@@ -2,7 +2,7 @@
 
 > Name: **not chosen yet** (working title "Space Mission Design Game").
 > Terms in **bold capitals** are defined in [`GLOSSARY.md`](../GLOSSARY.md). Decisions with lasting impact are in [`docs/adr/`](adr/).
-> Numbers marked _(verify)_ are placeholders until the research step confirms them with sources.
+> Facts and numbers are sourced in [`docs/research/`](research/). Anything still marked _(verify)_ there needs a source before it appears in the game.
 
 ## 1. The game in one paragraph
 
@@ -84,7 +84,9 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 - **Own rockets:** rent (Rideshare) at first. Own **Launch Vehicles** and a **Spaceport Site** arrive in Era 4 (1990s, when private rockets really appeared), about **1–3 hours** into the Campaign. Free Play can reach them sooner.
 - **Endless:** after Artemis IV, the Campaign continues as Free Play.
 
-### Campaign Eras and Milestones _(all facts: verify)_
+### Campaign Eras and Milestones
+
+Verified dates, rockets and sources: [`docs/research/milestones.md`](research/milestones.md).
 
 | Era | Milestone | Real event | Player's role |
 |---|---|---|---|
@@ -123,14 +125,14 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 | **Payload** | Radiation detector · TV camera · Radio transponder · Multispectral camera · Telescope · Moon mapper (camera + laser altimeter) · Science package |
 | **Crewed only** | **Crew Module** (oxygen, water, food, temperature, CO₂ removal, in one Part) + **Launch Escape System** (required) |
 
-- Every Part has **mass, power use, cost, build time, reliability**. Payload also has **Data per day** and **science value**. Numbers come from cited research _(verify)_.
+- Every Part has **mass, power use, cost, build time, reliability**. Payload also has **Data per day** and **science value**. Real ranges: [`docs/research/spacecraft-parts.md`](research/spacecraft-parts.md). Older Eras use lower, clearly labelled game estimates.
 - **Crewed rule:** estimated success must be **≥95%** to Launch.
 - There is rarely one right answer: several designs can meet a Contract.
 
 ## 8. Launch planning
 
-- **Launch Vehicle catalogue** by Era (e.g. Juno I, Thor-Delta, Saturn V, Space Shuttle, Atlas V, Falcon 9, SLS _(verify)_): payload capacity per orbit, cost, reliability. Rideshare is priced per kg.
-- **Launch site:** your Spaceport or a real spaceport you ship to (Cape Canaveral, Vandenberg, Wallops _(verify)_). Latitude and coast matter: launching east near the equator gives a free speed boost from Earth's spin, and a coast lets failed rockets fall into the sea.
+- **Launch Vehicle catalogue** by Era (Juno I, Thor-Able, Thor-Delta, Saturn V, Space Shuttle, Pegasus, Atlas V, Falcon 9, SLS: see [`docs/research/launch-vehicles.md`](research/launch-vehicles.md)): payload capacity per orbit, cost, reliability. Rideshare is priced per kg.
+- **Launch site:** your Spaceport or a real spaceport you ship to (Cape Canaveral/Kennedy, Vandenberg, Wallops: see [`docs/research/launch-sites-and-physics.md`](research/launch-sites-and-physics.md)). Latitude and coast matter: launching east near the equator gives a free speed boost from Earth's spin, and a coast lets failed rockets fall into the sea.
 - **Mass check:** the game blocks launches where Spacecraft mass is over the vehicle's capacity for that orbit.
 - **Weather:** rolled from the launch site's real climate. Over-limit wind or lightning **Scrubs** the launch (based on real launch weather rules).
 - **Launch Window advisor:** suggests the best day and explains why ("calm winds; Moon window opens"). Moon windows come round about monthly. Mars about every 26 months (Later).
@@ -204,8 +206,8 @@ Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Ra
 1. Name the Company and pick the Historic start.
 2. Accept the Explorer 1 Contract.
 3. Place an Aluminium Mine and a Copper Mine, then Metal Works and an Electronics Lab (or buy Parts).
-4. Open the Mission Designer: small Bus, batteries, simple antenna, spin stabilisation, radiation detector.
-5. Choose the Launch Vehicle (Juno I _(verify)_) and ship to Cape Canaveral.
+4. Open the Mission Designer: small Bus, batteries only (Explorer 1 had no solar cells), simple antenna, spin stabilisation, radiation detector.
+5. Choose the Launch Vehicle (Juno I, as in 1958) and ship to Cape Canaveral.
 6. Test Run: see the battery graph, fix one warning.
 7. Launch. First Anomaly: **Point the antenna**.
 8. Mission Report and Real History card: the Van Allen belts were discovered. First Mission Patch.

@@ -1,0 +1,44 @@
+# Campaign Milestones: verified facts
+
+Facts used in Real History cards and Milestone Contracts. Researched 2026-11-07. Where sources disagree, the note says so. Wikipedia is used for quick facts; prefer the NASA link for "Learn more →".
+
+| # | Milestone | Date | Launch Vehicle · site | Built by | Key fact for the card |
+|---|---|---|---|---|---|
+| 0 | **Vanguard TV3** (failure story) | 6 Dec 1957 | Vanguard · Cape Canaveral LC-18 | US Navy program | Rose about 4 ft, lost thrust, fell back and exploded on the pad.[^vtv3] |
+| 1 | **Explorer 1** | 31 Jan 1958, 22:48 local (1 Feb UTC) | Juno I · Cape Canaveral | JPL (rocket by the Army's ABMA) | First US satellite. 13.97 kg. Powered only by mercury batteries (~40% of its mass), which ran out on 23 May 1958. Its radiation detector found the **Van Allen belts**. Launched **before NASA existed** (NASA started 1 Oct 1958; JPL joined NASA 3 Dec 1958).[^e1][^nasa][^jpl] |
+| – | Vanguard 1 (side fact) | 17 Mar 1958 | Vanguard · Cape Canaveral | US Navy program | **First solar-powered satellite**; oldest human-made object still in orbit.[^v1] |
+| 2 | **TIROS-1** | 1 Apr 1960 | Thor-Able · Cape Canaveral LC-17A | RCA | First full-scale weather satellite. Worked 78 days until a power failure on 15 Jun 1960.[^tiros] |
+| 3 | **Telstar 1** | 10 Jul 1962 | Thor-Delta · Cape Canaveral | Bell Labs, for AT&T | First privately funded space project. AT&T **paid NASA for each launch** (about $3M, sources differ).[^telstar] |
+| 4 | **Syncom 3** | 19 Aug 1964 | Delta D · Cape Canaveral | Hughes | First geostationary communications satellite. Broadcast the **1964 Tokyo Olympics** to the US.[^syncom] |
+| 5 | **Apollo 11** (support) | Jul 1969 | Saturn V · Kennedy | Lunar Module by **Grumman** | The crew set up **EASEP**: a seismometer (worked 21 days, detected moonquakes and impacts) and a **laser retroreflector** still used by Earth lasers. Grumman won the Lunar Module contract on 7 Nov 1962 and built 13 of them.[^easep][^grumman] |
+| 6 | **Landsat 1** (ERTS-1) | 23 Jul 1972 | Delta 900 · Vandenberg SLC-2W | GE (one source says Hughes) | First Landsat satellite. Sent over 100,000 images covering more than 75% of Earth's surface by 1974. Renamed from ERTS-1 in 1975.[^landsat] |
+| 7 | **Hubble** | 24 Apr 1990 | Space Shuttle Discovery (STS-31) · Kennedy LC-39B | NASA, with industry | First launch attempt on 10 Apr was **scrubbed** at T-4 min (power unit problem).[^hubble] |
+| – | Pegasus (side fact, own rockets) | 5 Apr 1990 | Pegasus, air-launched | Orbital Sciences | First successful air-launched orbital rocket; carries up to 443 kg (XL).[^pegasus] |
+| 8 | **Lunar Reconnaissance Orbiter** | 18 Jun 2009 | Atlas V 401 · Cape Canaveral SLC-41 | NASA Goddard | Launched with **LCROSS**, whose stage was crashed into the Moon to look for water.[^lro] |
+| 9 | **Falcon 9 booster landing** | 21 Dec 2015 (22 Dec UTC) | Falcon 9 · Cape Canaveral | SpaceX | First Falcon 9 first stage landed, at Landing Zone 1, after launching 11 ORBCOMM satellites.[^f9] |
+| 10 | **Artemis I** | 16 Nov 2022 | SLS · Kennedy LC-39B | NASA | Uncrewed Orion flew around the Moon and back in 25 days. Earlier attempts were scrubbed (engine issue, Hurricane Ian).[^a1] |
+| 11 | **Artemis II** | 1 Apr 2026 | SLS · Kennedy | NASA | Crewed flight around the Moon.[^artemis] |
+| 12 | **Artemis IV** (finale) | Planned by 2028 | SLS + a commercial lander (Starship or Blue Moon, not chosen yet) | NASA | Planned first crewed Moon landing since 1972. Artemis III was changed in Feb 2026 to a lander test in Earth orbit (2027).[^artemis] |
+
+**Game notes**
+- Explorer 1 had **batteries only**, so the tutorial Spacecraft uses batteries, not solar. Solar cells unlock after Vanguard 1's real first (1958).
+- Telstar shows the Rideshare idea: a private company paying for a government launch.
+- Artemis IV is a future event: keep its data in one file and re-check before release.
+
+[^vtv3]: [Wikipedia: Vanguard TV-3](https://en.wikipedia.org/wiki/Vanguard_TV-3) · [Rockland Daily: first US attempt](https://rocklanddaily.com/news/today-in-history-disasterous-first-u-s-attempt-to-launch-a-satellite)
+[^e1]: [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1) · [JPL: Explorer 1 and the birth of the US space age](https://www.jpl.nasa.gov/images/explorer-1-and-the-birth-of-the-us-space-age/)
+[^nasa]: [Wikipedia: Creation of NASA](https://en.wikipedia.org/wiki/Creation_of_NASA)
+[^jpl]: [JPL history](https://www.jpl.nasa.gov/history) · [Wikipedia: JPL](https://en.wikipedia.org/wiki/Jet_Propulsion_Laboratory)
+[^v1]: [Wikipedia: Vanguard 1](https://en.wikipedia.org/wiki/Vanguard_1) · [Astronomy.com: Vanguard 1](https://www.astronomy.com/space-exploration/vanguard-1-earths-oldest-artificial-satellite-thats-still-in-orbit/)
+[^tiros]: [Wikipedia: TIROS-1](https://www.wikipedia.org/wiki/TIROS-1) · [This Day in Aviation: TIROS-1](https://thisdayinaviation.com/tag/tiros-1)
+[^telstar]: [Wikipedia: Telstar 1](https://en.wikipedia.org/wiki/Telstar_1) · [EBSCO: first commercial communications satellite](https://ebsco.com/research-starters/communication-and-mass-media/first-commercial-communications-satellite-launched)
+[^syncom]: [Wikipedia: Syncom](https://en.wikipedia.org/wiki/Syncom) · [History of Information: Syncom 3](https://www.historyofinformation.com/detail.php?id=2139)
+[^easep]: [NASA: lunar science announced](https://www.nasa.gov/history/50-years-ago-on-the-way-to-the-moon-lunar-science-announced/) · [Apollo 11 overview (WUSTL)](https://an.rsl.wustl.edu/apollo/data/userguide/apollo_11_overview.htm)
+[^grumman]: [Chariots for Apollo (NASA SP-4205), ch. 4-5](https://apolloexplorer.co.uk/books/SP-4205/ch4-5.html) · [ASME: Lunar Module LM-13](https://www.asme.org/wwwasmeorg/media/ResourceFiles/AboutASME/Who%20We%20Are/Engineering%20History/Landmarks/218-Apollo-Lunar-Module-LM-13.pdf)
+[^landsat]: [Wikipedia: Landsat 1](https://en.wikipedia.org/wiki/Landsat_1) · [USGS: Landsat 1 launch pad](https://www.usgs.gov/media/images/landsat-1-erts-launch-pad)
+[^hubble]: [Wikipedia: STS-31](https://en.wikipedia.org/wiki/STS-31) · [NASA: STS-31 gallery](https://www.nasa.gov/gallery/sts-31)
+[^pegasus]: [Wikipedia: Pegasus](https://en.wikipedia.org/wiki/Northrop_Grumman_Pegasus) · [Astronautix: Pegasus XL](http://www.astronautix.com/p/pegasusxl.html)
+[^lro]: [NASA SVS: LRO launch](https://svs.gsfc.nasa.gov/10443) · [ULA: LRO/LCROSS launch](https://www.ulalaunch.com/about/news/2009/06/18/united-launch-alliance-successfully-launches-moon-missions-for-nasa)
+[^f9]: [US Air Force: 45th SW launches ORBCOMM, lands booster](https://www.af.mil/News/Article-Display/Article/637696/45th-sw-launches-orbcomm-lands-first-stage-booster) · [Wikipedia: Falcon 9 flight 20](https://en.wikipedia.org/wiki/Falcon_9_flight_20)
+[^a1]: [Bloomberg: Artemis I launch](https://www.bloomberg.com/news/articles/2022-11-16/nasa-launches-sls-rocket-artemis-i-in-first-step-to-return-to-moon) · [NASA image: Artemis I](https://www.nasa.gov/image-detail/artemis-i-3)
+[^artemis]: [Wikipedia: Artemis IV](https://en.wikipedia.org/wiki/Artemis_IV) · [CRS: Artemis](https://www.congress.gov/crs-product/IF11643) · [SpacePolicyOnline: Artemis III, IV, V](https://spacepolicyonline.com/news/nasa-is-full-steam-ahead-on-artemis-iii-iv-and-v/)
