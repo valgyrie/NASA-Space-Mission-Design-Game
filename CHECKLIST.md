@@ -23,6 +23,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Start and Site
 - [ ] Company name (filtered) and logo maker
 - [ ] Logo upload (128×128, ~200 KB cap, "no photos of people" warning)
+- [ ] Default Company logo: an original preset (not the Space Apps logo)
 - [ ] Globe picker: Historic start pin, US, anywhere; Random; Seeds
 - [ ] Real climate and land type per location (NASA POWER 2025, baked in)
 - [ ] Site map generated from Seed + real data
@@ -80,6 +81,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Demo Mode: one save per finished Era
 - [ ] NASA data used visibly in the game (see GDD §14)
 - [ ] Credits screen (data, audio, sources)
+- [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits
 - [ ] README: how to play and run
 - [ ] Hosted playable link
 - [ ] Submission video
