@@ -1,0 +1,108 @@
+# Checklist
+
+**Required** = needed for the hackathon submission. **Optional** = later, if time allows.
+Tick an item only after it works in the game. Details for each item are in [`docs/GDD.md`](docs/GDD.md).
+
+## Required
+
+### Preparation
+- [x] Challenge brief in the repo (`docs/challenge.md`)
+- [x] Design session: GDD, glossary, decisions
+- [ ] Get the organisers' "you may start early" message in writing and save it
+- [ ] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
+- [ ] Research and cite: Milestone facts, Launch Vehicles, Part numbers, spaceports
+- [ ] Split the build into tickets
+- [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
+
+### Foundations
+- [ ] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
+- [ ] Isometric low-poly world with camera controls
+- [ ] Save and load (local)
+- [ ] All game text in one file (translation-ready)
+
+### Start and Site
+- [ ] Company name (filtered) and logo maker
+- [ ] Logo upload (128×128, ~200 KB cap, "no photos of people" warning)
+- [ ] Globe picker: Historic start pin, US, anywhere; Random; Seeds
+- [ ] Real climate and land type per location (NASA POWER 2025, baked in)
+- [ ] Site map generated from Seed + real data
+- [ ] Real-time Site with pause and 1×/2×/4× speed
+
+### Economy
+- [ ] Mines on deposits (Aluminium, Copper, Silicon first)
+- [ ] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant
+- [ ] Assembly Hall, Warehouse, Research Lab, Ground Station, HQ
+- [ ] Building Upgrades (levels)
+- [ ] Market (buy/sell at worse prices)
+- [ ] Shipping (money + days)
+- [ ] Startup grant safety net
+
+### Missions
+- [ ] Contracts board
+- [ ] Mission Designer: 3D Spacecraft, slots, six live resource bars
+- [ ] Easy and Advanced Part sets
+- [ ] Launch Vehicle catalogue with mass check
+- [ ] Rideshare priced per kg
+- [ ] Launch site choice, latitude and coast effects
+- [ ] Weather from real climate, Scrubs
+- [ ] Launch Window advisor
+- [ ] Launch Insurance
+- [ ] Test Run (2D) with estimated success %
+- [ ] 3D Launch and flight
+- [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
+- [ ] Mission Report explaining why
+- [ ] Mission Patches and patch gallery
+- [ ] Crew Module, Launch Escape System, ≥95% rule (for crewed Milestones)
+
+### Campaign
+- [ ] Tutorial: Explorer 1, first Launch in under 10 minutes
+- [ ] Era 1: Explorer 1, TIROS-1
+- [ ] Era 2: Telstar 1, Syncom 3
+- [ ] HQ Upgrade moves to the next Era
+- [ ] Research Points and tech tree
+- [ ] Real History cards (before and after), History Archive
+- [ ] Failure stories, retryable Milestones
+
+### Free Play and online
+- [ ] Free Play mode with generated Contracts
+- [ ] Anonymous accounts (nickname generator, recovery code)
+- [ ] Leaderboards
+- [ ] Weekly Challenge with fixed budget and scoring
+- [ ] Shareable Seeds, cloud saves
+
+### Look and sound
+- [ ] Cozy low-poly art, clean NASA-style UI
+- [ ] Sound effects
+- [ ] Music (licensed or generated, credited)
+- [ ] Learn more → links on real things
+
+### Judges and submission
+- [ ] Demo Mode: one save per finished Era
+- [ ] NASA data used visibly in the game (see GDD §14)
+- [ ] Credits screen (data, audio, sources)
+- [ ] README: how to play and run
+- [ ] Hosted playable link
+- [ ] Submission video
+- [ ] Project page on spaceappschallenge.org
+- [ ] Make the repo public before the deadline
+
+## Optional (later)
+
+- [ ] Era 3: Apollo 11 support, Landsat 1
+- [ ] Era 4: Hubble, Lunar Reconnaissance Orbiter, own rockets and Spaceport Site
+- [ ] Era 5: Falcon 9 landing, Artemis I, Artemis II, Artemis IV finale
+- [ ] Anomalies: Dodge the debris, Stop the tumble
+- [ ] Satellite photos of your region after imaging Missions (NASA GIBS)
+- [ ] Real Moon positions and windows (JPL Horizons)
+- [ ] Real solar storms as flight events (NASA DONKI)
+- [ ] Manual Part placement in Advanced mode
+- [ ] Live weather mode (today's real weather)
+- [ ] Visit other Companies' Sites, preset messages, send resources
+- [ ] Cooperative missions (up to 4 players)
+- [ ] Sandbox mode
+- [ ] Mars, asteroids, outer planets
+- [ ] Era-flavoured music
+- [ ] Touch and tablet support
+- [ ] Translations (e.g. Arabic, right-to-left)
+- [ ] Desktop app (Electron), PWA install
+- [ ] Choose a game name

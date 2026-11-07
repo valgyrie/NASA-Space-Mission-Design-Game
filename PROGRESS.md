@@ -2,21 +2,24 @@
 
 ## Current handoff
 
-**Goal:** design a 2.5D space-company tycoon for the NASA Space Apps 2026 "Space Mission Design Game" challenge (hackathon Nov 14–15, 2026), then build it.
+**Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** Phase 1 (design) is set up. No game code yet.
-- Challenge brief: `docs/challenge.md`.
-- Decisions so far: `docs/GDD.md` (design) and `docs/adr/0001-web-stack-typescript-threejs-supabase.md` (tech stack).
-- Phase-1 skills installed in `.claude/skills/` (see its README).
+**State:** design session finished (6 rounds of `/grill-with-docs`). Written: `docs/GDD.md`, `GLOSSARY.md`, ADR-0002 (Campaign follows real history from a US start), `CHECKLIST.md`, `AGENTS.md` (`CLAUDE.md` imports it), `README.md`. No game code yet. Organisers allowed building before the event, but the game must adapt to NASA's Resources (Nov 13).
 
-**Next:** run a `/grill-with-docs` session on the game design, working through the open questions at the bottom of `docs/GDD.md`. Record answers in `docs/GDD.md`, terms in `GLOSSARY.md`, and hard-to-reverse choices in `docs/adr/`.
+**Next (in this order):**
+1. Music prompts for Lyria 3.5 (read Google's official Lyria prompt guide first) plus the free audio source list → `docs/audio/`. Check free licensed music first; generate only gaps (≈8–10 pieces: menu, Site, Mission Designer, Launch, flight, Anomaly, success/failure stingers, Era change).
+2. Research and cite every fact and number marked _(verify)_ in `docs/GDD.md` → `docs/research/`.
+3. Split the Required items in `CHECKLIST.md` into tickets.
+4. Start building.
 
 **Open:**
-- Confirm the Space Apps rule on work done before Nov 14. The 2026 Project Submission Guide is expected Nov 13.
-- The challenge page's Resources tab has not been captured yet (expected around Nov 13).
+- Team should save the organisers' early-start permission in writing.
+- Official Resources tab not captured yet (Nov 13).
+- Game name: blank on purpose.
 
-**Suggested skills:** `grill-with-docs`, `research` (for NASA data, later).
+**Suggested skills:** `research`, `writing-for-agents` (for docs), `grill-with-docs` (for any new feature).
 
 ## Log
 
+- 2026-11-07: Design session done; GDD, glossary, ADR-0002, checklist, AGENTS.md written.
 - 2026-11-07: Researched the challenge, chose the web stack, wrote `docs/challenge.md`, set up phase-1 skills and memory files.
