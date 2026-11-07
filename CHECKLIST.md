@@ -76,6 +76,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Sound effects
 - [ ] Music (licensed or generated, credited)
 - [ ] Learn more → links on real things
+- [ ] Title screen → main menu with live 3D background; loading screens with sourced tips
+- [ ] Real NASA photos (credited) on Real History cards
+- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources)
 
 ### Judges and submission
 - [ ] Demo Mode: one save per finished Era

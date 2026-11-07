@@ -34,5 +34,6 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 26 | [Look and feel pass](26-look-and-feel.md) | 18 | Cozy low-poly models and a clean NASA-style UI across all screens; Learn more → links. |
 | 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Adapt to the official Resources (Nov 13); make data use visible in game and credits. |
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
+| 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
 
 **Not in this list (Optional in `CHECKLIST.md`):** Eras 3–5, Crew Module, Dodge the debris, Stop the tumble, GIBS photos, Horizons, DONKI, manual placement, live weather, visiting Sites, co-op, Sandbox, Mars, touch, translations, desktop app.

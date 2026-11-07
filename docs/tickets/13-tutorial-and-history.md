@@ -12,3 +12,4 @@
 - [ ] First Mission Patch is awarded and appears in the patch gallery
 - [ ] History Archive keeps every unlocked card
 - [ ] Explorer 1 facts match the research notes
+- [ ] Cards use real NASA photos with a visible credit line
