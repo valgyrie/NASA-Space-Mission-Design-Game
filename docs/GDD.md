@@ -10,7 +10,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 
 ## 2. Goals and audience
 
-- **Audience:** students aged about 10–14, and anyone curious. Easy to start, with depth for those who want it.
+- **Audience:** everyone from about age 10: students, families and adults who love space. Easy to start, with depth for those who want it.
 - **Teach the challenge's trade-offs:** every design choice changes **Mass, Power, Budget, Data, Communications** and **Time**, and the game shows how.
 - **Split:** about **60% mission design** (Site choice, weather and Launch Windows, Ground Stations, Spacecraft design, Launch Vehicle, Test Runs, flying) and **40% tycoon** (Mines, Factories, Upgrades, money).
 - **Judges play for minutes:** the first Launch happens within **10 minutes**, and **Demo Mode** jumps straight to any Era.
