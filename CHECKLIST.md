@@ -9,7 +9,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Challenge brief in the repo (`docs/challenge.md`)
 - [x] Design session: GDD, glossary, decisions
 - [ ] Get the organisers' "you may start early" message in writing and save it
-- [ ] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
+- [x] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
 - [ ] Research and cite: Milestone facts, Launch Vehicles, Part numbers, spaceports
 - [ ] Split the build into tickets
 - [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
