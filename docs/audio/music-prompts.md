@@ -13,7 +13,7 @@ Prompts for generating the game's music with **Lyria 3.5** in Gemini. Use these 
 Rules followed in every prompt (from Google's [Lyria prompt guide](https://ai.google.dev/gemini-api/docs/lyria-prompt-guide)):
 
 - Start with the **genre**, then mood, instruments, **BPM**, **key**, structure and length. Specific prompts beat vague ones.
-- **"Instrumental only, no vocals."** Lyria 3.5 adds singing by default.
+- **"Instrumental only, no vocals."** Lyria 3.5 adds singing by default. The rule is **no sung words**: wordless choir or humming is fine if it shows up (and is asked for on purpose in `launch`).
 - No artist or game names (prompts asking for specific artists get blocked).
 - The guide has no loop feature. For tracks that loop, the prompt asks for **no fade-out and an ending that matches the start**; the game crossfades the seam.
 
@@ -73,7 +73,7 @@ About 2 minutes 30 seconds long. No big drops or sudden changes. Instrumental on
 ## `launch` · Launch countdown and liftoff
 
 ```
-Orchestral score, building excitement to a triumphant release, the moment a rocket lifts off. Pulsing low strings, ticking percussion, rising brass, full string section, timpani, shimmering cymbals, warm synth pad. Starts at 110 BPM and grows in intensity, in D major.
+Orchestral score, building excitement to a triumphant release, the moment a rocket lifts off. Pulsing low strings, ticking percussion, rising brass, full string section, timpani, shimmering cymbals, soft wordless choir and warm synth pad. Starts at 110 BPM and grows in intensity, in D major.
 [0:00 - 0:30] Countdown: low pulsing strings and a ticking rhythm, tension slowly rising
 [0:30 - 0:45] Ignition: timpani roll and a big swell
 [0:45 - 1:15] Liftoff: triumphant brass and strings play a bold, hopeful melody
