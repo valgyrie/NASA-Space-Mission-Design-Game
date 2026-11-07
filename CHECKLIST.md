@@ -12,7 +12,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
 - [x] Research and cite: Milestone facts, Launch Vehicles, Part numbers, spaceports
 - [ ] Close remaining _(verify)_ items in `docs/research/` (Juno I and Delta D/900 capacity, spaceport latitudes, Moon/Mars window sources)
-- [ ] Split the build into tickets
+- [ ] Split the build into tickets (drafted in `docs/tickets/README.md`, waiting for approval)
 - [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
 
 ### Foundations
@@ -54,7 +54,6 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
 - [ ] Mission Report explaining why
 - [ ] Mission Patches and patch gallery
-- [ ] Crew Module, Launch Escape System, ≥95% rule (for crewed Milestones)
 
 ### Campaign
 - [ ] Tutorial: Explorer 1, first Launch in under 10 minutes
@@ -92,6 +91,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ## Optional (later)
 
 - [ ] Era 3: Apollo 11 support, Landsat 1
+- [ ] Crew Module, Launch Escape System, ≥95% rule (crewed Milestones start in Era 3)
 - [ ] Era 4: Hubble, Lunar Reconnaissance Orbiter, own rockets and Spaceport Site
 - [ ] Era 5: Falcon 9 landing, Artemis I, Artemis II, Artemis IV finale
 - [ ] Anomalies: Dodge the debris, Stop the tumble
