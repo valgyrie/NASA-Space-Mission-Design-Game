@@ -73,7 +73,7 @@ About 2 minutes 30 seconds long. No big drops or sudden changes. Instrumental on
 ## `launch` · Launch countdown and liftoff
 
 ```
-Orchestral score, building excitement to a triumphant release, the moment a rocket lifts off. Pulsing low strings, ticking percussion, rising brass, full string section, timpani, shimmering cymbals, soft choir-like synth pad (no words). Starts at 110 BPM and grows in intensity, in D major.
+Orchestral score, building excitement to a triumphant release, the moment a rocket lifts off. Pulsing low strings, ticking percussion, rising brass, full string section, timpani, shimmering cymbals, warm synth pad. Starts at 110 BPM and grows in intensity, in D major.
 [0:00 - 0:30] Countdown: low pulsing strings and a ticking rhythm, tension slowly rising
 [0:30 - 0:45] Ignition: timpani roll and a big swell
 [0:45 - 1:15] Liftoff: triumphant brass and strings play a bold, hopeful melody
