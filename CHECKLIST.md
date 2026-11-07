@@ -12,7 +12,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
 - [x] Research and cite: Milestone facts, Launch Vehicles, Part numbers, spaceports
 - [ ] Close remaining _(verify)_ items in `docs/research/` (Juno I and Delta D/900 capacity, spaceport latitudes, Moon/Mars window sources)
-- [ ] Split the build into tickets (drafted in `docs/tickets/README.md`, waiting for approval)
+- [x] Split the build into tickets (`docs/tickets/`)
 - [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
 
 ### Foundations
