@@ -1,4 +1,4 @@
-# Space Mission Design Game
+# LEAP
 
 A tycoon game where the player runs a space company, then designs, launches and flies missions that teach real space-mission trade-offs.
 

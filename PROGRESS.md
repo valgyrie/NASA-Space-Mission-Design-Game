@@ -15,12 +15,12 @@
 **Open:**
 - Team should save the organisers' early-start permission in writing.
 - Official Resources tab not captured yet (Nov 13).
-- Game name: blank on purpose.
 
 **Suggested skills:** the build skills (install first).
 
 ## Log
 
+- 2026-11-07: Game named **LEAP: A Space Mission Design Game** (Launch · Engineer · Advance · Pioneer).
 - 2026-11-07: Music prompts, cited research, `to-tickets` installed, 28 tickets approved and published.
 - 2026-11-07: Design session done; GDD, glossary, ADR-0002, checklist, AGENTS.md written.
 - 2026-11-07: Researched the challenge, chose the web stack, wrote `docs/challenge.md`, set up phase-1 skills and memory files.

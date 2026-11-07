@@ -1,6 +1,6 @@
 # Game Design Document
 
-> Name: **not chosen yet** (working title "Space Mission Design Game").
+> **LEAP: A Space Mission Design Game**. The letters stand for **Launch · Engineer · Advance · Pioneer** (see §13 for where this appears).
 > Terms in **bold capitals** are defined in [`GLOSSARY.md`](../GLOSSARY.md). Decisions with lasting impact are in [`docs/adr/`](adr/).
 > Facts and numbers are sourced in [`docs/research/`](research/). Anything still marked _(verify)_ there needs a source before it appears in the game.
 
@@ -181,6 +181,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Text:** short and plain. Unusual terms get a hint the first time ("Launch Vehicle (the rocket)"). Every real thing gets **Learn more →** to an official NASA page or Wikipedia. No logos of NASA, SpaceX or any real organisation. Real mission names and facts only, with sources.
 - **Sound:** sound effects generated in code where possible, otherwise free licensed packs. Music: free licensed tracks first, then AI-generated (Lyria 3.5) for gaps. All credited (see `docs/audio/`).
 - **Music mood:** hopeful, cozy, exciting. Tracks: main menu, Site (calm), Mission Designer (focused), Launch (exciting), flight, Anomaly (tense), success and failure stingers. Era-flavoured music is Later.
+- **Name on screen:** the title screen shows a big **LEAP** logo, the subtitle "A Space Mission Design Game" underneath, and one small line, *Launch · Engineer · Advance · Pioneer* (the four words may animate out of the four letters once). Everywhere else the game is just "LEAP". The Apollo 11 Real History card mentions *"one giant leap"* once, as the hidden source of the name.
 - **Language:** English. All text kept in one file so translations can be added later.
 
 ## 14. NASA data in the game

@@ -108,4 +108,4 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Touch and tablet support
 - [ ] Translations (e.g. Arabic, right-to-left)
 - [ ] Desktop app (Electron), PWA install
-- [ ] Choose a game name
+- [x] Choose a game name: **LEAP: A Space Mission Design Game**

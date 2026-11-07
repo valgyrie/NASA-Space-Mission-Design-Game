@@ -4,7 +4,7 @@ Instructions for any AI coding agent working on this repo (Claude Code reads it 
 
 ## Project
 
-A 2.5D space-company tycoon for the **NASA Space Apps 2026** challenge "Space Mission Design Game". Players grow a Company (~40% tycoon) and design, launch and fly Missions that teach real space-mission trade-offs (~60%). Audience: ages 10–14 and up. Stack: TypeScript, Vite, Three.js, HTML/CSS UI, Supabase (ADR-0001).
+**LEAP: A Space Mission Design Game** (Launch · Engineer · Advance · Pioneer), a 2.5D space-company tycoon for the **NASA Space Apps 2026** challenge "Space Mission Design Game". Players grow a Company (~40% tycoon) and design, launch and fly Missions that teach real space-mission trade-offs (~60%). Audience: ages 10–14 and up. Stack: TypeScript, Vite, Three.js, HTML/CSS UI, Supabase (ADR-0001).
 
 - **Phase:** design done, planning next. Space Apps organisers allowed building before the event, but the game must be adapted to NASA's official Resources (published Nov 13). Hackathon: Nov 14–15, 2026.
 - **Owner:** the team reviews and tests; agents write all code and art.
@@ -41,6 +41,8 @@ Write the handoff in `PROGRESS.md` (Claude: run `/handoff`), commit, and push. C
 - **Git:** small commits with clear messages; push often; the team merges into `main`.
 
 ## Writing style
+
+- The game's name is **LEAP**. Use the full title "LEAP: A Space Mission Design Game" only on the title screen, README and submission; the acronym's meaning appears only on the title screen.
 
 - **Human-facing text** (README, docs, in-game text, commit messages): short, plain, to the point, like a good game. No filler, no marketing tone, no feature lists for their own sake.
 - **Agent-facing docs** (this file, skills): whatever works best for agents.
