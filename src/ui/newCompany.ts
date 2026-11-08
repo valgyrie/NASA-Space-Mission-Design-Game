@@ -1,8 +1,41 @@
 import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
+import { SEED_MAX, checkSeed, randomSeed } from '../site/seed';
 import { t } from '../strings';
 
-/** Show the "Start your Company" dialog. Calls `onDone` once with an accepted name. */
-export function showNewCompany(root: HTMLElement, onDone: (name: string) => void): void {
+export interface NewCompanyChoice {
+  name: string;
+  seed: string;
+}
+
+interface Options {
+  /** Called whenever the Seed field holds a usable Seed, so the Site can be previewed. */
+  onSeed: (seed: string) => void;
+  /** Called once, with an accepted name and Seed. */
+  onDone: (choice: NewCompanyChoice) => void;
+}
+
+function field(id: string, label: string): { label: HTMLLabelElement; input: HTMLInputElement } {
+  const l = document.createElement('label');
+  l.htmlFor = id;
+  l.textContent = label;
+  const input = document.createElement('input');
+  input.id = id;
+  input.type = 'text';
+  input.autocomplete = 'off';
+  input.spellcheck = false;
+  return { label: l, input };
+}
+
+function note(id: string, text: string): HTMLParagraphElement {
+  const p = document.createElement('p');
+  p.className = 'note';
+  p.id = id;
+  p.textContent = text;
+  return p;
+}
+
+/** Show the "Start your Company" dialog. */
+export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): void {
   const form = document.createElement('form');
   form.className = 'panel dialog';
   form.noValidate = true;
@@ -10,21 +43,27 @@ export function showNewCompany(root: HTMLElement, onDone: (name: string) => void
   const heading = document.createElement('h1');
   heading.textContent = t('newCompany.heading');
 
-  const label = document.createElement('label');
-  label.htmlFor = 'company-name';
-  label.textContent = t('newCompany.label');
+  const name = field('company-name', t('newCompany.label'));
+  name.input.maxLength = NAME_MAX * 2; // room to type; the real limit is checked on Start
+  name.input.placeholder = t('newCompany.placeholder');
+  name.input.setAttribute('aria-describedby', 'company-note');
 
-  const input = document.createElement('input');
-  input.id = 'company-name';
-  input.type = 'text';
-  input.autocomplete = 'off';
-  input.spellcheck = false;
-  input.maxLength = NAME_MAX * 2; // room to type; the real limit is checked on Start
-  input.placeholder = t('newCompany.placeholder');
+  const seed = field('site-seed', t('newCompany.seedLabel'));
+  seed.input.maxLength = SEED_MAX + 4;
+  seed.input.className = 'seed';
+  seed.input.value = randomSeed();
+  seed.input.setAttribute('aria-describedby', 'seed-note');
 
-  const note = document.createElement('p');
-  note.className = 'note';
-  note.textContent = t('newCompany.note');
+  const reroll = document.createElement('button');
+  reroll.type = 'button';
+  reroll.className = 'icon';
+  reroll.textContent = t('newCompany.rerollIcon');
+  reroll.title = t('newCompany.reroll');
+  reroll.setAttribute('aria-label', t('newCompany.reroll'));
+
+  const seedRow = document.createElement('div');
+  seedRow.className = 'row';
+  seedRow.append(seed.input, reroll);
 
   const error = document.createElement('p');
   error.className = 'error';
@@ -34,23 +73,54 @@ export function showNewCompany(root: HTMLElement, onDone: (name: string) => void
   start.type = 'submit';
   start.textContent = t('newCompany.start');
 
-  input.setAttribute('aria-describedby', 'company-note');
-  note.id = 'company-note';
-  input.addEventListener('input', () => (error.textContent = ''));
+  const previewSeed = () => {
+    const check = checkSeed(seed.input.value);
+    if (check.ok) onSeed(check.seed);
+  };
+  let timer = 0;
+  seed.input.addEventListener('input', () => {
+    error.textContent = '';
+    window.clearTimeout(timer);
+    timer = window.setTimeout(previewSeed, 200);
+  });
+  name.input.addEventListener('input', () => (error.textContent = ''));
+  reroll.addEventListener('click', () => {
+    seed.input.value = randomSeed();
+    error.textContent = '';
+    previewSeed();
+  });
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const check = checkCompanyName(input.value);
-    if (check.ok) {
-      form.remove();
-      onDone(check.name);
+    const nameCheck = checkCompanyName(name.input.value);
+    if (!nameCheck.ok) {
+      error.textContent = t(`newCompany.error.${nameCheck.problem}`, { min: NAME_MIN, max: NAME_MAX });
+      name.input.focus();
       return;
     }
-    error.textContent = t(`newCompany.error.${check.problem}`, { min: NAME_MIN, max: NAME_MAX });
-    input.focus();
+    const seedCheck = checkSeed(seed.input.value);
+    if (!seedCheck.ok) {
+      const key = seedCheck.problem === 'badWord' ? 'newCompany.error.seedBadWord' : 'newCompany.error.seedInvalid';
+      error.textContent = t(key, { max: SEED_MAX });
+      seed.input.focus();
+      return;
+    }
+    form.remove();
+    onDone({ name: nameCheck.name, seed: seedCheck.seed });
   });
 
-  form.append(heading, label, input, note, error, start);
+  form.append(
+    heading,
+    name.label,
+    name.input,
+    note('company-note', t('newCompany.note')),
+    seed.label,
+    seedRow,
+    note('seed-note', t('newCompany.seedNote')),
+    error,
+    start,
+  );
   root.append(form);
-  input.focus();
+  previewSeed();
+  name.input.focus();
 }

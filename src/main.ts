@@ -1,4 +1,5 @@
 import { type SaveData, loadGame, startAutosave } from './save/save';
+import { generateSite } from './site/site';
 import { t } from './strings';
 import { showHud } from './ui/hud';
 import { showNewCompany } from './ui/newCompany';
@@ -13,7 +14,8 @@ const world = new World(canvas);
 world.start();
 
 function play(ui: HTMLElement, game: SaveData): void {
-  showHud(ui, game.company.name);
+  world.showSite(generateSite(game.site.seed));
+  showHud(ui, game.company.name, game.site.seed);
   startAutosave(localStorage, () => game);
 }
 
@@ -21,5 +23,8 @@ const saved = loadGame(localStorage);
 if (saved) {
   play(ui, saved);
 } else {
-  showNewCompany(ui, (name) => play(ui, { version: 1, company: { name } }));
+  showNewCompany(ui, {
+    onSeed: (seed) => world.showSite(generateSite(seed)),
+    onDone: ({ name, seed }) => play(ui, { version: 2, company: { name }, site: { seed } }),
+  });
 }

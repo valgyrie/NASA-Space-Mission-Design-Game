@@ -35,6 +35,10 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
   - Pick a spot on a 3D globe, or press **Random**. Each start has a **Seed** that can be shared.
 - **The location is real:** climate (sunshine, wind, rain, temperature) comes from NASA POWER data for 2025, baked into the game. Land type (coast, desert, mountains, forest, ice) also comes from real data.
 - **The Site map is generated** from the Seed and that real data: terrain, water, and mineral deposits.
+  - A Site is 64 × 64 tiles of terraced land: grass, sand, hills, mountains.
+  - Water is one of: a coast, a lake, a river, or none.
+  - Every Site gets at least two Deposits each of Aluminium, Copper and Silicon, on the land where they're found (§5). If that land is missing, they go on any dry land, so no start is unplayable.
+  - A random Seed is 6 letters and digits with no vowels (so it can't spell a word), e.g. `K7QXM2`. Players can type their own (up to 12, bad words blocked). Case, spaces and dashes don't matter.
 - **Good and bad starts are both playable.** An inland or northern Site is bad for launching but may be rich in minerals. A coastal Site near the equator is great for launching. Weather and latitude really matter (see §8).
 
 ## 5. Economy (≈40%)

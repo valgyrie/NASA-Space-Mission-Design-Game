@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
+import { SITE_SIZE, type Site } from '../site/site';
+import { buildSiteMesh } from './siteMesh';
 import {
   ISO_POLAR,
   START_AZIMUTH,
@@ -11,14 +13,8 @@ import {
   isoOffset,
 } from './isoCamera';
 
-/** Side length of the square Site, in tiles (1 tile = 1 world unit). */
-export const SITE_SIZE = 64;
-
 const COLOURS = {
   sky: 0x1b2433,
-  grass: 0x8cc66d,
-  soil: 0x8a6545,
-  grid: 0x7ab35d,
   skyLight: 0xdfefff,
   groundLight: 0x5a4632,
   sun: 0xfff1d6,
@@ -30,6 +26,7 @@ export class World {
   readonly scene = new THREE.Scene();
   readonly camera: THREE.OrthographicCamera;
   readonly controls: MapControls;
+  private siteGroup: THREE.Group | null = null;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -47,7 +44,6 @@ export class World {
 
     this.controls = this.makeControls(canvas);
     this.addLights();
-    this.addGround();
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -94,30 +90,19 @@ export class World {
     this.scene.add(sun);
   }
 
-  /** A flat grass slab with soil sides, like a cozy board-game tile, plus a faint tile grid. */
-  private addGround(): void {
-    const depth = 3;
-    const grass = new THREE.MeshStandardMaterial({ color: COLOURS.grass, roughness: 1, flatShading: true });
-    const soil = new THREE.MeshStandardMaterial({ color: COLOURS.soil, roughness: 1, flatShading: true });
-    // Box faces: +x, -x, +y, -y, +z, -z.
-    const slab = new THREE.Mesh(new THREE.BoxGeometry(SITE_SIZE, depth, SITE_SIZE), [
-      soil,
-      soil,
-      grass,
-      soil,
-      soil,
-      soil,
-    ]);
-    slab.position.y = -depth / 2;
-    slab.receiveShadow = true;
-    this.scene.add(slab);
-
-    const grid = new THREE.GridHelper(SITE_SIZE, SITE_SIZE / 4, COLOURS.grid, COLOURS.grid);
-    grid.position.y = 0.01;
-    const mat = grid.material as THREE.Material;
-    mat.transparent = true;
-    mat.opacity = 0.5;
-    this.scene.add(grid);
+  /** Show a Site, replacing the one on screen. */
+  showSite(site: Site): void {
+    if (this.siteGroup) {
+      this.scene.remove(this.siteGroup);
+      this.siteGroup.traverse((o) => {
+        if (o instanceof THREE.Mesh) {
+          o.geometry.dispose();
+          (o.material as THREE.Material).dispose();
+        }
+      });
+    }
+    this.siteGroup = buildSiteMesh(site);
+    this.scene.add(this.siteGroup);
   }
 
   private resize(): void {

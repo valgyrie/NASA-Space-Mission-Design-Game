@@ -10,7 +10,7 @@ function memoryStorage(): SaveStorage & { data: Map<string, string> } {
   };
 }
 
-const game: SaveData = { version: 1, company: { name: 'Comet Works' } };
+const game: SaveData = { version: 2, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' } };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -29,8 +29,18 @@ describe('local save', () => {
     expect(loadGame(storage)).toBeNull();
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 99, company: { name: 'X' } }));
     expect(loadGame(storage)).toBeNull();
-    storage.data.set(SAVE_KEY, JSON.stringify({ version: 1 }));
+    storage.data.set(SAVE_KEY, JSON.stringify({ version: 2, company: { name: 'X' } }));
     expect(loadGame(storage)).toBeNull();
+  });
+
+  it('upgrades a version 1 save by giving it a Seed', () => {
+    const storage = memoryStorage();
+    storage.data.set(SAVE_KEY, JSON.stringify({ version: 1, company: { name: 'Comet Works' } }));
+    expect(loadGame(storage, () => 'BCD234')).toEqual({
+      version: 2,
+      company: { name: 'Comet Works' },
+      site: { seed: 'BCD234' },
+    });
   });
 
   it('reports when the browser refuses to save', () => {

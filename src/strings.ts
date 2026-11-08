@@ -9,13 +9,27 @@ export const STRINGS = {
   'newCompany.label': 'Company name',
   'newCompany.placeholder': 'e.g. Comet Works',
   'newCompany.note': "Make up a name. Don't use your real full name.",
+  'newCompany.seedLabel': 'Seed',
+  'newCompany.seedNote': 'The same Seed always makes the same land. Share it with friends.',
+  'newCompany.reroll': 'New random Seed',
+  'newCompany.rerollIcon': '🎲',
   'newCompany.start': 'Start',
   'newCompany.error.empty': 'Your Company needs a name.',
   'newCompany.error.tooShort': 'Use at least {min} letters.',
   'newCompany.error.tooLong': 'Keep it to {max} characters or fewer.',
   'newCompany.error.badWord': "Let's pick a friendlier name.",
+  'newCompany.error.seedInvalid': 'A Seed is letters and numbers only, up to {max}.',
+  'newCompany.error.seedBadWord': "Let's pick a different Seed.",
 
   'hud.company': '{name}',
+  'hud.seed': 'Seed {seed}',
+  'hud.copy': 'Copy',
+  'hud.copied': 'Copied',
+  'hud.copySeed': 'Copy the Seed to share it',
+
+  'material.aluminium': 'Aluminium',
+  'material.copper': 'Copper',
+  'material.silicon': 'Silicon',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

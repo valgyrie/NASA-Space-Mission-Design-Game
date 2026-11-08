@@ -36,6 +36,10 @@ _Avoid_: age, level, tier
 A resource dug up by a Mine, such as aluminium or silicon.
 _Avoid_: ore, resource (alone)
 
+**Deposit**:
+A patch of a Site's land that holds one Raw Material; a Mine must sit on one.
+_Avoid_: vein, node, resource tile
+
 **Part**:
 A spacecraft component made by a Factory from Raw Materials, or bought on the Market.
 _Avoid_: item, module (alone)

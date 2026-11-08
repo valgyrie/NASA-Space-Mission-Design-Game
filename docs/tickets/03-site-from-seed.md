@@ -4,10 +4,10 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Entering the same Seed twice produces an identical Site
-- [ ] Different Seeds produce clearly different Sites
-- [ ] Deposits of Aluminium, Copper and Silicon appear and are visible
-- [ ] Water (river, lake or coast) can appear
-- [ ] The Seed is shown and can be copied
+- [x] Entering the same Seed twice produces an identical Site
+- [x] Different Seeds produce clearly different Sites
+- [x] Deposits of Aluminium, Copper and Silicon appear and are visible
+- [x] Water (river, lake or coast) can appear
+- [x] The Seed is shown and can be copied
