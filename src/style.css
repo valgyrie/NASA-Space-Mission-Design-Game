@@ -145,11 +145,50 @@ body {
   gap: 6px;
 }
 
-.hud-seed {
-  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
-  font-size: 13px;
-  font-weight: 400;
+.hud-top {
+  gap: 10px;
+}
+
+.icon-button {
+  font-size: 15px;
+  line-height: 1;
+  padding: 5px 8px;
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: auto;
+  background: rgba(8, 12, 20, 0.45);
+}
+
+.backdrop[hidden] {
+  display: none;
+}
+
+.menu-label {
+  font-size: 14px;
   color: var(--muted);
+}
+
+.seed-code {
+  flex: 1;
+  font-family: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  font-size: 20px;
+  letter-spacing: 0.1em;
+}
+
+.dialog button.small {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  color: var(--text);
+  background: #1f2c40;
+  border: 1px solid var(--panel-edge);
+}
+
+.dialog .primary {
+  margin-top: 8px;
 }
 
 button.small {

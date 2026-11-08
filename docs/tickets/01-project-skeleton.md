@@ -10,4 +10,6 @@
 - [x] An empty isometric ground plane is visible with soft lighting
 - [x] Mouse pans, zooms and rotates the camera smoothly
 - [x] Type check and test run on every commit and block it on failure
+
+**Changed later (2026-11-08):** the camera became a perspective camera that can also tilt down to the horizon, and the ground became a Site with land around it (ADR-0003).
 - [x] README says how to run the game

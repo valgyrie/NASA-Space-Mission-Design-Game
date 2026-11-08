@@ -7,6 +7,7 @@
 **Status:** ready-for-agent
 
 - [ ] All buildings, rockets and Spacecraft use the agreed low-poly style
+- [ ] Buildings look right both from the isometric start view and tilted low toward the horizon
 - [ ] Interface is consistent, readable and not overwhelming
 - [ ] Learn more → links on every real mission, rocket and fact
 - [ ] No real organisation's logos anywhere

@@ -29,10 +29,16 @@ export const STRINGS = {
   'newCompany.error.seedBadWord': "Let's pick a different Seed.",
 
   'hud.company': '{name}',
-  'hud.seed': 'Seed {seed}',
-  'hud.copy': 'Copy',
-  'hud.copied': 'Copied',
-  'hud.copySeed': 'Copy the Seed to share it',
+  'hud.menuIcon': '☰',
+  'hud.menu': 'Menu (Esc)',
+
+  'menu.heading': 'Paused',
+  'menu.seed': 'Seed',
+  'menu.seedNote': 'Share it and friends can play on the same land.',
+  'menu.copy': 'Copy',
+  'menu.copied': 'Copied',
+  'menu.copySeed': 'Copy the Seed to share it',
+  'menu.resume': 'Resume',
 
   'topBar.money': 'Money',
   'topBar.date': 'Date',

@@ -4,6 +4,7 @@ import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
 import { showHud } from './ui/hud';
+import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import type { World } from './world/world';
 
@@ -27,7 +28,19 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     speed = s;
   };
 
-  showHud(ui, game.company.name, game.site.seed);
+  // The menu pauses the Site while it is open and puts the speed back afterwards.
+  let speedBeforeMenu: Speed = 1;
+  const menu = makeMenu(
+    ui,
+    game.site.seed,
+    () => {
+      speedBeforeMenu = speed;
+      setSpeed(0);
+      if (placing) setPlacing(false);
+    },
+    () => setSpeed(speedBeforeMenu),
+  );
+  showHud(ui, game.company.name, () => menu.open());
   const topBar = showTopBar(ui, setSpeed);
   let placing = false;
   const setPlacing = (on: boolean) => {
@@ -64,7 +77,14 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   });
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement) return;
-    if (e.key === 'Escape' && placing) setPlacing(false);
+    if (e.key === 'Escape') {
+      // Esc backs out one step: stop placing first, otherwise open or close the menu.
+      if (placing) setPlacing(false);
+      else if (menu.isOpen) menu.close();
+      else menu.open();
+      return;
+    }
+    if (menu.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);

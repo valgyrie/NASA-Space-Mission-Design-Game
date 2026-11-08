@@ -39,6 +39,8 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
   - Water is one of: a coast, a lake, a river, or none.
   - Every Site gets at least two Deposits each of Aluminium, Copper and Silicon, on the land where they're found (§5). If that land is missing, they go on any dry land, so no start is unplayable.
   - A random Seed is 6 letters and digits with no vowels (so it can't spell a word), e.g. `K7QXM2`. Players can type their own (up to 12, bad words blocked). Case, spaces and dashes don't matter.
+  - The Seed is chosen in New game and afterwards shown in the pause menu (Esc), with Copy. It is not on screen during play.
+- **The world goes on past the Site.** The same Seed shapes the land around it out to the horizon, so coasts and rivers carry on past the edge. Only the Site can be built on (for now); a thin line marks its edge, and the land outside is slightly hazy.
 - **Good and bad starts are both playable.** An inland or northern Site is bad for launching but may be rich in minerals. A coastal Site near the equator is great for launching. Weather and latitude really matter (see §8).
 
 ## 5. Economy (≈40%)
@@ -183,7 +185,8 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 
 ## 13. Look, sound and text
 
-- **Look:** cozy, colourful low-poly world from a fixed isometric camera. Clean, calm NASA-style interface (dark panels, crisp charts). Not overwhelming.
+- **Look:** cozy, colourful low-poly world under a daytime sky, with sun shadows and soft shading in corners and at the foot of cliffs. Clean, calm NASA-style interface (dark panels, crisp charts). Not overwhelming.
+- **Camera:** opens at the classic isometric angle over the Site. Left-drag pans (it stays over the Site), right-drag turns and tilts (down to the horizon, up to nearly top-down), the wheel zooms. A narrow-lens perspective camera, so the horizon can be seen (ADR-0003).
 - **Text:** short and plain. Unusual terms get a hint the first time ("Launch Vehicle (the rocket)"). Every real thing gets **Learn more →** to an official NASA page or Wikipedia. No logos of NASA, SpaceX or any real organisation. Real mission names and facts only, with sources.
 - **Sound:** sound effects generated in code where possible, otherwise free licensed packs. Music: free licensed tracks first, then AI-generated (Lyria 3.5) for gaps. All credited (see `docs/audio/`).
 - **Music mood:** hopeful, cozy, exciting. Tracks: main menu, Site (calm), Mission Designer (focused), Launch (exciting), flight, Anomaly (tense), success and failure stingers. Era-flavoured music is Later.
@@ -208,7 +211,7 @@ The challenge expects the provided data to be used visibly. Planned slots, to be
 
 ## 15. Screens
 
-Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Settings · Credits
+Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
 
 ## 16. Tutorial (first 10 minutes, Explorer 1)
 

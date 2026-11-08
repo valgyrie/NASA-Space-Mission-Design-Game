@@ -17,7 +17,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
-- [x] Isometric low-poly world with camera controls
+- [x] Low-poly world with camera controls (pan, turn, tilt to the horizon, zoom)
+- [x] Land continues past the Site to the horizon; sky, haze and sun shadows
+- [x] Pause menu (Esc) with the Seed and Copy
 - [x] Save and load (local)
 - [x] All game text in one file (translation-ready)
 

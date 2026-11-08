@@ -1,29 +1,22 @@
 import * as THREE from 'three';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { hashText, makeRng } from '../site/random';
-import { type Site, type Terrain, tileAt } from '../site/site';
+import { type Land, SITE_SIZE, type Site, landOf, tileAt } from '../site/site';
+import { STEP, WATER, WATER_Y, buildTerrainGeometry, terrainMaterial } from './terrainMesh';
 
-/** Height of one terrain step in world units. A tile is 1 × 1. */
-export const STEP = 0.5;
-const BASE = -3;
-const WATER_Y = -0.12;
-
-const TERRAIN_COLOUR: Record<Terrain, number> = {
-  water: 0x3b6e8f,
-  sand: 0xe3cf94,
-  grass: 0x8cc66d,
-  hills: 0x6c9e55,
-  mountain: 0x9b958e,
-};
-const SNOW = 0xf1f4f8;
-const SOIL = 0x7d5a3c;
-const WATER = 0x4aa3d8;
+export { STEP } from './terrainMesh';
 
 export const DEPOSIT_COLOUR: Record<RawMaterial, number> = {
   aluminium: 0xdfe6ee,
   copper: 0xd8763a,
   silicon: 0x7b83eb,
 };
+
+/** Full-detail scenery reaches this many tiles past each edge of the Site. */
+const NEAR_REACH = 48;
+/** Coarse scenery (4 × 4 tiles per block) reaches this far, out to where the haze hides it. */
+const FAR_REACH = 224;
+const FAR_BLOCK = 4;
 
 /** World position of the centre of tile (x, z). */
 export function tileCentre(site: Site, x: number, z: number): { x: number; z: number } {
@@ -34,91 +27,139 @@ function topY(level: number): number {
   return level * STEP;
 }
 
-/** Low-poly 3D model of a Site: terraced land, water and deposit rocks. */
-export function buildSiteMesh(site: Site): THREE.Group {
+/**
+ * Low-poly 3D model of a Site and the land around it out to the horizon.
+ * Only the Site itself (named "terrain") can be clicked and built on.
+ */
+export function buildSiteMesh(site: Site, hazeColour: number): THREE.Group {
+  const land = landOf(site);
   const group = new THREE.Group();
   group.name = 'site';
-  group.add(terrainMesh(site), waterMesh(site), depositMesh(site));
+  group.add(
+    siteTerrain(site, land),
+    nearScenery(site, land, hazeColour),
+    farScenery(site, land, hazeColour),
+    waterMesh(land),
+    depositMesh(site),
+    siteBorder(site),
+  );
   return group;
 }
 
-function terrainMesh(site: Site): THREE.Mesh {
-  const positions: number[] = [];
-  const colours: number[] = [];
-  const rng = makeRng(hashText(site.seed + ':colour'));
-  const c = new THREE.Color();
+function mesh(geometry: THREE.BufferGeometry, name: string, castShadow: boolean): THREE.Mesh {
+  const m = new THREE.Mesh(geometry, terrainMaterial());
+  m.name = name;
+  m.castShadow = castShadow;
+  m.receiveShadow = true;
+  return m;
+}
 
-  const quad = (pts: number[][], colour: THREE.Color) => {
-    const [a, b, d, e] = pts as [number[], number[], number[], number[]];
-    for (const p of [a, b, d, a, d, e]) {
-      positions.push(p[0]!, p[1]!, p[2]!);
-      colours.push(colour.r, colour.g, colour.b);
-    }
-  };
-
-  for (let z = 0; z < site.size; z++) {
-    for (let x = 0; x < site.size; x++) {
+function siteTerrain(site: Site, land: Land): THREE.Mesh {
+  const geometry = buildTerrainGeometry({
+    from: 0,
+    to: site.size,
+    cellSize: 1,
+    origin: -site.size / 2,
+    cellAt: (x, z) => {
       const tile = tileAt(site, x, z)!;
-      const { x: cx, z: cz } = tileCentre(site, x, z);
-      const x0 = cx - 0.5;
-      const x1 = cx + 0.5;
-      const z0 = cz - 0.5;
-      const z1 = cz + 0.5;
-      const y = topY(tile.level);
+      const tint = tile.deposit ? { colour: DEPOSIT_COLOUR[tile.deposit], amount: 0.55 } : undefined;
+      return { terrain: tile.terrain, level: tile.level, tint };
+    },
+    levelAt: (x, z) => land.groundAt(x, z).level,
+  });
+  return mesh(geometry, 'terrain', true);
+}
 
-      // Top: terrain colour, tinted toward the Raw Material on a deposit, with a little jitter.
-      c.setHex(tile.terrain === 'mountain' && tile.level >= 9 ? SNOW : TERRAIN_COLOUR[tile.terrain]);
-      if (tile.deposit) c.lerp(new THREE.Color(DEPOSIT_COLOUR[tile.deposit]), 0.55);
-      c.offsetHSL(0, 0, (rng() - 0.5) * 0.04);
-      quad([[x0, y, z0], [x0, y, z1], [x1, y, z1], [x1, y, z0]], c);
+/** Full-detail land in a ring around the Site, a little hazy so the Site stands out. */
+function nearScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
+  const from = -NEAR_REACH;
+  const to = site.size + NEAR_REACH;
+  const inSite = (x: number, z: number) => x >= 0 && z >= 0 && x < site.size && z < site.size;
+  const geometry = buildTerrainGeometry({
+    from,
+    to,
+    cellSize: 1,
+    origin: -site.size / 2,
+    cellAt: (x, z) => (inSite(x, z) ? undefined : land.groundAt(x, z)),
+    levelAt: (x, z) => (x >= from && z >= from && x < to && z < to ? land.groundAt(x, z).level : undefined),
+    haze: 0.12,
+    hazeColour,
+  });
+  return mesh(geometry, 'scenery-near', true);
+}
 
-      // Sides, wherever the neighbour is lower (or off the edge of the Site).
-      const sides: [number, number, number[][]][] = [
-        [1, 0, [[x1, 0, z1], [x1, 0, z0]]],
-        [-1, 0, [[x0, 0, z0], [x0, 0, z1]]],
-        [0, 1, [[x0, 0, z1], [x1, 0, z1]]],
-        [0, -1, [[x1, 0, z0], [x0, 0, z0]]],
-      ];
-      for (const [dx, dz, [p, q]] of sides) {
-        const next = tileAt(site, x + dx, z + dz);
-        const bottom = next ? topY(next.level) : BASE;
-        if (bottom >= y) continue;
-        const side = new THREE.Color(next ? TERRAIN_COLOUR[tile.terrain] : SOIL).multiplyScalar(next ? 0.72 : 1);
-        quad([[p![0]!, y, p![2]!], [p![0]!, bottom, p![2]!], [q![0]!, bottom, q![2]!], [q![0]!, y, q![2]!]], side);
-        // Water at the edge of the Site gets a blue face so the sea doesn't look cut open.
-        if (!next && tile.terrain === 'water') {
-          const blue = new THREE.Color(WATER).multiplyScalar(0.8);
-          quad([[p![0]!, WATER_Y, p![2]!], [p![0]!, y, p![2]!], [q![0]!, y, q![2]!], [q![0]!, WATER_Y, q![2]!]], blue);
-        }
+/** Coarse land beyond that, out to the horizon. It sits behind the haze, so detail doesn't matter. */
+function farScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
+  const from = -FAR_REACH / FAR_BLOCK;
+  const to = (site.size + FAR_REACH) / FAR_BLOCK;
+  const holeFrom = -NEAR_REACH / FAR_BLOCK;
+  const holeTo = (site.size + NEAR_REACH) / FAR_BLOCK;
+  const inHole = (bx: number, bz: number) => bx >= holeFrom && bz >= holeFrom && bx < holeTo && bz < holeTo;
+  const blockGround = (bx: number, bz: number) =>
+    land.groundAt(bx * FAR_BLOCK + FAR_BLOCK / 2, bz * FAR_BLOCK + FAR_BLOCK / 2);
+  const geometry = buildTerrainGeometry({
+    from,
+    to,
+    cellSize: FAR_BLOCK,
+    origin: -site.size / 2,
+    cellAt: (bx, bz) => (inHole(bx, bz) ? undefined : blockGround(bx, bz)),
+    levelAt: (bx, bz) => (bx >= from && bz >= from && bx < to && bz < to ? blockGround(bx, bz).level : undefined),
+    haze: 0.22,
+    hazeColour,
+  });
+  return mesh(geometry, 'scenery-far', false);
+}
+
+function waterMesh(land: Land): THREE.Mesh {
+  const size = (SITE_SIZE + FAR_REACH) * 2 + 400;
+  const geometry = new THREE.PlaneGeometry(size, size);
+  geometry.rotateX(-Math.PI / 2);
+  const m = new THREE.Mesh(
+    geometry,
+    new THREE.MeshStandardMaterial({ color: WATER, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.88 }),
+  );
+  m.name = 'water';
+  m.position.y = WATER_Y;
+  m.receiveShadow = true;
+  m.visible = land.water !== 'none';
+  return m;
+}
+
+/** A thin line around the Site's edge, following the steps of the land: you can build inside it. */
+function siteBorder(site: Site): THREE.LineSegments {
+  const pts: number[] = [];
+  const lift = 0.04;
+  const o = -site.size / 2;
+  const n = site.size;
+  // Walk each edge; [x, z] of each tile along it and the corner line it runs on.
+  const edges: { tile: (i: number) => [number, number]; line: (i: number) => [number, number] }[] = [
+    { tile: (i) => [i, 0], line: (i) => [o + i, o] },
+    { tile: (i) => [n - 1, i], line: (i) => [o + n, o + i] },
+    { tile: (i) => [n - 1 - i, n - 1], line: (i) => [o + n - i, o + n] },
+    { tile: (i) => [0, n - 1 - i], line: (i) => [o, o + n - i] },
+  ];
+  for (const edge of edges) {
+    for (let i = 0; i < n; i++) {
+      const [tx, tz] = edge.tile(i);
+      const y = Math.max(topY(tileAt(site, tx, tz)!.level), 0) + lift;
+      const [ax, az] = edge.line(i);
+      const [bx, bz] = edge.line(i + 1);
+      pts.push(ax, y, az, bx, y, bz);
+      if (i + 1 < n) {
+        const [ux, uz] = edge.tile(i + 1);
+        const y2 = Math.max(topY(tileAt(site, ux, uz)!.level), 0) + lift;
+        if (y2 !== y) pts.push(bx, y, bz, bx, y2, bz);
       }
     }
   }
-
   const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
-  geometry.computeVertexNormals();
-  const mesh = new THREE.Mesh(
+  geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
+  const line = new THREE.LineSegments(
     geometry,
-    new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }),
+    new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.7 }),
   );
-  mesh.name = 'terrain';
-  mesh.castShadow = true;
-  mesh.receiveShadow = true;
-  return mesh;
-}
-
-function waterMesh(site: Site): THREE.Mesh {
-  const geometry = new THREE.PlaneGeometry(site.size, site.size);
-  geometry.rotateX(-Math.PI / 2);
-  const mesh = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({ color: WATER, roughness: 0.3, metalness: 0.1, transparent: true, opacity: 0.85 }),
-  );
-  mesh.position.y = WATER_Y;
-  mesh.receiveShadow = true;
-  mesh.visible = site.tiles.some((t) => t.terrain === 'water');
-  return mesh;
+  line.name = 'site-border';
+  return line;
 }
 
 /** Two or three small rocks on each deposit tile, coloured by Raw Material. */

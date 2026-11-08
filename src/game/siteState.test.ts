@@ -56,6 +56,6 @@ describe('time', () => {
   });
 
   it('does not jump ahead after a long pause in frames', () => {
-    expect(daysFor(30, 1)).toBe(daysFor(0.25, 1));
+    expect(daysFor(30, 1)).toBe(daysFor(1, 1));
   });
 });

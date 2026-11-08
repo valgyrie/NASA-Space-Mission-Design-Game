@@ -11,3 +11,5 @@
 - [x] Deposits of Aluminium, Copper and Silicon appear and are visible
 - [x] Water (river, lake or coast) can appear
 - [x] The Seed is shown and can be copied
+
+**Changed later (2026-11-08):** the Seed moved from the top-left panel into the pause menu (Esc), at the team's request. The land now also carries on past the Site to the horizon.

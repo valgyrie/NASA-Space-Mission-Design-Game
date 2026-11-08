@@ -2,36 +2,79 @@ import * as THREE from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { SITE_SIZE, type Site, tileAt } from '../site/site';
+import {
+  FOV_DEGREES,
+  MAX_DISTANCE,
+  MAX_ELEVATION,
+  MIN_DISTANCE,
+  MIN_ELEVATION,
+  START_AZIMUTH,
+  START_DISTANCE,
+  START_ELEVATION,
+  cameraOffset,
+  clampToGround,
+  hazeFor,
+  polarFromElevation,
+} from './camera';
 import { buildMine } from './mineMesh';
 import { STEP, buildSiteMesh, clearRocks, tileCentre } from './siteMesh';
-import {
-  ISO_POLAR,
-  START_AZIMUTH,
-  VIEW_HEIGHT,
-  ZOOM_MAX,
-  ZOOM_MIN,
-  clampToGround,
-  frustumFor,
-  isoOffset,
-} from './isoCamera';
 
 const COLOURS = {
-  sky: 0x1b2433,
-  skyLight: 0xdfefff,
-  groundLight: 0x5a4632,
-  sun: 0xfff1d6,
+  /** Pale haze at the horizon; distant land fades into it. */
+  horizon: 0xd3e4ee,
+  zenith: 0x5b97cf,
+  skyLight: 0xd6eaff,
+  groundLight: 0x6b5a45,
+  sun: 0xfff0d6,
 };
 
-/** The empty isometric world: ground, soft light, and a pan / zoom / rotate camera. */
+/** Direction the sunlight comes from: low and from the side, so shadows are long and easy to see. */
+const SUN_DIRECTION = new THREE.Vector3(-0.78, 0.5, 0.36).normalize();
+
+/** A sky dome: pale at the horizon, blue overhead. It follows the camera. */
+function makeSky(): THREE.Mesh {
+  const material = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    fog: false,
+    uniforms: {
+      horizon: { value: new THREE.Color(COLOURS.horizon) },
+      zenith: { value: new THREE.Color(COLOURS.zenith) },
+    },
+    vertexShader: `
+      varying vec3 vDir;
+      void main() {
+        vDir = normalize(position);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      uniform vec3 horizon;
+      uniform vec3 zenith;
+      varying vec3 vDir;
+      void main() {
+        float t = pow(clamp(vDir.y, 0.0, 1.0), 0.55);
+        gl_FragColor = vec4(mix(horizon, zenith, t), 1.0);
+      }`,
+  });
+  const sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), material);
+  sky.name = 'sky';
+  sky.renderOrder = -1;
+  sky.frustumCulled = false;
+  return sky;
+}
+
+/** The 3D world: the Site and the land around it, sky, sunlight, and the camera. */
 export class World {
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
-  readonly camera: THREE.OrthographicCamera;
+  readonly camera: THREE.PerspectiveCamera;
   readonly controls: MapControls;
   private siteGroup: THREE.Group | null = null;
   private site: Site | null = null;
   private readonly buildings = new THREE.Group();
   private readonly marker: THREE.Mesh;
+  private readonly sky = makeSky();
+  private readonly fog = new THREE.Fog(COLOURS.horizon, 100, 300);
   private readonly frameCallbacks: ((seconds: number) => void)[] = [];
   private readonly raycaster = new THREE.Raycaster();
 
@@ -41,11 +84,12 @@ export class World {
     this.renderer.shadowMap.enabled = true;
     this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.scene.background = new THREE.Color(COLOURS.sky);
+    this.scene.background = new THREE.Color(COLOURS.horizon);
+    this.scene.fog = this.fog;
+    this.scene.add(this.sky);
 
-    const f = frustumFor(window.innerWidth / window.innerHeight);
-    this.camera = new THREE.OrthographicCamera(f.left, f.right, f.top, f.bottom, 0.1, 1000);
-    const o = isoOffset(START_AZIMUTH, 200);
+    this.camera = new THREE.PerspectiveCamera(FOV_DEGREES, window.innerWidth / window.innerHeight, 0.5, 4000);
+    const o = cameraOffset(START_AZIMUTH, START_ELEVATION, START_DISTANCE);
     this.camera.position.set(o.x, o.y, o.z);
     this.camera.lookAt(0, 0, 0);
 
@@ -59,15 +103,15 @@ export class World {
     this.resize();
   }
 
-  /** Left drag pans, right drag turns, wheel zooms. The tilt stays isometric. */
+  /** Left drag pans, right drag turns (sideways) and tilts (up and down), wheel zooms. */
   private makeControls(canvas: HTMLCanvasElement): MapControls {
     const c = new MapControls(this.camera, canvas);
     c.enableDamping = true;
     c.dampingFactor = 0.12;
-    c.minPolarAngle = ISO_POLAR;
-    c.maxPolarAngle = ISO_POLAR;
-    c.minZoom = ZOOM_MIN;
-    c.maxZoom = ZOOM_MAX;
+    c.minPolarAngle = polarFromElevation(MAX_ELEVATION);
+    c.maxPolarAngle = polarFromElevation(MIN_ELEVATION);
+    c.minDistance = MIN_DISTANCE;
+    c.maxDistance = MAX_DISTANCE;
     c.zoomToCursor = true;
     c.rotateSpeed = 0.6;
     c.zoomSpeed = 1.2;
@@ -75,10 +119,10 @@ export class World {
       const { x, z } = clampToGround(c.target.x, c.target.z, SITE_SIZE / 2);
       const dx = x - c.target.x;
       const dz = z - c.target.z;
-      if (dx !== 0 || dz !== 0) {
-        c.target.set(x, 0, z);
+      if (dx !== 0 || dz !== 0 || c.target.y !== 0) {
         this.camera.position.x += dx;
         this.camera.position.z += dz;
+        c.target.set(x, 0, z);
       }
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -86,18 +130,23 @@ export class World {
   }
 
   private addLights(): void {
-    this.scene.add(new THREE.HemisphereLight(COLOURS.skyLight, COLOURS.groundLight, 1.6));
+    this.scene.add(new THREE.HemisphereLight(COLOURS.skyLight, COLOURS.groundLight, 1.15));
 
-    const sun = new THREE.DirectionalLight(COLOURS.sun, 1.8);
-    sun.position.set(30, 50, 20);
+    const sun = new THREE.DirectionalLight(COLOURS.sun, 2.6);
+    sun.position.copy(SUN_DIRECTION).multiplyScalar(120);
     sun.castShadow = true;
-    sun.shadow.mapSize.set(2048, 2048);
-    sun.shadow.radius = 4;
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.bias = -0.0004;
+    sun.shadow.normalBias = 0.03;
+    // The shadow covers the Site and a margin around it; the haze takes over beyond that.
     const s = sun.shadow.camera;
-    s.left = s.bottom = -SITE_SIZE * 0.75;
-    s.right = s.top = SITE_SIZE * 0.75;
-    s.far = 200;
-    this.scene.add(sun);
+    const reach = SITE_SIZE * 0.85;
+    s.left = s.bottom = -reach;
+    s.right = s.top = reach;
+    s.near = 1;
+    s.far = 260;
+    s.updateProjectionMatrix();
+    this.scene.add(sun, sun.target);
   }
 
   /** Show a Site, replacing the one on screen. */
@@ -105,13 +154,13 @@ export class World {
     if (this.siteGroup) {
       this.scene.remove(this.siteGroup);
       this.siteGroup.traverse((o) => {
-        if (o instanceof THREE.Mesh) {
+        if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
           o.geometry.dispose();
           (o.material as THREE.Material).dispose();
         }
       });
     }
-    this.siteGroup = buildSiteMesh(site);
+    this.siteGroup = buildSiteMesh(site, COLOURS.horizon);
     this.scene.add(this.siteGroup);
     this.site = site;
     this.buildings.clear();
@@ -179,8 +228,7 @@ export class World {
     const w = window.innerWidth;
     const h = window.innerHeight;
     this.renderer.setSize(w, h, false);
-    const f = frustumFor(w / h, VIEW_HEIGHT);
-    Object.assign(this.camera, f);
+    this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
   }
 
@@ -191,6 +239,10 @@ export class World {
       last = now;
       for (const fn of this.frameCallbacks) fn(seconds);
       this.controls.update();
+      const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
+      this.fog.near = near;
+      this.fog.far = far;
+      this.sky.position.copy(this.camera.position);
       this.renderer.render(this.scene, this.camera);
     });
   }

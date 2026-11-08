@@ -19,5 +19,5 @@ export const SECONDS_PER_DAY = 2;
 export const SPEEDS = [0, 1, 2, 4] as const;
 export type Speed = (typeof SPEEDS)[number];
 
-/** Longest real-time step the Site will simulate in one frame (e.g. after the tab was hidden). */
-export const MAX_FRAME_SECONDS = 0.25;
+/** Longest real-time step the Site simulates in one frame: slow computers keep pace, but a tab left hidden does not jump ahead. */
+export const MAX_FRAME_SECONDS = 1;

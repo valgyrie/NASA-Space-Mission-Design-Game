@@ -48,95 +48,144 @@ export function tileAt(site: Site, x: number, z: number): Tile | undefined {
   return site.tiles[z * site.size + x];
 }
 
-/** Build the Site map for a Seed. Pure: the same Seed always gives the same Site. */
-export function generateSite(seed: string, climate?: SiteClimate): Site {
-  const rng = makeRng(hashText(seed));
-  const size = SITE_SIZE;
-  const siteClimate = climate ?? placeholderClimate(rng);
+/** The ground at one spot: what it is and how high. */
+export interface Ground {
+  terrain: Terrain;
+  level: number;
+}
 
-  const height = heightField(rng, size);
+/**
+ * The land a Seed describes, everywhere: the Site and the scenery around it.
+ * `groundAt` works for any whole-number tile position, inside or outside the Site.
+ */
+export interface Land {
+  water: WaterKind;
+  climate: SiteClimate;
+  groundAt(x: number, z: number): Ground;
+}
+
+/** Shape the land for a Seed. Also returns the random numbers, ready for placing Deposits. */
+function makeLand(seed: string, climate?: SiteClimate): { land: Land; rng: Rng } {
+  const rng = makeRng(hashText(seed));
+  const drawn = placeholderClimate(rng); // always drawn, so the numbers after it don't depend on `climate`
+  const siteClimate = climate ?? drawn;
+
+  const height = heightField(rng);
   const water = pickWeighted<WaterKind>(rng, [
     ['coast', 0.35],
     ['lake', 0.25],
     ['river', 0.25],
     ['none', 0.15],
   ]);
-  carveWater(rng, height, size, water);
-
+  const carve = waterCarver(rng, seed, SITE_SIZE, water);
   const moisture = makeNoise(rng, 14);
-  const tiles: Tile[] = height.map((h, i) => {
-    const x = i % size;
-    const z = Math.floor(i / size);
-    const level = Math.min(MAX_LEVEL, Math.floor(h * 10) - 2);
-    return { terrain: terrainFor(level, moisture(x, z), siteClimate.dryness), level: Math.max(level, -1), deposit: null };
-  });
-  addBeaches(tiles, size);
-  placeDeposits(rng, tiles, size);
 
-  return { seed, size, water, climate: siteClimate, tiles };
+  const levelAt = (x: number, z: number) =>
+    Math.max(-1, Math.min(MAX_LEVEL, Math.floor(carve(x, z, height(x, z)) * 10) - 2));
+
+  const groundAt = (x: number, z: number): Ground => {
+    const level = levelAt(x, z);
+    let terrain = terrainFor(level, moisture(x, z), siteClimate.dryness);
+    // Low land right next to water becomes beach.
+    if (terrain === 'grass' && level <= 1 && NEIGHBOURS.some(([dx, dz]) => levelAt(x + dx, z + dz) < 0)) {
+      terrain = 'sand';
+    }
+    return { terrain, level };
+  };
+
+  return { land: { water, climate: siteClimate, groundAt }, rng };
+}
+
+/** Build the Site map for a Seed. Pure: the same Seed always gives the same Site. */
+export function generateSite(seed: string, climate?: SiteClimate): Site {
+  const { land, rng } = makeLand(seed, climate);
+  const size = SITE_SIZE;
+  const tiles: Tile[] = [];
+  for (let z = 0; z < size; z++) {
+    for (let x = 0; x < size; x++) tiles.push({ ...land.groundAt(x, z), deposit: null });
+  }
+  placeDeposits(rng, tiles, size);
+  return { seed, size, water: land.water, climate: land.climate, tiles };
+}
+
+/** The land around (and under) a Site, for drawing the scenery out to the horizon. */
+export function landOf(site: Site): Land {
+  return makeLand(site.seed, site.climate).land;
 }
 
 /** Rolling land: a few layers of noise, flattened so most of the Site is buildable. */
-function heightField(rng: Rng, size: number): number[] {
+function heightField(rng: Rng): (x: number, z: number) => number {
   const layers = [
     { noise: makeNoise(rng, 24), weight: 0.64 },
     { noise: makeNoise(rng, 10), weight: 0.3 },
     { noise: makeNoise(rng, 4), weight: 0.06 },
   ];
-  const out: number[] = [];
-  for (let z = 0; z < size; z++) {
-    for (let x = 0; x < size; x++) {
-      const n = layers.reduce((sum, l) => sum + l.noise(x, z) * l.weight, 0);
-      // Stretch the middle range so there are plains, hills and some peaks. Land never dips
-      // below sea level here: the only water is the coast, lake or river carved next.
-      out.push(Math.min(1, Math.max(LAND_FLOOR, (n - 0.5) * 1.8 + 0.5)));
-    }
-  }
-  return out;
+  return (x, z) => {
+    const n = layers.reduce((sum, l) => sum + l.noise(x, z) * l.weight, 0);
+    // Stretch the middle range so there are plains, hills and some peaks. Land never dips
+    // below sea level here: the only water is the coast, lake or river carved next.
+    return Math.min(1, Math.max(LAND_FLOOR, (n - 0.5) * 1.8 + 0.5));
+  };
 }
 
-/** Lower the land below sea level for the chosen kind of water. */
-function carveWater(rng: Rng, h: number[], size: number, kind: WaterKind): void {
+/** How far a river runs on past the Site's edges, in tiles. */
+const RIVER_REACH = 256;
+
+/** A function that lowers the land below sea level for the chosen kind of water. */
+function waterCarver(
+  rng: Rng,
+  seed: string,
+  size: number,
+  kind: WaterKind,
+): (x: number, z: number, h: number) => number {
   const wobble = makeNoise(rng, 8);
   if (kind === 'coast') {
     const side = randInt(rng, 0, 3);
     const width = randInt(rng, 10, 18);
-    for (let z = 0; z < size; z++) {
-      for (let x = 0; x < size; x++) {
-        const fromEdge = [x, size - 1 - x, z, size - 1 - z][side]!;
-        const d = fromEdge - width + (wobble(x, z) - 0.5) * 10;
-        if (d < 6) h[z * size + x] = Math.min(h[z * size + x]!, 0.2 + Math.max(d, -6) * 0.03);
-      }
-    }
-  } else if (kind === 'lake') {
+    return (x, z, h) => {
+      const fromEdge = [x, size - 1 - x, z, size - 1 - z][side]!;
+      const d = fromEdge - width + (wobble(x, z) - 0.5) * 10;
+      return d < 6 ? Math.min(h, 0.2 + Math.max(d, -6) * 0.03) : h;
+    };
+  }
+  if (kind === 'lake') {
     const cx = randInt(rng, size * 0.3, size * 0.7);
     const cz = randInt(rng, size * 0.3, size * 0.7);
     const r = randInt(rng, 6, 10);
-    for (let z = 0; z < size; z++) {
-      for (let x = 0; x < size; x++) {
-        const d = Math.hypot(x - cx, z - cz) - r + (wobble(x, z) - 0.5) * 6;
-        if (d < 4) h[z * size + x] = Math.min(h[z * size + x]!, 0.21 + Math.max(d, -4) * 0.025);
-      }
-    }
-  } else if (kind === 'river') {
-    // A river crosses the Site from one side to the other, winding as it goes.
-    const alongX = rng() < 0.5;
-    let across = randInt(rng, size * 0.25, size * 0.75);
-    let drift = 0;
-    const halfWidth = rng() < 0.5 ? 1 : 1.6;
-    for (let t = 0; t < size; t++) {
-      drift = Math.max(-0.8, Math.min(0.8, drift + (rng() - 0.5) * 0.5));
-      across = Math.max(6, Math.min(size - 7, across + drift));
-      for (let o = -4; o <= 4; o++) {
-        const a = Math.round(across) + o;
-        const [x, z] = alongX ? [t, a] : [a, t];
-        const d = Math.abs(across - a) - halfWidth;
-        const i = z * size + x;
-        if (d < 0.5) h[i] = Math.min(h[i]!, 0.15);
-        else if (d < 3) h[i] = Math.min(h[i]!, 0.2 + d * 0.035);
-      }
-    }
+    return (x, z, h) => {
+      const d = Math.hypot(x - cx, z - cz) - r + (wobble(x, z) - 0.5) * 6;
+      return d < 4 ? Math.min(h, 0.21 + Math.max(d, -4) * 0.025) : h;
+    };
   }
+  if (kind === 'river') {
+    // A river crosses the Site from one side to the other, winding as it goes, and runs on
+    // beyond both edges. The part outside the Site uses its own random numbers.
+    const alongX = rng() < 0.5;
+    const halfWidth = rng() < 0.5 ? 1 : 1.6;
+    const start = randInt(rng, size * 0.25, size * 0.75);
+    const path = new Map<number, number>();
+    const walk = (from: number, to: number, step: 1 | -1, r: Rng, across: number) => {
+      let drift = 0;
+      for (let t = from; t !== to; t += step) {
+        drift = Math.max(-0.8, Math.min(0.8, drift + (r() - 0.5) * 0.5));
+        across = Math.max(6, Math.min(size - 7, across + drift));
+        path.set(t, across);
+      }
+    };
+    walk(0, size, 1, rng, start);
+    const outside = makeRng(hashText(seed + ':river'));
+    walk(size, size + RIVER_REACH, 1, outside, path.get(size - 1)!);
+    walk(-1, -RIVER_REACH - 1, -1, outside, path.get(0)!);
+    return (x, z, h) => {
+      const across = path.get(alongX ? x : z);
+      if (across === undefined) return h;
+      const d = Math.abs(across - (alongX ? z : x)) - halfWidth;
+      if (d < 0.5) return Math.min(h, 0.15);
+      if (d < 3) return Math.min(h, 0.2 + d * 0.035);
+      return h;
+    };
+  }
+  return (_x, _z, h) => h;
 }
 
 function terrainFor(level: number, moisture: number, dryness: number): Terrain {
@@ -153,19 +202,6 @@ const NEIGHBOURS = [
   [0, 1],
   [0, -1],
 ] as const;
-
-/** Low land right next to water becomes sand. */
-function addBeaches(tiles: Tile[], size: number): void {
-  const beach: number[] = [];
-  tiles.forEach((tile, i) => {
-    if (tile.terrain !== 'grass' || tile.level > 1) return;
-    const x = i % size;
-    const z = Math.floor(i / size);
-    const byWater = NEIGHBOURS.some(([dx, dz]) => tiles[(z + dz) * size + (x + dx)]?.terrain === 'water' && x + dx >= 0 && x + dx < size);
-    if (byWater) beach.push(i);
-  });
-  for (const i of beach) tiles[i]!.terrain = 'sand';
-}
 
 /** Where each Raw Material is found (docs/GDD.md §4). */
 const FOUND_IN: Record<RawMaterial, readonly Terrain[]> = {

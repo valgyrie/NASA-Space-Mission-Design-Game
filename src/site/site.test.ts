@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
-import { type Site, type WaterKind, generateSite } from './site';
+import { type Site, type WaterKind, generateSite, landOf } from './site';
 import { checkSeed, normalizeSeed, randomSeed } from './seed';
 import { makeRng } from './random';
 
@@ -54,6 +54,32 @@ describe('Site from a Seed', () => {
       const site = generateSite(seed);
       const flat = site.tiles.filter((t) => t.terrain === 'grass' || t.terrain === 'sand').length;
       expect(flat / site.tiles.length, seed).toBeGreaterThan(0.4);
+    }
+  });
+});
+
+describe('land around the Site', () => {
+  it('matches the Site exactly where they overlap', () => {
+    const site = generateSite('K7QXM2');
+    const land = landOf(site);
+    site.tiles.forEach((tile, i) => {
+      const ground = land.groundAt(i % site.size, Math.floor(i / site.size));
+      expect(ground).toEqual({ terrain: tile.terrain, level: tile.level });
+    });
+  });
+
+  it('carries the coast and the river on past the edge', () => {
+    for (const seed of seeds) {
+      const site = generateSite(seed);
+      if (site.water !== 'coast' && site.water !== 'river') continue;
+      const land = landOf(site);
+      let outsideWater = 0;
+      for (let i = -40; i < site.size + 40; i++) {
+        for (const [x, z] of [[i, -20], [i, site.size + 20], [-20, i], [site.size + 20, i]] as const) {
+          if (land.groundAt(x, z).terrain === 'water') outsideWater++;
+        }
+      }
+      expect(outsideWater, `${seed} ${site.water}`).toBeGreaterThan(0);
     }
   });
 });
