@@ -72,7 +72,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 | **Propellant Plant** (Factory) | Water → propellant | Era 3 |
 | **Research Lab** | Turns science Data into **Research Points** | |
 | **Assembly Hall** | Builds the Spacecraft; its level sets the biggest Bus | |
-| **Warehouse** | Stores Raw Materials and Parts | |
+| **Warehouse** | Stores Raw Materials and Parts | Storage counts by mass (kg) |
 | **Ground Station** | Antenna that talks to Spacecraft; sets Communications | Bigger dish = more Data |
 | **Launch Pad** | Launch your own rockets | Spaceport Site, Era 4 |
 
@@ -83,6 +83,10 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 - **Time:** the Site runs in real time with pause and 1×/2×/4× speed. Opening the Mission Designer pauses it. The **Game date** starts on 1 January 1958; one game day takes 2 real seconds at 1×. Space pauses and resumes.
 - **Mines** take one tile and can go on any Deposit, mountains included (Copper is often up there).
 - **First tuning** (all in `src/game/balance.ts`, change freely): start with **$2M**; a Mine costs **$150K** and digs **10 kg a day**. Money is US dollars, Raw Materials are kilograms.
+- **Factories:** each makes one Part at a time, chosen by clicking it; it takes the Raw Materials when it starts a Part and adds the Part when done. Era 1 Parts: Small and Medium Bus (Metal Works), Basic Computer and Simple Antenna (Electronics Lab), Solar Cells (Solar Fab), Small and Large Battery (Battery Plant). Recipes are game estimates, not real figures.
+- **Factories and the Warehouse go on dry land without a Deposit,** so Deposits stay free for Mines.
+- **Storage** counts Raw Materials and Parts by mass: the Site holds **500 kg** in its yard, and each Warehouse adds **2,000 kg**. Mines stop when it is full. A Part always weighs less than its inputs, so Factories never overfill it.
+- **Market:** every Raw Material and Part has a making cost (Raw Materials' value plus the Factory's work). The Market sells at **2×** that and buys at **½**. Raw Materials trade in 10 kg lots, Parts one at a time, and arrive at once (Shipping between Sites comes later).
 
 ## 6. Contracts, Milestones and progression
 

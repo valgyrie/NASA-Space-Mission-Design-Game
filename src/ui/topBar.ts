@@ -1,10 +1,10 @@
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { SPEEDS, type Speed } from '../game/balance';
-import { type SiteState, outputPerDay } from '../game/siteState';
+import { type SiteState, outputPerDay, storageCapacity, storageFree, storageUsed } from '../game/siteState';
 import type { Site } from '../site/site';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
-import { formatGameDate, formatKg, formatMoney, formatPerDay } from './format';
+import { cssColour, formatGameDate, formatKg, formatMoney, formatPerDay, formatStorage } from './format';
 
 export interface TopBar {
   /** Refresh the numbers. Cheap enough to call every frame. */
@@ -29,7 +29,7 @@ function stat(label: string): { box: HTMLElement; value: HTMLElement; sub: HTMLE
   return { box, value, sub };
 }
 
-/** The bar along the top of the Site view: money, Game date, Raw Materials and speed. */
+/** The bar along the top of the Site view: money, Game date, Raw Materials, storage and speed. */
 export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): TopBar {
   const bar = document.createElement('div');
   bar.className = 'panel top-bar';
@@ -40,11 +40,14 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
   bar.append(money.box, date.box);
   for (const m of RAW_MATERIALS) {
     const s = stat(t(`material.${m}`));
-    s.box.style.setProperty('--material', `#${DEPOSIT_COLOUR[m].toString(16).padStart(6, '0')}`);
+    s.box.style.setProperty('--material', cssColour(DEPOSIT_COLOUR[m]));
     s.box.classList.add('material');
     stocks.set(m, s);
     bar.append(s.box);
   }
+  const storage = stat(t('topBar.storage'));
+  storage.sub.classList.add('warn');
+  bar.append(storage.box);
 
   const speeds = document.createElement('div');
   speeds.className = 'speeds';
@@ -69,10 +72,13 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
       setText(money.value, formatMoney(state.money));
       setText(date.value, formatGameDate(state.day));
       const rates = outputPerDay(site, state);
+      const full = storageFree(state) <= 0;
       for (const [m, s] of stocks) {
         setText(s.value, formatKg(state.stock[m]));
-        setText(s.sub, rates[m] > 0 ? formatPerDay(rates[m]) : '');
+        setText(s.sub, rates[m] > 0 && !full ? formatPerDay(rates[m]) : '');
       }
+      setText(storage.value, formatStorage(storageUsed(state), storageCapacity(state)));
+      setText(storage.sub, full ? t('topBar.storageFull') : '');
       for (const [sp, b] of buttons) {
         const on = String(sp === speed);
         if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on);

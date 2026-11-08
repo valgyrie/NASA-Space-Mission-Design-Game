@@ -25,3 +25,18 @@ export function formatPerDay(kg: number): string {
 export function formatGameDate(day: number): string {
   return dateFormat.format(new Date(START_DATE_UTC + Math.floor(day) * 86_400_000));
 }
+
+/** "2,000" */
+export function formatNumber(n: number): string {
+  return kgFormat.format(n);
+}
+
+/** "320 / 500 kg" (used rounded down) */
+export function formatStorage(used: number, capacity: number): string {
+  return t('format.storage', { used: kgFormat.format(Math.floor(used)), capacity: kgFormat.format(capacity) });
+}
+
+/** A colour number as CSS: 0x2b4fb3 → "#2b4fb3". */
+export function cssColour(hex: number): string {
+  return `#${hex.toString(16).padStart(6, '0')}`;
+}

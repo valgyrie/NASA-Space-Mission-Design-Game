@@ -34,10 +34,11 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Economy
 - [x] Mines on deposits (Aluminium, Copper, Silicon first), detailed model with a turning wheel
-- [ ] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant
-- [ ] Assembly Hall, Warehouse, Research Lab, Ground Station, HQ
+- [x] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant, detailed models that move while working
+- [x] Warehouse: storage by mass, shown in the top bar
+- [ ] Assembly Hall, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)
-- [ ] Market (buy/sell at worse prices)
+- [x] Market (buy/sell at worse prices)
 - [ ] Shipping (money + days)
 - [ ] Startup grant safety net
 

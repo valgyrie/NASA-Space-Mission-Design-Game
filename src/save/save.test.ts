@@ -13,7 +13,7 @@ function memoryStorage(): SaveStorage & { data: Map<string, string> } {
 
 const state = { ...newSiteState(), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4 }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 3, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: 4, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -40,7 +40,7 @@ describe('local save', () => {
     const storage = memoryStorage();
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 1, company: { name: 'Comet Works' } }));
     expect(loadGame(storage, () => 'BCD234')).toEqual({
-      version: 3,
+      version: 4,
       company: { name: 'Comet Works' },
       site: { seed: 'BCD234' },
       state: newSiteState(),
@@ -52,6 +52,24 @@ describe('local save', () => {
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 2, company: { name: 'A B' }, site: { seed: 'K7QXM2' } }));
     expect(loadGame(storage)?.site.seed).toBe('K7QXM2');
     expect(loadGame(storage)?.state).toEqual(newSiteState());
+  });
+
+  it('upgrades a version 3 save: keeps Mines and stock, adds Factories, Warehouses and Parts', () => {
+    const storage = memoryStorage();
+    const v3State = { money: 1_000_000, day: 40, mines: [{ x: 3, z: 4 }], stock: { aluminium: 5, copper: 6, silicon: 7 } };
+    storage.data.set(SAVE_KEY, JSON.stringify({ version: 3, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v3State }));
+    const loaded = loadGame(storage);
+    expect(loaded?.version).toBe(4);
+    expect(loaded?.state).toEqual({ ...newSiteState(), ...v3State });
+  });
+
+  it('restores Factories mid-Part and Parts in stock', () => {
+    const storage = memoryStorage();
+    const busy = { ...newSiteState(), warehouses: [{ x: 1, z: 1 }] };
+    busy.factories.push({ kind: 'batteryPlant', x: 2, z: 2, making: 'smallBattery', progress: 1.5 });
+    busy.parts.smallBattery = 3;
+    saveGame(storage, { ...game, state: busy });
+    expect(loadGame(storage)?.state).toEqual(busy);
   });
 
   it('reports when the browser refuses to save', () => {

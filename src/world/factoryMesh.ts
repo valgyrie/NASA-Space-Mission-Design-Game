@@ -1,0 +1,276 @@
+import * as THREE from 'three';
+import type { FactoryKind } from '../economy/part';
+import { RAW_MATERIALS } from '../economy/rawMaterial';
+import { M, PRODUCT_COLOUR, addSmoke, box, buildingGroup, colourMat, gableRoof, parts, v } from './buildingParts';
+import { DEPOSIT_COLOUR } from './siteMesh';
+
+/**
+ * Detailed low-poly Factories and the Warehouse, one tile each, at the Mine's level of detail.
+ * Doors and windows face +x and +z, the sides the start view shows. Moving parts are named as in
+ * `buildingParts.ts`; each Factory moves only while it is making something.
+ */
+
+type Parts = ReturnType<typeof parts>;
+
+/** A roll-up door with ribs, on the +z face at `z`. */
+function shutterDoor(p: Parts, x: number, z: number, w: number, h: number): void {
+  p.add(box(w, h, 0.015), M.shutter, x, 0.05 + h / 2, z);
+  for (let y = 0.08; y < h; y += 0.04) p.add(box(w, 0.006, 0.02), M.steel, x, 0.05 + y, z);
+}
+
+/** A row of windows along the +z face. */
+function windowsZ(p: Parts, xs: number[], y: number, z: number, w = 0.08, h = 0.06): void {
+  for (const x of xs) p.add(box(w, h, 0.015), M.glass, x, y, z);
+}
+
+/** A row of windows along the +x face. */
+function windowsX(p: Parts, zs: number[], y: number, x: number, w = 0.08, h = 0.06): void {
+  for (const z of zs) p.add(box(0.015, h, w), M.glass, x, y, z);
+}
+
+/** A wooden pallet with its top at y = 0.08. */
+function pallet(p: Parts, x: number, z: number, w = 0.2, d = 0.16): void {
+  p.add(box(w, 0.03, d), M.wood, x, 0.065, z);
+}
+
+/** Metal Works: a corrugated hall, a brick chimney that smokes, a glowing furnace, aluminium plates and a Bus frame. */
+function metalWorks(g: THREE.Group, p: Parts): void {
+  const product = colourMat(PRODUCT_COLOUR.metalWorks, { metalness: 0.5, roughness: 0.35 });
+  // Hall: x −0.4…0.2, z −0.35…0.11.
+  p.add(box(0.6, 0.34, 0.46), M.corrugated, -0.1, 0.22, -0.12);
+  p.add(gableRoof(0.52, 0.14, 0.64), M.darkRoof, -0.1, 0.39, -0.12);
+  shutterDoor(p, -0.06, 0.115, 0.2, 0.22);
+  windowsZ(p, [-0.3, 0.12], 0.33, 0.115);
+  windowsX(p, [-0.26, -0.12, 0.02], 0.32, 0.205);
+
+  // Brick chimney at the back with white bands; smoke rises from it.
+  p.cyl(0.06, 0.95, M.brick, -0.3, 0.05, -0.3, 8);
+  p.cyl(0.063, 0.04, M.white, -0.3, 0.84, -0.3, 8);
+  p.cyl(0.063, 0.04, M.white, -0.3, 0.92, -0.3, 8);
+  addSmoke(g, -0.3, 1.02, -0.3);
+
+  // Furnace on the +x side, glowing through its mouth, with a flue into the hall.
+  p.add(box(0.16, 0.18, 0.18), M.brick, 0.3, 0.14, -0.2);
+  p.add(box(0.018, 0.07, 0.09), M.fire, 0.385, 0.12, -0.2);
+  p.cyl(0.03, 0.18, M.steel, 0.3, 0.23, -0.24, 6);
+  p.bar(v(0.3, 0.4, -0.24), v(0.2, 0.36, -0.24), 0.04, M.steel);
+
+  // Yard: a stack of aluminium plates, I-beams, and a finished Bus frame on a pallet.
+  for (let i = 0; i < 4; i++) p.add(box(0.2, 0.018, 0.13), product, 0.27, 0.06 + i * 0.022, 0.26 + (i % 2) * 0.01);
+  for (let i = 0; i < 3; i++) p.add(box(0.3, 0.03, 0.03), product, -0.22, 0.065 + (i === 2 ? 0.03 : 0), 0.24 + (i % 2) * 0.05 + (i === 2 ? 0.025 : 0));
+  pallet(p, 0.03, 0.31, 0.17, 0.17);
+  const s = 0.07;
+  const cx = 0.03;
+  const cz = 0.31;
+  const y0 = 0.085;
+  for (const [ax, az, bx, bz] of [
+    [-1, -1, 1, -1],
+    [1, -1, 1, 1],
+    [1, 1, -1, 1],
+    [-1, 1, -1, -1],
+  ] as const) {
+    for (const y of [y0, y0 + 2 * s]) p.bar(v(cx + ax * s, y, cz + az * s), v(cx + bx * s, y, cz + bz * s), 0.014, product);
+    p.bar(v(cx + ax * s, y0, cz + az * s), v(cx + ax * s, y0 + 2 * s, cz + az * s), 0.014, product);
+  }
+  p.lamp(0.4, -0.4);
+}
+
+/** Electronics Lab: a clean white two-storey lab with window bands, a green stripe, and a turning dish on a mast. */
+function electronicsLab(_g: THREE.Group, p: Parts): void {
+  const product = colourMat(PRODUCT_COLOUR.electronicsLab);
+  // Building: x −0.36…0.2, z −0.32…0.12, two storeys.
+  p.add(box(0.56, 0.42, 0.44), M.white, -0.08, 0.26, -0.1);
+  p.add(box(0.6, 0.03, 0.48), M.white, -0.08, 0.485, -0.1);
+  p.add(box(0.565, 0.03, 0.445), product, -0.08, 0.45, -0.1);
+  for (const y of [0.25, 0.38]) {
+    p.add(box(0.5, 0.07, 0.015), M.glass, -0.08, y, 0.122);
+    p.add(box(0.015, 0.07, 0.38), M.glass, 0.202, y, -0.1);
+  }
+  // Glass entrance with a little canopy.
+  p.add(box(0.12, 0.14, 0.02), M.glass, -0.08, 0.12, 0.125);
+  p.add(box(0.18, 0.015, 0.08), M.white, -0.08, 0.2, 0.16);
+
+  // Roof: air-conditioning boxes and a mast with a dish that turns while the lab works.
+  for (const x of [0.05, 0.13]) {
+    p.add(box(0.07, 0.05, 0.07), M.tank, x, 0.525, -0.05);
+    p.cyl(0.022, 0.006, M.dark, x, 0.55, -0.05, 8);
+  }
+  p.cyl(0.012, 0.36, M.steel, -0.25, 0.5, -0.24, 6);
+  const dish = p.mover('spinY', -0.25, 0.86, -0.24);
+  dish.userData.speed = 0.8;
+  const bowl = p.add(new THREE.SphereGeometry(0.13, 10, 5, 0, Math.PI * 2, 0, Math.PI / 4.5), M.dish, 0, 0, 0, dish);
+  bowl.rotation.x = Math.PI / 2 + 0.5;
+  bowl.position.set(0, 0.02, 0.06);
+  p.bar(v(0, 0.02, -0.02), v(0, 0.05, 0.12), 0.01, M.steel, dish);
+
+  // Crates of green circuit boards on a pallet by the door.
+  pallet(p, 0.25, 0.3, 0.18, 0.14);
+  p.add(box(0.07, 0.06, 0.06), product, 0.21, 0.11, 0.3);
+  p.add(box(0.07, 0.06, 0.06), product, 0.29, 0.11, 0.3);
+  p.add(box(0.07, 0.06, 0.06), product, 0.25, 0.17, 0.3);
+  p.lamp(-0.38, 0.38);
+}
+
+/** One solar panel: a silver frame with four blue cells, lying flat around its centre. */
+function solarPanel(p: Parts, parent: THREE.Object3D, w: number, d: number): void {
+  const blue = colourMat(PRODUCT_COLOUR.solarFab, { roughness: 0.25, metalness: 0.4 });
+  p.add(box(w, 0.01, d), M.pipe, 0, 0, 0, parent);
+  const cw = w / 2 - 0.012;
+  const cd = d / 2 - 0.012;
+  for (const sx of [-1, 1]) for (const sz of [-1, 1]) p.add(box(cw, 0.012, cd), blue, (sx * w) / 4, 0.003, (sz * d) / 4, parent);
+}
+
+/** Solar Fab: a long hall with blue panels on the roof, a test panel that follows the Sun, and finished panels. */
+function solarFab(g: THREE.Group, p: Parts): void {
+  // Hall: x −0.4…0.3, z −0.33…0.09.
+  p.add(box(0.7, 0.24, 0.42), M.wall, -0.05, 0.17, -0.12);
+  p.add(box(0.74, 0.03, 0.46), M.darkRoof, -0.05, 0.305, -0.12);
+  shutterDoor(p, 0.12, 0.095, 0.14, 0.17);
+  p.add(box(0.07, 0.13, 0.015), M.door, -0.25, 0.115, 0.095);
+  windowsZ(p, [-0.1], 0.2, 0.095, 0.12, 0.06);
+  windowsX(p, [-0.24, -0.05], 0.2, 0.302);
+  // Two rows of three roof panels, tilted towards the low Sun.
+  for (const z of [-0.23, -0.02]) {
+    for (const x of [-0.29, -0.05, 0.19]) {
+      const holder = new THREE.Group();
+      holder.position.set(x, 0.345, z);
+      holder.rotation.x = 0.35;
+      g.add(holder);
+      solarPanel(p, holder, 0.21, 0.17);
+    }
+  }
+  // Test panel on a pole: it swings to follow the Sun while the Fab works.
+  p.cyl(0.014, 0.3, M.steel, 0.3, 0.05, 0.3, 6);
+  const tracker = p.mover('swing', 0.3, 0.37, 0.3);
+  const tilt = new THREE.Group();
+  tilt.rotation.x = 0.6;
+  tracker.add(tilt);
+  solarPanel(p, tilt, 0.2, 0.15);
+  // Finished panels stacked on a pallet.
+  pallet(p, -0.22, 0.28, 0.24, 0.18);
+  for (let i = 0; i < 3; i++) {
+    const stack = new THREE.Group();
+    stack.position.set(-0.22, 0.09 + i * 0.016, 0.28);
+    g.add(stack);
+    solarPanel(p, stack, 0.21, 0.16);
+  }
+  p.lamp(0.4, -0.4);
+}
+
+/** Battery Plant: a works building, two tall tanks with pipes, a roof fan, and pallets of yellow battery cells. */
+function batteryPlant(_g: THREE.Group, p: Parts): void {
+  const product = colourMat(PRODUCT_COLOUR.batteryPlant);
+  // Building: x −0.41…0.01, z −0.07…0.31.
+  p.add(box(0.42, 0.28, 0.38), M.wall, -0.2, 0.19, 0.12);
+  p.add(box(0.46, 0.03, 0.42), M.darkRoof, -0.2, 0.345, 0.12);
+  p.add(box(0.425, 0.03, 0.385), product, -0.2, 0.3, 0.12);
+  shutterDoor(p, -0.26, 0.315, 0.14, 0.16);
+  p.add(box(0.07, 0.13, 0.015), M.door, -0.06, 0.115, 0.315);
+  windowsX(p, [0.04, 0.2], 0.21, 0.012);
+  // Roof fan: a round housing with blades that turn while the plant works.
+  p.cyl(0.085, 0.05, M.tank, -0.25, 0.36, 0.08, 12);
+  const fan = p.mover('spinY', -0.25, 0.415, 0.08);
+  fan.userData.speed = 6;
+  for (let i = 0; i < 3; i++) {
+    const blade = p.add(box(0.14, 0.006, 0.03), M.dark, 0, 0, 0, fan);
+    blade.rotation.y = (i * Math.PI) / 3;
+  }
+  // Two tanks with domed tops and yellow bands, piped into the building.
+  for (const [x, z] of [
+    [0.06, -0.27],
+    [0.28, -0.22],
+  ] as const) {
+    p.cyl(0.095, 0.48, M.tank, x, 0.05, z, 12);
+    p.add(new THREE.SphereGeometry(0.095, 12, 5, 0, Math.PI * 2, 0, Math.PI / 2), M.tank, x, 0.53, z);
+    p.cyl(0.098, 0.04, product, x, 0.36, z, 12);
+    p.cyl(0.098, 0.015, M.stripe, x, 0.34, z, 12);
+    for (const [lx, lz] of [
+      [-1, -1],
+      [1, 1],
+    ] as const)
+      p.add(box(0.02, 0.06, 0.02), M.steel, x + lx * 0.06, 0.08, z + lz * 0.06);
+  }
+  p.bar(v(0.06, 0.2, -0.17), v(0.06, 0.2, -0.02), 0.025, M.pipe);
+  p.bar(v(0.06, 0.2, -0.02), v(-0.01, 0.2, -0.02), 0.025, M.pipe);
+  p.bar(v(0.28, 0.26, -0.13), v(0.28, 0.26, 0.02), 0.025, M.pipe);
+  p.bar(v(0.28, 0.26, 0.02), v(-0.01, 0.26, 0.02), 0.025, M.pipe);
+  p.bar(v(0.28, 0.05, 0.02), v(0.28, 0.26, 0.02), 0.02, M.steel);
+  // Pallet of battery cells: yellow cylinders with dark tops.
+  pallet(p, 0.26, 0.28, 0.2, 0.16);
+  for (let i = 0; i < 4; i++) {
+    for (let j = 0; j < 3; j++) {
+      const x = 0.195 + i * 0.044;
+      const z = 0.235 + j * 0.044;
+      p.cyl(0.018, 0.065, product, x, 0.08, z, 8);
+      p.cyl(0.012, 0.012, M.dark, x, 0.145, z, 6);
+    }
+  }
+  p.lamp(0.4, -0.02);
+}
+
+const BUILDERS: Record<FactoryKind, (g: THREE.Group, p: Parts) => void> = {
+  metalWorks,
+  electronicsLab,
+  solarFab,
+  batteryPlant,
+};
+
+/** A Factory model of `kind`, standing on a concrete pad. */
+export function buildFactory(kind: FactoryKind): THREE.Group {
+  const g = buildingGroup(kind);
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  BUILDERS[kind](g, p);
+  return g;
+}
+
+/** Warehouse: a long red-roofed store with a big door, crates in every colour, and a forklift at work. */
+export function buildWarehouse(): THREE.Group {
+  const g = buildingGroup('warehouse');
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  // Hall: x −0.38…0.38, z −0.38…0.12.
+  p.add(box(0.76, 0.26, 0.5), M.corrugated, 0, 0.18, -0.13);
+  p.add(gableRoof(0.56, 0.15, 0.8), M.roof, 0, 0.31, -0.13);
+  p.add(box(0.77, 0.03, 0.51), M.wall, 0, 0.065, -0.13);
+  shutterDoor(p, 0.06, 0.125, 0.26, 0.2);
+  p.add(box(0.07, 0.13, 0.015), M.door, -0.24, 0.115, 0.125);
+  windowsX(p, [-0.28, -0.13, 0.02], 0.26, 0.382, 0.08, 0.05);
+  windowsZ(p, [-0.32, 0.3], 0.26, 0.125, 0.06, 0.05);
+
+  // Crates outside in the colours of what is stored: Raw Materials and Parts.
+  const colours = [...RAW_MATERIALS.map((m) => DEPOSIT_COLOUR[m]), ...Object.values(PRODUCT_COLOUR)];
+  const spots = [
+    [-0.36, 0.22, 0],
+    [-0.27, 0.22, 0],
+    [-0.36, 0.22, 1],
+    [-0.36, 0.31, 0],
+    [0.3, 0.22, 0],
+    [0.37, 0.22, 0],
+    [0.3, 0.31, 0],
+  ] as const;
+  spots.forEach(([x, z, level], i) => {
+    p.add(box(0.075, 0.075, 0.075), M.wood, x, 0.09 + level * 0.08, z);
+    p.add(box(0.065, 0.012, 0.065), colourMat(colours[i % colours.length]!), x, 0.13 + level * 0.08, z);
+  });
+
+  // Forklift driving in and out of the door with a crate on its forks.
+  const fork = p.mover('shuttle', 0.06, 0.05, 0.3);
+  fork.userData.base = 0.3;
+  fork.userData.range = 0.07;
+  p.add(box(0.08, 0.05, 0.1), M.yellow, 0, 0.035, 0.01, fork);
+  p.add(box(0.07, 0.006, 0.07), M.dark, 0, 0.12, 0.02, fork);
+  for (const sx of [-1, 1]) {
+    p.bar(v(sx * 0.03, 0.06, 0.05), v(sx * 0.03, 0.12, 0.05), 0.008, M.dark, fork);
+    p.bar(v(sx * 0.03, 0.02, -0.045), v(sx * 0.03, 0.16, -0.045), 0.012, M.steel, fork);
+    p.add(box(0.012, 0.006, 0.07), M.steel, sx * 0.025, 0.03, -0.08, fork);
+    for (const z of [-0.025, 0.04]) {
+      const wheel = p.add(new THREE.CylinderGeometry(0.018, 0.018, 0.012, 8), M.dark, sx * 0.042, 0.018, z, fork);
+      wheel.rotation.z = Math.PI / 2;
+    }
+  }
+  p.add(box(0.06, 0.05, 0.06), M.wood, 0, 0.06, -0.085, fork);
+  p.add(box(0.05, 0.01, 0.05), colourMat(DEPOSIT_COLOUR.copper), 0, 0.09, -0.085, fork);
+  p.lamp(-0.42, 0.42);
+  return g;
+}

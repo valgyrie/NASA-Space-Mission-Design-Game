@@ -4,29 +4,31 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–04 done (on `main`). Since then, on `claude/sharp-cray-oqvpn1`, at the team's request, all tested in headless Chromium:
-- Land to the horizon, perspective camera with tilt (ADR-0003), working sun shadows, Seed in the pause menu (Esc). See the previous log line.
-- **Controls:** pan reaches 32 tiles past the Site (`PAN_BEYOND_SITE` in `src/world/camera.ts`). Keyboard in `World.listenToKeys`/`moveCamera` (`src/world/world.ts`): WASD/arrows move, Q/E turn, R/F tilt, +/− zoom, **H** or the ⌂ HUD button glides home to the isometric whole-Site view (nearest corner kept). `world.keyboardEnabled` is off while the pause menu is open. The pause menu lists the controls.
-- **Detailed Mine** (`src/world/mineMesh.ts`): pad, hoist house with gable roof/door/windows, braced headframe, winding wheel (`spin`, turned by `World.animateBuildings` while the Site runs), cable, rails and ore cart, ore piles, lamp.
-- Full-detail scenery now reaches one Site-sized Plot past each edge (`NEAR_REACH = 64`), ready for ticket 30. About 137k triangles in total.
-- **New ticket 30** (Optional, blocked by 05): buy neighbouring Plots. Ticket 05 now requires detailed Factory/Warehouse models at the Mine's level.
+**State:** tickets 01–05 done. Ticket 05 is on `claude/bold-euler-frvfuz` (not yet merged), tested in headless Chromium (build, click a Factory, switch Part, Market buy/sell, Esc order, iso and low-tilt views):
+- **Domain:** `src/economy/part.ts` (Factory kinds, building kinds, Era 1 Parts), recipes and prices in `src/game/balance.ts`, `src/game/siteState.ts` (`build`/`checkBuild` for every building, Factories, storage by mass), `src/game/market.ts`. Rules in `docs/GDD.md` §5 (new bullets under "First tuning").
+- **Save v4** (`src/save/save.ts`): v3 saves keep Mines and stock.
+- **Models:** shared helpers in `src/world/buildingParts.ts` (palette, `parts()`, `PRODUCT_COLOUR`, names of moving parts); Factories and Warehouse in `src/world/factoryMesh.ts`. `World.addBuilding`/`setWorking`; Factories move only while making a Part, Mines stop when storage is full.
+- **UI:** build menu with all six buildings, Storage in the top bar, Market panel (HUD button, `src/ui/marketPanel.ts`), building panel on click (`src/ui/buildingPanel.ts`).
+- **Camera fix:** the orbit point now glides to the ground height (`World.followGround`), so high plateaus no longer put the low-tilt camera under the ground. Closes the old open item.
 
 **Next:**
-1. Ticket 05 (Factories and Market), with detailed models per its new criterion. Reuse the helpers in `mineMesh.ts` (`bar`, `gableRoof`) — consider moving them to a shared `buildingParts.ts`.
-2. Also unblocked: 06, 19, 25. Ticket 30 after the Required tickets unless the team moves it up.
+1. Team: review ticket 05 in the browser and merge. Balance numbers are first guesses (Market prices like "$18.64K" could be rounded).
+2. Ticket 06 (Contracts board), then 07 (Mission Designer: "Parts come from the Warehouse" — use `state.parts`, `buy()` for buying on the spot; Part mass is in `RECIPES`). Also unblocked: 15, 19, 25, 30.
 
 **Open:**
-- The camera orbits a point at ground level (y = 0), so on high plateaus it looks slightly below the buildings. Could follow terrain height later.
-- Each Mine is ~35 small meshes; if Sites get dozens of buildings, merge static parts per material.
-- Performance unknown on real laptops (no GPU here). Knobs: shadow map size in `world.ts`, `NEAR_REACH`/`FAR_REACH` in `siteMesh.ts`.
+- Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and may add Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
+- Factories cost nothing to run. Upgrades (ticket 15) will raise output.
+- Each building is ~35–60 small meshes; merge static parts per material if Sites get crowded. Performance on real laptops still unknown.
+- Side panels are sized for desktop; not checked on narrow screens.
+- No "New game"/reset yet. Speed isn't saved.
 - Ticket 30 open question: free Deposit view of a Plot, or a paid Survey? Default free.
-- No "New game"/reset yet. Speed isn't saved. Balance numbers are first guesses.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `domain-modeling` (Factory, Part, Warehouse in ticket 05), `handoff`.
+**Suggested skills:** `domain-modeling` (Contract terms in ticket 06), `handoff`.
 
 ## Log
 
+- 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
 - 2026-11-08: Keyboard camera + H for the whole-Site view, pan past the Site, detailed Mine with turning wheel; ticket 30 (buy Plots, Optional) written.
 - 2026-11-08: Seed moved to a pause menu (Esc); land carries on to the horizon; perspective camera with tilt (ADR-0003); working sun shadows.
 - 2026-11-08: Ticket 04 done: Mines on Deposits, Game date with pause/1×/2×/4×, top bar, save v3.

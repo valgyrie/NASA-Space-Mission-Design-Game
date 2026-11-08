@@ -1,9 +1,16 @@
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
+import { cssColour } from './format';
 
-/** The panel at the top left of the Site view: Company name, menu button, and what the Deposit colours mean. */
-export function showHud(root: HTMLElement, companyName: string, onMenu: () => void, onHome: () => void): void {
+/** The panel at the top left of the Site view: Company name, menu button, what the Deposit colours mean, and the Market. */
+export function showHud(
+  root: HTMLElement,
+  companyName: string,
+  onMenu: () => void,
+  onHome: () => void,
+  onMarket: () => void,
+): void {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
 
@@ -33,14 +40,21 @@ export function showHud(root: HTMLElement, companyName: string, onMenu: () => vo
     const item = document.createElement('li');
     const dot = document.createElement('span');
     dot.className = 'dot';
-    dot.style.background = `#${DEPOSIT_COLOUR[material].toString(16).padStart(6, '0')}`;
+    dot.style.background = cssColour(DEPOSIT_COLOUR[material]);
     item.append(dot, t(`material.${material}`));
     legend.append(item);
   }
 
+  const market = document.createElement('button');
+  market.type = 'button';
+  market.className = 'small market-button';
+  market.textContent = t('market.open');
+  market.title = t('market.openName');
+  market.addEventListener('click', onMarket);
+
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend);
+  bar.append(top, legend, market);
   root.append(bar);
 }

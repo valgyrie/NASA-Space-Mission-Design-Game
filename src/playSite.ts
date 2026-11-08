@@ -1,9 +1,12 @@
+import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
-import { advanceDays, checkMine, daysFor, mineMaterial, placeMine } from './game/siteState';
+import { advanceDays, build, checkBuild, daysFor, mineMaterial, storageFree } from './game/siteState';
 import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
+import { showBuildingPanel } from './ui/buildingPanel';
 import { showHud } from './ui/hud';
+import { showMarketPanel } from './ui/marketPanel';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import type { World } from './world/world';
@@ -11,15 +14,17 @@ import type { World } from './world/world';
 /** A click that moves less than this many pixels is a click, not a camera drag. */
 const CLICK_SLOP = 6;
 
-/** Run the Site view for a game: the map, the clock, Mines and the UI around them. */
+/** Run the Site view for a game: the map, the clock, buildings, the Market and the UI around them. */
 export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const site = generateSite(game.site.seed);
   const state = game.state;
   world.showSite(site);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
-    if (material) world.addMine(mine.x, mine.z, material);
+    if (material) world.addBuilding('mine', mine.x, mine.z, material);
   }
+  for (const f of state.factories) world.addBuilding(f.kind, f.x, f.z);
+  for (const w of state.warehouses) world.addBuilding('warehouse', w.x, w.z);
 
   let speed: Speed = 1;
   let lastSpeed: Speed = 1;
@@ -37,53 +42,72 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       world.keyboardEnabled = false;
       speedBeforeMenu = speed;
       setSpeed(0);
-      if (placing) setPlacing(false);
+      setPlacing(null);
     },
     () => {
       world.keyboardEnabled = true;
       setSpeed(speedBeforeMenu);
     },
   );
-  showHud(ui, game.company.name, () => menu.open(), () => world.goHome());
+  const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
+  const panel = showBuildingPanel(ui, site, state);
+  showHud(
+    ui,
+    game.company.name,
+    () => menu.open(),
+    () => world.goHome(),
+    () => market.toggle(),
+  );
   const topBar = showTopBar(ui, setSpeed);
-  let placing = false;
-  const setPlacing = (on: boolean) => {
-    placing = on;
-    buildMenu.setPlacing(on);
-    world.markTile(null);
-    world.renderer.domElement.classList.toggle('placing', on);
-  };
-  const buildMenu = showBuildMenu(ui, () => setPlacing(!placing));
 
-  // Placing Mines: hover shows green or red, a click (not a drag) builds.
+  let placing: BuildingKind | null = null;
+  const setPlacing = (kind: BuildingKind | null) => {
+    placing = kind;
+    buildMenu.setPlacing(kind);
+    world.markTile(null);
+    world.renderer.domElement.classList.toggle('placing', kind !== null);
+    if (kind) panel.close();
+  };
+  // Picking the building you are already placing stops placing.
+  const buildMenu = showBuildMenu(ui, (kind) => setPlacing(placing === kind ? null : kind));
+
+  // Placing: hover shows green or red, a click (not a drag) builds. Otherwise a click opens a building's panel.
   const canvas = world.renderer.domElement;
   let down: { x: number; y: number } | null = null;
   canvas.addEventListener('pointermove', (e) => {
     if (!placing) return;
     const tile = world.tileAtScreen(e.clientX, e.clientY);
-    world.markTile(tile, !!tile && checkMine(site, state, tile.x, tile.z).ok);
+    world.markTile(tile, !!tile && checkBuild(site, state, placing, tile.x, tile.z).ok);
   });
   canvas.addEventListener('pointerdown', (e) => {
     down = e.button === 0 ? { x: e.clientX, y: e.clientY } : null;
   });
   canvas.addEventListener('pointerup', (e) => {
-    if (!placing || !down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_SLOP) return;
+    if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_SLOP) return;
     const tile = world.tileAtScreen(e.clientX, e.clientY);
+    if (!placing) {
+      if (tile) panel.show(tile.x, tile.z);
+      else panel.close();
+      return;
+    }
     if (!tile) return;
-    const result = placeMine(site, state, tile.x, tile.z);
+    const result = build(site, state, placing, tile.x, tile.z);
     if (result.ok) {
-      world.addMine(tile.x, tile.z, result.material);
+      const material = placing === 'mine' ? (mineMaterial(site, { x: tile.x, z: tile.z }) ?? undefined) : undefined;
+      world.addBuilding(placing, tile.x, tile.z, material);
       saveGame(localStorage, game);
     } else {
       buildMenu.showProblem(result.problem);
     }
-    world.markTile(tile, checkMine(site, state, tile.x, tile.z).ok);
+    world.markTile(tile, checkBuild(site, state, placing, tile.x, tile.z).ok);
   });
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement) return;
     if (e.key === 'Escape') {
-      // Esc backs out one step: stop placing first, otherwise open or close the menu.
-      if (placing) setPlacing(false);
+      // Esc backs out one step: stop placing, close a panel, otherwise open or close the menu.
+      if (placing) setPlacing(null);
+      else if (panel.isOpen) panel.close();
+      else if (market.isOpen) market.close();
       else if (menu.isOpen) menu.close();
       else menu.open();
       return;
@@ -97,8 +121,14 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
 
   world.onFrame((seconds) => {
     advanceDays(site, state, daysFor(seconds, speed));
+    // Mines turn while there is room to store what they dig; Factories while they make a Part.
+    const room = storageFree(state) > 0;
+    for (const m of state.mines) world.setWorking(m.x, m.z, room);
+    for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
     world.animateBuildings(Math.min(seconds, 0.1) * speed);
     topBar.update(site, state, speed);
+    market.update();
+    panel.update();
   });
   startAutosave(localStorage, () => game);
 

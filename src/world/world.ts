@@ -1,7 +1,8 @@
 import * as THREE from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
+import { type BuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
-import { SITE_SIZE, type Site, tileAt } from '../site/site';
+import { type Land, SITE_SIZE, type Site, landOf, tileAt } from '../site/site';
 import {
   FOV_DEGREES,
   MAX_DISTANCE,
@@ -21,6 +22,7 @@ import {
   hazeFor,
   polarFromElevation,
 } from './camera';
+import { buildFactory, buildWarehouse } from './factoryMesh';
 import { buildMine } from './mineMesh';
 import { STEP, buildSiteMesh, clearRocks, tileCentre } from './siteMesh';
 
@@ -107,7 +109,10 @@ export class World {
   readonly controls: MapControls;
   private siteGroup: THREE.Group | null = null;
   private site: Site | null = null;
+  private land: Land | null = null;
   private readonly buildings = new THREE.Group();
+  /** Building models by tile key "x,z". */
+  private readonly buildingAt = new Map<string, THREE.Group>();
   private readonly marker: THREE.Mesh;
   private readonly sky = makeSky();
   private readonly fog = new THREE.Fog(COLOURS.horizon, 100, 300);
@@ -168,7 +173,7 @@ export class World {
 
   private setPose(p: CameraPose): void {
     const { x, z } = clampToGround(p.target.x, p.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
-    this.controls.target.set(x, 0, z);
+    this.controls.target.set(x, p.target.y, z);
     const offset = new THREE.Vector3().setFromSpherical(new THREE.Spherical(p.distance, p.polar, p.azimuth));
     this.camera.position.copy(this.controls.target).add(offset);
   }
@@ -179,7 +184,7 @@ export class World {
     this.home = {
       from,
       to: {
-        target: new THREE.Vector3(0, 0, 0),
+        target: new THREE.Vector3(0, this.groundY(0, 0), 0),
         azimuth: nearestIsoAzimuth(from.azimuth),
         polar: polarFromElevation(START_ELEVATION),
         distance: START_DISTANCE,
@@ -247,10 +252,10 @@ export class World {
       const { x, z } = clampToGround(c.target.x, c.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
       const dx = x - c.target.x;
       const dz = z - c.target.z;
-      if (dx !== 0 || dz !== 0 || c.target.y !== 0) {
+      if (dx !== 0 || dz !== 0) {
         this.camera.position.x += dx;
         this.camera.position.z += dz;
-        c.target.set(x, 0, z);
+        c.target.set(x, c.target.y, z);
       }
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
@@ -291,25 +296,72 @@ export class World {
     this.siteGroup = buildSiteMesh(site, COLOURS.horizon);
     this.scene.add(this.siteGroup);
     this.site = site;
+    this.land = landOf(site);
     this.buildings.clear();
+    this.buildingAt.clear();
   }
 
-  /** Put a Mine model on tile (x, z). */
-  addMine(x: number, z: number, material: RawMaterial): void {
+  /** Height of the ground at world point (x, z), inside the Site or out in the land around it. Water counts as 0. */
+  private groundY(x: number, z: number): number {
+    if (!this.site || !this.land) return 0;
+    const tx = Math.floor(x + this.site.size / 2);
+    const tz = Math.floor(z + this.site.size / 2);
+    const level = tileAt(this.site, tx, tz)?.level ?? this.land.groundAt(tx, tz).level;
+    return Math.max(0, level) * STEP;
+  }
+
+  /** Let the point the camera orbits glide up and down with the ground, so hills and plateaus stay in view. */
+  private followGround(seconds: number): void {
+    const target = this.controls.target;
+    const dy = (this.groundY(target.x, target.z) - target.y) * Math.min(1, seconds * 6);
+    if (Math.abs(dy) < 1e-4) return;
+    target.y += dy;
+    this.camera.position.y += dy;
+  }
+
+  /** Put a building model on tile (x, z). A Mine needs the Raw Material it digs, for its ore piles. */
+  addBuilding(kind: BuildingKind, x: number, z: number, material?: RawMaterial): void {
     if (!this.site) return;
-    const mine = buildMine(material);
+    const model =
+      kind === 'mine' ? buildMine(material ?? 'aluminium') : isFactory(kind) ? buildFactory(kind) : buildWarehouse();
     const c = tileCentre(this.site, x, z);
-    mine.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
-    this.buildings.add(mine);
+    model.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
+    model.userData.tile = { x, z };
+    this.buildings.add(model);
+    this.buildingAt.set(`${x},${z}`, model);
+    this.setWorking(x, z, true);
     if (this.siteGroup) clearRocks(this.siteGroup, this.site, x, z);
   }
 
-  /** Turn the moving parts of buildings (winding wheels, later fans), by how much game time passed. */
+  /** Start or stop the moving parts of the building on tile (x, z). Factories move only while they make something. */
+  setWorking(x: number, z: number, on: boolean): void {
+    const model = this.buildingAt.get(`${x},${z}`);
+    if (!model || model.userData.working === on) return;
+    model.userData.working = on;
+    const smoke = model.getObjectByName('smoke');
+    if (smoke) smoke.visible = on;
+  }
+
+  /** Move the parts of working buildings (see `buildingParts.ts`), by how much game time passed. */
   animateBuildings(gameSeconds: number): void {
     if (gameSeconds === 0) return;
-    this.buildings.traverse((o) => {
-      if (o.name === 'spin') o.rotation.z += gameSeconds * 2.5;
-    });
+    for (const model of this.buildingAt.values()) {
+      if (!model.userData.working) continue;
+      const clock = (model.userData.clock = ((model.userData.clock as number | undefined) ?? 0) + gameSeconds);
+      model.traverse((o) => {
+        if (o.name === 'spin') o.rotation.z += gameSeconds * 2.5;
+        else if (o.name === 'spinY') o.rotation.y += gameSeconds * ((o.userData.speed as number | undefined) ?? 1.5);
+        else if (o.name === 'swing') o.rotation.y = Math.sin(clock * 0.5) * 0.8;
+        else if (o.name === 'shuttle') o.position.z = o.userData.base + Math.sin(clock * 0.9) * o.userData.range;
+        else if (o.name === 'smoke') {
+          for (const puff of o.children) {
+            const k = (clock * 0.3 + (puff.userData.phase as number)) % 1;
+            puff.position.set(k * 0.08, k * 0.4, k * 0.03);
+            puff.scale.setScalar(0.5 + k * 1.6);
+          }
+        }
+      });
+    }
   }
 
   /** The tile under a point on the screen, or null if the pointer is off the Site. */
@@ -322,6 +374,13 @@ export class World {
       -((clientY - rect.top) / rect.height) * 2 + 1,
     );
     this.raycaster.setFromCamera(ndc, this.camera);
+    // A building under the pointer wins over the ground behind it, so tall models are easy to click.
+    const onBuilding = this.raycaster.intersectObject(this.buildings, true)[0];
+    if (onBuilding) {
+      let o: THREE.Object3D | null = onBuilding.object;
+      while (o && !o.userData.tile) o = o.parent;
+      if (o) return { ...(o.userData.tile as { x: number; z: number }) };
+    }
     const hit = this.raycaster.intersectObject(terrain)[0];
     if (!hit?.face) return null;
     // Step slightly into the surface, so a click on a cliff face picks the tile it belongs to.
@@ -375,6 +434,7 @@ export class World {
       last = now;
       for (const fn of this.frameCallbacks) fn(seconds);
       this.moveCamera(seconds);
+      this.followGround(seconds);
       this.controls.update();
       const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
       this.fog.near = near;

@@ -1,3 +1,4 @@
+import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { type SiteState, newSiteState } from '../game/siteState';
 import { randomSeed } from '../site/seed';
@@ -5,7 +6,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -17,7 +18,7 @@ export interface SaveData {
   company: Company;
   /** The Site map is rebuilt from its Seed, so only the Seed is stored. */
   site: { seed: string };
-  /** Money, Game date, Mines and stock. */
+  /** Money, Game date, buildings and stock. */
   state: SiteState;
 }
 
@@ -26,6 +27,24 @@ export type SaveStorage = Pick<Storage, 'getItem' | 'setItem'>;
 
 const isNumber = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+const isTile = (b: unknown): boolean => {
+  const t = b as { x?: unknown; z?: unknown } | null;
+  return isNumber(t?.x) && isNumber(t?.z);
+};
+
+const isCounts = (v: unknown, keys: readonly string[]): boolean =>
+  typeof v === 'object' && v !== null && keys.every((k) => isNumber((v as Record<string, unknown>)[k]));
+
+function isFactory(value: unknown): boolean {
+  const f = value as Partial<SiteState['factories'][number]> | null;
+  return (
+    isTile(f) &&
+    (FACTORY_KINDS as readonly unknown[]).includes(f!.kind) &&
+    (PARTS as readonly unknown[]).includes(f!.making) &&
+    (f!.progress === null || isNumber(f!.progress))
+  );
+}
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -33,10 +52,13 @@ function isSiteState(value: unknown): value is SiteState {
     isNumber(v.money) &&
     isNumber(v.day) &&
     Array.isArray(v.mines) &&
-    v.mines.every((m) => isNumber(m?.x) && isNumber(m?.z)) &&
-    typeof v.stock === 'object' &&
-    v.stock !== null &&
-    RAW_MATERIALS.every((m) => isNumber(v.stock![m]))
+    v.mines.every(isTile) &&
+    Array.isArray(v.factories) &&
+    v.factories.every(isFactory) &&
+    Array.isArray(v.warehouses) &&
+    v.warehouses.every(isTile) &&
+    isCounts(v.stock, RAW_MATERIALS) &&
+    isCounts(v.parts, PARTS)
   );
 }
 
@@ -54,11 +76,17 @@ function isSaveData(value: unknown): value is SaveData {
 /**
  * Bring an older save up to date, one version at a time.
  * Version 1 had no Site, so it gets a fresh Seed. Version 2 had no economy, so it starts fresh.
+ * Version 3 had no Factories, Warehouses or Parts.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
   if (v?.version === 1) v = { version: 2, company: v.company, site: { seed: newSeed() } };
   if (v?.version === 2) v = { ...v, version: 3, state: newSiteState() } as typeof v;
+  if (v?.version === 3) {
+    // Version 3 had only Mines: keep them and the stock, add empty Factories, Warehouses and Parts.
+    const fresh = newSiteState();
+    v = { ...v, version: 4, state: { ...fresh, ...(v as { state?: object }).state, factories: [], warehouses: [], parts: fresh.parts } } as typeof v;
+  }
   return v;
 }
 

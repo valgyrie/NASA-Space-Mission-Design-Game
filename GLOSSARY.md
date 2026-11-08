@@ -63,6 +63,10 @@ _Avoid_: workshop, plant (alone)
 Where Parts and Raw Materials are bought and sold, at worse prices than making them yourself.
 _Avoid_: shop, store
 
+**Warehouse**:
+A building that stores Raw Materials and Parts; storage is counted by mass.
+_Avoid_: depot, storehouse, inventory
+
 **Shipping**:
 Moving Parts or a finished Spacecraft between Sites or to a launch site, costing money and days.
 _Avoid_: transport, logistics

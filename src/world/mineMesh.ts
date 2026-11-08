@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import type { RawMaterial } from '../economy/rawMaterial';
+import { M, box, buildingGroup, colourMat, gableRoof, parts, v } from './buildingParts';
 import { DEPOSIT_COLOUR } from './siteMesh';
 
 /**
@@ -8,65 +9,10 @@ import { DEPOSIT_COLOUR } from './siteMesh';
  * in the colour of the Raw Material, and a lamp.
  */
 
-const mat = (color: number, extra: THREE.MeshStandardMaterialParameters = {}) =>
-  new THREE.MeshStandardMaterial({ color, flatShading: true, roughness: 0.85, ...extra });
-
-const M = {
-  concrete: mat(0xa39e94),
-  wall: mat(0xf3eee4),
-  roof: mat(0xd9583a),
-  door: mat(0x6b4a33),
-  glass: mat(0x9fd3ff, { roughness: 0.2, metalness: 0.3 }),
-  steel: mat(0x46505f, { metalness: 0.4, roughness: 0.6 }),
-  dark: mat(0x23272e),
-  rail: mat(0x7d838c, { metalness: 0.6, roughness: 0.4 }),
-  wood: mat(0x8a6542),
-  bulb: mat(0xffe08a, { emissive: 0xffd36b, emissiveIntensity: 0.8 }),
-};
-const oreMaterials = new Map<RawMaterial, THREE.Material>();
-function ore(material: RawMaterial): THREE.Material {
-  let m = oreMaterials.get(material);
-  if (!m) oreMaterials.set(material, (m = mat(DEPOSIT_COLOUR[material], { roughness: 0.7 })));
-  return m;
-}
-
-const box = (w: number, h: number, d: number) => new THREE.BoxGeometry(w, h, d);
-
-/** A gable roof: a triangle pushed out into a prism, centred, ridge along x. */
-function gableRoof(width: number, height: number, length: number): THREE.BufferGeometry {
-  const shape = new THREE.Shape();
-  shape.moveTo(-width / 2, 0);
-  shape.lineTo(width / 2, 0);
-  shape.lineTo(0, height);
-  shape.closePath();
-  const g = new THREE.ExtrudeGeometry(shape, { depth: length, bevelEnabled: false });
-  g.translate(0, 0, -length / 2);
-  g.rotateY(Math.PI / 2);
-  return g;
-}
-
 export function buildMine(material: RawMaterial): THREE.Group {
-  const g = new THREE.Group();
-  g.name = 'mine';
-  g.scale.setScalar(1.15);
-
-  const add = (geometry: THREE.BufferGeometry, m: THREE.Material, x: number, y: number, z: number, parent: THREE.Object3D = g) => {
-    const mesh = new THREE.Mesh(geometry, m);
-    mesh.position.set(x, y, z);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-    parent.add(mesh);
-    return mesh;
-  };
-  /** A thin bar from point a to point b. */
-  const bar = (a: THREE.Vector3, b: THREE.Vector3, thick: number, m: THREE.Material) => {
-    const len = a.distanceTo(b);
-    const mesh = add(box(thick, len, thick), m, 0, 0, 0);
-    mesh.position.copy(a).add(b).multiplyScalar(0.5);
-    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
-    return mesh;
-  };
-  const v = (x: number, y: number, z: number) => new THREE.Vector3(x, y, z);
+  const g = buildingGroup('mine');
+  const { add, bar, lamp } = parts(g);
+  const ore = colourMat(DEPOSIT_COLOUR[material]);
 
   // Ground: concrete pad and the dark shaft opening under the headframe.
   add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
@@ -131,13 +77,12 @@ export function buildMine(material: RawMaterial): THREE.Group {
   for (const dx of [-0.045, 0.045]) add(box(0.015, 0.015, 0.5), M.rail, shaft.x + 0.03 + dx, 0.06, 0.12);
   for (let i = 0; i < 4; i++) add(box(0.14, 0.012, 0.03), M.wood, shaft.x + 0.03, 0.055, -0.08 + i * 0.13);
   add(box(0.13, 0.08, 0.16), M.steel, shaft.x + 0.03, 0.12, 0.2);
-  add(box(0.11, 0.035, 0.14), ore(material), shaft.x + 0.03, 0.17, 0.2);
-  add(new THREE.ConeGeometry(0.15, 0.17, 7), ore(material), -0.3, 0.13, -0.27);
-  add(new THREE.ConeGeometry(0.09, 0.1, 6), ore(material), -0.13, 0.1, -0.33);
+  add(box(0.11, 0.035, 0.14), ore, shaft.x + 0.03, 0.17, 0.2);
+  add(new THREE.ConeGeometry(0.15, 0.17, 7), ore, -0.3, 0.13, -0.27);
+  add(new THREE.ConeGeometry(0.09, 0.1, 6), ore, -0.13, 0.1, -0.33);
 
   // Lamp post at the front corner.
-  add(new THREE.CylinderGeometry(0.012, 0.016, 0.42, 5), M.dark, 0.38, 0.26, 0.38);
-  add(new THREE.SphereGeometry(0.03, 6, 4), M.bulb, 0.38, 0.49, 0.38);
+  lamp(0.38, 0.38);
 
   return g;
 }
