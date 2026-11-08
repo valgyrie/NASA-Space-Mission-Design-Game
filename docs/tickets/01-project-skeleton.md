@@ -4,10 +4,10 @@
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Running one command starts the game locally in a browser
-- [ ] An empty isometric ground plane is visible with soft lighting
-- [ ] Mouse pans, zooms and rotates the camera smoothly
-- [ ] Type check and test run on every commit and block it on failure
-- [ ] README says how to run the game
+- [x] Running one command starts the game locally in a browser
+- [x] An empty isometric ground plane is visible with soft lighting
+- [x] Mouse pans, zooms and rotates the camera smoothly
+- [x] Type check and test run on every commit and block it on failure
+- [x] README says how to run the game

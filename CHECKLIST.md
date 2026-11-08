@@ -16,8 +16,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
 
 ### Foundations
-- [ ] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
-- [ ] Isometric low-poly world with camera controls
+- [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
+- [x] Isometric low-poly world with camera controls
 - [ ] Save and load (local)
 - [ ] All game text in one file (translation-ready)
 

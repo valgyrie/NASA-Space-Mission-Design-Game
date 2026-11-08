@@ -6,7 +6,22 @@ Run a space company, design spacecraft, and relive real space history from Explo
 
 Built for the **NASA Space Apps Challenge 2026**: [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/).
 
-**Status:** design done; building starts next. Nothing to play yet.
+**Status:** early build. You can look around an empty Site.
+
+## Run it
+
+You need [Node.js](https://nodejs.org/) 20.19 or newer.
+
+```bash
+npm install
+npm run dev
+```
+
+The game opens at http://localhost:5173.
+
+**Camera:** left-drag to pan, right-drag to turn, mouse wheel to zoom.
+
+**Checks:** `npm run check` runs the type check and tests. They also run before every commit and stop it if anything fails.
 
 ## Docs
 
