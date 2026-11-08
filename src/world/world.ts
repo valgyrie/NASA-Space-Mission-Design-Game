@@ -1,7 +1,9 @@
 import * as THREE from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
-import { SITE_SIZE, type Site } from '../site/site';
-import { buildSiteMesh } from './siteMesh';
+import type { RawMaterial } from '../economy/rawMaterial';
+import { SITE_SIZE, type Site, tileAt } from '../site/site';
+import { buildMine } from './mineMesh';
+import { STEP, buildSiteMesh, clearRocks, tileCentre } from './siteMesh';
 import {
   ISO_POLAR,
   START_AZIMUTH,
@@ -27,6 +29,11 @@ export class World {
   readonly camera: THREE.OrthographicCamera;
   readonly controls: MapControls;
   private siteGroup: THREE.Group | null = null;
+  private site: Site | null = null;
+  private readonly buildings = new THREE.Group();
+  private readonly marker: THREE.Mesh;
+  private readonly frameCallbacks: ((seconds: number) => void)[] = [];
+  private readonly raycaster = new THREE.Raycaster();
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -44,6 +51,9 @@ export class World {
 
     this.controls = this.makeControls(canvas);
     this.addLights();
+    this.scene.add(this.buildings);
+    this.marker = this.makeMarker();
+    this.scene.add(this.marker);
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
@@ -103,6 +113,66 @@ export class World {
     }
     this.siteGroup = buildSiteMesh(site);
     this.scene.add(this.siteGroup);
+    this.site = site;
+    this.buildings.clear();
+  }
+
+  /** Put a Mine model on tile (x, z). */
+  addMine(x: number, z: number, material: RawMaterial): void {
+    if (!this.site) return;
+    const mine = buildMine(material);
+    const c = tileCentre(this.site, x, z);
+    mine.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
+    this.buildings.add(mine);
+    if (this.siteGroup) clearRocks(this.siteGroup, this.site, x, z);
+  }
+
+  /** The tile under a point on the screen, or null if the pointer is off the Site. */
+  tileAtScreen(clientX: number, clientY: number): { x: number; z: number } | null {
+    const terrain = this.siteGroup?.getObjectByName('terrain');
+    if (!terrain || !this.site) return null;
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(
+      ((clientX - rect.left) / rect.width) * 2 - 1,
+      -((clientY - rect.top) / rect.height) * 2 + 1,
+    );
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const hit = this.raycaster.intersectObject(terrain)[0];
+    if (!hit?.face) return null;
+    // Step slightly into the surface, so a click on a cliff face picks the tile it belongs to.
+    const p = hit.point.clone().addScaledVector(hit.face.normal, -0.01);
+    const x = Math.floor(p.x + this.site.size / 2);
+    const z = Math.floor(p.z + this.site.size / 2);
+    return tileAt(this.site, x, z) ? { x, z } : null;
+  }
+
+  /** Highlight one tile in green (allowed) or red (not allowed). Pass null to hide it. */
+  markTile(tile: { x: number; z: number } | null, allowed = true): void {
+    if (!tile || !this.site) {
+      this.marker.visible = false;
+      return;
+    }
+    const c = tileCentre(this.site, tile.x, tile.z);
+    this.marker.position.set(c.x, (tileAt(this.site, tile.x, tile.z)?.level ?? 0) * STEP + 0.02, c.z);
+    (this.marker.material as THREE.MeshBasicMaterial).color.setHex(allowed ? 0x5dff8a : 0xff5d5d);
+    this.marker.visible = true;
+  }
+
+  /** Run `fn` every frame with the real seconds since the last frame. */
+  onFrame(fn: (seconds: number) => void): void {
+    this.frameCallbacks.push(fn);
+  }
+
+  private makeMarker(): THREE.Mesh {
+    const geometry = new THREE.PlaneGeometry(0.96, 0.96);
+    geometry.rotateX(-Math.PI / 2);
+    const marker = new THREE.Mesh(
+      geometry,
+      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false }),
+    );
+    marker.renderOrder = 1;
+    marker.visible = false;
+    return marker;
   }
 
   private resize(): void {
@@ -115,7 +185,11 @@ export class World {
   }
 
   start(): void {
-    this.renderer.setAnimationLoop(() => {
+    let last = performance.now();
+    this.renderer.setAnimationLoop((now: number) => {
+      const seconds = (now - last) / 1000;
+      last = now;
+      for (const fn of this.frameCallbacks) fn(seconds);
       this.controls.update();
       this.renderer.render(this.scene, this.camera);
     });

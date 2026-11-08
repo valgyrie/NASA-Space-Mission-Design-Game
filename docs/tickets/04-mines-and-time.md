@@ -4,10 +4,10 @@
 
 **Blocked by:** 03
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] A Mine can only be placed on a matching deposit
-- [ ] Placing a Mine costs money
-- [ ] Raw Materials increase over time and are shown in the top bar
-- [ ] Pause, 1×, 2× and 4× speed work and affect production
-- [ ] Production survives save and reload
+- [x] A Mine can only be placed on a matching deposit
+- [x] Placing a Mine costs money
+- [x] Raw Materials increase over time and are shown in the top bar
+- [x] Pause, 1×, 2× and 4× speed work and affect production
+- [x] Production survives save and reload

@@ -26,6 +26,10 @@ _Avoid_: launch base
 A code that generates the same Site map every time it is used.
 _Avoid_: map code
 
+**Game date**:
+The date in the game world. It moves forward while the Site runs, faster at 2× and 4×, and stops when paused.
+_Avoid_: time (Time is a Mission resource), clock, turn
+
 **Era**:
 A period of real space history (e.g. 1958–1960) that sets which technology, rockets and contracts exist.
 _Avoid_: age, level, tier

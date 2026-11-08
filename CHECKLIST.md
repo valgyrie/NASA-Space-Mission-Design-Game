@@ -28,10 +28,10 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Globe picker: Historic start pin, US, anywhere; Random; Seeds
 - [ ] Real climate and land type per location (NASA POWER 2025, baked in)
 - [ ] Site map generated from Seed + real data
-- [ ] Real-time Site with pause and 1×/2×/4× speed
+- [x] Real-time Site with pause and 1×/2×/4× speed
 
 ### Economy
-- [ ] Mines on deposits (Aluminium, Copper, Silicon first)
+- [x] Mines on deposits (Aluminium, Copper, Silicon first)
 - [ ] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant
 - [ ] Assembly Hall, Warehouse, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)

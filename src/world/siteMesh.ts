@@ -102,6 +102,7 @@ function terrainMesh(site: Site): THREE.Mesh {
     geometry,
     new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 1 }),
   );
+  mesh.name = 'terrain';
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   return mesh;
@@ -123,13 +124,14 @@ function waterMesh(site: Site): THREE.Mesh {
 /** Two or three small rocks on each deposit tile, coloured by Raw Material. */
 function depositMesh(site: Site): THREE.InstancedMesh {
   const rng = makeRng(hashText(site.seed + ':rocks'));
-  const rocks: { x: number; y: number; z: number; s: number; r: number; colour: number }[] = [];
+  const rocks: { tile: number; x: number; y: number; z: number; s: number; r: number; colour: number }[] = [];
   site.tiles.forEach((tile, i) => {
     if (!tile.deposit) return;
     const { x, z } = tileCentre(site, i % site.size, Math.floor(i / site.size));
     const count = 2 + Math.floor(rng() * 2);
     for (let k = 0; k < count; k++) {
       rocks.push({
+        tile: i,
         x: x + (rng() - 0.5) * 0.6,
         y: topY(tile.level),
         z: z + (rng() - 0.5) * 0.6,
@@ -154,6 +156,21 @@ function depositMesh(site: Site): THREE.InstancedMesh {
     mesh.setMatrixAt(i, m);
     mesh.setColorAt(i, colour.setHex(rock.colour));
   });
+  mesh.name = 'deposits';
   mesh.castShadow = true;
+  // Which rocks sit on which tile, so a Mine can clear them away.
+  const byTile = new Map<number, number[]>();
+  rocks.forEach((rock, i) => byTile.set(rock.tile, [...(byTile.get(rock.tile) ?? []), i]));
+  mesh.userData.rocksByTile = byTile;
   return mesh;
+}
+
+/** Hide the Deposit rocks on one tile (a Mine is built there). */
+export function clearRocks(group: THREE.Group, site: Site, x: number, z: number): void {
+  const mesh = group.getObjectByName('deposits') as THREE.InstancedMesh | undefined;
+  const rocks = (mesh?.userData.rocksByTile as Map<number, number[]> | undefined)?.get(z * site.size + x);
+  if (!mesh || !rocks) return;
+  const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
+  for (const i of rocks) mesh.setMatrixAt(i, hidden);
+  mesh.instanceMatrix.needsUpdate = true;
 }

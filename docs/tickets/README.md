@@ -9,7 +9,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 01 ✅ | [Project skeleton](01-project-skeleton.md) | – | The game opens in a browser: empty isometric world, camera pan/zoom/rotate. Type checks and tests run before every commit. |
 | 02 ✅ | [Company and saving](02-company-and-saving.md) | 01 | Name your Company (bad-word filter). It's still there after reload. All text comes from one strings file. |
 | 03 ✅ | [Site from a Seed](03-site-from-seed.md) | 01 | A Seed generates the same Site every time: terrain, water and mineral deposits (placeholder climate). |
-| 04 | [Mines and time](04-mines-and-time.md) | 03 | Place Mines on deposits; Raw Materials pile up over time; pause and 1×/2×/4×. |
+| 04 ✅ | [Mines and time](04-mines-and-time.md) | 03 | Place Mines on deposits; Raw Materials pile up over time; pause and 1×/2×/4×. |
 | 05 | [Factories and Market](05-factories-and-market.md) | 04 | Factories turn Raw Materials into Parts; Warehouse stores them; buy and sell on the Market. |
 | 06 | [Contracts board](06-contracts-board.md) | 02 | See and accept the Explorer 1 Contract; money and deadline shown. |
 | 07 | [Mission Designer v1](07-mission-designer-v1.md) | 05, 06 | Build a Spacecraft from slots (Bus, Power, Battery, Comms, pointing, Payload) with a rotating 3D model and the six live resource bars. |

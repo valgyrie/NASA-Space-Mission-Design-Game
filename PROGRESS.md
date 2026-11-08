@@ -4,28 +4,28 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01, 02 and 03 are done and tested in headless Chromium.
-- 01: isometric camera (`src/world/world.ts`, `isoCamera.ts`). Pre-commit hook runs `npm run check`.
-- 02: Company name + bad-word filter (`src/company/`), local autosave (`src/save/save.ts`), all text in `src/strings.ts` (guarded by a test).
-- 03: `src/site/site.ts` `generateSite(seed, climate?)` is pure and deterministic: 64×64 `Tile`s (`terrain`, `level`, `deposit`), `water` kind (coast/lake/river/none), placeholder `climate.dryness`. Seeded random and noise in `src/site/random.ts`; Seed rules in `src/site/seed.ts`. 3D model in `src/world/siteMesh.ts` (one vertex-coloured mesh, water plane, instanced deposit rocks); `World.showSite()` swaps it. New-game dialog has a Seed field with 🎲 and live preview; HUD shows Seed + Copy + deposit colour legend.
-- Save is now `version: 2` with `site.seed`; version 1 saves are upgraded with a random Seed.
+**State:** tickets 01–04 are done and tested in headless Chromium.
+- 01 camera (`src/world/`), pre-commit `npm run check`. 02 Company name, local save, `src/strings.ts`. 03 Site from a Seed (`src/site/`, `src/world/siteMesh.ts`).
+- 04: `src/game/siteState.ts` holds `SiteState` (money, `day`, Mines, stock) and the pure rules: `checkMine`/`placeMine`, `advanceDays`, `daysFor` (speed, capped at 0.25 s per frame). Numbers in `src/game/balance.ts`. `src/playSite.ts` runs the Site view: builds the map and Mines, the frame loop, placement (hover = green/red tile, click-not-drag builds, Esc stops, Space pauses). UI: `src/ui/topBar.ts` (money, Game date, stock with +/day, speed), `src/ui/buildMenu.ts`, `src/ui/format.ts`. Mine model `src/world/mineMesh.ts`; `World` gained `onFrame`, `tileAtScreen`, `markTile`, `addMine`.
+- Save is `version: 3` with `state`; versions 1 and 2 upgrade step by step (`src/save/save.ts`). A Mine placement saves at once; autosave every 30 s and on page hide.
+- Dev builds expose `window.leap` (`world`, `site`, `state`, `setSpeed`) for browser tests.
 
 **Next:**
-1. Ticket 04 (Mines and time): Mines go on tiles where `deposit` is set. Tile → world position: `tileCentre()` and `STEP` in `src/world/siteMesh.ts`. Picking a tile needs a raycast against the terrain mesh (not built yet).
-2. Also unblocked: 06 (Contracts board), 19 (Company logo), 25 (sound and music).
-3. Ticket 16 replaces `placeholderClimate()` with real NASA POWER data (pass `climate` to `generateSite`). Changing the generator changes every saved Site, since only the Seed is stored.
+1. Ticket 05 (Factories and Market): Factories are the next building in `buildMenu.ts`; Parts and a Warehouse join `SiteState` (bump `SAVE_VERSION`, add an upgrade step).
+2. Also unblocked: 06 (Contracts board), 15 (Upgrades, needs 05), 19 (logo), 25 (sound).
 
 **Open:**
+- Balance numbers are first guesses ($2M start, $150K Mine, 10 kg/day, 2 s per game day). Tune when Factories and Contracts exist.
+- Speed is not saved; the game always resumes at 1×.
 - No "New game" or reset button yet (clear the site's local storage to start over).
-- Should mountain tiles be buildable? Copper often sits on them. Decide in ticket 04.
-- Team should save the organisers' early-start permission in writing.
-- Official Resources tab not captured yet (Nov 13).
-- Build skills (`tdd`, `codebase-design`, …) still not installed.
+- Top bar is wide (~740 px); fine on desktop, crowded on small screens.
+- Team should save the organisers' early-start permission in writing. Official Resources tab not captured yet (Nov 13).
 
-**Suggested skills:** `domain-modeling` (Mine, game time terms in ticket 04), `handoff`.
+**Suggested skills:** `domain-modeling` (Factory, Part, Warehouse terms in ticket 05), `handoff`.
 
 ## Log
 
+- 2026-11-08: Ticket 04 done: Mines on Deposits, Game date with pause/1×/2×/4×, top bar, save v3.
 - 2026-11-08: Ticket 03 done: Site generated from a Seed (terrain, water, Deposits), Seed shown and copyable.
 - 2026-11-08: Ticket 02 done: Company name with bad-word filter, local autosave, strings file.
 - 2026-11-08: Ticket 01 done: Vite + Three.js skeleton, isometric camera, pre-commit checks.

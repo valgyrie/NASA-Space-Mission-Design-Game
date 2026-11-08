@@ -4,6 +4,13 @@
  */
 export const STRINGS = {
   'game.title': 'LEAP',
+  /** Language and region used to format dates and numbers. */
+  'format.locale': 'en-GB',
+  /** Money uses US number style ("$1.5M"); the game's money is US dollars. */
+  'format.moneyLocale': 'en-US',
+  'format.money': '${amount}',
+  'format.kg': '{amount} kg',
+  'format.perDay': '+{amount}/day',
 
   'newCompany.heading': 'Start your Company',
   'newCompany.label': 'Company name',
@@ -26,6 +33,25 @@ export const STRINGS = {
   'hud.copy': 'Copy',
   'hud.copied': 'Copied',
   'hud.copySeed': 'Copy the Seed to share it',
+
+  'topBar.money': 'Money',
+  'topBar.date': 'Date',
+  'speed.label': 'Speed',
+  'speed.0': '❚❚',
+  'speed.0.name': 'Pause (Space)',
+  'speed.1': '1×',
+  'speed.1.name': 'Normal speed',
+  'speed.2': '2×',
+  'speed.2.name': 'Double speed',
+  'speed.4': '4×',
+  'speed.4.name': 'Four times speed',
+
+  'build.mine': 'Mine',
+  'build.mineHint': 'Digs up the Raw Material of the Deposit it sits on.',
+  'build.placing': 'Click a Deposit to build a Mine. Esc to stop.',
+  'build.problem.noDeposit': 'Mines go on a Deposit (the coloured rocks).',
+  'build.problem.occupied': "There's already a Mine here.",
+  'build.problem.money': 'Not enough money.',
 
   'material.aluminium': 'Aluminium',
   'material.copper': 'Copper',

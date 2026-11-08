@@ -77,7 +77,9 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 - **Income:** Contract rewards (main), selling Raw Materials and Parts (small), science Missions (Research Points and Reputation).
 - **Costs:** buildings and Upgrades, **Rideshare** (priced per kg, which teaches mass), **Shipping**, **Launch Insurance**.
 - **Safety net:** starting money covers the tutorial. A one-time startup grant appears if money gets dangerously low.
-- **Time:** the Site runs in real time with pause and 1×/2×/4× speed. Opening the Mission Designer pauses it.
+- **Time:** the Site runs in real time with pause and 1×/2×/4× speed. Opening the Mission Designer pauses it. The **Game date** starts on 1 January 1958; one game day takes 2 real seconds at 1×. Space pauses and resumes.
+- **Mines** take one tile and can go on any Deposit, mountains included (Copper is often up there).
+- **First tuning** (all in `src/game/balance.ts`, change freely): start with **$2M**; a Mine costs **$150K** and digs **10 kg a day**. Money is US dollars, Raw Materials are kilograms.
 
 ## 6. Contracts, Milestones and progression
 
