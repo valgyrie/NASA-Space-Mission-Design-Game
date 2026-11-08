@@ -40,6 +40,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
   - Every Site gets at least two Deposits each of Aluminium, Copper and Silicon, on the land where they're found (§5). If that land is missing, they go on any dry land, so no start is unplayable.
   - A random Seed is 6 letters and digits with no vowels (so it can't spell a word), e.g. `K7QXM2`. Players can type their own (up to 12, bad words blocked). Case, spaces and dashes don't matter.
   - The Seed is chosen in New game and afterwards shown in the pause menu (Esc), with Copy. It is not on screen during play.
+- **Growing the Site (Optional, ticket 30):** the land around is split into **Plots** the size of the Site. Look at a neighbouring Plot, see its Deposits and water, and buy it to add it to the Site. Price rises with what it holds and with each Plot bought. Contracts can also give a Plot as a reward.
 - **The world goes on past the Site.** The same Seed shapes the land around it out to the horizon, so coasts and rivers carry on past the edge. Only the Site can be built on (for now); a thin line marks its edge, and the land outside is slightly hazy.
 - **Good and bad starts are both playable.** An inland or northern Site is bad for launching but may be rich in minerals. A coastal Site near the equator is great for launching. Weather and latitude really matter (see §8).
 
@@ -77,7 +78,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 
 - **Upgrades** work like town halls in base-builders: each building has levels that raise output or quality (lighter, more efficient Parts). Upgrades cost money and take days (**Time**).
 - **Income:** Contract rewards (main), selling Raw Materials and Parts (small), science Missions (Research Points and Reputation).
-- **Costs:** buildings and Upgrades, **Rideshare** (priced per kg, which teaches mass), **Shipping**, **Launch Insurance**.
+- **Costs:** buildings and Upgrades, Plots of land (Optional), **Rideshare** (priced per kg, which teaches mass), **Shipping**, **Launch Insurance**.
 - **Safety net:** starting money covers the tutorial. A one-time startup grant appears if money gets dangerously low.
 - **Time:** the Site runs in real time with pause and 1×/2×/4× speed. Opening the Mission Designer pauses it. The **Game date** starts on 1 January 1958; one game day takes 2 real seconds at 1×. Space pauses and resumes.
 - **Mines** take one tile and can go on any Deposit, mountains included (Copper is often up there).
@@ -186,7 +187,8 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 ## 13. Look, sound and text
 
 - **Look:** cozy, colourful low-poly world under a daytime sky, with sun shadows and soft shading in corners and at the foot of cliffs. Clean, calm NASA-style interface (dark panels, crisp charts). Not overwhelming.
-- **Camera:** opens at the classic isometric angle over the Site. Left-drag pans (it stays over the Site), right-drag turns and tilts (down to the horizon, up to nearly top-down), the wheel zooms. A narrow-lens perspective camera, so the horizon can be seen (ADR-0003).
+- **Camera:** opens at the classic isometric angle over the Site. Left-drag or WASD/arrows move (up to 32 tiles past the Site's edge, so you can look at the land next door), right-drag or Q/E and R/F turn and tilt (down to the horizon, up to nearly top-down), the wheel or +/− zooms. **H** (or the ⌂ button) glides back to the isometric view of the whole Site. A narrow-lens perspective camera, so the horizon can be seen (ADR-0003).
+- **Buildings:** detailed low-poly models that read at a glance: each has a recognisable shape, small details (doors, windows, lamps), something in the colour of what it makes, and a moving part while it works (e.g. a Mine's winding wheel turns while the Site runs).
 - **Text:** short and plain. Unusual terms get a hint the first time ("Launch Vehicle (the rocket)"). Every real thing gets **Learn more →** to an official NASA page or Wikipedia. No logos of NASA, SpaceX or any real organisation. Real mission names and facts only, with sources.
 - **Sound:** sound effects generated in code where possible, otherwise free licensed packs. Music: free licensed tracks first, then AI-generated (Lyria 3.5) for gaps. All credited (see `docs/audio/`).
 - **Music mood:** hopeful, cozy, exciting. Tracks: main menu, Site (calm), Mission Designer (focused), Launch (exciting), flight, Anomaly (tense), success and failure stingers. Era-flavoured music is Later.

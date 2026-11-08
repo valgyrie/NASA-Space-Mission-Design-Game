@@ -31,6 +31,8 @@ export const STRINGS = {
   'hud.company': '{name}',
   'hud.menuIcon': '☰',
   'hud.menu': 'Menu (Esc)',
+  'hud.homeIcon': '⌂',
+  'hud.home': 'Whole Site view (H)',
 
   'menu.heading': 'Paused',
   'menu.seed': 'Seed',
@@ -39,6 +41,12 @@ export const STRINGS = {
   'menu.copied': 'Copied',
   'menu.copySeed': 'Copy the Seed to share it',
   'menu.resume': 'Resume',
+  'menu.controls': 'Controls',
+  'controls.move': 'Move: left-drag, or W A S D / arrow keys',
+  'controls.turn': 'Turn and tilt: right-drag, or Q E to turn, R F to tilt',
+  'controls.zoom': 'Zoom: mouse wheel, or + and −',
+  'controls.home': 'Back to the whole Site: H',
+  'controls.pause': 'Pause: Space · Menu: Esc',
 
   'topBar.money': 'Money',
   'topBar.date': 'Date',

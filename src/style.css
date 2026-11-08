@@ -166,6 +166,18 @@ body {
   display: none;
 }
 
+.hud-company {
+  flex: 1;
+}
+
+.controls {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--muted);
+}
+
 .menu-label {
   font-size: 14px;
   color: var(--muted);

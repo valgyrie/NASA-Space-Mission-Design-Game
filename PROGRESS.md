@@ -4,27 +4,30 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–04 are done and merged to `main`. Then, at the team's request (tested in headless Chromium):
-- **Seed** moved out of the top-left panel into a **pause menu** (`src/ui/menu.ts`): Esc or ☰ opens it, pauses the Site, shows the Seed with Copy; Esc/Resume closes and restores the speed. Esc while placing a Mine only stops placing.
-- **Horizon:** `src/site/site.ts` now builds a `Land` (`landOf(site).groundAt(x, z)`) that works for any tile position, so the scenery around the Site matches it and coasts and rivers carry on (river outside the Site uses its own random numbers, so Sites are unchanged). `src/world/siteMesh.ts` draws the Site (`terrain`, the only clickable mesh), near scenery (48 tiles, full detail, light haze), far scenery (4×4 blocks to 224 tiles), a water plane and a white border line. Shared terraced builder: `src/world/terrainMesh.ts`.
-- **Camera** (ADR-0003): perspective, 30° lens, opens at the isometric angle; right-drag tilts 7°–70°; pan stays over the Site. Maths in `src/world/camera.ts` (was `isoCamera.ts`). Sky dome + fog that follows zoom (`hazeFor`) in `src/world/world.ts`.
-- **Shadows:** the sun's shadow area was never applied before (`updateProjectionMatrix` was missing), so shadows only covered the centre. Fixed, sun lowered, 4096 shadow map, plus baked corner/cliff shading in the terrain colours.
-- Frame time cap raised to 1 s so slow computers keep game time in step.
+**State:** tickets 01–04 done (on `main`). Since then, on `claude/sharp-cray-oqvpn1`, at the team's request, all tested in headless Chromium:
+- Land to the horizon, perspective camera with tilt (ADR-0003), working sun shadows, Seed in the pause menu (Esc). See the previous log line.
+- **Controls:** pan reaches 32 tiles past the Site (`PAN_BEYOND_SITE` in `src/world/camera.ts`). Keyboard in `World.listenToKeys`/`moveCamera` (`src/world/world.ts`): WASD/arrows move, Q/E turn, R/F tilt, +/− zoom, **H** or the ⌂ HUD button glides home to the isometric whole-Site view (nearest corner kept). `world.keyboardEnabled` is off while the pause menu is open. The pause menu lists the controls.
+- **Detailed Mine** (`src/world/mineMesh.ts`): pad, hoist house with gable roof/door/windows, braced headframe, winding wheel (`spin`, turned by `World.animateBuildings` while the Site runs), cable, rails and ore cart, ore piles, lamp.
+- Full-detail scenery now reaches one Site-sized Plot past each edge (`NEAR_REACH = 64`), ready for ticket 30. About 137k triangles in total.
+- **New ticket 30** (Optional, blocked by 05): buy neighbouring Plots. Ticket 05 now requires detailed Factory/Warehouse models at the Mine's level.
 
 **Next:**
-1. Ticket 05 (Factories and Market). Buildings go in `World.buildings`; placement reuses `tileAtScreen`/`markTile`.
-2. Also unblocked: 06, 19, 25.
+1. Ticket 05 (Factories and Market), with detailed models per its new criterion. Reuse the helpers in `mineMesh.ts` (`bar`, `gableRoof`) — consider moving them to a shared `buildingParts.ts`.
+2. Also unblocked: 06, 19, 25. Ticket 30 after the Required tickets unless the team moves it up.
 
 **Open:**
-- Performance: about 110k triangles + 4096 shadow map. Fine on real GPUs; headless software rendering gets ~4 fps. If a teammate's laptop struggles, lower the shadow map to 2048 or shrink `FAR_REACH` in `siteMesh.ts`.
-- Seams between near and far scenery can show small cliffs; they're about 50 tiles out and in the haze.
-- No "New game"/reset yet (clear site data). Speed isn't saved. Balance numbers are first guesses.
+- The camera orbits a point at ground level (y = 0), so on high plateaus it looks slightly below the buildings. Could follow terrain height later.
+- Each Mine is ~35 small meshes; if Sites get dozens of buildings, merge static parts per material.
+- Performance unknown on real laptops (no GPU here). Knobs: shadow map size in `world.ts`, `NEAR_REACH`/`FAR_REACH` in `siteMesh.ts`.
+- Ticket 30 open question: free Deposit view of a Plot, or a paid Survey? Default free.
+- No "New game"/reset yet. Speed isn't saved. Balance numbers are first guesses.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
 **Suggested skills:** `domain-modeling` (Factory, Part, Warehouse in ticket 05), `handoff`.
 
 ## Log
 
+- 2026-11-08: Keyboard camera + H for the whole-Site view, pan past the Site, detailed Mine with turning wheel; ticket 30 (buy Plots, Optional) written.
 - 2026-11-08: Seed moved to a pause menu (Esc); land carries on to the horizon; perspective camera with tilt (ADR-0003); working sun shadows.
 - 2026-11-08: Ticket 04 done: Mines on Deposits, Game date with pause/1×/2×/4×, top bar, save v3.
 - 2026-11-08: Ticket 03 done: Site generated from a Seed (terrain, water, Deposits), Seed shown and copyable.

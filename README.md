@@ -19,9 +19,9 @@ npm run dev
 
 The game opens at http://localhost:5173.
 
-**Camera:** left-drag to pan, right-drag to turn (sideways) and tilt (up and down, to see the horizon), mouse wheel to zoom.
+**Camera:** left-drag (or W A S D / arrows) to move, right-drag to turn and tilt (or Q E to turn, R F to tilt down to the horizon), mouse wheel (or + −) to zoom. **H** goes back to the view of your whole Site.
 
-**Keys:** Space pauses. Esc opens the menu (and shows your Seed).
+**Keys:** Space pauses. Esc opens the menu (your Seed and the controls).
 
 **Checks:** `npm run check` runs the type check and tests. They also run before every commit and stop it if anything fails.
 

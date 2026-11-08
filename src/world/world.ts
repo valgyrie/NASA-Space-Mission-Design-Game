@@ -11,8 +11,13 @@ import {
   START_AZIMUTH,
   START_DISTANCE,
   START_ELEVATION,
+  HOME_SECONDS,
+  KEY_SPEED,
+  PAN_BEYOND_SITE,
   cameraOffset,
   clampToGround,
+  easeInOut,
+  nearestIsoAzimuth,
   hazeFor,
   polarFromElevation,
 } from './camera';
@@ -63,6 +68,37 @@ function makeSky(): THREE.Mesh {
   return sky;
 }
 
+/** Where the camera looks and from which direction and distance. */
+interface CameraPose {
+  target: THREE.Vector3;
+  azimuth: number;
+  polar: number;
+  distance: number;
+}
+
+/** Keys that move the camera while held. */
+const CAMERA_KEYS: Record<string, 'forward' | 'back' | 'left' | 'right' | 'turnLeft' | 'turnRight' | 'tiltUp' | 'tiltDown' | 'zoomIn' | 'zoomOut'> = {
+  w: 'forward',
+  arrowup: 'forward',
+  s: 'back',
+  arrowdown: 'back',
+  a: 'left',
+  arrowleft: 'left',
+  d: 'right',
+  arrowright: 'right',
+  q: 'turnLeft',
+  e: 'turnRight',
+  r: 'tiltUp',
+  f: 'tiltDown',
+  '=': 'zoomIn',
+  '+': 'zoomIn',
+  '-': 'zoomOut',
+};
+
+function isTyping(target: EventTarget | null): boolean {
+  return target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement;
+}
+
 /** The 3D world: the Site and the land around it, sky, sunlight, and the camera. */
 export class World {
   readonly renderer: THREE.WebGLRenderer;
@@ -77,6 +113,10 @@ export class World {
   private readonly fog = new THREE.Fog(COLOURS.horizon, 100, 300);
   private readonly frameCallbacks: ((seconds: number) => void)[] = [];
   private readonly raycaster = new THREE.Raycaster();
+  private readonly heldKeys = new Set<string>();
+  private home: { from: CameraPose; to: CameraPose; t: number } | null = null;
+  /** Turn off while a menu or dialog is open, so keys don't move the camera behind it. */
+  keyboardEnabled = true;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -101,6 +141,94 @@ export class World {
 
     window.addEventListener('resize', () => this.resize());
     this.resize();
+    this.listenToKeys();
+  }
+
+  /** WASD / arrows move, Q/E turn, R/F tilt, +/- zoom, H goes back to the whole-Site view. */
+  private listenToKeys(): void {
+    window.addEventListener('keydown', (e) => {
+      if (!this.keyboardEnabled || isTyping(e.target) || e.ctrlKey || e.metaKey || e.altKey) return;
+      const key = e.key.toLowerCase();
+      if (key === 'h' || key === 'home') {
+        this.goHome();
+        e.preventDefault();
+      } else if (key in CAMERA_KEYS) {
+        this.heldKeys.add(key);
+        e.preventDefault();
+      }
+    });
+    window.addEventListener('keyup', (e) => this.heldKeys.delete(e.key.toLowerCase()));
+    window.addEventListener('blur', () => this.heldKeys.clear());
+  }
+
+  private pose(): CameraPose {
+    const s = new THREE.Spherical().setFromVector3(this.camera.position.clone().sub(this.controls.target));
+    return { target: this.controls.target.clone(), azimuth: s.theta, polar: s.phi, distance: s.radius };
+  }
+
+  private setPose(p: CameraPose): void {
+    const { x, z } = clampToGround(p.target.x, p.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
+    this.controls.target.set(x, 0, z);
+    const offset = new THREE.Vector3().setFromSpherical(new THREE.Spherical(p.distance, p.polar, p.azimuth));
+    this.camera.position.copy(this.controls.target).add(offset);
+  }
+
+  /** Glide back to the isometric view of the whole Site, keeping the nearest corner you were looking from. */
+  goHome(): void {
+    const from = this.pose();
+    this.home = {
+      from,
+      to: {
+        target: new THREE.Vector3(0, 0, 0),
+        azimuth: nearestIsoAzimuth(from.azimuth),
+        polar: polarFromElevation(START_ELEVATION),
+        distance: START_DISTANCE,
+      },
+      t: 0,
+    };
+  }
+
+  /** Apply held keys and the glide home, once per frame. */
+  private moveCamera(seconds: number): void {
+    if (this.home) {
+      const h = this.home;
+      h.t = Math.min(1, h.t + seconds / HOME_SECONDS);
+      const k = easeInOut(h.t);
+      const mix = (a: number, b: number) => a + (b - a) * k;
+      this.controls.enableDamping = false; // no drift from an earlier drag while gliding
+      this.setPose({
+        target: h.from.target.clone().lerp(h.to.target, k),
+        azimuth: mix(h.from.azimuth, h.to.azimuth),
+        polar: mix(h.from.polar, h.to.polar),
+        distance: mix(h.from.distance, h.to.distance),
+      });
+      if (h.t >= 1) {
+        this.home = null;
+        this.controls.enableDamping = true;
+      }
+      return;
+    }
+    if (this.heldKeys.size === 0) return;
+    seconds = Math.min(seconds, 0.1); // no big jump after a slow frame
+    const held = new Set([...this.heldKeys].map((k) => CAMERA_KEYS[k]));
+    const p = this.pose();
+    const step = (plus: string, minus: string) => Number(held.has(plus as never)) - Number(held.has(minus as never));
+    const forward = step('forward', 'back');
+    const right = step('right', 'left');
+    const move = p.distance * KEY_SPEED.move * seconds;
+    // Forward is the way the camera faces, flattened onto the ground.
+    p.target.x += (-Math.sin(p.azimuth) * forward + Math.cos(p.azimuth) * right) * move;
+    p.target.z += (-Math.cos(p.azimuth) * forward - Math.sin(p.azimuth) * right) * move;
+    p.azimuth += step('turnLeft', 'turnRight') * KEY_SPEED.turn * seconds;
+    p.polar = Math.min(
+      this.controls.maxPolarAngle,
+      Math.max(this.controls.minPolarAngle, p.polar - step('tiltUp', 'tiltDown') * KEY_SPEED.tilt * seconds),
+    );
+    p.distance = Math.min(
+      MAX_DISTANCE,
+      Math.max(MIN_DISTANCE, p.distance * (1 - step('zoomIn', 'zoomOut') * KEY_SPEED.zoom * seconds)),
+    );
+    this.setPose(p);
   }
 
   /** Left drag pans, right drag turns (sideways) and tilts (up and down), wheel zooms. */
@@ -116,7 +244,7 @@ export class World {
     c.rotateSpeed = 0.6;
     c.zoomSpeed = 1.2;
     c.addEventListener('change', () => {
-      const { x, z } = clampToGround(c.target.x, c.target.z, SITE_SIZE / 2);
+      const { x, z } = clampToGround(c.target.x, c.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
       const dx = x - c.target.x;
       const dz = z - c.target.z;
       if (dx !== 0 || dz !== 0 || c.target.y !== 0) {
@@ -174,6 +302,14 @@ export class World {
     mine.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
     this.buildings.add(mine);
     if (this.siteGroup) clearRocks(this.siteGroup, this.site, x, z);
+  }
+
+  /** Turn the moving parts of buildings (winding wheels, later fans), by how much game time passed. */
+  animateBuildings(gameSeconds: number): void {
+    if (gameSeconds === 0) return;
+    this.buildings.traverse((o) => {
+      if (o.name === 'spin') o.rotation.z += gameSeconds * 2.5;
+    });
   }
 
   /** The tile under a point on the screen, or null if the pointer is off the Site. */
@@ -238,6 +374,7 @@ export class World {
       const seconds = (now - last) / 1000;
       last = now;
       for (const fn of this.frameCallbacks) fn(seconds);
+      this.moveCamera(seconds);
       this.controls.update();
       const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
       this.fog.near = near;

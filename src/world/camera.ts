@@ -49,7 +49,28 @@ export function hazeFor(distance: number): { near: number; far: number } {
   return { near: distance + 40, far: distance + 190 };
 }
 
-/** Keep the look-at point over the Site, so the player can't wander off. */
+/** How far past the Site's edge the player can move the view, in tiles: enough to look at the land next door. */
+export const PAN_BEYOND_SITE = 32;
+
+/** Keyboard camera speeds, per second. Moving scales with zoom, so it feels the same close up and far out. */
+export const KEY_SPEED = { move: 0.35, turn: 1.4, tilt: 0.9, zoom: 1.6 };
+
+/** Seconds the "whole Site" view takes to glide into place. */
+export const HOME_SECONDS = 0.7;
+
+/** The isometric corner direction (45°, 135°, …) closest to a turn, so going home keeps your side of the Site. */
+export function nearestIsoAzimuth(azimuth: number): number {
+  const quarter = Math.PI / 2;
+  return START_AZIMUTH + Math.round((azimuth - START_AZIMUTH) / quarter) * quarter;
+}
+
+/** Smooth start and stop for camera moves: 0 → 0, 1 → 1. */
+export function easeInOut(t: number): number {
+  const c = Math.min(1, Math.max(0, t));
+  return c * c * (3 - 2 * c);
+}
+
+/** Keep the look-at point over the Site or near it, so the player can't wander off. */
 export function clampToGround(x: number, z: number, halfSize: number): { x: number; z: number } {
   const c = (v: number) => Math.min(halfSize, Math.max(-halfSize, v));
   return { x: c(x), z: c(z) };

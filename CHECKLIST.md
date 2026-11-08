@@ -17,7 +17,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
-- [x] Low-poly world with camera controls (pan, turn, tilt to the horizon, zoom)
+- [x] Low-poly world with camera controls (pan, turn, tilt to the horizon, zoom; mouse and keyboard; H for the whole-Site view)
 - [x] Land continues past the Site to the horizon; sky, haze and sun shadows
 - [x] Pause menu (Esc) with the Seed and Copy
 - [x] Save and load (local)
@@ -33,7 +33,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Real-time Site with pause and 1×/2×/4× speed
 
 ### Economy
-- [x] Mines on deposits (Aluminium, Copper, Silicon first)
+- [x] Mines on deposits (Aluminium, Copper, Silicon first), detailed model with a turning wheel
 - [ ] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant
 - [ ] Assembly Hall, Warehouse, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)
@@ -95,6 +95,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ## Optional (later)
 
+- [ ] Buy neighbouring Plots to grow the Site (ticket 30)
 - [ ] Era 3: Apollo 11 support, Landsat 1
 - [ ] Crew Module, Launch Escape System, ≥95% rule (crewed Milestones start in Era 3)
 - [ ] Era 4: Hubble, Lunar Reconnaissance Orbiter, own rockets and Spaceport Site

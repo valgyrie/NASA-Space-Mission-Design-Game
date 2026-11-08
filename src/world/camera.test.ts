@@ -6,7 +6,10 @@ import {
   MIN_ELEVATION,
   START_DISTANCE,
   cameraOffset,
+  START_AZIMUTH,
   clampToGround,
+  easeInOut,
+  nearestIsoAzimuth,
   distanceToShow,
   hazeFor,
   polarFromElevation,
@@ -43,6 +46,19 @@ describe('camera', () => {
       expect(near).toBeGreaterThan(d + 32); // the Site's far edge, seen from straight above its edge
       expect(far).toBeLessThan(d + 32 + 224); // the end of the drawn land
     }
+  });
+
+  it('goes home to the nearest isometric corner', () => {
+    expect(nearestIsoAzimuth(START_AZIMUTH + 0.3)).toBeCloseTo(START_AZIMUTH);
+    expect(nearestIsoAzimuth(START_AZIMUTH + 1.2)).toBeCloseTo(START_AZIMUTH + Math.PI / 2);
+    expect(nearestIsoAzimuth(START_AZIMUTH - 2.5)).toBeCloseTo(START_AZIMUTH - Math.PI);
+  });
+
+  it('eases camera moves in and out', () => {
+    expect(easeInOut(0)).toBe(0);
+    expect(easeInOut(1)).toBe(1);
+    expect(easeInOut(0.5)).toBe(0.5);
+    expect(easeInOut(2)).toBe(1);
   });
 
   it('stops panning at the edge of the Site', () => {

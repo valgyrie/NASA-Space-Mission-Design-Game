@@ -3,7 +3,7 @@ import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
 
 /** The panel at the top left of the Site view: Company name, menu button, and what the Deposit colours mean. */
-export function showHud(root: HTMLElement, companyName: string, onMenu: () => void): void {
+export function showHud(root: HTMLElement, companyName: string, onMenu: () => void, onHome: () => void): void {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
 
@@ -19,6 +19,14 @@ export function showHud(root: HTMLElement, companyName: string, onMenu: () => vo
   menu.setAttribute('aria-label', t('hud.menu'));
   menu.addEventListener('click', onMenu);
 
+  const home = document.createElement('button');
+  home.type = 'button';
+  home.className = 'small icon-button';
+  home.textContent = t('hud.homeIcon');
+  home.title = t('hud.home');
+  home.setAttribute('aria-label', t('hud.home'));
+  home.addEventListener('click', onHome);
+
   const legend = document.createElement('ul');
   legend.className = 'legend';
   for (const material of RAW_MATERIALS) {
@@ -32,7 +40,7 @@ export function showHud(root: HTMLElement, companyName: string, onMenu: () => vo
 
   const top = document.createElement('div');
   top.className = 'row hud-top';
-  top.append(menu, name);
+  top.append(menu, name, home);
   bar.append(top, legend);
   root.append(bar);
 }

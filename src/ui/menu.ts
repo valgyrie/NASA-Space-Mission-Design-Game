@@ -54,7 +54,18 @@ export function makeMenu(root: HTMLElement, seed: string, onOpen: () => void, on
   resume.className = 'primary';
   resume.textContent = t('menu.resume');
 
-  panel.append(heading, seedLabel, seedRow, seedNote, resume);
+  const controlsLabel = document.createElement('span');
+  controlsLabel.className = 'menu-label';
+  controlsLabel.textContent = t('menu.controls');
+  const controls = document.createElement('ul');
+  controls.className = 'controls';
+  for (const key of ['controls.move', 'controls.turn', 'controls.zoom', 'controls.home', 'controls.pause'] as const) {
+    const li = document.createElement('li');
+    li.textContent = t(key);
+    controls.append(li);
+  }
+
+  panel.append(heading, seedLabel, seedRow, seedNote, controlsLabel, controls, resume);
   backdrop.append(panel);
   root.append(backdrop);
 

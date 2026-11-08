@@ -34,13 +34,17 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     ui,
     game.site.seed,
     () => {
+      world.keyboardEnabled = false;
       speedBeforeMenu = speed;
       setSpeed(0);
       if (placing) setPlacing(false);
     },
-    () => setSpeed(speedBeforeMenu),
+    () => {
+      world.keyboardEnabled = true;
+      setSpeed(speedBeforeMenu);
+    },
   );
-  showHud(ui, game.company.name, () => menu.open());
+  showHud(ui, game.company.name, () => menu.open(), () => world.goHome());
   const topBar = showTopBar(ui, setSpeed);
   let placing = false;
   const setPlacing = (on: boolean) => {
@@ -93,6 +97,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
 
   world.onFrame((seconds) => {
     advanceDays(site, state, daysFor(seconds, speed));
+    world.animateBuildings(Math.min(seconds, 0.1) * speed);
     topBar.update(site, state, speed);
   });
   startAutosave(localStorage, () => game);

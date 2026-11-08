@@ -11,3 +11,5 @@
 - [ ] Warehouse capacity limits storage and is shown
 - [ ] Market buys Raw Materials and Parts above making cost and sells below it
 - [ ] Chains are never longer than Mine → Factory → Part
+- [ ] Each Factory and the Warehouse has a detailed low-poly model at the Mine's level (`src/world/mineMesh.ts`): a building you can recognise (Metal Works: furnace and chimney; Electronics Lab: clean white lab with antenna; Solar Fab: panels on the roof; Battery Plant: tanks and pipes), small details (doors, windows, lamps), at least one moving part while it works (via `World.animateBuildings`), and something in the colour of what it makes
+- [ ] Buildings look right both from the isometric start view and tilted low toward the horizon

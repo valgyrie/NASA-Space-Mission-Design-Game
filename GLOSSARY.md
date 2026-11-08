@@ -22,6 +22,10 @@ _Avoid_: starting base
 A Site with launch pads, from which the Company launches its own rockets.
 _Avoid_: launch base
 
+**Plot**:
+A Site-sized piece of land next to a Site that the Company can buy to make the Site bigger.
+_Avoid_: chunk, parcel, lot
+
 **Seed**:
 A code that generates the same Site map every time it is used.
 _Avoid_: map code

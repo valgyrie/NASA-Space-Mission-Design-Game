@@ -12,8 +12,8 @@ export const DEPOSIT_COLOUR: Record<RawMaterial, number> = {
   silicon: 0x7b83eb,
 };
 
-/** Full-detail scenery reaches this many tiles past each edge of the Site. */
-const NEAR_REACH = 48;
+/** Full-detail scenery reaches this many tiles past each edge of the Site: one Site-sized plot on every side. */
+const NEAR_REACH = 64;
 /** Coarse scenery (4 × 4 tiles per block) reaches this far, out to where the haze hides it. */
 const FAR_REACH = 224;
 const FAR_BLOCK = 4;
@@ -176,7 +176,7 @@ function depositMesh(site: Site): THREE.InstancedMesh {
         x: x + (rng() - 0.5) * 0.6,
         y: topY(tile.level),
         z: z + (rng() - 0.5) * 0.6,
-        s: 0.2 + rng() * 0.12,
+        s: 0.16 + rng() * 0.1,
         r: rng() * Math.PI,
         colour: DEPOSIT_COLOUR[tile.deposit],
       });
