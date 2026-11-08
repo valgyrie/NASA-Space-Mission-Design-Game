@@ -55,8 +55,8 @@ All 10 tracks received: MP3, 192 kbps, 44.1 kHz stereo, 26 MB in total. Measured
 | `launch` | 1:31 | −11.9 | Steady energy, fades from ~1:20 | None |
 | `flight-orbit` | 2:55 | −11.8 | **2 s of silence at the start**; quieter last ~20 s | Trim start; loop ~0:02–2:35 |
 | `anomaly` | 1:03 | −12.4 | Quiet first ~10 s, then loud and driving | Loop ~0:10–0:55 |
-| `stinger-success` | 1:03 | −10.6 | **Far too long for a stinger** (asked ~10 s); no natural gap | Use a ~10 s cut (preview below) or regenerate |
-| `stinger-failure` | 1:01 | −11.5 | **Far too long for a stinger** (asked ~8 s); no natural gap | Use an ~8 s cut (preview below) or regenerate |
+| `stinger-success` | 1:03 | −10.6 | Came back ~1 min; **cut to 10 s** with a fade (team approved) | Done |
+| `stinger-failure` | 1:01 | −11.5 | Came back ~1 min; **cut to 8 s** with a fade (team approved) | Done |
 | `era-history` | 1:06 | −10.8 | Quiet intro (radio static as asked), then builds | None |
 
 **All tracks:**
@@ -64,7 +64,7 @@ All 10 tracks received: MP3, 192 kbps, 44.1 kHz stereo, 26 MB in total. Measured
 - **Peaks are slightly above 0 dB**, which can crackle on some devices. Fix: normalise every track to −16 LUFS with peaks ≤ −1 dB.
 - **Loops all fade out** (Lyria ignored "no fade-out", as expected). Fix: cut before the fade and crossfade the end into the start in game.
 - **26 MB is heavy for a web game.** Fix: re-encode to about 128 kbps (or Ogg/Opus) and load each track only when its screen opens.
-- **Stinger previews** to listen to: [`previews/stinger-success-cut-10s.mp3`](previews/stinger-success-cut-10s.mp3), [`previews/stinger-failure-cut-8s.mp3`](previews/stinger-failure-cut-8s.mp3).
+- **Stingers:** the files in `public/audio/music/` are the approved short cuts (already normalised to −16 LUFS); the 1-minute originals are in git history.
 
 ## Credits
 
