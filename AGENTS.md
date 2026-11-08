@@ -59,4 +59,5 @@ Write the handoff in `PROGRESS.md` (Claude: run `/handoff`), commit, and push. C
 | `docs/research/` | Cited research notes |
 | `docs/audio/` | Audio sources, credits, music prompts |
 | `docs/questionnaires/` | Questions for teammates |
+| `src/strings.ts` | All player-facing text. Never write it anywhere else; a test fails if you do. |
 | `.claude/skills/<name>/SKILL.md` | Workflow skills (see its README). Other agents can read them as plain instructions. |

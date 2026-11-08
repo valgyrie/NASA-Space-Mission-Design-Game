@@ -4,9 +4,9 @@
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] New game asks for a Company name, with a "don't use your real full name" note
-- [ ] Bad words in names are rejected with a friendly message
-- [ ] The game autosaves locally; reloading restores the Company
-- [ ] No player-facing text is written outside the strings file
+- [x] New game asks for a Company name, with a "don't use your real full name" note
+- [x] Bad words in names are rejected with a friendly message
+- [x] The game autosaves locally; reloading restores the Company
+- [x] No player-facing text is written outside the strings file

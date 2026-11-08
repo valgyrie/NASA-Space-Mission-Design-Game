@@ -18,8 +18,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
 - [x] Isometric low-poly world with camera controls
-- [ ] Save and load (local)
-- [ ] All game text in one file (translation-ready)
+- [x] Save and load (local)
+- [x] All game text in one file (translation-ready)
 
 ### Start and Site
 - [ ] Company name (filtered) and logo maker

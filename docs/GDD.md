@@ -163,7 +163,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 
 ## 11. Company identity
 
-- **Company name:** player's choice, with a "don't use your real full name" note and a bad-word filter.
+- **Company name:** player's choice, 2–24 characters, with a "don't use your real full name" note and a bad-word filter (also catches spelled-out and leetspeak words; real names like Cassini or Uranus pass).
 - **Logo:** an in-game **logo maker** (shapes, colours, space icons). Players may also **upload a drawing**, resized to 128×128 (upload cap about 200 KB), with a "don't upload photos of people" warning and a report/hide button for viewers.
 - The logo appears on the Company's rockets, flag and buildings, and on every **Mission Patch** (collected in a patch gallery).
 - **Default logo:** an original preset from the logo maker. Not the NASA Space Apps logo: it's an official emblem that must not be altered or imply endorsement, so it can't become a player's company logo. The official logo may appear unaltered on the splash and credits ("Made for NASA Space Apps 2026"), once organisers confirm.
