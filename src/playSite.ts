@@ -104,11 +104,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   window.addEventListener('keydown', (e) => {
     if (e.target instanceof HTMLInputElement) return;
     if (e.key === 'Escape') {
-      // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
-      if (menu.isOpen) menu.close();
-      else if (placing) setPlacing(null);
+      // Esc backs out one step: stop placing, close a panel, otherwise open or close the menu.
+      if (placing) setPlacing(null);
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
+      else if (menu.isOpen) menu.close();
       else menu.open();
       return;
     }

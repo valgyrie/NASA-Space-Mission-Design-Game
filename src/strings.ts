@@ -119,7 +119,7 @@ export const STRINGS = {
   'market.sell': 'Sell {price}',
   'market.problem.money': 'Not enough money.',
   'market.problem.space': 'No room in storage. Build a Warehouse or sell something.',
-  'market.problem.none': 'Not enough in stock to sell.',
+  'market.problem.none': 'You have none to sell.',
 
   'material.aluminium': 'Aluminium',
   'material.copper': 'Copper',

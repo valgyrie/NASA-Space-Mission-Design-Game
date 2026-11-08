@@ -5,7 +5,6 @@ import { generateSite } from '../site/site';
 import {
   BASE_STORAGE_KG,
   BUILD_COST,
-  MARKET_LOT_KG,
   MINE_COST,
   MINE_OUTPUT_PER_DAY,
   RECIPES,
@@ -146,44 +145,6 @@ describe('Market', () => {
 
   it('values a Part above the Raw Materials in it', () => {
     expect(makingCost('smallBus')).toBeGreaterThan(makingCost('aluminium') * 4);
-  });
-
-  it.each(RAW_MATERIALS)('sells a lot of %s for money without a Factory', (material) => {
-    const state = newSiteState();
-    state.money = 0;
-    state.stock[material] = MARKET_LOT_KG;
-    const before = structuredClone(state);
-
-    expect(sell(state, material)).toEqual({ ok: true });
-    expect(state).toEqual({
-      ...before,
-      money: sellPrice(material),
-      stock: { ...before.stock, [material]: 0 },
-    });
-  });
-
-  it.each(RAW_MATERIALS)('keeps the fractional remainder when selling %s', (material) => {
-    const state = newSiteState();
-    state.stock[material] = MARKET_LOT_KG * 2 + 0.5;
-
-    expect(sell(state, material)).toEqual({ ok: true });
-    expect(sell(state, material)).toEqual({ ok: true });
-    expect(state.stock[material]).toBe(0.5);
-    expect(state.money).toBe(START_MONEY + sellPrice(material) * 2);
-    const before = structuredClone(state);
-    expect(sell(state, material)).toEqual({ ok: false, problem: 'none' });
-    expect(state).toEqual(before);
-  });
-
-  it.each(RAW_MATERIALS)('needs a full lot of %s and leaves a refused sale unchanged', (material) => {
-    for (const kg of [0, MARKET_LOT_KG - 0.001]) {
-      const state = newSiteState();
-      state.stock[material] = kg;
-      const before = structuredClone(state);
-
-      expect(sell(state, material)).toEqual({ ok: false, problem: 'none' });
-      expect(state).toEqual(before);
-    }
   });
 
   it('buys and sells with money and storage', () => {

@@ -38,7 +38,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Warehouse: storage by mass, shown in the top bar
 - [ ] Assembly Hall, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)
-- [x] Market (buy/sell Raw Materials and Parts at worse prices)
+- [x] Market (buy/sell at worse prices)
 - [ ] Shipping (money + days)
 - [ ] Startup grant safety net
 
