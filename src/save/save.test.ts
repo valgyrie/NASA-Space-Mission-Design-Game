@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { MARKET_LOT_KG } from '../game/balance';
+import { sell, sellPrice } from '../game/market';
 import { newSiteState } from '../game/siteState';
 import { SAVE_KEY, type SaveData, type SaveStorage, loadGame, saveGame } from './save';
 
@@ -24,6 +26,18 @@ describe('local save', () => {
 
   it('has nothing to load on a new game', () => {
     expect(loadGame(memoryStorage())).toBeNull();
+  });
+
+  it('keeps money and remaining Raw Materials after a sale', () => {
+    const storage = memoryStorage();
+    const sold = structuredClone(game);
+    expect(sell(sold.state, 'copper')).toEqual({ ok: true });
+    expect(saveGame(storage, sold)).toBe(true);
+
+    const loaded = loadGame(storage);
+    expect(loaded?.state.money).toBe(game.state.money + sellPrice('copper'));
+    expect(loaded?.state.stock.copper).toBe(game.state.stock.copper - MARKET_LOT_KG);
+    expect(loaded).toEqual(sold);
   });
 
   it('ignores a broken or unknown save instead of crashing', () => {
