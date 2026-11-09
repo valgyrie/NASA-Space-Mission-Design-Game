@@ -83,7 +83,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 - **Time:** the Site runs in real time with pause and 1×/2×/4× speed. Opening the Mission Designer pauses it. The **Game date** starts on 1 January 1958; one game day takes 2 real seconds at 1×. Space pauses and resumes.
 - **Mines** take one tile and can go on any Deposit, mountains included (Copper is often up there).
 - **First tuning** (all in `src/game/balance.ts`, change freely): start with **$2M**; a Mine costs **$150K** and digs **10 kg a day**. Money is US dollars, Raw Materials are kilograms.
-- **Factories:** each makes one Part at a time, chosen by clicking it; it takes the Raw Materials when it starts a Part and adds the Part when done. Era 1 Parts: Small and Medium Bus (Metal Works), Basic Computer and Simple Antenna (Electronics Lab), Solar Cells (Solar Fab), Small and Large Battery (Battery Plant). Recipes are game estimates, not real figures.
+- **Factories:** each makes one Part at a time, chosen by clicking it; it takes the Raw Materials when it starts a Part and adds the Part when done. Era 1 Parts: Small and Medium Bus (Metal Works), Basic Computer, Simple Antenna and Radiation Detector (Electronics Lab), Solar Cells (Solar Fab), Small and Large Battery (Battery Plant). Recipes are game estimates, not real figures.
 - **Factories and the Warehouse go on dry land without a Deposit,** so Deposits stay free for Mines.
 - **Storage** counts Raw Materials and Parts by mass: the Site holds **500 kg** in its yard, and each Warehouse adds **2,000 kg**. Mines stop when it is full. A Part always weighs less than its inputs, so Factories never overfill it.
 - **Market:** every Raw Material and Part has a making cost (Raw Materials' value plus the Factory's work). The Market sells at **2×** that and buys at **½**. Raw Materials trade in 10 kg lots, Parts one at a time, and arrive at once (Shipping between Sites comes later).
@@ -126,6 +126,19 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 
 - **Mission Designer:** a 3D Spacecraft you can rotate, plus **slots**. Pick a **Bus** (small / medium / large), then one option per system, then the **Payload**.
 - The six resources show as **live bars** with clear warnings ("Power: 12 W short in eclipse").
+- **Mission Designer v1 (ticket 07):** full screen; opening it pauses the Site. Slots: Bus, Power, Battery, Comms, Pointing, Payload (Computer and Propulsion join when a Milestone needs them). It designs for the first accepted Contract, or the first one on offer. Each slot says whether its Part is in the Warehouse, with a Buy button if not, plus one "Buy missing Parts" button. Parts are used up only when the Mission ships (ticket 08). The design is saved.
+- **The six bars** (each with a target line; green when met, orange when short, grey until its slots are filled):
+
+| Bar | Measures | Target |
+|---|---|---|
+| Mass | Spacecraft mass | The Launch Vehicle's lift (Juno I, ~14 kg). Parts must also fit what the Bus carries. |
+| Power | Battery energy plus sunlight over the Mission (Wh) | Energy the Parts use over the Mission |
+| Budget | Market price of Parts not in the Warehouse | Money |
+| Data | Days the right Payload keeps sending | The Contract's days |
+| Communications | Data the antenna sends per day | Data the Payload makes per day |
+| Time | Days to assemble (set by the Bus) plus days flying | Days left before the deadline |
+
+- **Era 1 numbers** (game estimates in `src/game/balance.ts`): the tutorial design (Small Bus, batteries only, Large Battery, Simple Antenna, spin, radiation detector) weighs 11.5 kg and lasts about 33 days. A Small Battery runs out on day 16; a Medium Bus is too heavy for Juno I. Solar Cells show as locked until Vanguard 1 (ticket 14).
 - **Easy mode:** fewer, simpler Parts, and placement is automatic. **Advanced mode:** more Parts and more realistic numbers. **Manual placement** (panels facing the Sun, camera facing Earth) is **Later**, in Advanced only.
 
 | Slot | Options (by Era) |

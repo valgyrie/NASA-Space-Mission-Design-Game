@@ -61,13 +61,14 @@ export interface Recipe {
 
 /** How each Part is made. Game estimates for Era 1, not real figures. */
 export const RECIPES: Record<Part, Recipe> = {
-  smallBus: { factory: 'metalWorks', inputs: { aluminium: 40 }, days: 4, massKg: 6, work: 4_000 },
-  mediumBus: { factory: 'metalWorks', inputs: { aluminium: 100 }, days: 8, massKg: 15, work: 10_000 },
-  basicComputer: { factory: 'electronicsLab', inputs: { silicon: 6, copper: 4 }, days: 3, massKg: 2, work: 8_000 },
+  smallBus: { factory: 'metalWorks', inputs: { aluminium: 40 }, days: 4, massKg: 3, work: 4_000 },
+  mediumBus: { factory: 'metalWorks', inputs: { aluminium: 100 }, days: 8, massKg: 8, work: 10_000 },
+  basicComputer: { factory: 'electronicsLab', inputs: { silicon: 6, copper: 4 }, days: 3, massKg: 1, work: 8_000 },
   simpleAntenna: { factory: 'electronicsLab', inputs: { copper: 5, silicon: 1 }, days: 2, massKg: 1, work: 3_000 },
   solarCells: { factory: 'solarFab', inputs: { silicon: 12 }, days: 3, massKg: 2, work: 5_000 },
-  smallBattery: { factory: 'batteryPlant', inputs: { copper: 15 }, days: 3, massKg: 4, work: 2_500 },
-  largeBattery: { factory: 'batteryPlant', inputs: { copper: 35 }, days: 5, massKg: 9, work: 5_000 },
+  smallBattery: { factory: 'batteryPlant', inputs: { copper: 15 }, days: 3, massKg: 3, work: 2_500 },
+  largeBattery: { factory: 'batteryPlant', inputs: { copper: 35 }, days: 5, massKg: 6, work: 5_000 },
+  radiationDetector: { factory: 'electronicsLab', inputs: { silicon: 4, copper: 3 }, days: 3, massKg: 1.5, work: 6_000 },
 };
 
 /** The Market sells to you at this many times the making cost... */
@@ -86,3 +87,40 @@ export const CONTRACT_REWARD = {
 export const CONTRACT_DEADLINE_DAYS = {
   explorer1: 365,
 } as const;
+
+/**
+ * What each Mission Designer option does. Game estimates for Era 1, scaled so an Explorer 1-like
+ * Spacecraft (Small Bus, Large Battery, Simple Antenna, spin, radiation detector) fits Juno I's
+ * ~14 kg and runs about 30 days, as the real one did. Real ranges: docs/research/spacecraft-parts.md.
+ */
+export interface OptionStats {
+  /** Bus: kilograms of Parts it can carry. */
+  carriesKg?: number;
+  /** Bus: game days to put the Spacecraft together. */
+  assemblyDays?: number;
+  /** Watts the Part uses all the time. */
+  powerUseW?: number;
+  /** Watts made while in sunlight. */
+  solarW?: number;
+  /** Watt-hours of energy stored. */
+  batteryWh?: number;
+  /** Payload: kilobytes of Data made per day. */
+  dataPerDay?: number;
+  /** Comms: kilobytes of Data it can send home per day. */
+  sendPerDay?: number;
+}
+
+export const OPTION_STATS = {
+  smallBus: { carriesKg: 9, assemblyDays: 30 },
+  mediumBus: { carriesKg: 25, assemblyDays: 45 },
+  batteriesOnly: {},
+  solarCells: { solarW: 3 },
+  smallBattery: { batteryWh: 360 },
+  largeBattery: { batteryWh: 720 },
+  simpleAntenna: { powerUseW: 0.6, sendPerDay: 50 },
+  spin: {},
+  radiationDetector: { powerUseW: 0.3, dataPerDay: 20 },
+} as const satisfies Record<string, OptionStats>;
+
+/** Share of each orbit a Low Earth Orbit Spacecraft spends in sunlight (the rest is in Earth's shadow). Game estimate. */
+export const SUNLIT_SHARE = 0.6;

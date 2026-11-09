@@ -47,6 +47,22 @@ Table 9-3 mixes kbps and Gbps in one column; confirm each row in the PDF.
 |---|---|---|
 | Onboard computers | **~0.4–25 W**†; mass mostly not listed | SoA Table 8-4[^avi] |
 
+## Explorer 1, the tutorial Spacecraft
+
+Checked 2026-11-09 against [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1). The Mission Designer's Era 1 options are modelled on it.
+
+| Item | Real value | Game (ticket 07) |
+|---|---|---|
+| Mass | "13.97 kg (30.8 lb), of which 8.3 kg (18 lb) were instrumentation" | Tutorial design 11.5 kg; Juno I lifts ~14 kg |
+| Power | "mercury chemical batteries that made up approximately 40% of the payload weight"; high-power transmitter ran 31 days, low-power 105 days | Batteries only; Large Battery (6 kg) lasts ~33 days |
+| Radios | "A 60 milliwatt transmitter" (108.03 MHz) and "a 10 milliwatt transmitter" (108.00 MHz) | Simple Antenna uses 0.6 W (rounded up for play) |
+| Antennas | "two fiberglasses slot antennas in the body" and "four flexible whips forming a turnstile antenna" | Model shows four whips |
+| Pointing | "spinning around its long axis at 750 revolutions per minute"; it ended up tumbling about another axis because flexible parts lost energy | Spin option, no Part (tumbling: future Anomaly) |
+| Payload | "Anton 314 omnidirectional Geiger–Müller tube"; "Most of the time the instrument was saturated" | Radiation Detector, 1.5 kg |
+| Data storage | No tape recorder on Explorer 1; Explorer 3 "included a tape data recorder" | No Computer slot yet; a recorder fits a later Era 1 Milestone |
+
+All other Era 1 option numbers (Wh, W, kB a day, assembly days, Bus capacity) are game estimates in `src/game/balance.ts`, not measurements.
+
 ## How the game uses this
 
 - **Easy mode:** 2–3 options per slot with rounded numbers inside these ranges.

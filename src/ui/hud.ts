@@ -14,7 +14,7 @@ function setText(e: HTMLElement, text: string): void {
   if (e.textContent !== text) e.textContent = text;
 }
 
-/** The panel at the top left of the Site view: Company name, menu button, Deposit colours, Market, Contracts and the active Contract. */
+/** The panel at the top left of the Site view: Company name, menu button, Deposit colours, Market, Contracts, Mission Designer and the active Contract. */
 export function showHud(
   root: HTMLElement,
   companyName: string,
@@ -22,6 +22,7 @@ export function showHud(
   onHome: () => void,
   onMarket: () => void,
   onContracts: () => void,
+  onDesigner: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
@@ -72,6 +73,13 @@ export function showHud(
   contracts.title = t('contracts.openName');
   contracts.addEventListener('click', onContracts);
 
+  const designer = document.createElement('button');
+  designer.type = 'button';
+  designer.className = 'small market-button designer-button';
+  designer.textContent = t('designer.open');
+  designer.title = t('designer.openName');
+  designer.addEventListener('click', onDesigner);
+
   const buttons = document.createElement('div');
   buttons.className = 'row hud-buttons';
   buttons.append(market, contracts);
@@ -82,7 +90,7 @@ export function showHud(
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, buttons, active);
+  bar.append(top, legend, buttons, designer, active);
   root.append(bar);
 
   return {

@@ -101,8 +101,20 @@ The rocket that carries a Spacecraft to space.
 _Avoid_: rocket (alone), booster (alone)
 
 **Bus**:
-The Spacecraft's main body; its size sets how many Parts it can carry.
+The Spacecraft's main body; its size sets how much mass of Parts it can carry.
 _Avoid_: chassis, frame, hull
+
+**Mission Designer**:
+The screen where the player builds a Spacecraft by picking one option for each slot.
+_Avoid_: editor, builder, workshop
+
+**Slot**:
+A place on the Spacecraft for one system (Bus, Power, Battery, Comms, Pointing, Payload); each slot holds one option.
+_Avoid_: socket, hardpoint
+
+**Pointing**:
+How the Spacecraft keeps steady and faces the right way, e.g. by spinning like Explorer 1.
+_Avoid_: attitude control (in player text), orientation
 
 **Payload**:
 The instruments a Spacecraft carries to do its job.

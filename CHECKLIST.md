@@ -44,7 +44,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Missions
 - [x] Contracts board
-- [ ] Mission Designer: 3D Spacecraft, slots, six live resource bars
+- [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [ ] Easy and Advanced Part sets
 - [ ] Launch Vehicle catalogue with mass check
 - [ ] Rideshare priced per kg

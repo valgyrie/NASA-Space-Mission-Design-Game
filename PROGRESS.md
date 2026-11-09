@@ -4,32 +4,34 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–06 done. Ticket 06 (Contracts board) is on branch `claude/practical-wozniak-6t2cl1`, waiting for the team to merge. Tested in headless Chromium at 1440×900 and 1024×768: open the board, accept Explorer 1, watch days count down, Market and board close each other, Esc closes the board, the Contract survives reload, no console errors.
-- **Domain:** `src/game/contracts.ts` (`CONTRACTS`, `acceptContract`, `availableContracts`, `deadlineDay`, `daysLeft`). Requirements are typed data (`orbit`, `payload`, `dataDays`) so ticket 08's Mission Report can check them. Reward and deadline are in `src/game/balance.ts`. Deadlines count whole Game dates from the day accepted.
-- **Save v5:** `SiteState.contracts` (accepted Contracts with `acceptedDay`); v4 saves get `contracts: []`.
-- **UI:** `src/ui/contractsPanel.ts` (left side panel, same spot as the Market). HUD has a Contracts button that pulses until a Contract is taken, and an "Explorer 1: N days left" line. `showHud` now returns `{ update(state) }`.
-- **Layout fix:** the top bar and HUD no longer overlap at 1024×768 (checked 1024–1440 px wide with a 24-character name and big numbers).
-- **Facts:** Explorer 1 client and the 30-day Data requirement are cited in `docs/research/milestones.md` (Game notes). Rules in `docs/GDD.md` §6.
+**State:** tickets 01–07 done. Ticket 07 (Mission Designer v1) is on branch `claude/exciting-allen-7jb3qh`, waiting for the team to merge. Tested in headless Chromium at 1440×900 and 1024×768: open from the HUD, Site pauses (date stops), pick all six slots, bars and warnings react (Small Battery → "Power: runs out on day 16 of 30"), drag turns the model, Buy missing Parts fills the Warehouse, Esc closes and the speed comes back, design and Parts survive reload, no console errors.
+- **Domain:** `src/game/spacecraft.ts`: slots, options, `Design`, `choose`, `checkDesign` (six `Gauge`s + typed `DesignProblem`s), `missionGoal` (first accepted Contract, else first on offer), `partsToBuy`, `costToBuy`, `buyMissing`. Numbers in `src/game/balance.ts` (`OPTION_STATS`, `SUNLIT_SHARE`). Bar definitions: GDD §7.
+- **Launch Vehicles:** `src/game/launchVehicles.ts` has only Juno I (14 kg to LEO, still _(verify)_). Ticket 08 adds choosing, prices and the spaceport.
+- **New Part:** Radiation Detector (Electronics Lab). Part masses were cut so an Explorer 1-like design fits Juno I (Small Bus 3 kg, Medium 8, batteries 3/6, computer 1).
+- **Save v6:** `SiteState.design`; v5 saves get an empty design and `parts.radiationDetector = 0`.
+- **UI:** `src/ui/missionDesigner.ts` (full-screen dialog), 3D in `src/world/spacecraftView.ts` (own small renderer, runs only while open) and `spacecraftMesh.ts`. The Site isn't drawn while the designer is open (`world.hidden`).
+- **Facts:** Explorer 1 numbers checked and quoted in `docs/research/spacecraft-parts.md`.
 
 **Next:**
-1. Ticket 07 (Mission Designer v1): Parts come from the Warehouse (`state.parts`, `buy()` to buy on the spot; Part mass is in `RECIPES`). It needs a **radiation detector** Payload, which the Explorer 1 Contract already names (`PayloadKind` in `contracts.ts`, string `payload.radiationDetector`). Also unblocked: 15, 19, 25, 30.
+1. Ticket 08 (First full Mission loop): Juno I picker with mass check (`spacecraftMass`, `LAUNCH_VEHICLES`), take the Parts out of the Warehouse when shipping (`partsNeeded`), Rideshare per kg, Mission Report from `checkDesign` problems. Also unblocked: 15, 19, 20, 25, 30.
 
 **Open:**
-- A passed deadline only shows "deadline passed" (orange). Penalties and retries belong to ticket 17.
+- Solar Cells are shown but locked (`LOCKED` in `spacecraft.ts`); ticket 14 should unlock them with Vanguard 1.
+- No Computer or Propulsion slot yet. Explorer 1 had no tape recorder (Explorer 3 did): a Basic Computer as Data storage could come with TIROS-1.
+- Power doesn't check Earth's shadow yet (every battery covers it in Era 1); ticket 12's eclipse Anomaly will need it.
+- Communications ignores Ground Stations (ticket 18).
+- Assembly days (30/45 by Bus) are counted in the Time bar but nothing waits for them yet (ticket 08/15).
 - Explorer 1 numbers ($3M reward, 365 days) are first guesses; tune once Rideshare prices exist (ticket 08).
-- Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
-- Factories cost nothing to run. Upgrades (ticket 15) will raise output.
-- Balance numbers are first guesses (Market prices like "$18.64K" could be rounded).
-- Each building is ~35–60 small meshes; merge static parts per material if Sites get crowded. Performance on real laptops still unknown.
-- Narrower than 1024 px is not checked. (The top bar no longer overlaps the HUD from 1024 px up: the HUD has a fixed width, long names end in "…", and the top bar is tighter below 1280 px.)
+- A passed deadline only shows "deadline passed". Penalties and retries belong to ticket 17.
+- Balance numbers are first guesses. Performance on real laptops still unknown. Narrower than 1024 px is not checked (the designer's slot list scrolls at 1024×768).
 - No "New game"/reset yet. Speed isn't saved.
-- Ticket 30 open question: free Deposit view of a Plot, or a paid Survey? Default free.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `domain-modeling` (Part and Payload terms in ticket 07), `handoff`.
+**Suggested skills:** `domain-modeling` (Launch Vehicle, Rideshare, Shipping terms in ticket 08), `handoff`.
 
 ## Log
 
+- 2026-11-09: Ticket 07 done: Mission Designer with six slots, rotating 3D Spacecraft, six live bars, Radiation Detector Part, save v6.
 - 2026-11-09: Ticket 06 done: Contracts board, Explorer 1 Contract with deadline, save v5.
 - 2026-11-08: Checked existing Raw Material sales; added regression tests and a README note, fixed the stock message and pause overlay.
 - 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
