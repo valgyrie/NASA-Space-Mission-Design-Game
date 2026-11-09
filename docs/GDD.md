@@ -139,6 +139,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 | Time | Days to assemble (set by the Bus) plus days flying | Days left before the deadline |
 
 - **Era 1 numbers** (game estimates in `src/game/balance.ts`): the tutorial design (Small Bus, batteries only, Large Battery, Simple Antenna, spin, radiation detector) weighs 11.5 kg and lasts about 33 days. A Small Battery runs out on day 16; a Medium Bus is too heavy for Juno I. Solar Cells show as locked until Vanguard 1 (ticket 14).
+- **The 3D Spacecraft** sits against stars with a low-poly Earth below. Every Part has visible detail so choices read at a glance: the Small Bus is a slim striped cylinder with seams, flanges and a hatch; the Medium Bus is an octagon in gold foil with a finned white radiator and corner rails; batteries are rows of cells in a strut cage; solar cells are framed panels with a cell grid; the Simple Antenna is four hinged whips plus slot antennas; Spin adds balance weights and spin-up nozzles, and the model really spins; the radiation detector has vents and a window onto its Geiger tube under the nose cone. A launch adapter ring sits at the bottom.
 - **Easy mode:** fewer, simpler Parts, and placement is automatic. **Advanced mode:** more Parts and more realistic numbers. **Manual placement** (panels facing the Sun, camera facing Earth) is **Later**, in Advanced only.
 
 | Slot | Options (by Era) |
