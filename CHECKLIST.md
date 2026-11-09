@@ -54,7 +54,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Launch Window advisor
 - [ ] Launch Insurance
 - [x] Test Run (2D) with estimated success %
-- [ ] 3D Launch and flight
+- [x] 3D Launch and flight
 - [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
 - [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
 - [ ] Mission Patches and patch gallery

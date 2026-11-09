@@ -50,7 +50,7 @@ function svg<K extends keyof SVGElementTagNameMap>(tag: K, attrs: Record<string,
 }
 
 /** The value on day `day` (which may be part-way through a day), read off a per-day list. */
-function at(values: readonly number[], day: number): number {
+export function at(values: readonly number[], day: number): number {
   const i = Math.max(0, Math.min(values.length - 1, Math.floor(day)));
   const j = Math.min(values.length - 1, i + 1);
   return values[i]! + (values[j]! - values[i]!) * (day - i);
@@ -144,7 +144,7 @@ function eccentricAnomaly(lap: number, e: number): number {
   return ea;
 }
 
-function drawOrbit(canvas: HTMLCanvasElement, orbitKm: { low: number; high: number }, lap: number, powered: boolean): void {
+export function drawOrbit(canvas: HTMLCanvasElement, orbitKm: { low: number; high: number }, lap: number, powered: boolean): void {
   const ratio = window.devicePixelRatio || 1;
   const w = Math.round(canvas.clientWidth * ratio);
   const h = Math.round(canvas.clientHeight * ratio);

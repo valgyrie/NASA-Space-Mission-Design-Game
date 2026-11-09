@@ -1569,3 +1569,158 @@ button.report-close {
     transition: none;
   }
 }
+
+/* ---- The Launch (ticket 10) ---- */
+
+.launch {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: auto;
+  background: #02050c;
+  overflow: hidden;
+}
+
+.launch[hidden],
+.launch-canvas[hidden],
+.launch-note[hidden],
+.launch-bars[hidden],
+.launch-bar[hidden] {
+  display: none;
+}
+
+.launch-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.launch-cut {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.launch-cut.on {
+  animation: launch-cut 0.7s ease-out;
+}
+
+@keyframes launch-cut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.launch-card {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  width: min(380px, calc(100vw - 40px));
+  box-sizing: border-box;
+  padding: 14px 18px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+}
+
+.launch-title {
+  margin: 0 0 6px;
+  font-size: 22px;
+}
+
+.launch-detail {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
+.launch-detail.warn {
+  color: var(--warn);
+}
+
+.launch-clock {
+  margin: 10px 0 0;
+  font-size: 20px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.launch-bars {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+  font-size: 13px;
+}
+
+.launch-bar {
+  display: grid;
+  grid-template-columns: 110px 1fr 96px;
+  align-items: center;
+  gap: 8px;
+}
+
+.launch-bar-track {
+  height: 8px;
+  background: #1f2c40;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.launch-bar-fill {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.launch-bar.warn .launch-bar-fill {
+  background: var(--warn);
+}
+
+.launch-bar-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted);
+}
+
+.launch-note {
+  position: absolute;
+  left: 20px;
+  bottom: 20px;
+  margin: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  color: var(--muted);
+  background: var(--panel);
+  border-radius: 6px;
+}
+
+.launch-controls {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 10px;
+}
+
+.launch-speeds {
+  padding-left: 0;
+  border-left: 0;
+}
+
+.launch-simple-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+  color: var(--accent);
+}

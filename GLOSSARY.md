@@ -100,6 +100,9 @@ _Avoid_: rocket, ship, satellite (as the general term)
 The rocket that carries a Spacecraft to space.
 _Avoid_: rocket (alone), booster (alone)
 
+**Stage**:
+One section of a Launch Vehicle that burns, then drops away so the rest flies on lighter.
+
 **Bus**:
 The Spacecraft's main body; its size sets how much mass of Parts it can carry.
 _Avoid_: chassis, frame, hull

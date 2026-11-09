@@ -4,34 +4,32 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–09 done (08 merged into `main`; 09 on branch `claude/gallant-goldberg-07ceik`, waiting for the team to merge). The whole loop works: accept Explorer 1, design, Plan the Launch, **Test Run**, ship, watch the truck, Launch, read the Mission Report, get paid.
+**State:** tickets 01–10 done (09 merged into `main`; 10 on branch `claude/intelligent-brown-qe6o60`, waiting for the team to merge). The whole loop works: accept Explorer 1, design, Test Run, ship, watch the truck, Launch, **watch the 3D Launch**, read the Mission Report, get paid.
 
-**Just finished: ticket 09, Test Run.** How it plays: GDD §9 "First Test Run".
-- **Domain:** `src/game/flight.ts`. `fly(plan, launchDay, deadline, spread)` works out one flight day by day (battery Wh, Data sent home, `powerOutDay`, findings). `drawSpread` varies Parts off their labels (`PART_SPREAD` in `balance.ts`: battery ±5%, power use ±5%, antenna ±10%, game estimates). `testRun` flies `TEST_RUNS` (200) seeded runs: `successPercent`, `missed` per requirement, battery best/worst band. `realFlight` draws one spread from Seed + Launch day.
-- **Changed from ticket 08:** `flightFindings` is gone; `launch(state, seed)` now uses `realFlight`, so the real flight is one run of the same model and the % is honest. With Era 1 Parts nothing changes in play (the Explorer design is 100%, Small Battery 0%), because a 10% margin always holds. The team may want to know this decision; GDD §8 says it.
-- `testRunFor(state, seed, design, vehicle)` in `mission.ts` uses the planner's Launch day and deadline. It needs no Contract, Parts or money.
-- `Contract.orbitKm` (Explorer 1: 358 × 2,550 km, cited in `docs/research/earth-map.md`) draws the orbit.
-- **UI:** `src/ui/testRun.ts` (canvas orbit view with Kepler motion, SVG graphs with a replay cursor, estimated success, predicted problems via the Mission Report's `findingText`). Button in the Launch planner footer; the Mission Designer now switches between three views (`showView` in `missionDesigner.ts`), and `showMissionDesigner` takes the Seed.
-- **Tested** in headless Chromium at 1440×900, 1280×800 and 1024×768: Large Battery 100%, no problems, "Day 30 of 30"; Small Battery 0%, "Power ran out on day 16 of 30…", orbit dot goes grey on day 16; Test Run again gives the same %; Back returns to the planner; no console errors, no sideways scroll. 138 unit tests pass.
+**Just finished: ticket 10, 3D Launch and flight.** How it plays: GDD §9 "First 3D Launch". Juno I facts with sources: `docs/research/launch-vehicles.md` (new "Juno I: how Explorer 1 flew" table).
+- **Domain:** `LaunchVehicle` now has `heightM`, `stages` (motors, burn seconds) and `coastS` (`src/game/launchVehicles.ts`). `src/game/ascent.ts` turns them into the show: `flightShow(vehicle, flight)` gives segments (countdown, burn per stage, coast, orbit or lost, mission days, end) with screen seconds; `showAt(segments, seconds)` reads the moment; `stageTimes` gives T+ for each stage. Show length ~90 s at 1× (tested 60–120 s for 30/90/365 days).
+- **`launch()` now returns `{ report, flight, design }`** (`LaunchResult` in `mission.ts`), so the show plays the same Flight the report came from. The result is saved before the show starts; reloading mid-show just skips it.
+- **3D:** `src/world/rocketMesh.ts` (low-poly Juno I, 21.2 m, tub of 11 + 3 + 1 motors, the player's Spacecraft scaled on top) and `src/world/launchView.ts` (own WebGL renderer, three shots: pad and chase camera with smoke and a made-up climb path; upper stages over a 3,000-unit Earth with Cape Canaveral below; the orbit to scale with Kepler motion, dot grey once Power is out). Stage 4 stays on, as on Explorer 1.
+- **UI:** `src/ui/launchShow.ts` (card with title, fact line, T+ clock or "Day N of M", Battery and Data bars; 1×/2×/4×, Simple view, Skip; Esc skips). Simple view reuses the Test Run's `drawOrbit` (now exported with `at`). It switches on by itself if the median frame over 40 timed frames is slower than 1/20 s, or WebGL fails. Wired in `playSite.ts` `launchMission`: world hidden during the show, Mission Report after.
+- **Tested** in headless Chromium (SwiftShader) at 1440×900, 1280×800, 1024×768: Large Battery plays countdown → liftoff → coast → stages 2–4 → orbit → 30 days → "Mission complete" → report "Explorer 1 worked!"; Small Battery shows "Day 16: Power out" in orange, Battery bar 0 Wh, "Mission over", failure report; simulated slow frames (80 ms busy-wait) switch to the simple view with its note; Esc skips to the report; no console errors, no sideways scroll. 146 unit tests pass; build passes.
 
 **Next:**
-1. Ticket 10 (3D Launch and flight; notes from 08 and 09 in its file). Also unblocked: 15, 16, 17, 19, 20, 25, 30. Ticket 13 now waits only for 11.
+1. Ticket 11 (Anomalies: framework + Point the antenna). The mission-days part of the show (`phase === 'mission'` in `launchShow.ts` / `drawOrbit` in `launchView.ts`) is the natural place to pause for an Anomaly. Also unblocked: 15, 16, 17, 19, 20, 25, 30.
 
 **Open:**
-- Every Era 1 design is 0% or 100%: in-between estimates need thinner-margin Parts (Solar Cells, ticket 14) or Launch Vehicle failures (ticket 17, add to both `realFlight` and `testRun`).
-- The Test Run has no signal graph (needs Ground Stations, ticket 18) and ignores Earth's shadow (ticket 12).
-- The truck drives in a straight line over terraces and water; there are no roads. The Spacecraft on the truck is small.
-- After Explorer 1 there are no more Contracts until ticket 14.
-- The Mission Report appears the moment you Launch; the 30 flying days don't pass on the Game date (ticket 10 can decide).
-- Rideshare $40K/kg, Shipping $25K / 7 days and the Part spreads are guesses; tune with playtests. Juno I's 14 kg is still _(verify)_.
-- A passed deadline does nothing yet (ticket 17). No "New game"/reset. Speed isn't saved.
-- Performance on real laptops unknown; narrower than 1024 px not checked.
+- The 247 s coast is read as starting at first-stage burnout (orbit at T+420 s); no source gives Explorer 1's own times _(verify)_. Gunter's Space Page or the NASA Boehm PDF linked from Wikipedia's Juno I page may have them.
+- The pad shot's high-altitude horizon is a flat haze band, and Earth facets are coarse in the space shot (icosahedron detail 48). Fine for now; ticket 26 can polish.
+- The Game date doesn't move during the show (Mission days are only shown). Payment arrives at Launch.
+- The "lost" path (too heavy for orbit) can't happen in play yet because the planner blocks it; it's unit-tested only.
+- Every Era 1 design is 0% or 100% (needs ticket 14 Parts or ticket 17 failures). Test Run has no signal graph (18) or eclipse (12).
+- Rideshare, Shipping and Part spreads are guesses; Juno I's 14 kg is still _(verify)_. No "New game"; Speed not saved; real-laptop performance unknown.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
 **Suggested skills:** `handoff`.
 
 ## Log
 
+- 2026-11-09: Ticket 10 done: 3D Launch of Juno I (pad, staging, orbit, Mission days) between Launch and the Mission Report, with speed, skip and a simple view for slow devices.
 - 2026-11-09: Ticket 09 done: free Test Run with orbit view, battery and Data graphs, estimated success from 200 seeded runs; the real Launch flies the same model.
 - 2026-11-09: Watch the Shipping: Spacecraft assembled on a truck at a dock, truck drives off the Site, Follow the truck, Mission tracker with the dates to come.
 - 2026-11-09: Ticket 08 done: Launch planner (Juno I mass check, Rideshare per kg, Shipping to Cape Canaveral), Launch from the HUD, Mission Report with reasons, reward paid, save v7.
@@ -46,4 +44,3 @@
 - 2026-11-08: Ticket 03 done: Site generated from a Seed (terrain, water, Deposits), Seed shown and copyable.
 - 2026-11-08: Ticket 02 done: Company name with bad-word filter, local autosave, strings file.
 - 2026-11-08: Ticket 01 done: Vite + Three.js skeleton, isometric camera, pre-commit checks.
-- 2026-11-07: Game named **LEAP: A Space Mission Design Game** (Launch · Engineer · Advance · Pioneer).

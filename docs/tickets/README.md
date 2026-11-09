@@ -15,7 +15,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 07 ✅ | [Mission Designer v1](07-mission-designer-v1.md) | 05, 06 | Build a Spacecraft from slots (Bus, Power, Battery, Comms, pointing, Payload) with a rotating 3D model and the six live resource bars. |
 | 08 ✅ | [First full Mission loop](08-first-full-mission-loop.md) | 07 | Pick Juno I (mass check), ship to Cape Canaveral, pay the Rideshare, Launch, get a Mission Report that explains why. Watch the truck carry the Spacecraft off the Site; a Mission tracker shows the dates to come. **The whole game loop works end to end, roughly.** |
 | 09 ✅ | [Test Run](09-test-run.md) | 08 | Free 2D Test Run with battery and Data graphs and an estimated success %. Simulation is deterministic and tested. |
-| 10 | [3D Launch and flight](10-launch-and-flight-3d.md) | 08 | Watch liftoff, staging and orbit in 3D. |
+| 10 ✅ | [3D Launch and flight](10-launch-and-flight-3d.md) | 08 | Watch liftoff, staging and orbit in 3D. |
 | 11 | [Anomalies: framework + Point the antenna](11-anomaly-framework-antenna.md) | 10 | First Anomaly mini-game; first time required, then skippable; driven by design weaknesses; failure lowers the result. |
 | 12 | [Anomalies: Stuck solar panel, Survive the eclipse](12-anomalies-panel-eclipse.md) | 11, 14 | Two more Anomaly mini-games. |
 | 13 | [Tutorial and Real History](13-tutorial-and-history.md) | 09, 11 | Explorer 1 tutorial: first Launch in under 10 minutes; Real History cards before and after; first Mission Patch; History Archive. |

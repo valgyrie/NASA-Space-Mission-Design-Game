@@ -9,6 +9,7 @@ import { showContractsPanel } from './ui/contractsPanel';
 import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
 import { showMissionDesigner } from './ui/missionDesigner';
+import { showLaunchShow } from './ui/launchShow';
 import { showMissionReport } from './ui/missionReport';
 import { showMissionTracker } from './ui/missionTracker';
 import { SITE_SIZE } from './site/site';
@@ -16,6 +17,7 @@ import { accepted, deadlineDay } from './game/contracts';
 import { launch, missionStage } from './game/mission';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
+import { LaunchView } from './world/launchView';
 import type { World } from './world/world';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
@@ -86,6 +88,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     world.keyboardEnabled = true;
     setSpeed(speedBeforeReport);
   });
+  // The Launch plays first, then the Mission Report. The result is already settled and saved.
+  const launchShow = showLaunchShow(ui, () => new LaunchView());
   const tracker = showMissionTracker(ui, state, {
     onFollow: () => world.followTruck(),
     onLaunch: () => launchMission(),
@@ -105,7 +109,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     tracker.close();
     panel.close();
     const taken = accepted(state, contract);
-    report.show(result, taken ? deadlineDay(taken) : null, Math.floor(state.day));
+    world.hidden = true;
+    launchShow.play(result, () => {
+      world.hidden = false;
+      report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day));
+    });
   };
   // The Market and the Contracts board share the left side, so one closes the other.
   const hud = showHud(
@@ -178,7 +186,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.target instanceof HTMLInputElement) return;
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
-      if (menu.isOpen) menu.close();
+      if (launchShow.isOpen) launchShow.skip();
+      else if (menu.isOpen) menu.close();
       else if (report.isOpen) report.close();
       else if (designer.isOpen) designer.close();
       else if (placing) setPlacing(null);
@@ -189,7 +198,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (menu.isOpen || designer.isOpen || report.isOpen) return;
+    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -223,5 +232,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow } });
 }

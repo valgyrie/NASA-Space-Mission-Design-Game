@@ -10,7 +10,8 @@ const SPIN_TURNS_PER_SECOND = 0.6;
 /** Seconds after the player lets go before the camera starts drifting round again. */
 const IDLE_SECONDS = 4;
 
-function makeStars(): THREE.Points {
+/** A fixed field of stars on a sphere of `radius`, so the sky looks the same every time. */
+export function makeStars(radius = 150): THREE.Points {
   const positions: number[] = [];
   // A fixed pattern, so the sky looks the same every time.
   let seed = 7;
@@ -18,7 +19,7 @@ function makeStars(): THREE.Points {
   for (let i = 0; i < 600; i++) {
     const theta = rand() * Math.PI * 2;
     const phi = Math.acos(2 * rand() - 1);
-    const r = 150;
+    const r = radius;
     positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
   }
   const geometry = new THREE.BufferGeometry();
