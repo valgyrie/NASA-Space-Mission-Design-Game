@@ -192,6 +192,8 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Rules:** each type is mandatory the first time; after that it can be skipped and is resolved from your best past result. Anomalies come mostly from **design weaknesses**, not pure luck. Failing one **reduces** the Mission's result; it never destroys it outright.
 - **Hackathon:** build 3 (antenna, solar panel, eclipse), then the other 2 if time allows.
 
+- **Space view (ticket 31):** a Spacecraft that reaches orbit stays there. **Space view** (HUD button, shown once something is in orbit; also **See it in orbit** on the Mission Report) shows Earth with every Spacecraft the Company has in orbit, each on its real orbit (size, shape and tilt; Explorer 1: 358 × 2,550 km, 33.24°), moving as Kepler says, 300× faster than real, with Earth turning at the same pace. Name tags and a list; clicking a Spacecraft (on screen, on its tag or in the list) follows its 3D model round the orbit with Earth beside it, and shows what it is doing: "Sending Data: day N of M", "Silent since day N: the Power ran out. Still in orbit." or "Mission done. Still in orbit.", plus its Launch, orbit and lap time ("One lap takes 115 minutes", worked out from Kepler's third law). Drag to turn, scroll to zoom, **See the whole Earth** to go back, Esc to close. It pauses the Site. Orbits round the Moon and other worlds join with their Contracts (Era 3 on). Facts: `docs/research/orbits.md`.
+
 ## 10. Mission Report and scoring
 
 - Explains **why** the Mission ended as it did, linked to design choices ("Battery ran out in eclipse because Power margin was 3%. A larger battery or more solar cells would fix this.").
@@ -243,7 +245,7 @@ The challenge expects the provided data to be used visibly. Planned slots, to be
 
 ## 15. Screens
 
-Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
+Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Space view · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
 
 ## 16. Tutorial (first 10 minutes, Explorer 1)
 

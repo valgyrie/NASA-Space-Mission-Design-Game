@@ -1,6 +1,7 @@
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { availableContracts, daysLeft } from '../game/contracts';
 import { missionStage } from '../game/mission';
+import { satellitesInOrbit } from '../game/space';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
@@ -26,6 +27,7 @@ export function showHud(
   onDesigner: () => void,
   onLaunch: () => void,
   onTrack: () => void,
+  onSpace: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
@@ -83,6 +85,15 @@ export function showHud(
   designer.title = t('designer.openName');
   designer.addEventListener('click', onDesigner);
 
+  // Shown once something is in orbit: the Space view with every Spacecraft up there.
+  const space = document.createElement('button');
+  space.type = 'button';
+  space.className = 'small market-button designer-button space-button';
+  space.textContent = t('space.open');
+  space.title = t('space.openName');
+  space.hidden = true;
+  space.addEventListener('click', onSpace);
+
   const buttons = document.createElement('div');
   buttons.className = 'row hud-buttons';
   buttons.append(market, contracts);
@@ -111,7 +122,7 @@ export function showHud(
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, buttons, designer, active, mission, track, launch);
+  bar.append(top, legend, buttons, designer, space, active, mission, track, launch);
   root.append(bar);
 
   // Panels on the left open just below the HUD, which grows while a Mission is on its way.
@@ -135,6 +146,8 @@ export function showHud(
       } else setText(mission, '');
       if (launch.hidden !== (stage?.stage !== 'ready')) launch.hidden = stage?.stage !== 'ready';
       if (track.hidden !== !stage) track.hidden = !stage;
+      const orbiting = satellitesInOrbit(state).length > 0;
+      if (space.hidden === orbiting) space.hidden = !orbiting;
       const first = state.contracts[0];
       if (!first) return setText(active, '');
       const name = t(`contract.${first.id}.name`);

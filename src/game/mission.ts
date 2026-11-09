@@ -247,6 +247,8 @@ export interface MissionReport {
   /** Money paid for it (0 on failure). */
   reward: number;
   findings: Finding[];
+  /** The design that flew, for the Space view. Null in saves from before it was kept. */
+  design: Design | null;
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -269,7 +271,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
   const { findings, success } = flight;
   const reward = success ? completeContract(state, m.contract) : 0;
-  const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings };
+  const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings, design: { ...m.design } };
   state.reports.push(report);
   state.mission = null;
   return { report, flight, design: m.design };

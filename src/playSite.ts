@@ -12,12 +12,14 @@ import { showMissionDesigner } from './ui/missionDesigner';
 import { showLaunchShow } from './ui/launchShow';
 import { showMissionReport } from './ui/missionReport';
 import { showMissionTracker } from './ui/missionTracker';
+import { showSpaceScreen } from './ui/spaceScreen';
 import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
 import { launch, missionStage } from './game/mission';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import { LaunchView } from './world/launchView';
+import { SpaceView } from './world/spaceView';
 import type { World } from './world/world';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
@@ -84,9 +86,33 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   });
   // The Mission Report pauses the Site while it is read.
   let speedBeforeReport: Speed = 1;
-  const report = showMissionReport(ui, () => {
-    world.keyboardEnabled = true;
-    setSpeed(speedBeforeReport);
+  const report = showMissionReport(
+    ui,
+    () => {
+      world.keyboardEnabled = true;
+      setSpeed(speedBeforeReport);
+    },
+    (r) => space.open(state.reports.indexOf(r)),
+  );
+  // The Space view pauses the Site like the Mission Designer does.
+  let speedBeforeSpace: Speed = 1;
+  const space = showSpaceScreen(ui, state, () => new SpaceView(), {
+    onOpen() {
+      world.keyboardEnabled = false;
+      world.hidden = true;
+      speedBeforeSpace = speed;
+      setSpeed(0);
+      setPlacing(null);
+      market.close();
+      contracts.close();
+      tracker.close();
+      panel.close();
+    },
+    onClose() {
+      world.keyboardEnabled = true;
+      world.hidden = false;
+      setSpeed(speedBeforeSpace);
+    },
   });
   // The Launch plays first, then the Mission Report. The result is already settled and saved.
   const launchShow = showLaunchShow(ui, () => new LaunchView());
@@ -138,6 +164,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       contracts.close();
       tracker.toggle();
     },
+    () => space.open(),
   );
   const topBar = showTopBar(ui, setSpeed);
 
@@ -188,6 +215,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
       else if (menu.isOpen) menu.close();
+      else if (space.isOpen) space.close();
       else if (report.isOpen) report.close();
       else if (designer.isOpen) designer.close();
       else if (placing) setPlacing(null);
@@ -198,7 +226,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen) return;
+    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -232,5 +260,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space } });
 }

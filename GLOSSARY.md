@@ -161,6 +161,10 @@ _Avoid_: event, glitch, bug
 The result of a Mission, explaining why it succeeded or failed.
 _Avoid_: results screen, summary
 
+**Space view**:
+A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
+_Avoid_: map, radar, tracker (that is the Mission tracker)
+
 **Launch Insurance**:
 A payment before Launch that returns most of the Mission's cost if it fails.
 

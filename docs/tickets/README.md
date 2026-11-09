@@ -36,5 +36,6 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
 | 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
 | 30 | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
+| 31 ✅ | [Space view](31-space-view.md) _(added 2026-11-09)_ | 10 | See every Spacecraft in orbit round Earth; click one to follow it along its real orbit. |
 
 **Not in this list (Optional in `CHECKLIST.md`):** Eras 3–5, Crew Module, Dodge the debris, Stop the tumble, GIBS photos, Horizons, DONKI, manual placement, live weather, visiting Sites, co-op, Sandbox, Mars, touch, translations, desktop app.

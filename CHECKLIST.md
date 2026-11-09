@@ -55,6 +55,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Launch Insurance
 - [x] Test Run (2D) with estimated success %
 - [x] 3D Launch and flight
+- [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
 - [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
 - [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
 - [ ] Mission Patches and patch gallery
@@ -105,6 +106,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Anomalies: Dodge the debris, Stop the tumble
 - [ ] Satellite photos of your region after imaging Missions (NASA GIBS)
 - [ ] Real Moon positions and windows (JPL Horizons)
+- [ ] Space view shows the Moon, and Spacecraft orbiting the Moon or other worlds (with their Contracts, Era 3 on)
 - [ ] Real solar storms as flight events (NASA DONKI)
 - [ ] Manual Part placement in Advanced mode
 - [ ] Live weather mode (today's real weather)
