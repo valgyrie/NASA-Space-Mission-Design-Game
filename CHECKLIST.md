@@ -43,7 +43,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Startup grant safety net
 
 ### Missions
-- [ ] Contracts board
+- [x] Contracts board
 - [ ] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [ ] Easy and Advanced Part sets
 - [ ] Launch Vehicle catalogue with mass check

@@ -5,6 +5,7 @@ import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
 import { showBuildingPanel } from './ui/buildingPanel';
+import { showContractsPanel } from './ui/contractsPanel';
 import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
 import { makeMenu } from './ui/menu';
@@ -50,13 +51,22 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     },
   );
   const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
+  const contracts = showContractsPanel(ui, state, () => saveGame(localStorage, game));
   const panel = showBuildingPanel(ui, site, state);
-  showHud(
+  // The Market and the Contracts board share the left side, so one closes the other.
+  const hud = showHud(
     ui,
     game.company.name,
     () => menu.open(),
     () => world.goHome(),
-    () => market.toggle(),
+    () => {
+      contracts.close();
+      market.toggle();
+    },
+    () => {
+      market.close();
+      contracts.toggle();
+    },
   );
   const topBar = showTopBar(ui, setSpeed);
 
@@ -109,6 +119,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else if (placing) setPlacing(null);
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
+      else if (contracts.isOpen) contracts.close();
       else menu.open();
       return;
     }
@@ -128,6 +139,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     world.animateBuildings(Math.min(seconds, 0.1) * speed);
     topBar.update(site, state, speed);
     market.update();
+    contracts.update();
+    hud.update(state);
     panel.update();
   });
   startAutosave(localStorage, () => game);

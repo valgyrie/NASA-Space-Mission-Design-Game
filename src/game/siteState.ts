@@ -1,6 +1,7 @@
 import { type BuildingKind, type FactoryKind, PARTS, type Part } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
+import type { AcceptedContract } from './contracts';
 import {
   BASE_STORAGE_KG,
   BUILD_COST,
@@ -45,6 +46,8 @@ export interface SiteState {
   stock: Record<RawMaterial, number>;
   /** How many of each Part are in stock. */
   parts: Record<Part, number>;
+  /** Contracts the Company has accepted. */
+  contracts: AcceptedContract[];
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -58,6 +61,7 @@ export function newSiteState(): SiteState {
     warehouses: [],
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
+    contracts: [],
   };
 }
 

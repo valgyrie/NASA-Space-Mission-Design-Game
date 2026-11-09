@@ -22,6 +22,7 @@ Facts used in Real History cards and Milestone Contracts. Researched 2026-11-07.
 
 **Game notes**
 - Explorer 1 had **batteries only**, so the tutorial Spacecraft uses batteries, not solar. Solar cells unlock after Vanguard 1's real first (1958).
+- Explorer 1 Contract: client **US Army**. The Army Ballistic Missile Agency (ABMA) modified the Jupiter-C, and "ABMA and JPL completed the job of modifying the Jupiter-C and building Explorer 1 in 84 days"; Project Orbiter was "a joint U.S. Army and U.S. Navy proposal". Its main instrument was a Geiger tube "to detect cosmic rays". The high-power transmitter ran 31 days, so the game asks for **30 days of Data**.[^e1]
 - Telstar shows the Rideshare idea: a private company paying for a government launch.
 - Artemis IV is a future event: keep its data in one file and re-check before release.
 

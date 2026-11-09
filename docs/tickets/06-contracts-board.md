@@ -4,9 +4,9 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Contracts board opens from the Site view
-- [ ] Explorer 1 Contract shows client, objective, requirements, reward and deadline
-- [ ] Accepting it marks it active and starts the deadline
-- [ ] Text uses Glossary terms and stays short
+- [x] Contracts board opens from the Site view
+- [x] Explorer 1 Contract shows client, objective, requirements, reward and deadline
+- [x] Accepting it marks it active and starts the deadline
+- [x] Text uses Glossary terms and stays short

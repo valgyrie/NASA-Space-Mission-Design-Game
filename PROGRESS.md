@@ -4,31 +4,32 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–05 done (on `main`), tested in headless Chromium (build, click a Factory, switch Part, Market buy/sell, Esc order, iso and low-tilt views):
-- **Domain:** `src/economy/part.ts` (Factory kinds, building kinds, Era 1 Parts), recipes and prices in `src/game/balance.ts`, `src/game/siteState.ts` (`build`/`checkBuild` for every building, Factories, storage by mass), `src/game/market.ts`. Rules in `docs/GDD.md` §5 (new bullets under "First tuning").
-- **Save v4** (`src/save/save.ts`): v3 saves keep Mines and stock.
-- **Models:** shared helpers in `src/world/buildingParts.ts` (palette, `parts()`, `PRODUCT_COLOUR`, names of moving parts); Factories and Warehouse in `src/world/factoryMesh.ts`. `World.addBuilding`/`setWorking`; Factories move only while making a Part, Mines stop when storage is full.
-- **UI:** build menu with all six buildings, Storage in the top bar, Market panel (HUD button, `src/ui/marketPanel.ts`), building panel on click (`src/ui/buildingPanel.ts`).
-- **Camera fix:** the orbit point now glides to the ground height (`World.followGround`), so high plateaus no longer put the low-tilt camera under the ground. Closes the old open item.
-- **Material selling:** already in ticket 05. Checked all three Raw Materials: 10 kg lots add money, keep fractional leftovers and survive reload. Added regression tests, clearer text for less than a full lot, and a short README note. The pause overlay now covers the Market; Esc resumes before closing panels. Checked in Chromium at 1440×900, 1366×768 and 1024×768; agent review passed.
+**State:** tickets 01–06 done. Ticket 06 (Contracts board) is on branch `claude/practical-wozniak-6t2cl1`, waiting for the team to merge. Tested in headless Chromium at 1440×900 and 1024×768: open the board, accept Explorer 1, watch days count down, Market and board close each other, Esc closes the board, the Contract survives reload, no console errors.
+- **Domain:** `src/game/contracts.ts` (`CONTRACTS`, `acceptContract`, `availableContracts`, `deadlineDay`, `daysLeft`). Requirements are typed data (`orbit`, `payload`, `dataDays`) so ticket 08's Mission Report can check them. Reward and deadline are in `src/game/balance.ts`. Deadlines count whole Game dates from the day accepted.
+- **Save v5:** `SiteState.contracts` (accepted Contracts with `acceptedDay`); v4 saves get `contracts: []`.
+- **UI:** `src/ui/contractsPanel.ts` (left side panel, same spot as the Market). HUD has a Contracts button that pulses until a Contract is taken, and an "Explorer 1: N days left" line. `showHud` now returns `{ update(state) }`.
+- **Facts:** Explorer 1 client and the 30-day Data requirement are cited in `docs/research/milestones.md` (Game notes). Rules in `docs/GDD.md` §6.
 
 **Next:**
-1. Ticket 06 (Contracts board), then 07 (Mission Designer: "Parts come from the Warehouse" — use `state.parts`, `buy()` for buying on the spot; Part mass is in `RECIPES`). Also unblocked: 15, 19, 25, 30.
+1. Ticket 07 (Mission Designer v1): Parts come from the Warehouse (`state.parts`, `buy()` to buy on the spot; Part mass is in `RECIPES`). It needs a **radiation detector** Payload, which the Explorer 1 Contract already names (`PayloadKind` in `contracts.ts`, string `payload.radiationDetector`). Also unblocked: 15, 19, 25, 30.
 
 **Open:**
-- Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and may add Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
+- A passed deadline only shows "deadline passed" (orange). Penalties and retries belong to ticket 17.
+- Explorer 1 numbers ($3M reward, 365 days) are first guesses; tune once Rideshare prices exist (ticket 08).
+- Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
 - Factories cost nothing to run. Upgrades (ticket 15) will raise output.
 - Balance numbers are first guesses (Market prices like "$18.64K" could be rounded).
 - Each building is ~35–60 small meshes; merge static parts per material if Sites get crowded. Performance on real laptops still unknown.
-- Market fits at 1024×768, but the top bar overlaps part of the Company panel at that width. Narrower screens are not checked.
+- At 1024×768 the top bar overlaps the Company name in the HUD. Narrower screens are not checked.
 - No "New game"/reset yet. Speed isn't saved.
 - Ticket 30 open question: free Deposit view of a Plot, or a paid Survey? Default free.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `domain-modeling` (Contract terms in ticket 06), `handoff`.
+**Suggested skills:** `domain-modeling` (Part and Payload terms in ticket 07), `handoff`.
 
 ## Log
 
+- 2026-11-09: Ticket 06 done: Contracts board, Explorer 1 Contract with deadline, save v5.
 - 2026-11-08: Checked existing Raw Material sales; added regression tests and a README note, fixed the stock message and pause overlay.
 - 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
 - 2026-11-08: Keyboard camera + H for the whole-Site view, pan past the Site, detailed Mine with turning wheel; ticket 30 (buy Plots, Optional) written.

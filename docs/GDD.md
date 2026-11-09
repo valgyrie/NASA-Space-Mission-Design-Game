@@ -91,6 +91,8 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 ## 6. Contracts, Milestones and progression
 
 - A **Contract** has a client, objective, requirements, reward (money, Reputation, land, Parts) and deadline. Example: _"Photograph 80% of Earth's land at ≤10 m detail for 2 years: $40M."_
+- **Contracts board** (button in the Site view): shows Contracts on offer and the active ones. Accepting a Contract makes it active and starts its deadline that Game day; the days left show on the board and under the Company name. The board button glows while there is work on offer and none taken.
+- **Explorer 1 Contract** (first tuning in `src/game/balance.ts`): client US Army; reach Low Earth Orbit, carry a radiation detector, send Data for 30 days; reward **$3M**; deadline **365 days** after accepting (about 12 minutes at 1×). What happens when a deadline passes comes with ticket 17.
 - **Campaign:** each Era has **Milestones** (required) and optional side Contracts. Finishing an Era's Milestones unlocks the **HQ** Upgrade. Pay and wait, then the next Era begins and the year jumps.
 - **Research Points** choose the order of Upgrades inside an Era (e.g. better solar cells or a stronger antenna first). Small tech tree, about 15 items in total.
 - **Destinations (hackathon):** Low Earth Orbit → Sun-synchronous orbit → Geostationary orbit → Moon (orbit, then surface). Mars and beyond are Later.

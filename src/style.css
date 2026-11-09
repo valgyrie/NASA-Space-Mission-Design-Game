@@ -406,7 +406,7 @@ button.small {
 }
 
 .market {
-  top: 120px;
+  top: 150px;
   left: 12px;
   width: min(420px, calc(100vw - 24px));
 }
@@ -536,5 +536,106 @@ button.trade.blocked {
   display: flex;
   align-items: center;
   gap: 6px;
+  font-weight: 600;
+}
+
+.hud-buttons {
+  gap: 6px;
+}
+
+/* A soft pulse on the Contracts button while work is on offer and none is taken. */
+.market-button.attention {
+  border-color: var(--accent);
+  animation: attention 1.6s ease-in-out infinite;
+}
+
+@keyframes attention {
+  50% {
+    box-shadow: 0 0 0 3px rgba(79, 163, 255, 0.35);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .market-button.attention {
+    animation: none;
+  }
+}
+
+.hud-contract {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+}
+
+.hud-contract:empty {
+  display: none;
+}
+
+.hud-contract.warn {
+  color: var(--warn);
+}
+
+.contracts {
+  top: 150px;
+  left: 12px;
+  width: min(380px, calc(100vw - 24px));
+}
+
+.contract-card {
+  margin-top: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+  background: rgba(30, 44, 64, 0.45);
+}
+
+.contract-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.contract-title h4 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.tag {
+  padding: 1px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #0a0f17;
+  background: #f2c94c;
+}
+
+.contract-field {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px;
+  padding: 3px 0;
+  line-height: 1.4;
+}
+
+.contract-label {
+  color: var(--muted);
+}
+
+.contract-field .warn {
+  color: var(--warn);
+}
+
+.contract-requirements {
+  margin: 0;
+  padding-left: 16px;
+}
+
+button.accept {
+  margin-top: 8px;
+  padding: 5px 16px;
   font-weight: 600;
 }
