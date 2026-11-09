@@ -15,6 +15,7 @@ import { showMissionTracker } from './ui/missionTracker';
 import { showSpaceScreen } from './ui/spaceScreen';
 import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
+import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
 import { launch, missionStage } from './game/mission';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
@@ -29,6 +30,8 @@ const CLICK_SLOP = 6;
 export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const site = generateSite(game.site.seed);
   const state = game.state;
+  // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
+  settleUnanswered(state);
   world.showSite(site);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
@@ -136,10 +139,22 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     panel.close();
     const taken = accepted(state, contract);
     world.hidden = true;
-    launchShow.play(result, () => {
-      world.hidden = false;
-      report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day));
-    });
+    const kind = result.report.anomaly?.kind;
+    const hooks = kind && {
+      best: isMandatory(state, kind) ? null : state.anomalyBest[kind]!,
+      onAnswer: (score: number, answer: 'played' | 'skipped') => {
+        settleAnomaly(state, result.report, score, answer);
+        saveGame(localStorage, game);
+      },
+    };
+    launchShow.play(
+      result,
+      () => {
+        world.hidden = false;
+        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day));
+      },
+      hooks || undefined,
+    );
   };
   // The Market and the Contracts board share the left side, so one closes the other.
   const hud = showHud(

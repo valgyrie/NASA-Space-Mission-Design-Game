@@ -153,3 +153,20 @@ export const PART_SPREAD = {
 
 /** Quick runs behind a Test Run's estimated success. */
 export const TEST_RUNS = 200;
+
+/**
+ * Point the antenna: how likely it is, from how much the antenna can send beyond the Data the Payload makes.
+ * A stronger link still gets through when the antenna points a little off, so it drifts off less often.
+ * Game estimates. With no spare at all the chance is HIGH; with SAFE_SPARE (200% extra) or more it is LOW.
+ */
+export const ANTENNA_CHANCE = {
+  low: 0.15,
+  high: 0.9,
+  safeSpare: 2,
+} as const;
+
+/** Share of the Mission's Data a fully failed Anomaly loses. The reward is cut by the same share. Game estimate. */
+export const ANOMALY_MAX_DATA_LOSS = 0.3;
+
+/** Score an Anomaly gets when the game closed before it was answered and there is no best past result. */
+export const ANOMALY_UNANSWERED_SCORE = 0.5;
