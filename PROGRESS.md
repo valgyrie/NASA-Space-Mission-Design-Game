@@ -15,6 +15,10 @@
 **Next:**
 1. Ticket 06 (Contracts board), then 07 (Mission Designer: "Parts come from the Warehouse" — use `state.parts`, `buy()` for buying on the spot; Part mass is in `RECIPES`). Also unblocked: 15, 19, 25, 30.
 
+**Local launchers:** `LEAP.bat` (Windows), `LEAP.command` (macOS), `LEAP.sh` (Linux), with setup in `scripts/leap.ps1` and shared `scripts/leap.mjs`. They fetch the current Node.js LTS from the official release index, verify its SHA-256 checksum, and keep the runtime and npm cache in ignored `.leap/`. `npm ci` uses the current lockfile, includes development/optional packages, and checks engines; package-file or runtime changes trigger reinstall, and an engine failure refreshes Node once. Later starts check the installed dependency tree. Vite starts in the launcher process on `localhost:5173`; readiness is checked before opening the browser. Reopening recognises both the launcher and the existing `npm run dev` command, prints the link and explains how to quit. Linux file-manager launches open a terminal. Setup has download progress and a moving install bar. Game code, saves, package files and tickets are unchanged.
+
+**Launcher validation:** clean Linux download/install/start, repeat launch and Chromium play/reload passed (3D canvas, Company retained, no page errors). `node --test scripts/leap.test.mjs` checks real Vite with simulated installs/openers: setup, cached restart, updates, broken packages, failed install/retry, runtime refresh request, stale lock, simultaneous setup, occupied port, existing dev server, paths with spaces/punctuation, Linux terminal opening and rejected downloads. Shell and PowerShell syntax passed; PowerShell streaming download, archive/checksum handling and setup locking also checked on Linux with fixtures. `npm run check` (75 tests) and `npm run build` passed; the existing bundle-size warning remains. Native Windows and macOS desktop smoke tests are still due. README has run, reopen, quit and troubleshooting steps; AGENTS.md records launcher maintenance. The next game ticket stays 06.
+
 **Open:**
 - Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and may add Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
 - Factories cost nothing to run. Upgrades (ticket 15) will raise output.
@@ -29,6 +33,7 @@
 
 ## Log
 
+- 2026-11-10: Added local launchers with dependency setup, progress, browser opening and reopening; game code and tickets unchanged.
 - 2026-11-08: Checked existing Raw Material sales; added regression tests and a README note, fixed the stock message and pause overlay.
 - 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
 - 2026-11-08: Keyboard camera + H for the whole-Site view, pan past the Site, detailed Mine with turning wheel; ticket 30 (buy Plots, Optional) written.

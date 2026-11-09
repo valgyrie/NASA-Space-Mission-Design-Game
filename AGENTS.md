@@ -60,4 +60,5 @@ Write the handoff in `PROGRESS.md` (Claude: run `/handoff`), commit, and push. C
 | `docs/audio/` | Audio sources, credits, music prompts |
 | `docs/questionnaires/` | Questions for teammates |
 | `src/strings.ts` | All player-facing text. Never write it anywhere else; a test fails if you do. |
+| `LEAP.bat`, `LEAP.sh`, `LEAP.command`, `scripts/leap.*` | Local launchers and setup messages (outside the game). Keep them working when changing dependencies or the dev server; use the current manifest and lockfile. |
 | `.claude/skills/<name>/SKILL.md` | Workflow skills (see its README). Other agents can read them as plain instructions. |

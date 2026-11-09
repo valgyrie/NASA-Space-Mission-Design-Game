@@ -1,0 +1,4 @@
+/LEAP.bat text eol=crlf
+/LEAP.sh text eol=lf
+/LEAP.command text eol=lf
+/scripts/leap.ps1 text eol=crlf
