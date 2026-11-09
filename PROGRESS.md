@@ -8,6 +8,7 @@
 - **Domain:** `src/game/contracts.ts` (`CONTRACTS`, `acceptContract`, `availableContracts`, `deadlineDay`, `daysLeft`). Requirements are typed data (`orbit`, `payload`, `dataDays`) so ticket 08's Mission Report can check them. Reward and deadline are in `src/game/balance.ts`. Deadlines count whole Game dates from the day accepted.
 - **Save v5:** `SiteState.contracts` (accepted Contracts with `acceptedDay`); v4 saves get `contracts: []`.
 - **UI:** `src/ui/contractsPanel.ts` (left side panel, same spot as the Market). HUD has a Contracts button that pulses until a Contract is taken, and an "Explorer 1: N days left" line. `showHud` now returns `{ update(state) }`.
+- **Layout fix:** the top bar and HUD no longer overlap at 1024×768 (checked 1024–1440 px wide with a 24-character name and big numbers).
 - **Facts:** Explorer 1 client and the 30-day Data requirement are cited in `docs/research/milestones.md` (Game notes). Rules in `docs/GDD.md` §6.
 
 **Next:**
@@ -20,7 +21,7 @@
 - Factories cost nothing to run. Upgrades (ticket 15) will raise output.
 - Balance numbers are first guesses (Market prices like "$18.64K" could be rounded).
 - Each building is ~35–60 small meshes; merge static parts per material if Sites get crowded. Performance on real laptops still unknown.
-- At 1024×768 the top bar overlaps the Company name in the HUD. Narrower screens are not checked.
+- Narrower than 1024 px is not checked. (The top bar no longer overlaps the HUD from 1024 px up: the HUD has a fixed width, long names end in "…", and the top bar is tighter below 1280 px.)
 - No "New game"/reset yet. Speed isn't saved.
 - Ticket 30 open question: free Deposit view of a Plot, or a paid Survey? Default free.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).

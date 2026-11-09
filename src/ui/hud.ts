@@ -29,6 +29,7 @@ export function showHud(
   const name = document.createElement('span');
   name.className = 'hud-company';
   name.textContent = t('hud.company', { name: companyName });
+  name.title = name.textContent; // the whole name on hover when it is cut short
 
   const menu = document.createElement('button');
   menu.type = 'button';
