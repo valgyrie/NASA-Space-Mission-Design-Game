@@ -25,7 +25,7 @@
 
 **Open:**
 - The 247 s coast is read as starting at first-stage burnout (orbit at T+420 s); no source gives Explorer 1's own times _(verify)_. Gunter's Space Page or the NASA Boehm PDF linked from Wikipedia's Juno I page may have them.
-- The pad shot's high-altitude horizon is a flat haze band, and Earth facets are coarse in the space shot (icosahedron detail 48). Fine for now; ticket 26 can polish.
+- Blocky Earth up close (3D Launch upper stages, Space view follow camera) and the flat horizon high in the climb: written into ticket 26 (Look and feel).
 - The Game date doesn't move during the show (Mission days are only shown). Payment arrives at Launch, so the Space view can say "Sending Data: day 1 of 30" after a report that already says it worked.
 - Space view: orbits never decay (drag and re-entry are not modelled). The Moon and orbits round other worlds wait for their Contracts (Optional in `CHECKLIST.md`).
 - The "lost" path (too heavy for orbit) can't happen in play yet because the planner blocks it; it's unit-tested only.
