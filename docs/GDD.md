@@ -139,7 +139,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 | Time | Days to assemble (set by the Bus) plus days flying | Days left before the deadline |
 
 - **Era 1 numbers** (game estimates in `src/game/balance.ts`): the tutorial design (Small Bus, batteries only, Large Battery, Simple Antenna, spin, radiation detector) weighs 11.5 kg and lasts about 33 days. A Small Battery runs out on day 16; a Medium Bus is too heavy for Juno I. Solar Cells show as locked until Vanguard 1 (ticket 14).
-- **The 3D Spacecraft** sits against stars with a low-poly Earth below. Every Part has visible detail so choices read at a glance: the Small Bus is a slim striped cylinder with seams, flanges and a hatch; the Medium Bus is an octagon in gold foil with a finned white radiator and corner rails; batteries are rows of cells in a strut cage; solar cells are framed panels with a cell grid; the Simple Antenna is four hinged whips plus slot antennas; Spin adds balance weights and spin-up nozzles, and the model really spins; the radiation detector has vents and a window onto its Geiger tube under the nose cone. A launch adapter ring sits at the bottom.
+- **The 3D Spacecraft** sits against stars with the real Earth below: true continents, deserts, forests and ice from Natural Earth on a low-poly globe, thin clouds and a glowing atmosphere, turning slowly west to east. It starts over the Americas (Explorer 1 launched from Cape Canaveral) and is drawn at its true apparent size from 13,000 km up, so whole continents fit (from Explorer 1's own height it would fill half the sky). It stays in the lower part of the view however the camera turns. Details: [`docs/research/earth-map.md`](research/earth-map.md). Every Part has visible detail so choices read at a glance: the Small Bus is a slim striped cylinder with seams, flanges and a hatch; the Medium Bus is an octagon in gold foil with a finned white radiator and corner rails; batteries are rows of cells in a strut cage; solar cells are framed panels with a cell grid; the Simple Antenna is four hinged whips plus slot antennas; Spin adds balance weights and spin-up nozzles, and the model really spins; the radiation detector has vents and a window onto its Geiger tube under the nose cone. A launch adapter ring sits at the bottom.
 - **Easy mode:** fewer, simpler Parts, and placement is automatic. **Advanced mode:** more Parts and more realistic numbers. **Manual placement** (panels facing the Sun, camera facing Earth) is **Later**, in Advanced only.
 
 | Slot | Options (by Era) |
@@ -229,6 +229,7 @@ The challenge expects the provided data to be used visibly. Planned slots, to be
 | NASA DONKI (space weather) | Real solar storms as flight events |
 | NASA 3D Resources | Models of real spacecraft for Real History cards |
 | NASA Small Spacecraft State-of-the-Art report | Real Part numbers |
+| Natural Earth (public domain, not NASA) | Real continents on the Mission Designer's globe |
 | Official challenge Resources | To be added on Nov 13 |
 
 ## 15. Screens

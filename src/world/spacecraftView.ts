@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Design } from '../game/spacecraft';
+import { buildEarth } from './earthMesh';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
 
 /** Turns per second of a spin-stabilised Spacecraft on the table (slowed right down from Explorer 1's 750 rpm). */
@@ -17,58 +18,44 @@ function makeStars(): THREE.Points {
   for (let i = 0; i < 600; i++) {
     const theta = rand() * Math.PI * 2;
     const phi = Math.acos(2 * rand() - 1);
-    const r = 40;
+    const r = 150;
     positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
   }
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  return new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xcfd9ff, size: 0.12, sizeAttenuation: true }));
+  return new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xcfd9ff, size: 1.6, sizeAttenuation: false }));
 }
 
-/** A low-poly Earth far below: blue sea, green and sandy land, white poles and a thin blue haze. */
-function makeEarth(): THREE.Group {
-  const geometry = new THREE.IcosahedronGeometry(14, 4).toNonIndexed();
-  const pos = geometry.getAttribute('position');
-  const colours: number[] = [];
-  const sea = new THREE.Color(0x1f5fa8);
-  const land = new THREE.Color(0x4f8f45);
-  const sand = new THREE.Color(0xc9b27a);
-  const ice = new THREE.Color(0xeef3f8);
-  const p = new THREE.Vector3();
-  for (let i = 0; i < pos.count; i += 3) {
-    // One colour per triangle, from its centre, so the faces stay crisp.
-    p.set(0, 0, 0);
-    for (let k = 0; k < 3; k++) p.add(new THREE.Vector3().fromBufferAttribute(pos, i + k));
-    p.divideScalar(3).normalize();
-    const n = Math.sin(p.x * 5.1 + p.z * 2.3) + Math.sin(p.y * 4.7 - p.x * 3.1) + Math.sin(p.z * 6.3 + p.y * 1.7);
-    const c = Math.abs(p.y) > 0.9 ? ice : n > 1.1 ? sand : n > 0.35 ? land : sea;
-    for (let k = 0; k < 3; k++) colours.push(c.r, c.g, c.b);
-  }
-  geometry.setAttribute('color', new THREE.Float32BufferAttribute(colours, 3));
-  const planet = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({ vertexColors: true, flatShading: true, roughness: 0.9 }));
-  const haze = new THREE.Mesh(
-    new THREE.SphereGeometry(14.5, 48, 24),
-    new THREE.MeshBasicMaterial({ color: 0x6fb6ff, transparent: true, opacity: 0.16, side: THREE.BackSide, depthWrite: false }),
-  );
-  planet.name = 'planet';
-  const earth = new THREE.Group();
-  earth.add(planet, haze);
-  // Far below and behind, tilted so the camera sees the oceans and land, not the pole.
-  earth.position.set(-8, -24, -22);
-  earth.rotation.set(1.1, 0, 0.35);
-  earth.name = 'earth';
-  return earth;
-}
+/**
+ * Earth at its true apparent size as seen from 13,000 km up: its disc spans about 38° of sky
+ * (angular radius asin(6371 / 19371) ≈ 19°), so whole continents fit in the view. Explorer 1 itself
+ * flew lower (358–2,550 km), where Earth fills half the sky and only a patch would show.
+ * Scaled down with the distance, so it looks the same. Radii in km; see docs/research/earth-map.md.
+ */
+const EARTH_RADIUS_KM = 6371;
+const VIEW_ALTITUDE_KM = 13_000;
+const EARTH_RADIUS = 30;
+const EARTH_DISTANCE = (EARTH_RADIUS * (EARTH_RADIUS_KM + VIEW_ALTITUDE_KM)) / EARTH_RADIUS_KM;
+/** Angle below the middle of the view of Earth's centre: its top edge sits just above the middle. */
+const EARTH_BELOW = Math.asin(EARTH_RADIUS_KM / (EARTH_RADIUS_KM + VIEW_ALTITUDE_KM)) - THREE.MathUtils.degToRad(9);
+/** North pole tilted away from the camera, so the view centres near 27°N. */
+const EARTH_TILT = -0.3;
+/** Start over the Americas and the Atlantic: Cape Canaveral, where Explorer 1 launched, is at 80.6°W. */
+const START_LONGITUDE = THREE.MathUtils.degToRad(80);
+/** Radians per second the surface turns: slow and calm, west to east like the real Earth. */
+const EARTH_TURN = 0.012;
 
 /** The Mission Designer's 3D view: the Spacecraft against the stars. Drag to turn, wheel to zoom. */
 export class SpacecraftView {
   readonly canvas = document.createElement('canvas');
   private readonly renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true, alpha: false });
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(35, 1, 0.1, 100);
+  private readonly camera = new THREE.PerspectiveCamera(35, 1, 0.1, 400);
   private readonly controls: OrbitControls;
   private model: THREE.Group | null = null;
-  private readonly earth = makeEarth();
+  /** Turns with the camera, so Earth always fills the lower part of the view whichever way it looks (a backdrop, like the stars far away). */
+  private readonly earthPivot = new THREE.Group();
+  private readonly earth = buildEarth(EARTH_RADIUS);
   private spinning = false;
   private running = false;
   private last = 0;
@@ -79,7 +66,13 @@ export class SpacecraftView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.scene.background = new THREE.Color(0x0a1220);
-    this.scene.add(makeStars(), this.earth);
+    const placed = new THREE.Group();
+    placed.position.set(0, -EARTH_DISTANCE * Math.sin(EARTH_BELOW), -EARTH_DISTANCE * Math.cos(EARTH_BELOW));
+    placed.rotation.x = EARTH_TILT;
+    placed.add(this.earth.earth);
+    this.earth.spin(START_LONGITUDE);
+    this.earthPivot.add(placed);
+    this.scene.add(makeStars(), this.earthPivot);
     this.scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2f3a, 1.3));
     const sun = new THREE.DirectionalLight(0xfff2dc, 2.4);
     sun.position.set(-3, 4, 3);
@@ -122,9 +115,10 @@ export class SpacecraftView {
       this.last = now;
       this.idle += seconds;
       this.controls.autoRotate = this.idle > IDLE_SECONDS;
-      this.earth.getObjectByName('planet')!.rotation.y += seconds * 0.02;
+      this.earth.spin(seconds * EARTH_TURN);
       if (this.model && this.spinning) this.model.rotation.y += seconds * SPIN_TURNS_PER_SECOND * Math.PI * 2;
       this.controls.update(seconds);
+      this.earthPivot.quaternion.copy(this.camera.quaternion);
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(frame);
     };
