@@ -1,4 +1,5 @@
 // Linux integration checks: real Vite, with installs and browser opening replaced.
+// Saved for the final ticket; do not rerun for ordinary tickets or updates.
 // Run with: node --test scripts/leap.test.mjs (port 5173 must be free).
 import assert from 'node:assert/strict';
 import { spawn } from 'node:child_process';

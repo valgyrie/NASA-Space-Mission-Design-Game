@@ -45,7 +45,7 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 
 **Checks:** `npm run check` runs the type check and tests. They also run before every commit and stop it if anything fails.
 
-**Launcher checks (Linux):** `node --test scripts/leap.test.mjs` checks setup, reopening, updates and failures with real Vite and simulated installs. Stop LEAP first so port 5173 is free. After changing the launchers, also check a clean first start, progress bars, reopening and quitting on Windows and macOS.
+**Launcher checks (final ticket only):** these are separate from the game tests and do not run on each ticket or update. At the final ticket, run `node --test scripts/leap.test.mjs` on Linux with port 5173 free, then check a clean first start, progress bars, reopening and quitting on Windows, macOS and Linux.
 
 ## Docs
 

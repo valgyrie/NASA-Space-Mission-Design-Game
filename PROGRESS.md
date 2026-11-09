@@ -19,6 +19,8 @@
 
 **Launcher validation:** clean Linux download/install/start, repeat launch and Chromium play/reload passed (3D canvas, Company retained, no page errors). `node --test scripts/leap.test.mjs` checks real Vite with simulated installs/openers: setup, cached restart, updates, broken packages, failed install/retry, runtime refresh request, stale lock, simultaneous setup, occupied port, existing dev server, paths with spaces/punctuation, Linux terminal opening and rejected downloads. Shell and PowerShell syntax passed; PowerShell streaming download, archive/checksum handling and setup locking also checked on Linux with fixtures. `npm run check` (75 tests) and `npm run build` passed; the existing bundle-size warning remains. Native Windows and macOS desktop smoke tests are still due. README has run, reopen, quit and troubleshooting steps; AGENTS.md records launcher maintenance. The next game ticket stays 06.
 
+**Launcher test schedule:** the team wants launcher validation saved for the final ticket. Do not rerun launcher tests or setup/browser/progress/reopen/quit smoke tests for each ticket, update, dependency change or launcher edit unless explicitly asked. At the final ticket, run the separate launcher suite and clean Windows/macOS/Linux smoke tests, including the native checks still due. Keep the existing game tests, type checks and pre-commit hook. Normal dependency checks when a player starts LEAP are unchanged.
+
 **Open:**
 - Part list is a first cut for Era 1; ticket 07 adds the other stats (power, reliability) and may add Payloads. Keep inputs Raw Materials only (a test enforces Mine → Factory → Part).
 - Factories cost nothing to run. Upgrades (ticket 15) will raise output.
@@ -33,6 +35,7 @@
 
 ## Log
 
+- 2026-11-10: Deferred further launcher validation to the final ticket; existing game checks stay in place.
 - 2026-11-10: Added local launchers with dependency setup, progress, browser opening and reopening; game code and tickets unchanged.
 - 2026-11-08: Checked existing Raw Material sales; added regression tests and a README note, fixed the stock message and pause overlay.
 - 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
