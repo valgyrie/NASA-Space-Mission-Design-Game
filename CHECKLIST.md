@@ -17,6 +17,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
+- [x] Local launchers: dependency setup, progress, browser opening and reopening (`LEAP.bat`, `LEAP.command`, `LEAP.sh`)
 - [x] Low-poly world with camera controls (pan, turn, tilt to the horizon, zoom; mouse and keyboard; H for the whole-Site view)
 - [x] Land continues past the Site to the horizon; sky, haze and sun shadows
 - [x] Pause menu (Esc) with the Seed and Copy
@@ -86,6 +87,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources)
 
 ### Judges and submission
+- [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
 - [ ] Demo Mode: one save per finished Era
 - [ ] NASA data used visibly in the game (see GDD §14)
 - [ ] Credits screen (data, audio, sources)

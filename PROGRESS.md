@@ -16,6 +16,14 @@
 1. Team: try the mini-game by hand and judge its difficulty (15 s, 2 s hold, 4 s par, wobble) for a 10-year-old; numbers are at the top of `src/game/antennaGame.ts`.
 2. Ticket 13 (Tutorial and Real History) is now unblocked (09, 11 done); also 15, 16, 17, 19, 20, 25, 30. Ticket 12 still waits for 14.
 
+**Local launchers:** `LEAP.bat` (Windows), `LEAP.command` (macOS), `LEAP.sh` (Linux), with setup in `scripts/leap.ps1` and shared `scripts/leap.mjs`. They fetch the current Node.js LTS from the official release index, verify its SHA-256 checksum, and keep the runtime and npm cache in ignored `.leap/`. `npm ci` uses the current lockfile, includes development/optional packages, and checks engines; package-file or runtime changes trigger reinstall, and an engine failure refreshes Node once. Later starts check the installed dependency tree. Vite starts in the launcher process on `localhost:5173`; readiness is checked before opening the browser. Reopening recognises both the launcher and the existing `npm run dev` command, prints the link and explains how to quit. Linux file-manager launches open a terminal. Setup has download progress and a moving install bar. Game code, saves, package files and tickets are unchanged.
+
+**Initial launcher validation (before syncing with newer main):** clean Linux download/install/start, repeat launch and Chromium play/reload passed (3D canvas, Company retained, no page errors). `node --test scripts/leap.test.mjs` checks real Vite with simulated installs/openers: setup, cached restart, updates, broken packages, failed install/retry, runtime refresh request, stale lock, simultaneous setup, occupied port, existing dev server, paths with spaces/punctuation, Linux terminal opening and rejected downloads. Shell and PowerShell syntax passed; PowerShell streaming download, archive/checksum handling and setup locking also checked on Linux with fixtures. `npm run check` (75 tests) and `npm run build` passed; the existing bundle-size warning remains. Native Windows and macOS desktop smoke tests are still due. README has run, reopen, quit and troubleshooting steps; AGENTS.md records launcher maintenance. The game handoff and next-ticket order above are kept from main.
+
+**Launcher test schedule:** the team wants launcher validation saved for the final ticket. Do not rerun launcher tests or setup/browser/progress/reopen/quit smoke tests for each ticket, update, dependency change or launcher edit unless explicitly asked. At the final ticket, run the separate launcher suite and clean Windows/macOS/Linux smoke tests, including the native checks still due. Keep the existing game tests, type checks and pre-commit hook. Normal dependency checks when a player starts LEAP are unchanged.
+
+**Branch sync:** brought in main at `103a9bf` before opening the launcher PR. Kept the newer game code, package files, tickets, checklist status, README play notes and handoff. Launcher checks remain deferred to the final ticket.
+
 **Open:**
 - With Era 1's only antenna the chance is fixed (~32%); it varies once Comms Parts differ (ticket 14) and Ground Stations exist (ticket 18).
 - One Anomaly per flight at most. A score of 0 counts as a best of 0, so a later skip gives 0%.
@@ -31,6 +39,9 @@
 
 ## Log
 
+- 2026-11-10: Synced the launcher branch with newer main; kept its game, tickets and current handoff.
+- 2026-11-10: Deferred further launcher validation to the final ticket; existing game checks stay in place.
+- 2026-11-10: Added local launchers with dependency setup, progress, browser opening and reopening; game code and tickets unchanged.
 - 2026-11-09: Ticket 11 done: Anomaly framework and Point the antenna (mouse mini-game during the Launch show, first one can't be skipped, chance from the Comms margin, lost Data cuts the pay), save v9.
 - 2026-11-09: Ticket 31 (new) done: Space view with every Spacecraft in orbit on its real orbit, click to follow; reports keep their design, save v8. Tickets 10 and 31 merged into `main`.
 - 2026-11-09: Ticket 10 done: 3D Launch of Juno I (pad, staging, orbit, Mission days) between Launch and the Mission Report, with speed, skip and a simple view for slow devices.

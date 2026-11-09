@@ -35,6 +35,7 @@ Write the handoff in `PROGRESS.md` (Claude: run `/handoff`), commit, and push. C
 
 - **Usage is limited** (Claude Pro, shared with chat): one topic per session, look facts up inline, spawn sub-agents only for broad searches.
 - **One Checklist item at a time.** Test it in the browser before ticking it.
+- **Launcher checks wait until the final ticket.** Do not run `scripts/leap.test.mjs` or repeat launcher setup, progress, reopening or shutdown smoke tests during ordinary tickets, updates, dependency changes or launcher edits, unless the user explicitly asks. Keep the launchers compatible as needed, then run their automated checks and clean Windows/macOS/Linux smoke tests at the final ticket. Existing game tests, type checks and the pre-commit hook stay in place. The launchers' normal dependency checks when someone starts LEAP still run.
 - **Facts must be real and cited.** No invented mission facts or numbers; mark unverified ones _(verify)_.
 - **No NASA, SpaceX or other real logos.** Real mission names and facts are fine.
 - **Child safety:** no chat, no personal data, anonymous accounts.
@@ -60,4 +61,5 @@ Write the handoff in `PROGRESS.md` (Claude: run `/handoff`), commit, and push. C
 | `docs/audio/` | Audio sources, credits, music prompts |
 | `docs/questionnaires/` | Questions for teammates |
 | `src/strings.ts` | All player-facing text. Never write it anywhere else; a test fails if you do. |
+| `LEAP.bat`, `LEAP.sh`, `LEAP.command`, `scripts/leap.*` | Local launchers and setup messages (outside the game). Keep them working when changing dependencies or the dev server; use the current manifest and lockfile. |
 | `.claude/skills/<name>/SKILL.md` | Workflow skills (see its README). Other agents can read them as plain instructions. |
