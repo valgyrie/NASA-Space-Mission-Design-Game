@@ -39,15 +39,16 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Assembly Hall, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
-- [ ] Shipping (money + days)
+- [x] Shipping (money + days)
+- [x] Watch the Shipping: Spacecraft assembled on a truck at a dock, the truck drives off, camera can follow; Mission tracker with the dates to come
 - [ ] Startup grant safety net
 
 ### Missions
 - [x] Contracts board
 - [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [ ] Easy and Advanced Part sets
-- [ ] Launch Vehicle catalogue with mass check
-- [ ] Rideshare priced per kg
+- [ ] Launch Vehicle catalogue with mass check (Juno I and the mass check done; more vehicles come with their Eras)
+- [x] Rideshare priced per kg
 - [ ] Launch site choice, latitude and coast effects
 - [ ] Weather from real climate, Scrubs
 - [ ] Launch Window advisor
@@ -55,7 +56,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Test Run (2D) with estimated success %
 - [ ] 3D Launch and flight
 - [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
-- [ ] Mission Report explaining why
+- [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
 - [ ] Mission Patches and patch gallery
 
 ### Campaign

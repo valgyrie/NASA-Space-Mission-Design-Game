@@ -126,7 +126,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 
 - **Mission Designer:** a 3D Spacecraft you can rotate, plus **slots**. Pick a **Bus** (small / medium / large), then one option per system, then the **Payload**.
 - The six resources show as **live bars** with clear warnings ("Power: 12 W short in eclipse").
-- **Mission Designer v1 (ticket 07):** full screen; opening it pauses the Site. Slots: Bus, Power, Battery, Comms, Pointing, Payload (Computer and Propulsion join when a Milestone needs them). It designs for the first accepted Contract, or the first one on offer. Each slot says whether its Part is in the Warehouse, with a Buy button if not, plus one "Buy missing Parts" button. Parts are used up only when the Mission ships (ticket 08). The design is saved.
+- **Mission Designer v1 (ticket 07):** full screen; opening it pauses the Site. Slots: Bus, Power, Battery, Comms, Pointing, Payload (Computer and Propulsion join when a Milestone needs them). It designs for the first accepted Contract, or the first one on offer. Each slot says whether its Part is in the Warehouse, with a Buy button if not, plus one "Buy missing Parts" button. Parts are used up only when the Mission ships. The design is saved. Once every slot is filled, **Plan the Launch →** opens the Launch planner.
 - **The six bars** (each with a target line; green when met, orange when short, grey until its slots are filled):
 
 | Bar | Measures | Target |
@@ -136,7 +136,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 | Budget | Market price of Parts not in the Warehouse | Money |
 | Data | Days the right Payload keeps sending | The Contract's days |
 | Communications | Data the antenna sends per day | Data the Payload makes per day |
-| Time | Days to assemble (set by the Bus) plus days flying | Days left before the deadline |
+| Time | Days to assemble (set by the Bus), ship to the Launch Site and fly | Days left before the deadline |
 
 - **Era 1 numbers** (game estimates in `src/game/balance.ts`): the tutorial design (Small Bus, batteries only, Large Battery, Simple Antenna, spin, radiation detector) weighs 11.5 kg and lasts about 33 days. A Small Battery runs out on day 16; a Medium Bus is too heavy for Juno I. Solar Cells show as locked until Vanguard 1 (ticket 14).
 - **The 3D Spacecraft** sits against stars with the real Earth below: true continents, deserts, forests and ice from Natural Earth on a low-poly globe, thin clouds and a glowing atmosphere, turning slowly west to east. It starts over the Americas (Explorer 1 launched from Cape Canaveral) and is drawn at its true apparent size from 13,000 km up, so whole continents fit (from Explorer 1's own height it would fill half the sky). It stays in the lower part of the view however the camera turns. Details: [`docs/research/earth-map.md`](research/earth-map.md). Every Part has visible detail so choices read at a glance: the Small Bus is a slim striped cylinder with seams, flanges and a hatch; the Medium Bus is an octagon in gold foil with a finned white radiator and corner rails; batteries are rows of cells in a strut cage; solar cells are framed panels with a cell grid; the Simple Antenna is four hinged whips plus slot antennas; Spin adds balance weights and spin-up nozzles, and the model really spins; the radiation detector has vents and a window onto its Geiger tube under the nose cone. A launch adapter ring sits at the bottom.
@@ -163,6 +163,12 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Launch Vehicle catalogue** by Era (Juno I, Thor-Able, Thor-Delta, Saturn V, Space Shuttle, Pegasus, Atlas V, Falcon 9, SLS: see [`docs/research/launch-vehicles.md`](research/launch-vehicles.md)): payload capacity per orbit, cost, reliability. Rideshare is priced per kg.
 - **Launch site:** your Spaceport or a real spaceport you ship to (Cape Canaveral/Kennedy, Vandenberg, Wallops: see [`docs/research/launch-sites-and-physics.md`](research/launch-sites-and-physics.md)). Latitude and coast matter: launching east near the equator gives a free speed boost from Earth's spin, and a coast lets failed rockets fall into the sea.
 - **Mass check:** the game blocks launches where Spacecraft mass is over the vehicle's capacity for that orbit.
+- **First Mission loop (ticket 08):** the Launch planner sits inside the Mission Designer. It shows the Launch Vehicle (only Juno I in Era 1) with its lift and a fits/too-heavy line, the Launch Site (Cape Canaveral), the costs (Rideshare = kg × price per kg, plus Shipping), and a timeline (assembly, Shipping, arrival, Mission end, deadline). The Mission Designer's warnings are repeated there: a weak design can still ship, so the Mission Report can show what went wrong. Shipping is blocked only for no accepted Contract, a Mission already on its way, empty slots, too much mass, missing Parts or not enough money, each with one plain reason.
+- **Book Rideshare and ship** pays both costs at once and takes the Parts out of the Warehouse. The Site keeps running while the Spacecraft is assembled and shipped; the HUD counts down, then shows **Launch**. One Mission at a time.
+- **Watching the Shipping:** the Mission happens on the Site, not just in numbers. A loading dock (concrete pad, crane, lamps) appears beside the Warehouse, or in the middle of the Site without one. During assembly the player's own Spacecraft stands on a flatbed truck inside a yellow scaffold while the crane swings over it. When Shipping starts, a crate closes over it and the truck drives off the Site, the side with the least water, and out of sight as the Shipping days run out (7 days: 14 seconds at 1×). **Follow the truck** glides the camera after it; dragging the map stops following, and once the truck is gone the camera returns to the Site.
+- **Mission tracker** (HUD button while a Mission is on its way): a road from "Your Site" to the Launch Site with the truck on it, what is happening now and the days left, and four stages with their dates: assembly, Shipping, Launch (from the arrival date) and the Mission's days of Data (when it would end if launched then), then the deadline (orange if the Mission would end too late). It holds the Launch button once the Spacecraft has arrived. The Launch itself becomes a 3D sequence in ticket 10.
+- **First tuning** (game estimates in `src/game/balance.ts`): Juno I Rideshare **$40,000 per kg** (no real per-kg price exists; for scale, 2026 rideshare is about $7,000/kg), Shipping to Cape Canaveral **$25,000 and 7 days** (until real Site places, ticket 16). Explorer 1 (11.5 kg) costs $485,000 and reaches the Cape 37 days after shipping.
+- **Launch** works out the flight from the design, with no luck yet (risk comes with ticket 17), and opens the Mission Report. Success pays the reward and moves the Contract to Done on the board. Failure pays nothing; the Contract stays open until its deadline, so the player can fix the design and ship again.
 - **Weather:** rolled from the launch site's real climate. Over-limit wind or lightning **Scrubs** the launch (based on real launch weather rules).
 - **Launch Window advisor:** suggests the best day and explains why ("calm winds; Moon window opens"). Moon windows come round about monthly. Mars about every 26 months (Later).
 - **Launch Insurance:** price based on estimated success. Pays back most of the cost on failure. Explained in one line.
@@ -187,6 +193,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 ## 10. Mission Report and scoring
 
 - Explains **why** the Mission ended as it did, linked to design choices ("Battery ran out in eclipse because Power margin was 3%. A larger battery or more solar cells would fix this.").
+- **First version (ticket 08):** the outcome ("Explorer 1 worked!" / "failed."), then one line per requirement with ✓ or ✗ and the design numbers behind it, failures first: orbit (mass against lift), Payload, Power (battery Wh, watts used, days it lasted), Communications (kB sent against kB made) and Time (end date against deadline). Then the reward, or until when the Contract stays open. It pauses the Site while open. Every report is saved for the History Archive later.
 - Rewards: money, Reputation, Research Points, a **Mission Patch**, and Real History cards.
 - **Weekly Challenge score:** the objective must be met to score at all. Then **Reliability 40%**, **Science value 30%**, **Money left 20%**, **Mass margin 10%**. Best attempt counts; speed does not. Everyone who completes it gets the same reward; the top 3 get a badge.
 
@@ -242,7 +249,7 @@ Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Ra
 2. Accept the Explorer 1 Contract.
 3. Place an Aluminium Mine and a Copper Mine, then Metal Works and an Electronics Lab (or buy Parts).
 4. Open the Mission Designer: small Bus, batteries only (Explorer 1 had no solar cells), simple antenna, spin stabilisation, radiation detector.
-5. Choose the Launch Vehicle (Juno I, as in 1958) and ship to Cape Canaveral.
+5. Choose the Launch Vehicle (Juno I, as in 1958), book the Rideshare and ship to Cape Canaveral.
 6. Test Run: see the battery graph, fix one warning.
 7. Launch. First Anomaly: **Point the antenna**.
 8. Mission Report and Real History card: the Van Allen belts were discovered. First Mission Patch.

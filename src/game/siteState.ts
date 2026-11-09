@@ -1,7 +1,8 @@
 import { type BuildingKind, type FactoryKind, PARTS, type Part } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
-import type { AcceptedContract } from './contracts';
+import type { AcceptedContract, ContractId } from './contracts';
+import type { Mission, MissionReport } from './mission';
 import { type Design, emptyDesign } from './spacecraft';
 import {
   BASE_STORAGE_KG,
@@ -49,8 +50,14 @@ export interface SiteState {
   parts: Record<Part, number>;
   /** Contracts the Company has accepted. */
   contracts: AcceptedContract[];
+  /** Contracts the Company has fulfilled, oldest first. */
+  completed: ContractId[];
   /** The Spacecraft on the Mission Designer's table. */
   design: Design;
+  /** The Mission being assembled and shipped, or waiting at the Launch Site; null when none. */
+  mission: Mission | null;
+  /** Every Mission Report so far, oldest first. */
+  reports: MissionReport[];
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -65,7 +72,10 @@ export function newSiteState(): SiteState {
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
     contracts: [],
+    completed: [],
     design: emptyDesign(),
+    mission: null,
+    reports: [],
   };
 }
 

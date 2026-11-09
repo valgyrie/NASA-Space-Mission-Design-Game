@@ -64,16 +64,17 @@ export function accepted(state: SiteState, id: ContractId): AcceptedContract | u
   return state.contracts.find((c) => c.id === id);
 }
 
-/** Contracts on the board that the Company hasn't taken yet. */
+/** Contracts on the board that the Company hasn't taken or finished yet. */
 export function availableContracts(state: SiteState): Contract[] {
-  return CONTRACT_IDS.filter((id) => !accepted(state, id)).map((id) => CONTRACTS[id]);
+  return CONTRACT_IDS.filter((id) => !accepted(state, id) && !state.completed.includes(id)).map((id) => CONTRACTS[id]);
 }
 
-export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' };
+export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' | 'done' };
 
 /** Take on a Contract: it becomes active and its deadline starts today. */
 export function acceptContract(state: SiteState, id: ContractId): AcceptResult {
   if (accepted(state, id)) return { ok: false, problem: 'taken' };
+  if (state.completed.includes(id)) return { ok: false, problem: 'done' };
   state.contracts.push({ id, acceptedDay: state.day });
   return { ok: true };
 }
@@ -86,4 +87,12 @@ export function deadlineDay(contract: AcceptedContract): number {
 /** Whole game days left before the deadline, counted by date; 0 once it has passed. */
 export function daysLeft(state: SiteState, contract: AcceptedContract): number {
   return Math.max(0, deadlineDay(contract) - Math.floor(state.day));
+}
+
+/** A Mission fulfilled the Contract: pay the reward and move it from active to done. */
+export function completeContract(state: SiteState, id: ContractId): number {
+  state.contracts = state.contracts.filter((c) => c.id !== id);
+  if (!state.completed.includes(id)) state.completed.push(id);
+  state.money += CONTRACTS[id].reward;
+  return CONTRACTS[id].reward;
 }
