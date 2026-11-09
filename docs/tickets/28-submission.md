@@ -6,7 +6,7 @@
 
 **Status:** ready-for-human (team tasks) and ready-for-agent
 
-- [ ] Credits screen lists data, audio, sources and the team
+- [ ] Credits screen lists data, audio, sources and the team (include Natural Earth for the globe: `docs/research/earth-map.md`)
 - [ ] README explains how to play and run
 - [ ] Game is hosted at a public link
 - [ ] Submission video recorded (team)
