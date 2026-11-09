@@ -122,6 +122,8 @@ export class World {
   private home: { from: CameraPose; to: CameraPose; t: number } | null = null;
   /** Turn off while a menu or dialog is open, so keys don't move the camera behind it. */
   keyboardEnabled = true;
+  /** True while a full-screen view (the Mission Designer) covers the Site: frames still run, nothing is drawn. */
+  hidden = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -440,7 +442,7 @@ export class World {
       this.fog.near = near;
       this.fog.far = far;
       this.sky.position.copy(this.camera.position);
-      this.renderer.render(this.scene, this.camera);
+      if (!this.hidden) this.renderer.render(this.scene, this.camera);
     });
   }
 }

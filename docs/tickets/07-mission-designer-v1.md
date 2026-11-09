@@ -4,11 +4,11 @@
 
 **Blocked by:** 05, 06
 
-**Status:** ready-for-agent
+**Status:** done
 
-- [ ] Opening the Mission Designer pauses the Site
-- [ ] Every slot offers at least one Era 1 option
-- [ ] The 3D Spacecraft updates as Parts are chosen and can be rotated
-- [ ] Mass, Power, Budget, Data, Communications and Time bars update live
-- [ ] Clear warnings appear when a resource is short
-- [ ] Parts come from the Warehouse or are bought on the spot
+- [x] Opening the Mission Designer pauses the Site
+- [x] Every slot offers at least one Era 1 option
+- [x] The 3D Spacecraft updates as Parts are chosen and can be rotated
+- [x] Mass, Power, Budget, Data, Communications and Time bars update live
+- [x] Clear warnings appear when a resource is short
+- [x] Parts come from the Warehouse or are bought on the spot

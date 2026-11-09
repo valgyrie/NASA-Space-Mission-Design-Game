@@ -2,12 +2,13 @@ import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { CONTRACT_IDS } from '../game/contracts';
 import { type SiteState, newSiteState } from '../game/siteState';
+import { SLOTS, emptyDesign, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -51,6 +52,12 @@ function isAcceptedContract(value: unknown): boolean {
   return !!c && (CONTRACT_IDS as readonly unknown[]).includes(c.id) && isNumber(c.acceptedDay);
 }
 
+function isDesign(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const d = value as Record<string, unknown>;
+  return Object.keys(d).length === SLOTS.length && SLOTS.every((slot) => isValidChoice(slot, d[slot]));
+}
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -66,7 +73,8 @@ function isSiteState(value: unknown): value is SiteState {
     isCounts(v.stock, RAW_MATERIALS) &&
     isCounts(v.parts, PARTS) &&
     Array.isArray(v.contracts) &&
-    v.contracts.every(isAcceptedContract)
+    v.contracts.every(isAcceptedContract) &&
+    isDesign(v.design)
   );
 }
 
@@ -85,6 +93,7 @@ function isSaveData(value: unknown): value is SaveData {
  * Bring an older save up to date, one version at a time.
  * Version 1 had no Site, so it gets a fresh Seed. Version 2 had no economy, so it starts fresh.
  * Version 3 had no Factories, Warehouses or Parts. Version 4 had no Contracts.
+ * Version 5 had no Spacecraft design and no Radiation Detector Part.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -97,6 +106,11 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   }
   if (v?.version === 4) {
     v = { ...v, version: 5, state: { ...(v as { state?: object }).state, contracts: [] } } as typeof v;
+  }
+  if (v?.version === 5) {
+    const old = (v as { state?: { parts?: object } }).state;
+    const parts = { ...old?.parts, radiationDetector: 0 };
+    v = { ...v, version: 6, state: { ...old, parts, design: emptyDesign() } } as typeof v;
   }
   return v;
 }

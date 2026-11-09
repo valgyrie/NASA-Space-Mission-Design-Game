@@ -8,6 +8,7 @@ import { showBuildingPanel } from './ui/buildingPanel';
 import { showContractsPanel } from './ui/contractsPanel';
 import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
+import { showMissionDesigner } from './ui/missionDesigner';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import type { World } from './world/world';
@@ -53,6 +54,26 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
   const contracts = showContractsPanel(ui, state, () => saveGame(localStorage, game));
   const panel = showBuildingPanel(ui, site, state);
+  // The Mission Designer pauses the Site like the menu does, and closes the side panels.
+  let speedBeforeDesigner: Speed = 1;
+  const designer = showMissionDesigner(ui, state, {
+    onOpen() {
+      world.keyboardEnabled = false;
+      world.hidden = true;
+      speedBeforeDesigner = speed;
+      setSpeed(0);
+      setPlacing(null);
+      market.close();
+      contracts.close();
+      panel.close();
+    },
+    onClose() {
+      world.keyboardEnabled = true;
+      world.hidden = false;
+      setSpeed(speedBeforeDesigner);
+    },
+    onChange: () => saveGame(localStorage, game),
+  });
   // The Market and the Contracts board share the left side, so one closes the other.
   const hud = showHud(
     ui,
@@ -67,6 +88,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       market.close();
       contracts.toggle();
     },
+    () => designer.open(),
   );
   const topBar = showTopBar(ui, setSpeed);
 
@@ -116,6 +138,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (menu.isOpen) menu.close();
+      else if (designer.isOpen) designer.close();
       else if (placing) setPlacing(null);
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
@@ -123,7 +146,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (menu.isOpen) return;
+    if (menu.isOpen || designer.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -146,5 +169,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer } });
 }
