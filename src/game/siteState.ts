@@ -1,6 +1,7 @@
 import { type BuildingKind, type FactoryKind, PARTS, type Part } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
+import type { AnomalyKind } from './anomalies';
 import type { AcceptedContract, ContractId } from './contracts';
 import type { Mission, MissionReport } from './mission';
 import { type Design, emptyDesign } from './spacecraft';
@@ -58,6 +59,8 @@ export interface SiteState {
   mission: Mission | null;
   /** Every Mission Report so far, oldest first. */
   reports: MissionReport[];
+  /** Best score (0–1) the Company has played for each kind of Anomaly. Missing until it has played one. */
+  anomalyBest: Partial<Record<AnomalyKind, number>>;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -76,6 +79,7 @@ export function newSiteState(): SiteState {
     design: emptyDesign(),
     mission: null,
     reports: [],
+    anomalyBest: {},
   };
 }
 

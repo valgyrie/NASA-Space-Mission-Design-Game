@@ -7,6 +7,7 @@ import {
   type LaunchVehicleId,
   rideshareCost,
 } from './launchVehicles';
+import { type Anomaly, rollAnomaly } from './anomalies';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
 import {
@@ -244,11 +245,13 @@ export interface MissionReport {
   launchDay: number;
   /** Every finding was ok, so the Contract was fulfilled. */
   success: boolean;
-  /** Money paid for it (0 on failure). */
+  /** Money paid for it (0 on failure). Until its Anomaly is settled, the full reward, held back. */
   reward: number;
   findings: Finding[];
   /** The design that flew, for the Space view. Null in saves from before it was kept. */
   design: Design | null;
+  /** The Anomaly met in flight, or null. Null in saves from before Anomalies. */
+  anomaly: Anomaly | null;
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -261,7 +264,8 @@ export interface LaunchResult {
 
 /**
  * Launch the Mission waiting at the Launch Site: fly it, pay the reward on success and file the Mission Report.
- * The flight is drawn from the Site's Seed and the Launch day, like one run of a Test Run.
+ * The flight is drawn from the Site's Seed and the Launch day, like one run of a Test Run. If an Anomaly
+ * strikes, the reward is held back until it is settled (anomalies.ts), since it can cut the pay.
  */
 export function launch(state: SiteState, seed: string): LaunchResult | null {
   const m = state.mission;
@@ -270,8 +274,19 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   const taken = accepted(state, m.contract);
   const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
   const { findings, success } = flight;
-  const reward = success ? completeContract(state, m.contract) : 0;
-  const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings, design: { ...m.design } };
+  const anomaly = rollAnomaly(state, seed, m, flight, launchDay);
+  const reward = success ? completeContract(state, m.contract, !anomaly) : 0;
+  const report: MissionReport = {
+    contract: m.contract,
+    vehicle: m.vehicle,
+    site: m.site,
+    launchDay,
+    success,
+    reward,
+    findings,
+    design: { ...m.design },
+    anomaly,
+  };
   state.reports.push(report);
   state.mission = null;
   return { report, flight, design: m.design };

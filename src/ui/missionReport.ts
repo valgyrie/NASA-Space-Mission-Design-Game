@@ -1,6 +1,8 @@
 import type { Finding, MissionReport } from '../game/mission';
+import { antennaChance } from '../game/anomalies';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
+import { lostText, percentText } from './anomalyPanel';
 import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 
 export interface MissionReportDialog {
@@ -49,6 +51,24 @@ export function findingText(f: Finding): string {
   }
 }
 
+/** The Anomaly's lines: what happened and what it cost, and why it happened. Empty when there was none. */
+export function anomalyLines(report: MissionReport): string[] {
+  const a = report.anomaly;
+  if (!a || a.score === null || a.answer === null) return [];
+  const what = t(`report.anomaly.${a.answer}`, {
+    day: formatNumber(a.day),
+    name: t(`anomaly.${a.kind}.name`),
+    score: percentText(a.score),
+    lost: lostText(a.lostDays),
+  });
+  const cut = a.cut > 0 ? ` ${t('report.anomaly.cut', { money: formatMoney(a.cut) })}` : '';
+  const numbers = { send: formatNumber(a.sendPerDay), make: formatNumber(a.dataPerDay) };
+  const why = a.first
+    ? t('report.anomaly.antenna.first', { ...numbers, chance: percentText(antennaChance(a.sendPerDay, a.dataPerDay)) })
+    : t('report.anomaly.antenna.why', { ...numbers, chance: percentText(a.chance) });
+  return [what + cut, why];
+}
+
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
 export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeOrbit: (report: MissionReport) => void): MissionReportDialog {
   const backdrop = el('div', 'backdrop report-backdrop');
@@ -63,6 +83,8 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
   const outcome = el('p', 'report-outcome');
   const why = el('h3', '', t('report.why'));
   const findings = el('ul', 'report-findings');
+  const anomalyHeading = el('h3', '', t('report.anomaly'));
+  const anomaly = el('div', 'report-anomaly');
   const reward = el('p', 'report-reward');
   const close = el('button', 'report-close', t('report.close'));
   close.type = 'button';
@@ -71,7 +93,7 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, outcome, why, findings, reward, buttons);
+  panel.append(heading, subtitle, outcome, why, findings, anomalyHeading, anomaly, reward, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
@@ -98,6 +120,9 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
           return li;
         }),
       );
+      const lines = anomalyLines(report);
+      anomaly.replaceChildren(...lines.map((line, i) => el('p', i === 0 ? '' : 'report-anomaly-why', line)));
+      anomalyHeading.hidden = anomaly.hidden = lines.length === 0;
       if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
       else if (deadlineDay !== null && today < deadlineDay) reward.textContent = t('report.retry', { date: formatGameDate(deadlineDay) });
       else reward.textContent = t('report.tooLate');

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateSite } from '../site/site';
 import { CONTRACTS, acceptContract, availableContracts } from './contracts';
 import { LAUNCH_SITES, LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
+import { settleAnomaly } from './anomalies';
 import { launch, missionStage, missionTimeline, planLaunch, shipMission, testRunFor } from './mission';
 import { type SiteState, advanceDays, newSiteState } from './siteState';
 import { type Design, type OptionId, checkDesign, choose, emptyDesign, missionGoal, partsNeeded, spacecraftMass } from './spacecraft';
@@ -121,7 +122,10 @@ describe('shipping and Launch', () => {
     const { report } = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(true);
     expect(report.findings.every((f) => f.ok)).toBe(true);
+    // The first flight meets Point the antenna, so the pay waits until it is settled.
     expect(report.reward).toBe(CONTRACTS.explorer1.reward);
+    expect(state.money).toBe(money);
+    settleAnomaly(state, report, 1, 'played');
     expect(state.money).toBe(money + CONTRACTS.explorer1.reward);
     expect(state.contracts).toEqual([]);
     expect(state.completed).toEqual(['explorer1']);

@@ -97,10 +97,13 @@ export function daysLeft(state: SiteState, contract: AcceptedContract): number {
   return Math.max(0, deadlineDay(contract) - Math.floor(state.day));
 }
 
-/** A Mission fulfilled the Contract: pay the reward and move it from active to done. */
-export function completeContract(state: SiteState, id: ContractId): number {
+/**
+ * A Mission fulfilled the Contract: move it from active to done and pay the reward, unless `pay` is false
+ * (an Anomaly still to settle holds the payment back).
+ */
+export function completeContract(state: SiteState, id: ContractId, pay = true): number {
   state.contracts = state.contracts.filter((c) => c.id !== id);
   if (!state.completed.includes(id)) state.completed.push(id);
-  state.money += CONTRACTS[id].reward;
+  if (pay) state.money += CONTRACTS[id].reward;
   return CONTRACTS[id].reward;
 }

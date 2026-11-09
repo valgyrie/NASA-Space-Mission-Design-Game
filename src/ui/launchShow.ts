@@ -1,9 +1,11 @@
-import { type Segment, type ShowMoment, flightShow, showAt, stageTimes } from '../game/ascent';
+import { withContactLost } from '../game/anomalies';
+import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
 import { CONTRACTS } from '../game/contracts';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { LaunchResult } from '../game/mission';
 import { t } from '../strings';
 import type { LaunchView } from '../world/launchView';
+import { type AnomalyHooks, showAnomalyPanel } from './anomalyPanel';
 import { formatDecimal, formatNumber } from './format';
 import { at, drawOrbit } from './testRun';
 
@@ -13,9 +15,15 @@ import { at, drawOrbit } from './testRun';
  * the way the report says. Draws in 3D, or in a simple 2D view on devices too slow for it.
  */
 
+/** How the show settles an Anomaly met on the way. */
+export type ShowAnomalyHooks = Pick<AnomalyHooks, 'best' | 'onAnswer'>;
+
 export interface LaunchShow {
-  play(result: LaunchResult, onDone: () => void): void;
-  /** Jump to the end: the Mission Report. */
+  play(result: LaunchResult, onDone: () => void, anomaly?: ShowAnomalyHooks): void;
+  /**
+   * Jump to the end: the Mission Report. An Anomaly still ahead is skipped with the best past score, or,
+   * the first time, the show jumps to it instead, since that one must be played.
+   */
   skip(): void;
   readonly isOpen: boolean;
 }
@@ -78,11 +86,16 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
     }
     case 'lost':
       return { title: t('launch.lost'), detail: t('launch.lostDetail', { vehicle }) };
-    case 'mission':
-      return {
-        title: t('launch.mission', { contract }),
-        detail: powered ? t('launch.missionDetail') : t('testRun.powerOut', { day: formatNumber(Math.floor(flight.powerOutDay ?? 0)) }),
-      };
+    case 'mission': {
+      const a = report.anomaly;
+      const noContact = a !== null && a.score !== null && m.value >= a.day && m.value < a.day + a.lostDays;
+      const detail = !powered
+        ? t('testRun.powerOut', { day: formatNumber(Math.floor(flight.powerOutDay ?? 0)) })
+        : noContact
+          ? t('launch.noContact')
+          : t('launch.missionDetail');
+      return { title: t('launch.mission', { contract }), detail };
+    }
     case 'end':
       return { title: t(report.success ? 'launch.done' : 'launch.over'), detail: t('launch.toReport') };
   }
@@ -218,10 +231,12 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
   controls.append(speeds, simpleButton, skipButton);
   screen.append(simpleCanvas, cut, card, note, controls);
   root.append(screen);
+  const anomalyPanel = showAnomalyPanel(screen);
 
   let view: LaunchView | null = null;
   let viewFailed = false;
   let result: LaunchResult | null = null;
+  let anomalyHooks: ShowAnomalyHooks | null = null;
   let segments: Segment[] = [];
   let done: () => void = () => {};
   let speed: number = 1;
@@ -249,6 +264,18 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
   simpleButton.addEventListener('click', () => setSimple(!simple));
   skipButton.addEventListener('click', () => api.skip());
 
+  /** The Anomaly is settled: show the Data it cost from here on. */
+  const answer: ShowAnomalyHooks['onAnswer'] = (score, how) => {
+    const a = result?.report.anomaly;
+    if (!result || !a || a.score !== null) return;
+    anomalyHooks?.onAnswer(score, how);
+    if (a.score !== null) result = { ...result, flight: withContactLost(result.flight, a) };
+  };
+  const anomalyAhead = () => {
+    const a = result?.report.anomaly;
+    return a && a.score === null ? a : null;
+  };
+
   const finish = () => {
     cancelAnimationFrame(frame);
     frame = 0;
@@ -260,10 +287,21 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
 
   const tick = (now: number) => {
     if (!result) return;
-    const dt = Math.min(0.1, (now - last) / 1000);
+    // The show waits while an Anomaly is being played.
+    const dt = anomalyPanel.isOpen ? 0 : Math.min(0.1, (now - last) / 1000);
     last = now;
     showSeconds += dt * speed;
-    const m = showAt(segments, showSeconds);
+    let m = showAt(segments, showSeconds);
+    const ahead = anomalyAhead();
+    if (ahead && anomalyHooks && m.segment.phase === 'mission' && m.value >= ahead.day && !anomalyPanel.isOpen) {
+      showSeconds = secondsAtDay(segments, ahead.day);
+      m = showAt(segments, showSeconds);
+      anomalyPanel.open(ahead, {
+        best: anomalyHooks?.best ?? null,
+        onAnswer: answer,
+        onClose: () => skipButton.focus(),
+      });
+    }
     const { flight } = result;
     const phase = m.segment.phase;
     const day = phase === 'mission' ? m.value : phase === 'end' ? flight.missionDays : 0;
@@ -324,9 +362,10 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
   };
 
   const api: LaunchShow = {
-    play(r, onDone) {
+    play(r, onDone, anomaly) {
       result = r;
       done = onDone;
+      anomalyHooks = anomaly ?? null;
       segments = flightShow(r.report.vehicle, r.flight);
       const times = stageTimes(r.report.vehicle);
       ascentEnd = times.at(-1)!.end;
@@ -360,7 +399,18 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
       frame = requestAnimationFrame(tick);
     },
     skip() {
-      if (result) finish();
+      if (!result) return;
+      const ahead = anomalyAhead();
+      if (anomalyPanel.isOpen) {
+        if (!anomalyPanel.trySkip()) return;
+      } else if (ahead && anomalyHooks && anomalyHooks.best === null) {
+        // The first one must be played: go straight to it.
+        showSeconds = Math.max(showSeconds, secondsAtDay(segments, ahead.day));
+        return;
+      } else if (ahead && anomalyHooks) {
+        answer(anomalyHooks.best!, 'skipped');
+      }
+      finish();
     },
     get isOpen() {
       return !screen.hidden;

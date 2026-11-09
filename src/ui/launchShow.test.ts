@@ -11,7 +11,7 @@ function result(ids: OptionId[]): LaunchResult {
   const design: Design = emptyDesign();
   for (const id of ids) choose(design, id);
   const flight = fly({ contract: 'explorer1', design, vehicle: 'juno1' }, 40, 365);
-  const report = { contract: 'explorer1' as const, vehicle: 'juno1' as const, site: 'capeCanaveral' as const, launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design };
+  const report = { contract: 'explorer1' as const, vehicle: 'juno1' as const, site: 'capeCanaveral' as const, launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design, anomaly: null };
   return { report, flight, design };
 }
 
@@ -40,5 +40,16 @@ describe('Launch show text', () => {
     expect(showText(m, r, false).detail).toBe('Day 16: Power out. The Spacecraft goes silent.');
     const end = showAt(show, 1e9);
     expect(showText(end, r, false).title).toBe('Mission over');
+  });
+
+  it('says no Data reaches home on the days an Anomaly lost', () => {
+    const r = result(EXPLORER);
+    r.report.anomaly = { kind: 'antenna', day: 10, chance: 1, first: true, sendPerDay: 50, dataPerDay: 20, missionDays: 30, untilDay: 30, score: 0.5, answer: 'played', lostDays: 4, cut: 0 };
+    const show = flightShow('juno1', r.flight);
+    const days = show.findIndex((s) => s.phase === 'mission');
+    const at = (day: number) => showText({ segment: show[days]!, index: days, fraction: day / 30, value: day, done: false }, r, true).detail;
+    expect(at(9)).toBe('Sending Data home every day.');
+    expect(at(11)).toBe('No contact: Data from these days never reaches home.');
+    expect(at(14)).toBe('Sending Data home every day.');
   });
 });

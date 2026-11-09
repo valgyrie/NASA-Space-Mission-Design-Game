@@ -105,3 +105,13 @@ export function stageTimes(vehicle: LaunchVehicleId): { start: number; end: numb
   });
   return times;
 }
+
+/** Screen seconds (at normal speed) from the start of the show to a Mission day. */
+export function secondsAtDay(segments: readonly Segment[], day: number): number {
+  let seconds = 0;
+  for (const s of segments) {
+    if (s.phase === 'mission') return seconds + (s.to > s.from ? ((day - s.from) / (s.to - s.from)) * s.playS : 0);
+    seconds += s.playS;
+  }
+  return seconds;
+}
