@@ -7,7 +7,7 @@ import {
   type LaunchVehicleId,
   rideshareCost,
 } from './launchVehicles';
-import { type TestRun, realFlight, testRun } from './flight';
+import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
 import {
   type Design,
@@ -247,21 +247,32 @@ export interface MissionReport {
   /** Money paid for it (0 on failure). */
   reward: number;
   findings: Finding[];
+  /** The design that flew, for the Space view. Null in saves from before it was kept. */
+  design: Design | null;
+}
+
+/** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
+export interface LaunchResult {
+  report: MissionReport;
+  flight: Flight;
+  /** The design that flew. */
+  design: Design;
 }
 
 /**
  * Launch the Mission waiting at the Launch Site: fly it, pay the reward on success and file the Mission Report.
  * The flight is drawn from the Site's Seed and the Launch day, like one run of a Test Run.
  */
-export function launch(state: SiteState, seed: string): MissionReport | null {
+export function launch(state: SiteState, seed: string): LaunchResult | null {
   const m = state.mission;
   if (!m || missionStage(state)?.stage !== 'ready') return null;
   const launchDay = Math.floor(state.day);
   const taken = accepted(state, m.contract);
-  const { findings, success } = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
+  const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
+  const { findings, success } = flight;
   const reward = success ? completeContract(state, m.contract) : 0;
-  const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings };
+  const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings, design: { ...m.design } };
   state.reports.push(report);
   state.mission = null;
-  return report;
+  return { report, flight, design: m.design };
 }

@@ -50,7 +50,7 @@ export function findingText(f: Finding): string {
 }
 
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
-export function showMissionReport(root: HTMLElement, onClose: () => void): MissionReportDialog {
+export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeOrbit: (report: MissionReport) => void): MissionReportDialog {
   const backdrop = el('div', 'backdrop report-backdrop');
   backdrop.hidden = true;
   const panel = el('div', 'panel report');
@@ -66,7 +66,13 @@ export function showMissionReport(root: HTMLElement, onClose: () => void): Missi
   const reward = el('p', 'report-reward');
   const close = el('button', 'report-close', t('report.close'));
   close.type = 'button';
-  panel.append(heading, subtitle, outcome, why, findings, reward, close);
+  // A Spacecraft that reached orbit is still up there: the Space view shows it.
+  const seeOrbit = el('button', 'report-orbit', t('report.seeOrbit'));
+  seeOrbit.type = 'button';
+  const buttons = el('div', 'report-buttons');
+  buttons.append(seeOrbit, close);
+  panel.append(heading, subtitle, outcome, why, findings, reward, buttons);
+  let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
 
@@ -95,6 +101,8 @@ export function showMissionReport(root: HTMLElement, onClose: () => void): Missi
       if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
       else if (deadlineDay !== null && today < deadlineDay) reward.textContent = t('report.retry', { date: formatGameDate(deadlineDay) });
       else reward.textContent = t('report.tooLate');
+      shown = report;
+      seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);
       backdrop.hidden = false;
       close.focus();
     },
@@ -108,5 +116,10 @@ export function showMissionReport(root: HTMLElement, onClose: () => void): Missi
     },
   };
   close.addEventListener('click', () => api.close());
+  seeOrbit.addEventListener('click', () => {
+    const report = shown;
+    api.close();
+    if (report) onSeeOrbit(report);
+  });
   return api;
 }

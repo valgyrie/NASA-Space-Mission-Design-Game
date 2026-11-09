@@ -1,0 +1,107 @@
+import type { Flight } from './flight';
+import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
+
+/**
+ * The Launch as it plays on screen: countdown, each stage burning, the coast, orbit, then the Mission's
+ * days. Real flight times are squeezed into about a minute and a half, so the player can watch it all;
+ * the outcome is the Flight already worked out by flight.ts, never decided here.
+ */
+
+export type ShowPhase = 'countdown' | 'burn' | 'coast' | 'orbit' | 'mission' | 'lost' | 'end';
+
+/** One stretch of the show. `from`–`to` are flight seconds (T+), or Mission days for 'mission'. */
+export interface Segment {
+  phase: ShowPhase;
+  /** Which stage is burning (1 is the bottom one), for 'burn'. */
+  stage?: number;
+  from: number;
+  to: number;
+  /** Seconds it takes on screen at normal speed. */
+  playS: number;
+}
+
+/** Seconds of countdown shown before liftoff. */
+export const COUNTDOWN_S = 3;
+/** Screen seconds for the first stage's whole burn. */
+const FIRST_STAGE_PLAY_S = 22;
+/** Screen seconds for the coast to the top of the climb. */
+const COAST_PLAY_S = 9;
+/** Screen seconds for each upper stage. */
+const UPPER_STAGE_PLAY_S = 3.5;
+/** Screen seconds to look at the new orbit before the Mission's days start. */
+const ORBIT_PLAY_S = 4;
+/** Screen seconds for each Mission day, and the most the days may take in all. */
+const DAY_PLAY_S = 1.3;
+const MISSION_PLAY_MAX_S = 45;
+/** Screen seconds to hold the last moment before the Mission Report. */
+const END_PLAY_S = 3;
+
+/** The show for one flight. A Spacecraft that doesn't reach orbit stops after the last stage. */
+export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findings' | 'missionDays'>): Segment[] {
+  const lv = LAUNCH_VEHICLES[vehicle];
+  const segments: Segment[] = [{ phase: 'countdown', from: -COUNTDOWN_S, to: 0, playS: COUNTDOWN_S }];
+  let t = 0;
+  lv.stages.forEach((s, i) => {
+    if (i === 1) {
+      segments.push({ phase: 'coast', from: t, to: t + lv.coastS, playS: COAST_PLAY_S });
+      t += lv.coastS;
+    }
+    segments.push({ phase: 'burn', stage: i + 1, from: t, to: t + s.burnS, playS: i === 0 ? FIRST_STAGE_PLAY_S : UPPER_STAGE_PLAY_S });
+    t += s.burnS;
+  });
+  const reachedOrbit = flight.findings.find((f) => f.kind === 'orbit')?.ok ?? true;
+  if (!reachedOrbit) {
+    segments.push({ phase: 'lost', from: t, to: t, playS: ORBIT_PLAY_S });
+    return segments;
+  }
+  segments.push({ phase: 'orbit', from: t, to: t, playS: ORBIT_PLAY_S });
+  const days = flight.missionDays;
+  segments.push({ phase: 'mission', from: 0, to: days, playS: Math.min(MISSION_PLAY_MAX_S, days * DAY_PLAY_S) });
+  segments.push({ phase: 'end', from: days, to: days, playS: END_PLAY_S });
+  return segments;
+}
+
+/** Screen seconds the whole show takes at normal speed. */
+export function showLength(segments: readonly Segment[]): number {
+  return segments.reduce((sum, s) => sum + s.playS, 0);
+}
+
+/** Where the show is after `seconds` on screen at normal speed. */
+export interface ShowMoment {
+  segment: Segment;
+  index: number;
+  /** How far through this segment, 0–1. */
+  fraction: number;
+  /** Flight seconds (T+) or Mission day, depending on the segment. */
+  value: number;
+  /** The show is over: time for the Mission Report. */
+  done: boolean;
+}
+
+export function showAt(segments: readonly Segment[], seconds: number): ShowMoment {
+  let left = Math.max(0, seconds);
+  for (let index = 0; index < segments.length; index++) {
+    const segment = segments[index]!;
+    if (left < segment.playS) {
+      const fraction = segment.playS > 0 ? left / segment.playS : 1;
+      return { segment, index, fraction, value: segment.from + (segment.to - segment.from) * fraction, done: false };
+    }
+    left -= segment.playS;
+  }
+  const index = segments.length - 1;
+  const segment = segments[index]!;
+  return { segment, index, fraction: 1, value: segment.to, done: true };
+}
+
+/** The flight seconds at which each stage starts and stops burning, from the bottom up. */
+export function stageTimes(vehicle: LaunchVehicleId): { start: number; end: number }[] {
+  const lv = LAUNCH_VEHICLES[vehicle];
+  const times: { start: number; end: number }[] = [];
+  let t = 0;
+  lv.stages.forEach((s, i) => {
+    if (i === 1) t += lv.coastS;
+    times.push({ start: t, end: t + s.burnS });
+    t += s.burnS;
+  });
+  return times;
+}

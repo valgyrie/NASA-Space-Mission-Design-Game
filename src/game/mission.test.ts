@@ -118,7 +118,7 @@ describe('shipping and Launch', () => {
     shipMission(state, state.design);
     advanceDays(site, state, 37);
     const money = state.money;
-    const report = launch(state, 'K7QXM2')!;
+    const { report } = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(true);
     expect(report.findings.every((f) => f.ok)).toBe(true);
     expect(report.reward).toBe(CONTRACTS.explorer1.reward);
@@ -132,12 +132,24 @@ describe('shipping and Launch', () => {
     expect(state.reports).toEqual([report]);
   });
 
+  it('hands back the flight behind the report, for the Launch show', () => {
+    const state = ready(swap('largeBattery', 'smallBattery'));
+    shipMission(state, state.design);
+    const design = { ...state.design };
+    advanceDays(site, state, 37);
+    const result = launch(state, 'K7QXM2')!;
+    expect(result.design).toEqual(design);
+    expect(result.flight.findings).toEqual(result.report.findings);
+    expect(result.flight.success).toBe(result.report.success);
+    expect(result.flight.powerOutDay).toBeLessThan(30);
+  });
+
   it('fails because the Small Battery runs out, and keeps the Contract open for another try', () => {
     const state = ready(swap('largeBattery', 'smallBattery'));
     shipMission(state, state.design);
     advanceDays(site, state, 37);
     const money = state.money;
-    const report = launch(state, 'K7QXM2')!;
+    const { report } = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(false);
     expect(report.reward).toBe(0);
     expect(state.money).toBe(money);
@@ -153,7 +165,7 @@ describe('shipping and Launch', () => {
     state.day = 300; // ready on day 337, ends on day 367: two days after the deadline
     shipMission(state, state.design);
     advanceDays(site, state, 37);
-    const report = launch(state, 'K7QXM2')!;
+    const { report } = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(false);
     expect(report.findings.find((f) => f.kind === 'time')).toEqual({ kind: 'time', ok: false, endDay: 367, deadlineDay: 365 });
   });
@@ -174,6 +186,6 @@ describe('Test Run', () => {
     expect(testRunFor(state, 'K7QXM2', state.design).successPercent).toBe(0);
     shipMission(state, state.design);
     advanceDays(site, state, state.mission!.readyDay - state.day);
-    expect(launch(state, 'K7QXM2')?.success).toBe(false);
+    expect(launch(state, 'K7QXM2')?.report.success).toBe(false);
   });
 });

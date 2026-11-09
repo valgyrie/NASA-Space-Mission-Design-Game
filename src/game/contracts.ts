@@ -34,6 +34,8 @@ export interface Contract {
   deadlineDays: number;
   /** The real Mission's orbit, kilometres above the ground at its lowest and highest. Drawn in the Test Run. */
   orbitKm: { low: number; high: number };
+  /** The real orbit's tilt to the equator, in degrees. Drawn in the Space view. */
+  inclinationDeg: number;
 }
 
 /**
@@ -54,6 +56,8 @@ export const CONTRACTS: Record<ContractId, Contract> = {
     reward: CONTRACT_REWARD.explorer1,
     deadlineDays: CONTRACT_DEADLINE_DAYS.explorer1,
     orbitKm: { low: 358, high: 2_550 },
+    // docs/research/launch-vehicles.md (Explorer 1's orbit).
+    inclinationDeg: 33.24,
   },
 };
 

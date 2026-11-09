@@ -178,6 +178,7 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Test Run (2D, free, unlimited):** top-down orbit view plus graphs (battery, Data stored, signal). Shows predicted problems and an **estimated success %** (from running about 200 quick simulations).
 - **First Test Run (ticket 09):** a **Test Run · free** button in the Launch planner. It needs no Contract, Parts or money, so players can test before buying. The screen shows the Contract's real orbit from above (Explorer 1: 358 × 2,550 km, drawn to scale; the dot speeds up at the low point, as Kepler says, and turns grey but keeps orbiting when the Power dies), a **Battery** graph (energy left each day, with a band for the best and worst runs) and a **Data sent home** graph against the client's goal. A replay runs the Mission's days in 8 seconds with a cursor on both graphs. The **estimated success** comes from 200 runs with the Parts a little off their labels; it shows 0% or 100% only when every run agreed. **Predicted problems** repeat the Mission Report's plain reasons, plus "ran out in N of 200 runs: the margin is thin" when only some runs fail. Same Seed and design always give the same Test Run. Signal (Ground Stations) joins with ticket 18; Earth's shadow with ticket 12. With Era 1's Parts every design is 0% or 100%; in-between values appear once Parts have thinner margins.
 - **Launch and flight (3D):** a 2–4 minute flight: launch, staging, orbit, operations, with Anomalies along the way.
+- **First 3D Launch (ticket 10):** pressing Launch settles the flight at once (it is saved), then plays it before the Mission Report, in about 1½ minutes: countdown; liftoff from the pad with smoke and a chase camera; the first stage burns 155 s and drops away; the coast; Juno I's three small-rocket stages (11, 3, then 1 motor, 6 s each) fire over Earth and the spent ones fall behind; "In orbit!"; then the orbit to scale while the Mission's days pass, with Battery and Data bars. A clock shows the real flight time (T+) and then the Mission day. Real times are squeezed (the first stage plays in 22 s; the days in up to 45 s). It ends the way the flight did: the dot goes grey on the day the Power runs out, a Spacecraft too heavy to reach orbit falls back. 1×/2×/4× and **Skip to the report** (also Esc). **Simple view** draws a 2D path and the Test Run's orbit instead; it takes over by itself when a device draws under 20 frames a second, or has no WebGL. The Game date does not move during the show. Facts: `docs/research/launch-vehicles.md`.
 - **Anomalies (mini-games):**
 
 | Anomaly | What you do | More likely when |
@@ -190,6 +191,8 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 
 - **Rules:** each type is mandatory the first time; after that it can be skipped and is resolved from your best past result. Anomalies come mostly from **design weaknesses**, not pure luck. Failing one **reduces** the Mission's result; it never destroys it outright.
 - **Hackathon:** build 3 (antenna, solar panel, eclipse), then the other 2 if time allows.
+
+- **Space view (ticket 31):** a Spacecraft that reaches orbit stays there. **Space view** (HUD button, shown once something is in orbit; also **See it in orbit** on the Mission Report) shows Earth with every Spacecraft the Company has in orbit, each on its real orbit (size, shape and tilt; Explorer 1: 358 × 2,550 km, 33.24°), moving as Kepler says, 300× faster than real, with Earth turning at the same pace. Name tags and a list; clicking a Spacecraft (on screen, on its tag or in the list) follows its 3D model round the orbit with Earth beside it, and shows what it is doing: "Sending Data: day N of M", "Silent since day N: the Power ran out. Still in orbit." or "Mission done. Still in orbit.", plus its Launch, orbit and lap time ("One lap takes 115 minutes", worked out from Kepler's third law). Drag to turn, scroll to zoom, **See the whole Earth** to go back, Esc to close. It pauses the Site. Orbits round the Moon and other worlds join with their Contracts (Era 3 on). Facts: `docs/research/orbits.md`.
 
 ## 10. Mission Report and scoring
 
@@ -242,7 +245,7 @@ The challenge expects the provided data to be used visibly. Planned slots, to be
 
 ## 15. Screens
 
-Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
+Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Space view · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
 
 ## 16. Tutorial (first 10 minutes, Explorer 1)
 

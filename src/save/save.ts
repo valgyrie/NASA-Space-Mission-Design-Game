@@ -9,7 +9,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 7;
+export const SAVE_VERSION = 8;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -89,7 +89,8 @@ function isReport(value: unknown): boolean {
     typeof r.success === 'boolean' &&
     isNumber(r.reward) &&
     Array.isArray(r.findings) &&
-    r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean')
+    r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean') &&
+    (r.design === null || (isDesign(r.design) && isComplete(r.design!)))
   );
 }
 
@@ -135,6 +136,7 @@ function isSaveData(value: unknown): value is SaveData {
  * Version 3 had no Factories, Warehouses or Parts. Version 4 had no Contracts.
  * Version 5 had no Spacecraft design and no Radiation Detector Part.
  * Version 6 had no Missions: nothing shipped, no Contracts done, no Mission Reports.
+ * Version 7 didn't keep the design in Mission Reports: the Space view shows those Spacecraft as a plain model.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -155,6 +157,11 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   }
   if (v?.version === 6) {
     v = { ...v, version: 7, state: { ...(v as { state?: object }).state, completed: [], mission: null, reports: [] } } as typeof v;
+  }
+  if (v?.version === 7) {
+    const old = (v as { state?: { reports?: unknown } }).state;
+    const reports = Array.isArray(old?.reports) ? old.reports.map((r: object) => ({ ...r, design: null })) : old?.reports;
+    v = { ...v, version: 8, state: { ...old, reports } } as typeof v;
   }
   return v;
 }

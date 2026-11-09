@@ -100,6 +100,9 @@ _Avoid_: rocket, ship, satellite (as the general term)
 The rocket that carries a Spacecraft to space.
 _Avoid_: rocket (alone), booster (alone)
 
+**Stage**:
+One section of a Launch Vehicle that burns, then drops away so the rest flies on lighter.
+
 **Bus**:
 The Spacecraft's main body; its size sets how much mass of Parts it can carry.
 _Avoid_: chassis, frame, hull
@@ -157,6 +160,10 @@ _Avoid_: event, glitch, bug
 **Mission Report**:
 The result of a Mission, explaining why it succeeded or failed.
 _Avoid_: results screen, summary
+
+**Space view**:
+A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
+_Avoid_: map, radar, tracker (that is the Mission tracker)
 
 **Launch Insurance**:
 A payment before Launch that returns most of the Mission's cost if it fails.
