@@ -53,12 +53,13 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
 
 /**
  * The Launch planner, shown inside the Mission Designer: pick the Launch Vehicle (mass check), see
- * the Launch Site, what the Rideshare and Shipping cost, and when the Mission would end; then ship.
+ * the Launch Site, what the Rideshare and Shipping cost, and when the Mission would end; try a free
+ * Test Run; then ship.
  * `designWarnings` gives the Mission Designer's warnings, so a weak design ships knowingly.
  */
 export function makeLaunchPlanner(
   state: SiteState,
-  hooks: { onBack(): void; onShip(): void; designWarnings(): string[] },
+  hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; designWarnings(): string[] },
 ): LaunchPlanner {
   let vehicle: LaunchVehicleId = LAUNCH_VEHICLE_IDS[0];
   const site: LaunchSiteId = LAUNCH_SITE_IDS[0];
@@ -116,8 +117,11 @@ export function makeLaunchPlanner(
   const warnNote = el('p', 'planner-hint', t('planner.warningsNote'));
   const problems = el('ul', 'planner-problems');
   problems.setAttribute('aria-live', 'polite');
+  const testRun = button('planner-testrun', t('planner.testRun'));
+  testRun.title = t('planner.testRunName');
+  testRun.addEventListener('click', () => hooks.onTestRun(vehicle));
   const ship = button('planner-ship', '');
-  footer.append(warnHead, warnings, warnNote, problems, ship);
+  footer.append(warnHead, warnings, warnNote, problems, testRun, ship);
 
   const grid = el('div', 'planner-grid');
   grid.append(choices, costs, timeline);

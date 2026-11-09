@@ -61,7 +61,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const panel = showBuildingPanel(ui, site, state);
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
-  const designer = showMissionDesigner(ui, state, {
+  const designer = showMissionDesigner(ui, state, game.site.seed, {
     onOpen() {
       world.keyboardEnabled = false;
       world.hidden = true;
@@ -93,7 +93,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   });
   const launchMission = () => {
     const contract = state.mission?.contract;
-    const result = launch(state);
+    const result = launch(state, game.site.seed);
     if (!result || !contract) return;
     saveGame(localStorage, game);
     world.keyboardEnabled = false;

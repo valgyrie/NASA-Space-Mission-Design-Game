@@ -7,6 +7,7 @@ import {
   type LaunchVehicleId,
   rideshareCost,
 } from './launchVehicles';
+import { type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
 import {
   type Design,
@@ -18,13 +19,10 @@ import {
   assemblyDays,
   carriedMass,
   contractNeeds,
-  dataOf,
   emptySlots,
-  hasRightPayload,
   missionGoal,
   partsNeeded,
   partsToBuy,
-  powerOf,
   spacecraftMass,
 } from './spacecraft';
 
@@ -32,7 +30,7 @@ import {
  * A Mission from shipping to Mission Report. The player books a Rideshare and ships the Spacecraft:
  * the Parts leave the Warehouse, the money is paid, and the Spacecraft is assembled and shipped to the
  * Launch Site while the Site keeps running. Once it arrives the player Launches, and the flight is
- * worked out from the design (no luck yet: risk comes with ticket 17).
+ * worked out from the design (flight.ts): small differences between Parts mean thin margins can fail.
  */
 
 /** A Spacecraft on its way to Launch. */
@@ -131,6 +129,21 @@ export function planLaunch(
     problems,
     ok: problems.length === 0,
   };
+}
+
+/**
+ * A free Test Run of the design, as if it shipped today: same Launch day and deadline as the plan.
+ * It needs no Contract, Parts or money, so the player can test before buying anything.
+ */
+export function testRunFor(
+  state: SiteState,
+  seed: string,
+  design: Design,
+  vehicle: LaunchVehicleId = 'juno1',
+  site: LaunchSiteId = 'capeCanaveral',
+): TestRun {
+  const plan = planLaunch(state, design, vehicle, site);
+  return testRun(seed, { contract: plan.goal.contract.id, design, vehicle }, plan.readyDay, plan.deadlineDay);
 }
 
 /**
@@ -236,41 +249,16 @@ export interface MissionReport {
   findings: Finding[];
 }
 
-/** Work out how the flight goes, from the design alone. */
-export function flightFindings(mission: Mission, launchDay: number, deadline: number | null): Finding[] {
-  const contract = CONTRACTS[mission.contract];
-  const { orbit, payload, missionDays } = contractNeeds(contract);
-  const design = mission.design;
-  const massKg = spacecraftMass(design);
-  const liftKg = LAUNCH_VEHICLES[mission.vehicle].liftKg[orbit];
-  const power = powerOf(design);
-  const data = dataOf(design);
-  const endDay = launchDay + missionDays;
-  return [
-    { kind: 'orbit', ok: massKg <= liftKg + 1e-9, orbit, vehicle: mission.vehicle, massKg, liftKg },
-    { kind: 'payload', ok: hasRightPayload(design, payload), payload, carried: design.payload },
-    {
-      kind: 'power',
-      ok: power.lastsDays >= missionDays - 1e-9,
-      battery: design.battery,
-      batteryWh: power.batteryWh,
-      powerUseW: power.powerUseW,
-      lastsDays: Number.isFinite(power.lastsDays) ? power.lastsDays : null,
-      needDays: missionDays,
-    },
-    { kind: 'comms', ok: data.sendPerDay >= data.dataPerDay - 1e-9, ...data },
-    { kind: 'time', ok: deadline === null || endDay <= deadline, endDay, deadlineDay: deadline ?? endDay },
-  ];
-}
-
-/** Launch the Mission waiting at the Launch Site: fly it, pay the reward on success and file the Mission Report. */
-export function launch(state: SiteState): MissionReport | null {
+/**
+ * Launch the Mission waiting at the Launch Site: fly it, pay the reward on success and file the Mission Report.
+ * The flight is drawn from the Site's Seed and the Launch day, like one run of a Test Run.
+ */
+export function launch(state: SiteState, seed: string): MissionReport | null {
   const m = state.mission;
   if (!m || missionStage(state)?.stage !== 'ready') return null;
   const launchDay = Math.floor(state.day);
   const taken = accepted(state, m.contract);
-  const findings = flightFindings(m, launchDay, taken ? deadlineDay(taken) : null);
-  const success = findings.every((f) => f.ok);
+  const { findings, success } = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
   const reward = success ? completeContract(state, m.contract) : 0;
   const report: MissionReport = { contract: m.contract, vehicle: m.vehicle, site: m.site, launchDay, success, reward, findings };
   state.reports.push(report);
