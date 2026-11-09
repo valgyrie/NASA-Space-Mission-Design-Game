@@ -6,6 +6,8 @@
 
 **Status:** ready-for-agent
 
+**From ticket 08:** the HUD's Launch button calls `launchMission` in `src/playSite.ts`, which runs `launch()` and opens the Mission Report at once. Put the 3D flight between the two.
+
 - [ ] Liftoff, staging and orbit insertion are shown in 3D
 - [ ] Flight lasts roughly 1–2 minutes and can be sped up
 - [ ] The outcome matches the simulation result

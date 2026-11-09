@@ -2,13 +2,14 @@ import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { CONTRACT_IDS } from '../game/contracts';
 import { type SiteState, newSiteState } from '../game/siteState';
-import { SLOTS, emptyDesign, isValidChoice } from '../game/spacecraft';
+import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
+import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -58,6 +59,40 @@ function isDesign(value: unknown): boolean {
   return Object.keys(d).length === SLOTS.length && SLOTS.every((slot) => isValidChoice(slot, d[slot]));
 }
 
+const isOneOf = (v: unknown, ids: readonly string[]) => (ids as readonly unknown[]).includes(v);
+
+function isMission(value: unknown): boolean {
+  if (value === null) return true;
+  const m = value as Partial<NonNullable<SiteState['mission']>>;
+  return (
+    typeof m === 'object' &&
+    isOneOf(m.contract, CONTRACT_IDS) &&
+    isDesign(m.design) &&
+    isComplete(m.design!) &&
+    isOneOf(m.vehicle, LAUNCH_VEHICLE_IDS) &&
+    isOneOf(m.site, LAUNCH_SITE_IDS) &&
+    isNumber(m.startDay) &&
+    isNumber(m.shipDay) &&
+    isNumber(m.readyDay)
+  );
+}
+
+/** Reports are only read back for display, so a light check is enough. */
+function isReport(value: unknown): boolean {
+  const r = value as Partial<SiteState['reports'][number]> | null;
+  return (
+    !!r &&
+    isOneOf(r.contract, CONTRACT_IDS) &&
+    isOneOf(r.vehicle, LAUNCH_VEHICLE_IDS) &&
+    isOneOf(r.site, LAUNCH_SITE_IDS) &&
+    isNumber(r.launchDay) &&
+    typeof r.success === 'boolean' &&
+    isNumber(r.reward) &&
+    Array.isArray(r.findings) &&
+    r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean')
+  );
+}
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -74,7 +109,12 @@ function isSiteState(value: unknown): value is SiteState {
     isCounts(v.parts, PARTS) &&
     Array.isArray(v.contracts) &&
     v.contracts.every(isAcceptedContract) &&
-    isDesign(v.design)
+    Array.isArray(v.completed) &&
+    v.completed.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    isDesign(v.design) &&
+    isMission(v.mission) &&
+    Array.isArray(v.reports) &&
+    v.reports.every(isReport)
   );
 }
 
@@ -94,6 +134,7 @@ function isSaveData(value: unknown): value is SaveData {
  * Version 1 had no Site, so it gets a fresh Seed. Version 2 had no economy, so it starts fresh.
  * Version 3 had no Factories, Warehouses or Parts. Version 4 had no Contracts.
  * Version 5 had no Spacecraft design and no Radiation Detector Part.
+ * Version 6 had no Missions: nothing shipped, no Contracts done, no Mission Reports.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -111,6 +152,9 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     const old = (v as { state?: { parts?: object } }).state;
     const parts = { ...old?.parts, radiationDetector: 0 };
     v = { ...v, version: 6, state: { ...old, parts, design: emptyDesign() } } as typeof v;
+  }
+  if (v?.version === 6) {
+    v = { ...v, version: 7, state: { ...(v as { state?: object }).state, completed: [], mission: null, reports: [] } } as typeof v;
   }
   return v;
 }

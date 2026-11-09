@@ -4,34 +4,31 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–07 done and merged into `main`. Tested in headless Chromium at 1440×900 and 1024×768: open from the HUD, Site pauses (date stops), pick all six slots, bars and warnings react (Small Battery → "Power: runs out on day 16 of 30"), drag and wheel turn and zoom the model, Buy missing Parts fills the Warehouse, Esc closes and the speed comes back, design and Parts survive reload, no console errors.
-- **3D models:** detailed per Part (seams, bolts, battery cells in a cage, cell grids, hinged whips, spin weights and nozzles, Geiger tube window, launch adapter) against stars and the real Earth (Natural Earth continents, deserts, forests, ice; clouds and an atmosphere glow), drawn at its true apparent size from 13,000 km and pinned to the lower part of the view. Rebuild the map with `scripts/build_earth_map.py`; sources and sizes in `docs/research/earth-map.md`. What each Part looks like: GDD §7. Low metalness on purpose: there is no environment map, so shiny metal renders dark.
-- **Domain:** `src/game/spacecraft.ts`: slots, options, `Design`, `choose`, `checkDesign` (six `Gauge`s + typed `DesignProblem`s), `missionGoal` (first accepted Contract, else first on offer), `partsToBuy`, `costToBuy`, `buyMissing`. Numbers in `src/game/balance.ts` (`OPTION_STATS`, `SUNLIT_SHARE`). Bar definitions: GDD §7.
-- **Launch Vehicles:** `src/game/launchVehicles.ts` has only Juno I (14 kg to LEO, still _(verify)_). Ticket 08 adds choosing, prices and the spaceport.
-- **New Part:** Radiation Detector (Electronics Lab). Part masses were cut so an Explorer 1-like design fits Juno I (Small Bus 3 kg, Medium 8, batteries 3/6, computer 1).
-- **Save v6:** `SiteState.design`; v5 saves get an empty design and `parts.radiationDetector = 0`.
-- **UI:** `src/ui/missionDesigner.ts` (full-screen dialog), 3D in `src/world/spacecraftView.ts` (own small renderer, runs only while open) and `spacecraftMesh.ts`. The Site isn't drawn while the designer is open (`world.hidden`).
-- **Facts:** Explorer 1 numbers checked and quoted in `docs/research/spacecraft-parts.md`.
+**State:** tickets 01–08 done (08 on branch `claude/lucid-brahmagupta-371ni3`, not merged yet). The whole loop works roughly: accept Explorer 1, design, Plan the Launch, book the Rideshare and ship, wait while the Site runs, Launch from the HUD, read the Mission Report, get paid. Tested in headless Chromium at 1440×900 and 1024×768: Medium Bus blocked ("2.5 kg too heavy for Juno I…"), Small Battery ships with a warning and fails ("Power ran out on day 16 of 30…", Contract stays open), Large Battery succeeds and pays $3M, Contract moves to Done, Esc closes the report and the speed comes back, everything survives reload, no console errors.
+- **Domain:** `src/game/mission.ts`: `planLaunch` (costs, days, blocking `PlanProblem`s), `shipMission` (pays, takes Parts, sets `state.mission`), `missionStage` (assembling → shipping → ready), `launch` (`flightFindings` → `MissionReport`, pays via `completeContract`). How it plays and the numbers: GDD §8 and §10.
+- **Launch Vehicles and Sites:** `src/game/launchVehicles.ts` (`perKg`, `rideshareCost`, `LAUNCH_SITES`); prices in `balance.ts` (`RIDESHARE_PER_KG`, `SHIPPING`), both game estimates.
+- **Spacecraft:** `spacecraft.ts` gained `powerOf`, `dataOf`, `hasRightPayload`, `assemblyDays`, `contractNeeds`, `isComplete`. `MissionGoal.accepted` became `status` ('accepted' | 'offered' | 'done'). The Time bar now adds Shipping days.
+- **Save v7:** `SiteState.completed`, `mission`, `reports`; v6 saves get none.
+- **UI:** Launch planner inside the Mission Designer (`src/ui/launchPlanner.ts`), HUD mission line and Launch button (`hud.ts`), Mission Report dialog (`missionReport.ts`), Done list on the Contracts board. Wiring in `playSite.ts` (`launchMission`).
 
 **Next:**
-1. Ticket 08 (First full Mission loop; notes from ticket 07 are in its file): Juno I picker with mass check (`spacecraftMass`, `LAUNCH_VEHICLES`), take the Parts out of the Warehouse when shipping (`partsNeeded`), Rideshare per kg, Mission Report from `checkDesign` problems. Also unblocked: 15, 19, 20, 25, 30.
+1. Ticket 09 (Test Run) or 10 (3D Launch and flight); notes from 08 are in their files. Also unblocked: 15, 16, 17, 19, 20, 25, 30.
 
 **Open:**
-- Solar Cells are shown but locked (`LOCKED` in `spacecraft.ts`); ticket 14 should unlock them with Vanguard 1.
-- No Computer or Propulsion slot yet. Explorer 1 had no tape recorder (Explorer 3 did): a Basic Computer as Data storage could come with TIROS-1.
-- Power doesn't check Earth's shadow yet (every battery covers it in Era 1); ticket 12's eclipse Anomaly will need it.
-- Communications ignores Ground Stations (ticket 18).
-- Assembly days (30/45 by Bus) are counted in the Time bar but nothing waits for them yet (ticket 08/15).
-- Explorer 1 numbers ($3M reward, 365 days) are first guesses; tune once Rideshare prices exist (ticket 08).
-- A passed deadline only shows "deadline passed". Penalties and retries belong to ticket 17.
-- Balance numbers are first guesses. Performance on real laptops still unknown. Narrower than 1024 px is not checked (the designer's slot list scrolls at 1024×768).
-- No "New game"/reset yet. Speed isn't saved.
+- After Explorer 1 there are no more Contracts until ticket 14; the designer then shows "For: Explorer 1 (done)".
+- The Mission Report appears the moment you Launch; the 30 flying days don't pass on the Game date (ticket 10 can decide).
+- A Spacecraft whose Power dies still "finishes" on schedule in the Time line; fine for now.
+- Rideshare $40K/kg and Shipping $25K / 7 days are guesses; tune with playtests. Juno I's 14 kg is still _(verify)_.
+- Solar Cells locked until ticket 14. Power ignores Earth's shadow (ticket 12). Communications ignores Ground Stations (ticket 18).
+- A passed deadline does nothing yet (ticket 17). No "New game"/reset. Speed isn't saved.
+- Performance on real laptops unknown; narrower than 1024 px not checked.
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `domain-modeling` (Launch Vehicle, Rideshare, Shipping terms in ticket 08), `handoff`.
+**Suggested skills:** `handoff`; `research` if Juno I numbers get checked.
 
 ## Log
 
+- 2026-11-09: Ticket 08 done: Launch planner (Juno I mass check, Rideshare per kg, Shipping to Cape Canaveral), Launch from the HUD, Mission Report with reasons, reward paid, save v7.
 - 2026-11-09: Mission Designer globe now shows the real Earth (Natural Earth map, true apparent size from 13,000 km); merged.
 - 2026-11-09: Ticket 07 done and merged: Mission Designer with six slots, detailed rotating 3D Spacecraft over Earth, six live bars, Radiation Detector Part, save v6.
 - 2026-11-09: Ticket 06 done: Contracts board, Explorer 1 Contract with deadline, save v5.
@@ -46,4 +43,3 @@
 - 2026-11-07: Game named **LEAP: A Space Mission Design Game** (Launch · Engineer · Advance · Pioneer).
 - 2026-11-07: Music prompts, cited research, `to-tickets` installed, 28 tickets approved and published.
 - 2026-11-07: Design session done; GDD, glossary, ADR-0002, checklist, AGENTS.md written.
-- 2026-11-07: Researched the challenge, chose the web stack, wrote `docs/challenge.md`, set up phase-1 skills and memory files.

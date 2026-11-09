@@ -128,6 +128,10 @@ _Avoid_: life support system (as a separate part)
 Renting space on another organisation's Launch Vehicle, priced by mass.
 _Avoid_: rental, booking
 
+**Launch Site**:
+The place a Launch Vehicle lifts off from: a real spaceport the Company ships its Spacecraft to, such as Cape Canaveral, or later its own Spaceport Site.
+_Avoid_: launch base, pad (alone)
+
 **Launch Window**:
 A time period when a launch to a destination is possible and sensible.
 

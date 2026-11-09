@@ -95,11 +95,11 @@ describe('checking a design', () => {
   it('uses the accepted Contract for the deadline', () => {
     const state = newSiteState();
     acceptContract(state, 'explorer1');
-    state.day = 340; // 25 days left: not enough to build (30) and fly (30)
+    state.day = 340; // 25 days left: not enough to build (30), ship (7) and fly (30)
     const check = checkDesign(state, design(...EXPLORER));
-    expect(check.goal.accepted).toBe(true);
+    expect(check.goal.status).toBe('accepted');
     expect(check.gauges.time.status).toBe('short');
-    expect(check.problems).toContainEqual({ kind: 'late', needDays: 60, daysLeft: 25 });
+    expect(check.problems).toContainEqual({ kind: 'late', needDays: 67, daysLeft: 25 });
   });
 
   it('is short on Budget when the money cannot buy the missing Parts', () => {

@@ -1,5 +1,6 @@
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { availableContracts, daysLeft } from '../game/contracts';
+import { missionStage } from '../game/mission';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
@@ -23,6 +24,7 @@ export function showHud(
   onMarket: () => void,
   onContracts: () => void,
   onDesigner: () => void,
+  onLaunch: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
@@ -87,10 +89,21 @@ export function showHud(
   const active = document.createElement('p');
   active.className = 'hud-contract';
 
+  // The Mission on its way: assembling, shipping, then a Launch button once it is at the Launch Site.
+  const mission = document.createElement('p');
+  mission.className = 'hud-mission';
+  const launch = document.createElement('button');
+  launch.type = 'button';
+  launch.className = 'small launch-button';
+  launch.textContent = t('mission.launch');
+  launch.title = t('mission.launchName');
+  launch.hidden = true;
+  launch.addEventListener('click', onLaunch);
+
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, buttons, designer, active);
+  bar.append(top, legend, buttons, designer, active, mission, launch);
   root.append(bar);
 
   return {
@@ -98,6 +111,16 @@ export function showHud(
       // Nudge towards the board while there is work on offer and none taken.
       const nudge = state.contracts.length === 0 && availableContracts(state).length > 0;
       if (contracts.classList.contains('attention') !== nudge) contracts.classList.toggle('attention', nudge);
+      const stage = missionStage(state);
+      if (stage && state.mission) {
+        const values = {
+          contract: t(`contract.${state.mission.contract}.name`),
+          site: t(`launchSite.${state.mission.site}.short`),
+          days: formatNumber(stage.daysLeft),
+        };
+        setText(mission, t(`mission.${stage.stage}`, values));
+      } else setText(mission, '');
+      if (launch.hidden !== (stage?.stage !== 'ready')) launch.hidden = stage?.stage !== 'ready';
       const first = state.contracts[0];
       if (!first) return setText(active, '');
       const name = t(`contract.${first.id}.name`);

@@ -1,0 +1,112 @@
+import type { Finding, MissionReport } from '../game/mission';
+import { OPTIONS } from '../game/spacecraft';
+import { t } from '../strings';
+import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
+
+export interface MissionReportDialog {
+  show(report: MissionReport, deadlineDay: number | null, today: number): void;
+  close(): void;
+  readonly isOpen: boolean;
+}
+
+function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
+  const e = document.createElement(tag);
+  e.className = className;
+  if (text) e.textContent = text;
+  return e;
+}
+
+/** One "because" line: what happened and the design numbers behind it. */
+export function findingText(f: Finding): string {
+  const state = f.ok ? 'ok' : 'short';
+  switch (f.kind) {
+    case 'orbit':
+      return t(`finding.orbit.${state}`, {
+        orbit: t(`orbit.${f.orbit}`),
+        kg: formatDecimal(f.massKg),
+        vehicle: t(`launchVehicle.${f.vehicle}`),
+        max: formatNumber(f.liftKg),
+      });
+    case 'payload':
+      if (f.payload === null) return t('finding.payload.any');
+      return t(`finding.payload.${state}`, { payload: t(`payload.${f.payload}`) });
+    case 'power': {
+      const battery = f.battery && OPTIONS[f.battery].part ? t(`part.${OPTIONS[f.battery].part!}`) : t('slot.battery');
+      const values = {
+        need: formatNumber(f.needDays),
+        battery,
+        wh: formatNumber(f.batteryWh),
+        w: formatDecimal(f.powerUseW),
+        days: formatNumber(Math.floor(f.lastsDays ?? 0)),
+      };
+      if (f.ok && f.lastsDays === null) return t('finding.power.sun', values);
+      return t(`finding.power.${state}`, values);
+    }
+    case 'comms':
+      return t(`finding.comms.${state}`, { send: formatNumber(f.sendPerDay), make: formatNumber(f.dataPerDay) });
+    case 'time':
+      return t(`finding.time.${state}`, { end: formatGameDate(f.endDay), deadline: formatGameDate(f.deadlineDay) });
+  }
+}
+
+/** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
+export function showMissionReport(root: HTMLElement, onClose: () => void): MissionReportDialog {
+  const backdrop = el('div', 'backdrop report-backdrop');
+  backdrop.hidden = true;
+  const panel = el('div', 'panel report');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-labelledby', 'report-heading');
+  const heading = el('h2', '', t('report.heading'));
+  heading.id = 'report-heading';
+  const subtitle = el('p', 'report-subtitle');
+  const outcome = el('p', 'report-outcome');
+  const why = el('h3', '', t('report.why'));
+  const findings = el('ul', 'report-findings');
+  const reward = el('p', 'report-reward');
+  const close = el('button', 'report-close', t('report.close'));
+  close.type = 'button';
+  panel.append(heading, subtitle, outcome, why, findings, reward, close);
+  backdrop.append(panel);
+  root.append(backdrop);
+
+  const api: MissionReportDialog = {
+    show(report, deadlineDay, today) {
+      const contract = t(`contract.${report.contract}.name`);
+      subtitle.textContent = t('report.subtitle', {
+        contract,
+        vehicle: t(`launchVehicle.${report.vehicle}`),
+        site: t(`launchSite.${report.site}.short`),
+        date: formatGameDate(report.launchDay),
+      });
+      outcome.textContent = t(report.success ? 'report.success' : 'report.failure', { contract });
+      outcome.classList.toggle('ok', report.success);
+      // What went wrong comes first: that is what the player needs to fix.
+      const sorted = [...report.findings].sort((a, b) => Number(a.ok) - Number(b.ok));
+      findings.replaceChildren(
+        ...sorted.map((f) => {
+          const li = el('li', f.ok ? 'ok' : 'short');
+          const mark = el('span', 'report-mark', t(f.ok ? 'report.ok' : 'report.short'));
+          mark.setAttribute('aria-label', t(f.ok ? 'report.okName' : 'report.shortName'));
+          li.append(mark, el('span', '', findingText(f)));
+          return li;
+        }),
+      );
+      if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
+      else if (deadlineDay !== null && today < deadlineDay) reward.textContent = t('report.retry', { date: formatGameDate(deadlineDay) });
+      else reward.textContent = t('report.tooLate');
+      backdrop.hidden = false;
+      close.focus();
+    },
+    close() {
+      if (backdrop.hidden) return;
+      backdrop.hidden = true;
+      onClose();
+    },
+    get isOpen() {
+      return !backdrop.hidden;
+    },
+  };
+  close.addEventListener('click', () => api.close());
+  return api;
+}

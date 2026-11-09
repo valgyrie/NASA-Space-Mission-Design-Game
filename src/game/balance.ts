@@ -124,3 +124,17 @@ export const OPTION_STATS = {
 
 /** Share of each orbit a Low Earth Orbit Spacecraft spends in sunlight (the rest is in Earth's shadow). Game estimate. */
 export const SUNLIT_SHARE = 0.6;
+
+/**
+ * Rideshare price per kilogram of Spacecraft, by Launch Vehicle. Game estimate: no per-kg price was ever
+ * published for Juno I. Set so Explorer 1 (11.5 kg) costs about $460K to launch, well inside the $3M reward.
+ * For scale, 2026 rideshare costs about $7,000/kg (docs/research/launch-vehicles.md).
+ */
+export const RIDESHARE_PER_KG = {
+  juno1: 40_000,
+} as const;
+
+/** Shipping a finished Spacecraft from the Site to each Launch Site. Game estimates until real Site places (ticket 16). */
+export const SHIPPING = {
+  capeCanaveral: { cost: 25_000, days: 7 },
+} as const;

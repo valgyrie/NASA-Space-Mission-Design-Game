@@ -13,9 +13,11 @@ import {
   checkDesign,
   choose,
   costToBuy,
+  isComplete,
   isUnlocked,
   optionsFor,
 } from '../game/spacecraft';
+import { makeLaunchPlanner } from './launchPlanner';
 import { RECIPES } from '../game/balance';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
@@ -202,11 +204,42 @@ export function showMissionDesigner(
   const buyAll = button('small designer-buy-all', '');
   const problem = el('p', 'side-problem');
   problem.setAttribute('aria-live', 'polite');
-  resBox.append(warnings, status, buyAll, problem);
+  const next = button('designer-next', t('designer.next'));
+  next.title = t('designer.nextName');
+  resBox.append(warnings, status, buyAll, problem, next);
 
   const body = el('div', 'designer-body');
   body.append(slotsBox, viewBox, resBox);
-  panel.append(head, body);
+
+  // The Launch planner takes the designer's place once the design is complete.
+  const planner = makeLaunchPlanner(state, {
+    onBack: () => showPlanner(false),
+    onShip: () => {
+      hooks.onChange();
+      api.close();
+    },
+    designWarnings: () => {
+      const check = checkDesign(state, state.design);
+      // Mass blocks shipping (the planner says why) and missing Parts are bought in the designer.
+      const blocking = new Set(['tooHeavy', 'busFull', 'money']);
+      return check.problems.filter((p) => !blocking.has(p.kind)).map((p) => problemText(p, check));
+    },
+  });
+  panel.append(head, body, planner.root);
+
+  const showPlanner = (on: boolean) => {
+    body.hidden = on;
+    planner.root.hidden = !on;
+    heading.textContent = t(on ? 'planner.heading' : 'designer.heading');
+    if (on) {
+      view.stop();
+      planner.render();
+    } else {
+      view.start();
+      render();
+    }
+  };
+  next.addEventListener('click', () => showPlanner(true));
 
   const report = (result: TradeResult) => {
     problem.textContent = result.ok ? '' : t(`market.problem.${result.problem}`);
@@ -218,7 +251,8 @@ export function showMissionDesigner(
   const render = () => {
     const check = checkDesign(state, state.design);
     const contract = t(`contract.${check.goal.contract.id}.name`);
-    goal.textContent = t(check.goal.accepted ? 'designer.for' : 'designer.forOffer', { contract });
+    const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
+    goal.textContent = t(forKey[check.goal.status], { contract });
 
     for (const slot of SLOTS) {
       const { options, stock } = slotRows.get(slot)!;
@@ -267,6 +301,7 @@ export function showMissionDesigner(
     const cost = costToBuy(state, state.design);
     buyAll.hidden = cost === 0;
     buyAll.textContent = t('designer.buyAll', { price: formatMoney(cost) });
+    next.disabled = !isComplete(state.design);
   };
 
   const changed = () => {
@@ -281,8 +316,7 @@ export function showMissionDesigner(
       backdrop.hidden = false;
       problem.textContent = '';
       hooks.onOpen();
-      render();
-      view.start();
+      showPlanner(false);
       close.focus();
     },
     close() {

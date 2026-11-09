@@ -126,6 +126,12 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     const open = availableContracts(state);
     if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
     for (const c of open) body.append(card(c));
+    if (state.completed.length > 0) {
+      body.append(el('h3', '', t('contracts.completed')));
+      const done = el('ul', 'contract-done');
+      for (const id of state.completed) done.append(el('li', '', t('contracts.completedLine', { name: t(`contract.${id}.name`) })));
+      body.append(done);
+    }
     update();
   };
 

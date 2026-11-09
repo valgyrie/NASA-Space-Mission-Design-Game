@@ -1,13 +1,13 @@
 import type { Part } from '../economy/part';
 import { OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
-import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, daysLeft } from './contracts';
-import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
+import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
+import { LAUNCH_SITES, LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId } from './launchVehicles';
 import { type TradeResult, buy, buyPrice } from './market';
 import { type SiteState, storageFree } from './siteState';
 
 /**
  * The Spacecraft the player designs in the Mission Designer: one option per slot.
- * Nothing is used up here; the Parts leave the Warehouse when the Mission ships (ticket 08).
+ * Nothing is used up here; the Parts leave the Warehouse when the Mission ships (mission.ts).
  */
 
 export const SLOTS = ['bus', 'power', 'battery', 'comms', 'pointing', 'payload'] as const;
@@ -115,8 +115,13 @@ export function spacecraftMass(design: Design): number {
   return partsNeeded(design).reduce((kg, p) => kg + RECIPES[p].massKg, 0);
 }
 
+/** Every slot is filled. */
+export function isComplete(design: Design): boolean {
+  return emptySlots(design).length === 0;
+}
+
 /** Kilograms of Parts carried by the Bus (everything except the Bus itself). */
-function carriedMass(design: Design): number {
+export function carriedMass(design: Design): number {
   return picked(design)
     .filter((o) => o.slot !== 'bus' && o.part)
     .reduce((kg, o) => kg + RECIPES[o.part!].massKg, 0);
@@ -148,22 +153,24 @@ export function buyMissing(state: SiteState, design: Design): TradeResult {
 /** The Contract the Spacecraft is designed for, and what follows from it. */
 export interface MissionGoal {
   contract: Contract;
-  /** True once the Company has accepted it; otherwise it is the first one on offer. */
-  accepted: boolean;
+  /** Accepted by the Company, still on offer, or already done (nothing else on the board). */
+  status: 'accepted' | 'offered' | 'done';
   /** Days the Spacecraft must send Data. */
   missionDays: number;
   payload: PayloadKind | null;
   /** Game days left before the deadline (the full deadline if not accepted yet). */
   daysLeft: number;
+  orbit: Orbit;
   vehicle: LaunchVehicleId;
   /** Kilograms the Launch Vehicle can lift to the Contract's orbit. */
   liftKg: number;
+  site: LaunchSiteId;
+  /** Game days to ship the finished Spacecraft to the Launch Site. */
+  shippingDays: number;
 }
 
-/** The first accepted Contract, or else the first one on offer. */
-export function missionGoal(state: SiteState): MissionGoal {
-  const taken = state.contracts[0];
-  const contract = CONTRACTS[taken?.id ?? CONTRACT_IDS[0]];
+/** What a Contract asks for: orbit, Payload and days of Data. */
+export function contractNeeds(contract: Contract): { orbit: Orbit; payload: PayloadKind | null; missionDays: number } {
   let missionDays = 0;
   let payload: PayloadKind | null = null;
   let orbit: Orbit = 'lowEarthOrbit';
@@ -172,16 +179,59 @@ export function missionGoal(state: SiteState): MissionGoal {
     else if (r.kind === 'payload') payload = r.payload;
     else orbit = r.orbit;
   }
+  return { orbit, payload, missionDays };
+}
+
+/** The first accepted Contract, else the first one on offer, else the last one done. */
+export function missionGoal(state: SiteState): MissionGoal {
+  const taken = state.contracts[0];
+  const offered = availableContracts(state)[0];
+  const contract = taken ? CONTRACTS[taken.id] : (offered ?? CONTRACTS[state.completed.at(-1) ?? CONTRACT_IDS[0]]);
+  const status = taken ? 'accepted' : offered ? 'offered' : 'done';
+  const { orbit, payload, missionDays } = contractNeeds(contract);
   const vehicle: LaunchVehicleId = 'juno1';
+  const site: LaunchSiteId = 'capeCanaveral';
   return {
     contract,
-    accepted: !!taken,
+    status,
     missionDays,
     payload,
     daysLeft: taken ? daysLeft(state, taken) : contract.deadlineDays,
+    orbit,
     vehicle,
     liftKg: LAUNCH_VEHICLES[vehicle].liftKg[orbit],
+    site,
+    shippingDays: LAUNCH_SITES[site].shippingDays,
   };
+}
+
+// ---- How the Spacecraft works in flight ----
+
+/** Power over a Mission: watts used, watts from sunlight on average, energy stored, and days it lasts. */
+export function powerOf(design: Design): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
+  const options = picked(design);
+  const powerUseW = sum(options, 'powerUseW');
+  const sunW = sum(options, 'solarW') * SUNLIT_SHARE;
+  const batteryWh = sum(options, 'batteryWh');
+  const drainW = powerUseW - sunW;
+  return { powerUseW, sunW, batteryWh, lastsDays: drainW > 0 ? batteryWh / drainW / 24 : Infinity };
+}
+
+/** Kilobytes of Data the Payload makes each day, and what the Comms can send home. */
+export function dataOf(design: Design): { dataPerDay: number; sendPerDay: number } {
+  const options = picked(design);
+  return { dataPerDay: sum(options, 'dataPerDay'), sendPerDay: sum(options, 'sendPerDay') };
+}
+
+/** Does the Payload slot hold what the Contract asks for? Any Payload counts when it names none. */
+export function hasRightPayload(design: Design, payload: PayloadKind | null): boolean {
+  const p = design.payload ? OPTIONS[design.payload] : null;
+  return !!p && (payload === null || p.payload === payload);
+}
+
+/** Game days to put the Spacecraft together, set by its Bus. */
+export function assemblyDays(design: Design): number {
+  return design.bus ? (OPTIONS[design.bus].stats.assemblyDays ?? 0) : 0;
 }
 
 // ---- The six resources ----
@@ -236,7 +286,6 @@ function gauge(value: number, target: number, sense: 'max' | 'min', waitingFor?:
 /** Check a design against its Mission: the six live bars and the problems behind any shortfall. */
 export function checkDesign(state: SiteState, design: Design): DesignCheck {
   const goal = missionGoal(state);
-  const options = picked(design);
   const empty = (...slots: Slot[]) => slots.find((s) => design[s] === null);
   const problems: DesignProblem[] = [];
 
@@ -254,11 +303,7 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
 
   // Power: energy stored plus sunlight, against what the Spacecraft uses over the Mission.
   const hours = goal.missionDays * 24;
-  const powerUseW = sum(options, 'powerUseW');
-  const sunW = sum(options, 'solarW') * SUNLIT_SHARE;
-  const batteryWh = sum(options, 'batteryWh');
-  const drainW = powerUseW - sunW;
-  const lastsDays = drainW > 0 ? batteryWh / drainW / 24 : Infinity;
+  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design);
   const powerGauge = gauge(batteryWh + sunW * hours, powerUseW * hours, 'min', empty('power', 'battery'));
   if (powerGauge.status === 'short') problems.push({ kind: 'powerShort', lastsDays, needDays: goal.missionDays });
 
@@ -268,22 +313,21 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   if (budgetGauge.status === 'short') problems.push({ kind: 'money', short: cost - state.money });
 
   // Data: days the right Payload keeps sending, against the days the Contract asks for.
-  const payload = design.payload ? OPTIONS[design.payload] : null;
-  const rightPayload = !!payload && (goal.payload === null || payload.payload === goal.payload);
+  const rightPayload = hasRightPayload(design, goal.payload);
   const dataDays = rightPayload ? Math.min(lastsDays, 9_999) : 0;
   const dataGauge = gauge(dataDays, goal.missionDays, 'min', empty('payload', 'comms', 'power', 'battery'));
-  if (payload && !rightPayload && goal.payload) problems.push({ kind: 'wrongPayload', payload: goal.payload });
+  if (design.payload && !rightPayload && goal.payload) problems.push({ kind: 'wrongPayload', payload: goal.payload });
 
   // Communications: Data the antenna can send each day, against what the Payload makes.
-  const dataPerDay = sum(options, 'dataPerDay');
-  const sendPerDay = sum(options, 'sendPerDay');
+  const { dataPerDay, sendPerDay } = dataOf(design);
   const commsGauge = gauge(sendPerDay, dataPerDay, 'min', empty('comms', 'payload'));
   if (commsGauge.status === 'short') problems.push({ kind: 'commsShort', sendPerDay, dataPerDay });
 
-  // Time: putting it together plus flying the Mission, against the days left before the deadline.
-  const buildDays = bus ? (OPTIONS[bus].stats.assemblyDays ?? 0) : 0;
-  const timeGauge = gauge(buildDays + goal.missionDays, goal.daysLeft, 'max', empty('bus'));
-  if (timeGauge.status === 'short') problems.push({ kind: 'late', needDays: buildDays + goal.missionDays, daysLeft: goal.daysLeft });
+  // Time: putting it together, shipping it and flying the Mission, against the days left before the deadline.
+  const buildDays = assemblyDays(design);
+  const needDays = buildDays + goal.shippingDays + goal.missionDays;
+  const timeGauge = gauge(needDays, goal.daysLeft, 'max', empty('bus'));
+  if (timeGauge.status === 'short') problems.push({ kind: 'late', needDays, daysLeft: goal.daysLeft });
 
   const gauges: Record<Resource, Gauge> = {
     mass: massGauge,
@@ -293,6 +337,6 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
     communications: commsGauge,
     time: timeGauge,
   };
-  const ready = emptySlots(design).length === 0 && RESOURCES.every((r) => gauges[r].status === 'ok');
+  const ready = isComplete(design) && RESOURCES.every((r) => gauges[r].status === 'ok');
   return { goal, gauges, problems, powerUseW, lastsDays, dataPerDay, sendPerDay, buildDays, ready };
 }
