@@ -76,3 +76,13 @@ export const MARKET_BUY_FACTOR = 2;
 export const MARKET_SELL_FACTOR = 0.5;
 /** Raw Materials are traded in lots of this many kilograms; Parts one at a time. */
 export const MARKET_LOT_KG = 10;
+
+/** Money each Contract pays on success. Game estimates, not real contract values. */
+export const CONTRACT_REWARD = {
+  explorer1: 3_000_000,
+} as const;
+
+/** Game days from accepting a Contract to its deadline. A year keeps the tutorial relaxed (about 12 minutes at 1×). */
+export const CONTRACT_DEADLINE_DAYS = {
+  explorer1: 365,
+} as const;

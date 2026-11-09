@@ -1,22 +1,35 @@
 import { RAW_MATERIALS } from '../economy/rawMaterial';
+import { availableContracts, daysLeft } from '../game/contracts';
+import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
-import { cssColour } from './format';
+import { cssColour, formatNumber } from './format';
 
-/** The panel at the top left of the Site view: Company name, menu button, what the Deposit colours mean, and the Market. */
+export interface Hud {
+  /** Refresh the active Contract line. Cheap enough to call every frame. */
+  update(state: SiteState): void;
+}
+
+function setText(e: HTMLElement, text: string): void {
+  if (e.textContent !== text) e.textContent = text;
+}
+
+/** The panel at the top left of the Site view: Company name, menu button, Deposit colours, Market, Contracts and the active Contract. */
 export function showHud(
   root: HTMLElement,
   companyName: string,
   onMenu: () => void,
   onHome: () => void,
   onMarket: () => void,
-): void {
+  onContracts: () => void,
+): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
 
   const name = document.createElement('span');
   name.className = 'hud-company';
   name.textContent = t('hud.company', { name: companyName });
+  name.title = name.textContent; // the whole name on hover when it is cut short
 
   const menu = document.createElement('button');
   menu.type = 'button';
@@ -52,9 +65,37 @@ export function showHud(
   market.title = t('market.openName');
   market.addEventListener('click', onMarket);
 
+  const contracts = document.createElement('button');
+  contracts.type = 'button';
+  contracts.className = 'small market-button';
+  contracts.textContent = t('contracts.open');
+  contracts.title = t('contracts.openName');
+  contracts.addEventListener('click', onContracts);
+
+  const buttons = document.createElement('div');
+  buttons.className = 'row hud-buttons';
+  buttons.append(market, contracts);
+
+  const active = document.createElement('p');
+  active.className = 'hud-contract';
+
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, market);
+  bar.append(top, legend, buttons, active);
   root.append(bar);
+
+  return {
+    update(state) {
+      // Nudge towards the board while there is work on offer and none taken.
+      const nudge = state.contracts.length === 0 && availableContracts(state).length > 0;
+      if (contracts.classList.contains('attention') !== nudge) contracts.classList.toggle('attention', nudge);
+      const first = state.contracts[0];
+      if (!first) return setText(active, '');
+      const name = t(`contract.${first.id}.name`);
+      const left = daysLeft(state, first);
+      setText(active, left > 0 ? t('contracts.hudActive', { name, days: formatNumber(left) }) : t('contracts.hudOverdue', { name }));
+      active.classList.toggle('warn', left === 0);
+    },
+  };
 }
