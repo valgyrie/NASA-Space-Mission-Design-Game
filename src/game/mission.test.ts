@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateSite } from '../site/site';
 import { CONTRACTS, acceptContract, availableContracts } from './contracts';
 import { LAUNCH_SITES, LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
-import { launch, missionStage, planLaunch, shipMission } from './mission';
+import { launch, missionStage, missionTimeline, planLaunch, shipMission } from './mission';
 import { type SiteState, advanceDays, newSiteState } from './siteState';
 import { type Design, type OptionId, checkDesign, choose, emptyDesign, missionGoal, partsNeeded, spacecraftMass } from './spacecraft';
 
@@ -77,12 +77,33 @@ describe('shipping and Launch', () => {
     expect(plan.ok).toBe(true);
     expect(state.money).toBe(money - plan.total);
     for (const p of partsNeeded(state.design)) expect(state.parts[p]).toBe(0);
-    expect(missionStage(state)).toEqual({ stage: 'assembling', daysLeft: 30 });
+    expect(missionStage(state)).toEqual({ stage: 'assembling', daysLeft: 30, fraction: 0 });
     expect(launch(state)).toBeNull();
-    advanceDays(site, state, 30);
-    expect(missionStage(state)).toEqual({ stage: 'shipping', daysLeft: 7 });
-    advanceDays(site, state, 7);
-    expect(missionStage(state)?.stage).toBe('ready');
+    advanceDays(site, state, 15);
+    expect(missionStage(state)).toEqual({ stage: 'assembling', daysLeft: 15, fraction: 0.5 });
+    advanceDays(site, state, 15);
+    expect(missionStage(state)).toEqual({ stage: 'shipping', daysLeft: 7, fraction: 0 });
+    advanceDays(site, state, 3.5);
+    expect(missionStage(state)?.fraction).toBeCloseTo(0.5);
+    advanceDays(site, state, 3.5);
+    expect(missionStage(state)).toEqual({ stage: 'ready', daysLeft: 0, fraction: 1 });
+  });
+
+  it('lays out the dates to come: assembly, Shipping, Launch, Mission end and deadline', () => {
+    const state = ready();
+    state.day = 10.4;
+    shipMission(state, state.design);
+    expect(missionTimeline(state)).toEqual({
+      startDay: 10,
+      shipDay: 40,
+      readyDay: 47,
+      launchDay: 47,
+      endDay: 77,
+      deadlineDay: CONTRACTS.explorer1.deadlineDays,
+    });
+    // Waiting at the Launch Site pushes the earliest Launch, and the Mission end, to today.
+    state.day = 60.2;
+    expect(missionTimeline(state)).toMatchObject({ launchDay: 60, endDay: 90 });
   });
 
   it('ships one Mission at a time', () => {

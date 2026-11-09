@@ -47,3 +47,8 @@ const decimalFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 }
 export function formatDecimal(n: number): string {
   return decimalFormat.format(n);
 }
+
+/** "1 day", "12 days" */
+export function formatDays(n: number): string {
+  return n === 1 ? t('format.day') : t('format.days', { amount: kgFormat.format(n) });
+}

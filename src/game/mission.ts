@@ -160,14 +160,49 @@ export function shipMission(
   return plan;
 }
 
-/** Where the Mission is now, and whole game days until the next stage. */
-export function missionStage(state: SiteState): { stage: 'assembling' | 'shipping' | 'ready'; daysLeft: number } | null {
+/** Where the Mission is now: the stage, whole game days until the next one, and how far through this one (0–1). */
+export interface MissionStage {
+  stage: 'assembling' | 'shipping' | 'ready';
+  daysLeft: number;
+  fraction: number;
+}
+
+export function missionStage(state: SiteState): MissionStage | null {
   const m = state.mission;
   if (!m) return null;
   const today = Math.floor(state.day);
-  if (today < m.shipDay) return { stage: 'assembling', daysLeft: m.shipDay - today };
-  if (today < m.readyDay) return { stage: 'shipping', daysLeft: m.readyDay - today };
-  return { stage: 'ready', daysLeft: 0 };
+  const through = (from: number, to: number) => (to > from ? Math.min(1, Math.max(0, (state.day - from) / (to - from))) : 1);
+  if (today < m.shipDay) return { stage: 'assembling', daysLeft: m.shipDay - today, fraction: through(m.startDay, m.shipDay) };
+  if (today < m.readyDay) return { stage: 'shipping', daysLeft: m.readyDay - today, fraction: through(m.shipDay, m.readyDay) };
+  return { stage: 'ready', daysLeft: 0, fraction: 1 };
+}
+
+/** The dates still to come, for the Mission tracker. */
+export interface MissionTimeline {
+  startDay: number;
+  shipDay: number;
+  readyDay: number;
+  /** Earliest Game day it can Launch: when it arrives, or today if it is already there. */
+  launchDay: number;
+  /** Game day the Mission would end if it Launched on `launchDay`. */
+  endDay: number;
+  /** The Contract's deadline, or null if it is no longer accepted. */
+  deadlineDay: number | null;
+}
+
+export function missionTimeline(state: SiteState): MissionTimeline | null {
+  const m = state.mission;
+  if (!m) return null;
+  const launchDay = Math.max(m.readyDay, Math.floor(state.day));
+  const taken = accepted(state, m.contract);
+  return {
+    startDay: m.startDay,
+    shipDay: m.shipDay,
+    readyDay: m.readyDay,
+    launchDay,
+    endDay: launchDay + contractNeeds(CONTRACTS[m.contract]).missionDays,
+    deadlineDay: taken ? deadlineDay(taken) : null,
+  };
 }
 
 // ---- Flight and Mission Report ----

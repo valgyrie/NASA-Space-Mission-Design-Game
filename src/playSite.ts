@@ -10,8 +10,10 @@ import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
 import { showMissionDesigner } from './ui/missionDesigner';
 import { showMissionReport } from './ui/missionReport';
+import { showMissionTracker } from './ui/missionTracker';
+import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
-import { launch } from './game/mission';
+import { launch, missionStage } from './game/mission';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import type { World } from './world/world';
@@ -68,6 +70,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       setPlacing(null);
       market.close();
       contracts.close();
+      tracker.close();
       panel.close();
     },
     onClose() {
@@ -83,6 +86,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     world.keyboardEnabled = true;
     setSpeed(speedBeforeReport);
   });
+  const tracker = showMissionTracker(ui, state, {
+    onFollow: () => world.followTruck(),
+    onLaunch: () => launchMission(),
+    isFollowing: () => world.isFollowingTruck,
+  });
   const launchMission = () => {
     const contract = state.mission?.contract;
     const result = launch(state);
@@ -94,6 +102,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     setPlacing(null);
     contracts.close();
     market.close();
+    tracker.close();
     panel.close();
     const taken = accepted(state, contract);
     report.show(result, taken ? deadlineDay(taken) : null, Math.floor(state.day));
@@ -106,14 +115,21 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     () => world.goHome(),
     () => {
       contracts.close();
+      tracker.close();
       market.toggle();
     },
     () => {
       market.close();
+      tracker.close();
       contracts.toggle();
     },
     () => designer.open(),
     launchMission,
+    () => {
+      market.close();
+      contracts.close();
+      tracker.toggle();
+    },
   );
   const topBar = showTopBar(ui, setSpeed);
 
@@ -168,6 +184,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else if (placing) setPlacing(null);
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
+      else if (tracker.isOpen) tracker.close();
       else if (contracts.isOpen) contracts.close();
       else menu.open();
       return;
@@ -185,10 +202,21 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     const room = storageFree(state) > 0;
     for (const m of state.mines) world.setWorking(m.x, m.z, room);
     for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
-    world.animateBuildings(Math.min(seconds, 0.1) * speed);
+    const gameSeconds = Math.min(seconds, 0.1) * speed;
+    world.animateBuildings(gameSeconds);
+    // The Mission on its way, on the Site: the truck loads at the dock beside the Warehouse, then drives off.
+    const stage = missionStage(state);
+    const m = state.mission;
+    const dock = state.warehouses[0] ?? { x: SITE_SIZE / 2, z: SITE_SIZE / 2 };
+    world.updateShipping(
+      m && stage ? { id: `${m.contract}@${m.startDay}`, start: dock, design: m.design, ...stage } : null,
+      gameSeconds,
+      seconds,
+    );
     topBar.update(site, state, speed);
     market.update();
     contracts.update();
+    tracker.update();
     hud.update(state);
     panel.update();
   });

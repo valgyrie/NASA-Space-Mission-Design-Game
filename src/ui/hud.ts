@@ -4,7 +4,7 @@ import { missionStage } from '../game/mission';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
-import { cssColour, formatNumber } from './format';
+import { cssColour, formatDays, formatNumber } from './format';
 
 export interface Hud {
   /** Refresh the active Contract line. Cheap enough to call every frame. */
@@ -25,6 +25,7 @@ export function showHud(
   onContracts: () => void,
   onDesigner: () => void,
   onLaunch: () => void,
+  onTrack: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
@@ -99,12 +100,24 @@ export function showHud(
   launch.title = t('mission.launchName');
   launch.hidden = true;
   launch.addEventListener('click', onLaunch);
+  const track = document.createElement('button');
+  track.type = 'button';
+  track.className = 'small market-button';
+  track.textContent = t('mission.track');
+  track.title = t('mission.trackName');
+  track.hidden = true;
+  track.addEventListener('click', onTrack);
 
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, buttons, designer, active, mission, launch);
+  bar.append(top, legend, buttons, designer, active, mission, track, launch);
   root.append(bar);
+
+  // Panels on the left open just below the HUD, which grows while a Mission is on its way.
+  const place = () => document.documentElement.style.setProperty('--hud-bottom', `${bar.offsetTop + bar.offsetHeight + 10}px`);
+  new ResizeObserver(place).observe(bar);
+  place();
 
   return {
     update(state) {
@@ -116,11 +129,12 @@ export function showHud(
         const values = {
           contract: t(`contract.${state.mission.contract}.name`),
           site: t(`launchSite.${state.mission.site}.short`),
-          days: formatNumber(stage.daysLeft),
+          days: formatDays(stage.daysLeft),
         };
         setText(mission, t(`mission.${stage.stage}`, values));
       } else setText(mission, '');
       if (launch.hidden !== (stage?.stage !== 'ready')) launch.hidden = stage?.stage !== 'ready';
+      if (track.hidden !== !stage) track.hidden = !stage;
       const first = state.contracts[0];
       if (!first) return setText(active, '');
       const name = t(`contract.${first.id}.name`);

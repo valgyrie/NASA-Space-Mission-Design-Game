@@ -1256,3 +1256,153 @@ button.report-close {
   color: #06101d;
   cursor: pointer;
 }
+
+/* Left-side panels open below the HUD, wherever its bottom is (set by hud.ts). */
+.market,
+.contracts,
+.tracker {
+  top: var(--hud-bottom, 150px);
+  max-height: calc(100vh - var(--hud-bottom, 150px) - 100px);
+}
+
+/* ---- Mission tracker ---- */
+.tracker {
+  left: 12px;
+  width: min(380px, calc(100vw - 24px));
+}
+
+.tracker-body[hidden],
+.tracker .side-note[hidden],
+.tracker-bar[hidden],
+.tracker-buttons [hidden] {
+  display: none;
+}
+
+.tracker-subtitle {
+  margin: 2px 0 12px;
+  color: var(--muted);
+}
+
+.tracker-road {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.tracker-track {
+  position: relative;
+  height: 4px;
+  margin: 14px 12px 0;
+  border-radius: 2px;
+  background: repeating-linear-gradient(90deg, #3a4a60 0 8px, transparent 8px 14px);
+}
+
+.tracker-travelled {
+  height: 100%;
+  border-radius: 2px;
+  background: var(--accent);
+}
+
+.tracker-truck {
+  position: absolute;
+  bottom: 1px;
+  width: 34px;
+  height: 18px;
+  transform: translateX(-50%);
+  transition: left 0.3s linear;
+}
+
+.tracker-now {
+  margin: 10px 0 12px;
+  font-weight: 600;
+}
+
+.tracker-stages {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tracker-stages li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 10px;
+  padding: 7px 10px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+  color: var(--muted);
+}
+
+.tracker-stages li[data-status='now'] {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(79, 163, 255, 0.08);
+}
+
+.tracker-stages li[data-status='done'] {
+  opacity: 0.6;
+}
+
+.tracker-stages li[data-status='done'] .tracker-stage-name::before {
+  content: '✓ ';
+  color: #8fd18f;
+}
+
+.tracker-stage-name {
+  font-weight: 600;
+}
+
+.tracker-when {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.tracker-bar {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background: #1f2c40;
+  overflow: hidden;
+}
+
+.tracker-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+.tracker-deadline {
+  margin: 10px 0 0;
+  color: var(--muted);
+}
+
+.tracker-deadline.warn {
+  color: var(--warn);
+}
+
+.tracker-buttons {
+  margin-top: 12px;
+}
+
+.tracker-buttons button {
+  flex: 1;
+  padding: 7px 12px;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.tracker-follow[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: #213654;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tracker-truck {
+    transition: none;
+  }
+}

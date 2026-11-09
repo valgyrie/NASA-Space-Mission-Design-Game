@@ -40,6 +40,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Building Upgrades (levels)
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
 - [x] Shipping (money + days)
+- [x] Watch the Shipping: Spacecraft assembled on a truck at a dock, the truck drives off, camera can follow; Mission tracker with the dates to come
 - [ ] Startup grant safety net
 
 ### Missions

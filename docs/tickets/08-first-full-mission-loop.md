@@ -14,3 +14,10 @@
 - [x] Launch produces a result from the design (no animation needed yet)
 - [x] Mission Report states the outcome and at least one "because" reason tied to the design
 - [x] Completing Explorer 1 pays the Contract reward
+
+**Added after review (2026-11-09):** the player can watch the Shipping and see the dates to come.
+
+- [x] The Spacecraft is assembled on a truck at a loading dock on the Site, then the truck drives off with it in a crate
+- [x] Follow the truck with the camera
+- [x] Mission tracker: where the Spacecraft is now, each stage with its dates, the deadline, and Launch once it has arrived
+- Watching the Launch itself is ticket 10.

@@ -13,7 +13,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 05 ✅ | [Factories and Market](05-factories-and-market.md) | 04 | Factories turn Raw Materials into Parts; Warehouse stores them; buy and sell on the Market. |
 | 06 ✅ | [Contracts board](06-contracts-board.md) | 02 | See and accept the Explorer 1 Contract; money and deadline shown. |
 | 07 ✅ | [Mission Designer v1](07-mission-designer-v1.md) | 05, 06 | Build a Spacecraft from slots (Bus, Power, Battery, Comms, pointing, Payload) with a rotating 3D model and the six live resource bars. |
-| 08 ✅ | [First full Mission loop](08-first-full-mission-loop.md) | 07 | Pick Juno I (mass check), ship to Cape Canaveral, pay the Rideshare, Launch, get a Mission Report that explains why. **The whole game loop works end to end, roughly.** |
+| 08 ✅ | [First full Mission loop](08-first-full-mission-loop.md) | 07 | Pick Juno I (mass check), ship to Cape Canaveral, pay the Rideshare, Launch, get a Mission Report that explains why. Watch the truck carry the Spacecraft off the Site; a Mission tracker shows the dates to come. **The whole game loop works end to end, roughly.** |
 | 09 | [Test Run](09-test-run.md) | 08 | Free 2D Test Run with battery and Data graphs and an estimated success %. Simulation is deterministic and tested. |
 | 10 | [3D Launch and flight](10-launch-and-flight-3d.md) | 08 | Watch liftoff, staging and orbit in 3D. |
 | 11 | [Anomalies: framework + Point the antenna](11-anomaly-framework-antenna.md) | 10 | First Anomaly mini-game; first time required, then skippable; driven by design weaknesses; failure lowers the result. |

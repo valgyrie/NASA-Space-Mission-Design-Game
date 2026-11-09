@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { formatGameDate, formatKg, formatMoney, formatPerDay } from './format';
+import { formatDays, formatGameDate, formatKg, formatMoney, formatPerDay } from './format';
 
 describe('formatting', () => {
+  it('says "1 day" but "12 days"', () => {
+    expect(formatDays(1)).toBe('1 day');
+    expect(formatDays(12)).toBe('12 days');
+    expect(formatDays(0)).toBe('0 days');
+  });
+
   it('shows money short', () => {
     expect(formatMoney(2_000_000)).toBe('$2M');
     expect(formatMoney(1_850_000)).toBe('$1.85M');
