@@ -10,13 +10,13 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 02 ✅ | [Company and saving](02-company-and-saving.md) | 01 | Name your Company (bad-word filter). It's still there after reload. All text comes from one strings file. |
 | 03 ✅ | [Site from a Seed](03-site-from-seed.md) | 01 | A Seed generates the same Site every time: terrain, water and mineral deposits (placeholder climate). |
 | 04 ✅ | [Mines and time](04-mines-and-time.md) | 03 | Place Mines on deposits; Raw Materials pile up over time; pause and 1×/2×/4×. |
-| 05 | [Factories and Market](05-factories-and-market.md) | 04 | Factories turn Raw Materials into Parts; Warehouse stores them; buy and sell on the Market. |
-| 06 | [Contracts board](06-contracts-board.md) | 02 | See and accept the Explorer 1 Contract; money and deadline shown. |
-| 07 | [Mission Designer v1](07-mission-designer-v1.md) | 05, 06 | Build a Spacecraft from slots (Bus, Power, Battery, Comms, pointing, Payload) with a rotating 3D model and the six live resource bars. |
-| 08 | [First full Mission loop](08-first-full-mission-loop.md) | 07 | Pick Juno I (mass check), ship to Cape Canaveral, pay the Rideshare, Launch, get a Mission Report that explains why. **The whole game loop works end to end, roughly.** |
-| 09 | [Test Run](09-test-run.md) | 08 | Free 2D Test Run with battery and Data graphs and an estimated success %. Simulation is deterministic and tested. |
-| 10 | [3D Launch and flight](10-launch-and-flight-3d.md) | 08 | Watch liftoff, staging and orbit in 3D. |
-| 11 | [Anomalies: framework + Point the antenna](11-anomaly-framework-antenna.md) | 10 | First Anomaly mini-game; first time required, then skippable; driven by design weaknesses; failure lowers the result. |
+| 05 ✅ | [Factories and Market](05-factories-and-market.md) | 04 | Factories turn Raw Materials into Parts; Warehouse stores them; buy and sell on the Market. |
+| 06 ✅ | [Contracts board](06-contracts-board.md) | 02 | See and accept the Explorer 1 Contract; money and deadline shown. |
+| 07 ✅ | [Mission Designer v1](07-mission-designer-v1.md) | 05, 06 | Build a Spacecraft from slots (Bus, Power, Battery, Comms, pointing, Payload) with a rotating 3D model and the six live resource bars. |
+| 08 ✅ | [First full Mission loop](08-first-full-mission-loop.md) | 07 | Pick Juno I (mass check), ship to Cape Canaveral, pay the Rideshare, Launch, get a Mission Report that explains why. Watch the truck carry the Spacecraft off the Site; a Mission tracker shows the dates to come. **The whole game loop works end to end, roughly.** |
+| 09 ✅ | [Test Run](09-test-run.md) | 08 | Free 2D Test Run with battery and Data graphs and an estimated success %. Simulation is deterministic and tested. |
+| 10 ✅ | [3D Launch and flight](10-launch-and-flight-3d.md) | 08 | Watch liftoff, staging and orbit in 3D. |
+| 11 ✅ | [Anomalies: framework + Point the antenna](11-anomaly-framework-antenna.md) | 10 | First Anomaly mini-game; first time required, then skippable; driven by design weaknesses; failure lowers the result. |
 | 12 | [Anomalies: Stuck solar panel, Survive the eclipse](12-anomalies-panel-eclipse.md) | 11, 14 | Two more Anomaly mini-games. |
 | 13 | [Tutorial and Real History](13-tutorial-and-history.md) | 09, 11 | Explorer 1 tutorial: first Launch in under 10 minutes; Real History cards before and after; first Mission Patch; History Archive. |
 | 14 | [Era 1 complete](14-era-1-complete.md) | 13 | TIROS-1 Milestone; solar cells unlock; Thor-Able; Research Lab, Research Points, first tech tree items. |
@@ -36,5 +36,6 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
 | 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
 | 30 | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
+| 31 ✅ | [Space view](31-space-view.md) _(added 2026-11-09)_ | 10 | See every Spacecraft in orbit round Earth; click one to follow it along its real orbit. |
 
 **Not in this list (Optional in `CHECKLIST.md`):** Eras 3–5, Crew Module, Dodge the debris, Stop the tumble, GIBS photos, Horizons, DONKI, manual placement, live weather, visiting Sites, co-op, Sandbox, Mars, touch, translations, desktop app.

@@ -1,12 +1,16 @@
 import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
+import { ANOMALY_KINDS } from '../game/anomalies';
+import { CONTRACT_IDS } from '../game/contracts';
 import { type SiteState, newSiteState } from '../game/siteState';
+import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
+import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 9;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -45,6 +49,69 @@ function isFactory(value: unknown): boolean {
   );
 }
 
+function isAcceptedContract(value: unknown): boolean {
+  const c = value as Partial<SiteState['contracts'][number]> | null;
+  return !!c && (CONTRACT_IDS as readonly unknown[]).includes(c.id) && isNumber(c.acceptedDay);
+}
+
+function isDesign(value: unknown): boolean {
+  if (typeof value !== 'object' || value === null) return false;
+  const d = value as Record<string, unknown>;
+  return Object.keys(d).length === SLOTS.length && SLOTS.every((slot) => isValidChoice(slot, d[slot]));
+}
+
+const isOneOf = (v: unknown, ids: readonly string[]) => (ids as readonly unknown[]).includes(v);
+
+function isMission(value: unknown): boolean {
+  if (value === null) return true;
+  const m = value as Partial<NonNullable<SiteState['mission']>>;
+  return (
+    typeof m === 'object' &&
+    isOneOf(m.contract, CONTRACT_IDS) &&
+    isDesign(m.design) &&
+    isComplete(m.design!) &&
+    isOneOf(m.vehicle, LAUNCH_VEHICLE_IDS) &&
+    isOneOf(m.site, LAUNCH_SITE_IDS) &&
+    isNumber(m.startDay) &&
+    isNumber(m.shipDay) &&
+    isNumber(m.readyDay)
+  );
+}
+
+function isAnomaly(value: unknown): boolean {
+  if (value === null) return true;
+  const a = value as Record<string, unknown> | null;
+  return (
+    !!a &&
+    isOneOf(a.kind, ANOMALY_KINDS) &&
+    ['day', 'chance', 'sendPerDay', 'dataPerDay', 'missionDays', 'untilDay', 'lostDays', 'cut'].every((k) => isNumber(a[k])) &&
+    typeof a.first === 'boolean' &&
+    (a.score === null || isNumber(a.score)) &&
+    (a.answer === null || isOneOf(a.answer, ['played', 'skipped', 'unanswered']))
+  );
+}
+
+const isBest = (v: unknown): boolean =>
+  typeof v === 'object' && v !== null && Object.entries(v).every(([k, n]) => isOneOf(k, ANOMALY_KINDS) && isNumber(n));
+
+/** Reports are only read back for display, so a light check is enough. */
+function isReport(value: unknown): boolean {
+  const r = value as Partial<SiteState['reports'][number]> | null;
+  return (
+    !!r &&
+    isOneOf(r.contract, CONTRACT_IDS) &&
+    isOneOf(r.vehicle, LAUNCH_VEHICLE_IDS) &&
+    isOneOf(r.site, LAUNCH_SITE_IDS) &&
+    isNumber(r.launchDay) &&
+    typeof r.success === 'boolean' &&
+    isNumber(r.reward) &&
+    Array.isArray(r.findings) &&
+    r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean') &&
+    (r.design === null || (isDesign(r.design) && isComplete(r.design!))) &&
+    isAnomaly(r.anomaly)
+  );
+}
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -58,7 +125,16 @@ function isSiteState(value: unknown): value is SiteState {
     Array.isArray(v.warehouses) &&
     v.warehouses.every(isTile) &&
     isCounts(v.stock, RAW_MATERIALS) &&
-    isCounts(v.parts, PARTS)
+    isCounts(v.parts, PARTS) &&
+    Array.isArray(v.contracts) &&
+    v.contracts.every(isAcceptedContract) &&
+    Array.isArray(v.completed) &&
+    v.completed.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    isDesign(v.design) &&
+    isMission(v.mission) &&
+    Array.isArray(v.reports) &&
+    v.reports.every(isReport) &&
+    isBest(v.anomalyBest)
   );
 }
 
@@ -76,7 +152,11 @@ function isSaveData(value: unknown): value is SaveData {
 /**
  * Bring an older save up to date, one version at a time.
  * Version 1 had no Site, so it gets a fresh Seed. Version 2 had no economy, so it starts fresh.
- * Version 3 had no Factories, Warehouses or Parts.
+ * Version 3 had no Factories, Warehouses or Parts. Version 4 had no Contracts.
+ * Version 5 had no Spacecraft design and no Radiation Detector Part.
+ * Version 6 had no Missions: nothing shipped, no Contracts done, no Mission Reports.
+ * Version 7 didn't keep the design in Mission Reports: the Space view shows those Spacecraft as a plain model.
+ * Version 8 had no Anomalies: its reports had none, and the Company has played none yet.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -86,6 +166,27 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     // Version 3 had only Mines: keep them and the stock, add empty Factories, Warehouses and Parts.
     const fresh = newSiteState();
     v = { ...v, version: 4, state: { ...fresh, ...(v as { state?: object }).state, factories: [], warehouses: [], parts: fresh.parts } } as typeof v;
+  }
+  if (v?.version === 4) {
+    v = { ...v, version: 5, state: { ...(v as { state?: object }).state, contracts: [] } } as typeof v;
+  }
+  if (v?.version === 5) {
+    const old = (v as { state?: { parts?: object } }).state;
+    const parts = { ...old?.parts, radiationDetector: 0 };
+    v = { ...v, version: 6, state: { ...old, parts, design: emptyDesign() } } as typeof v;
+  }
+  if (v?.version === 6) {
+    v = { ...v, version: 7, state: { ...(v as { state?: object }).state, completed: [], mission: null, reports: [] } } as typeof v;
+  }
+  if (v?.version === 7) {
+    const old = (v as { state?: { reports?: unknown } }).state;
+    const reports = Array.isArray(old?.reports) ? old.reports.map((r: object) => ({ ...r, design: null })) : old?.reports;
+    v = { ...v, version: 8, state: { ...old, reports } } as typeof v;
+  }
+  if (v?.version === 8) {
+    const old = (v as { state?: { reports?: unknown } }).state;
+    const reports = Array.isArray(old?.reports) ? old.reports.map((r: object) => ({ ...r, anomaly: null })) : old?.reports;
+    v = { ...v, version: 9, state: { ...old, reports, anomalyBest: {} } } as typeof v;
   }
   return v;
 }

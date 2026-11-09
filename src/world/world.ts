@@ -24,6 +24,23 @@ import {
 } from './camera';
 import { buildFactory, buildWarehouse } from './factoryMesh';
 import { buildMine } from './mineMesh';
+import type { Design } from '../game/spacecraft';
+import { type ShippingRoute, shippingRoute } from './shippingRoute';
+import { ShippingView } from './shippingView';
+
+/** How close the camera comes when it follows the Shipping truck. */
+const FOLLOW_DISTANCE = 11;
+
+/** The Mission as the Site should show it: where it is and what is being shipped. */
+export interface ShippingState {
+  /** Mission identity: a new value builds a new route and models. */
+  id: string;
+  /** Tile the truck starts from (the Warehouse, or the middle of the Site). */
+  start: { x: number; z: number };
+  design: Design;
+  stage: 'assembling' | 'shipping' | 'ready';
+  fraction: number;
+}
 import { STEP, buildSiteMesh, clearRocks, tileCentre } from './siteMesh';
 
 const COLOURS = {
@@ -120,8 +137,13 @@ export class World {
   private readonly raycaster = new THREE.Raycaster();
   private readonly heldKeys = new Set<string>();
   private home: { from: CameraPose; to: CameraPose; t: number } | null = null;
+  private readonly shipping = new ShippingView((x, z) => this.groundY(x, z));
+  private route: { id: string; route: ShippingRoute } | null = null;
+  private following = false;
   /** Turn off while a menu or dialog is open, so keys don't move the camera behind it. */
   keyboardEnabled = true;
+  /** True while a full-screen view (the Mission Designer) covers the Site: frames still run, nothing is drawn. */
+  hidden = false;
 
   constructor(canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
@@ -140,7 +162,7 @@ export class World {
 
     this.controls = this.makeControls(canvas);
     this.addLights();
-    this.scene.add(this.buildings);
+    this.scene.add(this.buildings, this.shipping.group);
     this.marker = this.makeMarker();
     this.scene.add(this.marker);
 
@@ -180,6 +202,7 @@ export class World {
 
   /** Glide back to the isometric view of the whole Site, keeping the nearest corner you were looking from. */
   goHome(): void {
+    this.following = false;
     const from = this.pose();
     this.home = {
       from,
@@ -195,6 +218,20 @@ export class World {
 
   /** Apply held keys and the glide home, once per frame. */
   private moveCamera(seconds: number): void {
+    if (this.following) {
+      const truck = this.shipping.truckWorldPosition;
+      const moving = [...this.heldKeys].some((k) => ['forward', 'back', 'left', 'right'].includes(CAMERA_KEYS[k] as string));
+      if (moving) this.following = false;
+      else if (!truck) this.goHome(); // it drove out of sight: back to the Site
+      else {
+        const p = this.pose();
+        const k = Math.min(1, seconds * 4);
+        p.target.lerp(truck, k);
+        p.distance += (Math.min(FOLLOW_DISTANCE, p.distance) - p.distance) * k;
+        p.distance = Math.max(p.distance, MIN_DISTANCE);
+        this.setPose(p);
+      }
+    }
     if (this.home) {
       const h = this.home;
       h.t = Math.min(1, h.t + seconds / HOME_SECONDS);
@@ -259,6 +296,10 @@ export class World {
       }
     });
     canvas.addEventListener('contextmenu', (e) => e.preventDefault());
+    // Dragging the map takes the camera back from the truck; turning and zooming don't.
+    canvas.addEventListener('pointerdown', (e) => {
+      if (e.button === 0) this.following = false;
+    });
     return c;
   }
 
@@ -299,6 +340,38 @@ export class World {
     this.land = landOf(site);
     this.buildings.clear();
     this.buildingAt.clear();
+    this.shipping.reset();
+    this.route = null;
+    this.following = false;
+  }
+
+  /**
+   * Show the Mission on its way: the Spacecraft assembled on a truck at a loading dock, then driven off
+   * the Site. Call every frame with the game seconds that passed (0 while paused); null hides it.
+   */
+  updateShipping(state: ShippingState | null, gameSeconds: number, realSeconds: number): void {
+    if (!state || !this.site) {
+      this.shipping.show(null);
+      this.route = null;
+      return;
+    }
+    if (this.route?.id !== state.id) {
+      // The route is fixed when the Mission ships, so a building placed later doesn't move the dock.
+      const occupied = (x: number, z: number) => this.buildingAt.has(`${x},${z}`);
+      this.route = { id: state.id, route: shippingRoute(this.site, state.start, occupied) };
+    }
+    this.shipping.show({ route: this.route.route, design: state.design, stage: state.stage, fraction: state.fraction });
+    this.shipping.animate(gameSeconds, realSeconds);
+  }
+
+  /** Let the camera ride along with the Shipping truck until the player drags the map or it drives out of sight. */
+  followTruck(): void {
+    this.home = null;
+    this.following = this.shipping.truckWorldPosition !== null;
+  }
+
+  get isFollowingTruck(): boolean {
+    return this.following;
   }
 
   /** Height of the ground at world point (x, z), inside the Site or out in the land around it. Water counts as 0. */
@@ -440,7 +513,7 @@ export class World {
       this.fog.near = near;
       this.fog.far = far;
       this.sky.position.copy(this.camera.position);
-      this.renderer.render(this.scene, this.camera);
+      if (!this.hidden) this.renderer.render(this.scene, this.camera);
     });
   }
 }

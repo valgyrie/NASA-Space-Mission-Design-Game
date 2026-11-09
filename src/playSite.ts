@@ -5,10 +5,22 @@ import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
 import { showBuildingPanel } from './ui/buildingPanel';
+import { showContractsPanel } from './ui/contractsPanel';
 import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
+import { showMissionDesigner } from './ui/missionDesigner';
+import { showLaunchShow } from './ui/launchShow';
+import { showMissionReport } from './ui/missionReport';
+import { showMissionTracker } from './ui/missionTracker';
+import { showSpaceScreen } from './ui/spaceScreen';
+import { SITE_SIZE } from './site/site';
+import { accepted, deadlineDay } from './game/contracts';
+import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
+import { launch, missionStage } from './game/mission';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
+import { LaunchView } from './world/launchView';
+import { SpaceView } from './world/spaceView';
 import type { World } from './world/world';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
@@ -18,6 +30,8 @@ const CLICK_SLOP = 6;
 export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const site = generateSite(game.site.seed);
   const state = game.state;
+  // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
+  settleUnanswered(state);
   world.showSite(site);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
@@ -50,13 +64,122 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     },
   );
   const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
+  const contracts = showContractsPanel(ui, state, () => saveGame(localStorage, game));
   const panel = showBuildingPanel(ui, site, state);
-  showHud(
+  // The Mission Designer pauses the Site like the menu does, and closes the side panels.
+  let speedBeforeDesigner: Speed = 1;
+  const designer = showMissionDesigner(ui, state, game.site.seed, {
+    onOpen() {
+      world.keyboardEnabled = false;
+      world.hidden = true;
+      speedBeforeDesigner = speed;
+      setSpeed(0);
+      setPlacing(null);
+      market.close();
+      contracts.close();
+      tracker.close();
+      panel.close();
+    },
+    onClose() {
+      world.keyboardEnabled = true;
+      world.hidden = false;
+      setSpeed(speedBeforeDesigner);
+    },
+    onChange: () => saveGame(localStorage, game),
+  });
+  // The Mission Report pauses the Site while it is read.
+  let speedBeforeReport: Speed = 1;
+  const report = showMissionReport(
+    ui,
+    () => {
+      world.keyboardEnabled = true;
+      setSpeed(speedBeforeReport);
+    },
+    (r) => space.open(state.reports.indexOf(r)),
+  );
+  // The Space view pauses the Site like the Mission Designer does.
+  let speedBeforeSpace: Speed = 1;
+  const space = showSpaceScreen(ui, state, () => new SpaceView(), {
+    onOpen() {
+      world.keyboardEnabled = false;
+      world.hidden = true;
+      speedBeforeSpace = speed;
+      setSpeed(0);
+      setPlacing(null);
+      market.close();
+      contracts.close();
+      tracker.close();
+      panel.close();
+    },
+    onClose() {
+      world.keyboardEnabled = true;
+      world.hidden = false;
+      setSpeed(speedBeforeSpace);
+    },
+  });
+  // The Launch plays first, then the Mission Report. The result is already settled and saved.
+  const launchShow = showLaunchShow(ui, () => new LaunchView());
+  const tracker = showMissionTracker(ui, state, {
+    onFollow: () => world.followTruck(),
+    onLaunch: () => launchMission(),
+    isFollowing: () => world.isFollowingTruck,
+  });
+  const launchMission = () => {
+    const contract = state.mission?.contract;
+    const result = launch(state, game.site.seed);
+    if (!result || !contract) return;
+    saveGame(localStorage, game);
+    world.keyboardEnabled = false;
+    speedBeforeReport = speed;
+    setSpeed(0);
+    setPlacing(null);
+    contracts.close();
+    market.close();
+    tracker.close();
+    panel.close();
+    const taken = accepted(state, contract);
+    world.hidden = true;
+    const kind = result.report.anomaly?.kind;
+    const hooks = kind && {
+      best: isMandatory(state, kind) ? null : state.anomalyBest[kind]!,
+      onAnswer: (score: number, answer: 'played' | 'skipped') => {
+        settleAnomaly(state, result.report, score, answer);
+        saveGame(localStorage, game);
+      },
+    };
+    launchShow.play(
+      result,
+      () => {
+        world.hidden = false;
+        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day));
+      },
+      hooks || undefined,
+    );
+  };
+  // The Market and the Contracts board share the left side, so one closes the other.
+  const hud = showHud(
     ui,
     game.company.name,
     () => menu.open(),
     () => world.goHome(),
-    () => market.toggle(),
+    () => {
+      contracts.close();
+      tracker.close();
+      market.toggle();
+    },
+    () => {
+      market.close();
+      tracker.close();
+      contracts.toggle();
+    },
+    () => designer.open(),
+    launchMission,
+    () => {
+      market.close();
+      contracts.close();
+      tracker.toggle();
+    },
+    () => space.open(),
   );
   const topBar = showTopBar(ui, setSpeed);
 
@@ -105,14 +228,20 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.target instanceof HTMLInputElement) return;
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
-      if (menu.isOpen) menu.close();
+      if (launchShow.isOpen) launchShow.skip();
+      else if (menu.isOpen) menu.close();
+      else if (space.isOpen) space.close();
+      else if (report.isOpen) report.close();
+      else if (designer.isOpen) designer.close();
       else if (placing) setPlacing(null);
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
+      else if (tracker.isOpen) tracker.close();
+      else if (contracts.isOpen) contracts.close();
       else menu.open();
       return;
     }
-    if (menu.isOpen) return;
+    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -125,13 +254,26 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     const room = storageFree(state) > 0;
     for (const m of state.mines) world.setWorking(m.x, m.z, room);
     for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
-    world.animateBuildings(Math.min(seconds, 0.1) * speed);
+    const gameSeconds = Math.min(seconds, 0.1) * speed;
+    world.animateBuildings(gameSeconds);
+    // The Mission on its way, on the Site: the truck loads at the dock beside the Warehouse, then drives off.
+    const stage = missionStage(state);
+    const m = state.mission;
+    const dock = state.warehouses[0] ?? { x: SITE_SIZE / 2, z: SITE_SIZE / 2 };
+    world.updateShipping(
+      m && stage ? { id: `${m.contract}@${m.startDay}`, start: dock, design: m.design, ...stage } : null,
+      gameSeconds,
+      seconds,
+    );
     topBar.update(site, state, speed);
     market.update();
+    contracts.update();
+    tracker.update();
+    hud.update(state);
     panel.update();
   });
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space } });
 }

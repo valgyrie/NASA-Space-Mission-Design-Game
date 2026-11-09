@@ -100,9 +100,24 @@ _Avoid_: rocket, ship, satellite (as the general term)
 The rocket that carries a Spacecraft to space.
 _Avoid_: rocket (alone), booster (alone)
 
+**Stage**:
+One section of a Launch Vehicle that burns, then drops away so the rest flies on lighter.
+
 **Bus**:
-The Spacecraft's main body; its size sets how many Parts it can carry.
+The Spacecraft's main body; its size sets how much mass of Parts it can carry.
 _Avoid_: chassis, frame, hull
+
+**Mission Designer**:
+The screen where the player builds a Spacecraft by picking one option for each slot.
+_Avoid_: editor, builder, workshop
+
+**Slot**:
+A place on the Spacecraft for one system (Bus, Power, Battery, Comms, Pointing, Payload); each slot holds one option.
+_Avoid_: socket, hardpoint
+
+**Pointing**:
+How the Spacecraft keeps steady and faces the right way, e.g. by spinning like Explorer 1.
+_Avoid_: attitude control (in player text), orientation
 
 **Payload**:
 The instruments a Spacecraft carries to do its job.
@@ -116,6 +131,10 @@ _Avoid_: life support system (as a separate part)
 Renting space on another organisation's Launch Vehicle, priced by mass.
 _Avoid_: rental, booking
 
+**Launch Site**:
+The place a Launch Vehicle lifts off from: a real spaceport the Company ships its Spacecraft to, such as Cape Canaveral, or later its own Spaceport Site.
+_Avoid_: launch base, pad (alone)
+
 **Launch Window**:
 A time period when a launch to a destination is possible and sensible.
 
@@ -127,6 +146,10 @@ _Avoid_: delay, abort
 A free, simplified 2D simulation of a Mission before the real Launch.
 _Avoid_: simulation (alone), practice
 
+**Estimated success**:
+The share of a Test Run's quick runs in which the Mission met its Contract, shown as a percentage.
+_Avoid_: success rate, odds, probability
+
 **Launch**:
 The real attempt to fly a Mission, with costs and risks.
 
@@ -137,6 +160,10 @@ _Avoid_: event, glitch, bug
 **Mission Report**:
 The result of a Mission, explaining why it succeeded or failed.
 _Avoid_: results screen, summary
+
+**Space view**:
+A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
+_Avoid_: map, radar, tracker (that is the Mission tracker)
 
 **Launch Insurance**:
 A payment before Launch that returns most of the Mission's cost if it fails.

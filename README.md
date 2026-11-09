@@ -6,7 +6,7 @@ Run a space company, design spacecraft, and relive real space history from Explo
 
 Built for the **NASA Space Apps Challenge 2026**: [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/).
 
-**Status:** early build. You can build Mines and Factories, make Parts, and buy and sell on the Market.
+**Status:** early build. You can build Mines and Factories, make Parts, trade on the Market, take the Explorer 1 Contract and design its Spacecraft. Launching comes next.
 
 ## Run it
 
@@ -42,6 +42,8 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 **Keys:** Space pauses. Esc opens the menu (your Seed and the controls).
 
 **Market:** open it under your Company name. Sell Raw Materials in 10 kg lots, or Parts one at a time, for money.
+
+**Contracts and Mission Designer:** both buttons are under your Company name. The Mission Designer pauses the Site: pick a Part for each slot, turn the 3D Spacecraft by dragging, and watch the six bars (Mass, Power, Budget, Data, Communications, Time). Missing Parts can be bought right there.
 
 **Checks:** `npm run check` runs the type check and tests. They also run before every commit and stop it if anything fails.
 

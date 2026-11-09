@@ -40,3 +40,15 @@ export function formatStorage(used: number, capacity: number): string {
 export function cssColour(hex: number): string {
   return `#${hex.toString(16).padStart(6, '0')}`;
 }
+
+const decimalFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+
+/** "11.5" (at most one decimal) */
+export function formatDecimal(n: number): string {
+  return decimalFormat.format(n);
+}
+
+/** "1 day", "12 days" */
+export function formatDays(n: number): string {
+  return n === 1 ? t('format.day') : t('format.days', { amount: kgFormat.format(n) });
+}

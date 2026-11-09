@@ -40,23 +40,25 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Assembly Hall, Research Lab, Ground Station, HQ
 - [ ] Building Upgrades (levels)
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
-- [ ] Shipping (money + days)
+- [x] Shipping (money + days)
+- [x] Watch the Shipping: Spacecraft assembled on a truck at a dock, the truck drives off, camera can follow; Mission tracker with the dates to come
 - [ ] Startup grant safety net
 
 ### Missions
-- [ ] Contracts board
-- [ ] Mission Designer: 3D Spacecraft, slots, six live resource bars
+- [x] Contracts board
+- [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [ ] Easy and Advanced Part sets
-- [ ] Launch Vehicle catalogue with mass check
-- [ ] Rideshare priced per kg
+- [ ] Launch Vehicle catalogue with mass check (Juno I and the mass check done; more vehicles come with their Eras)
+- [x] Rideshare priced per kg
 - [ ] Launch site choice, latitude and coast effects
 - [ ] Weather from real climate, Scrubs
 - [ ] Launch Window advisor
 - [ ] Launch Insurance
-- [ ] Test Run (2D) with estimated success %
-- [ ] 3D Launch and flight
-- [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse
-- [ ] Mission Report explaining why
+- [x] Test Run (2D) with estimated success %
+- [x] 3D Launch and flight
+- [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
+- [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse (Point the antenna and the framework done, ticket 11)
+- [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
 - [ ] Mission Patches and patch gallery
 
 ### Campaign
@@ -106,6 +108,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Anomalies: Dodge the debris, Stop the tumble
 - [ ] Satellite photos of your region after imaging Missions (NASA GIBS)
 - [ ] Real Moon positions and windows (JPL Horizons)
+- [ ] Space view shows the Moon, and Spacecraft orbiting the Moon or other worlds (with their Contracts, Era 3 on)
 - [ ] Real solar storms as flight events (NASA DONKI)
 - [ ] Manual Part placement in Advanced mode
 - [ ] Live weather mode (today's real weather)

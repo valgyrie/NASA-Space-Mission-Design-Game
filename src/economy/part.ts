@@ -10,7 +10,7 @@ export function isFactory(kind: BuildingKind): kind is FactoryKind {
   return (FACTORY_KINDS as readonly string[]).includes(kind);
 }
 
-/** Era 1 Parts a Factory can make. Their recipes are in `src/game/balance.ts`. */
+/** Era 1 Parts a Factory can make (Payloads too). Their recipes are in `src/game/balance.ts`. */
 export const PARTS = [
   'smallBus',
   'mediumBus',
@@ -19,5 +19,6 @@ export const PARTS = [
   'solarCells',
   'smallBattery',
   'largeBattery',
+  'radiationDetector',
 ] as const;
 export type Part = (typeof PARTS)[number];
