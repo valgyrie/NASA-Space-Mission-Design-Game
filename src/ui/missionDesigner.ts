@@ -15,9 +15,12 @@ import {
   costToBuy,
   isComplete,
   isUnlocked,
+  missionGoal,
   optionsFor,
 } from '../game/spacecraft';
 import { makeLaunchPlanner } from './launchPlanner';
+import { makeTestRunScreen } from './testRun';
+import { testRunFor } from '../game/mission';
 import { RECIPES } from '../game/balance';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
@@ -126,6 +129,7 @@ export function gaugeLayout(g: Gauge): { fill: number; target: number } {
 export function showMissionDesigner(
   root: HTMLElement,
   state: SiteState,
+  seed: string,
   hooks: { onOpen(): void; onClose(): void; onChange(): void },
 ): MissionDesigner {
   const backdrop = el('div', 'backdrop designer-backdrop');
@@ -211,12 +215,16 @@ export function showMissionDesigner(
   const body = el('div', 'designer-body');
   body.append(slotsBox, viewBox, resBox);
 
-  // The Launch planner takes the designer's place once the design is complete.
+  // The Launch planner takes the designer's place once the design is complete; a Test Run takes the planner's.
   const planner = makeLaunchPlanner(state, {
-    onBack: () => showPlanner(false),
+    onBack: () => showView('design'),
     onShip: () => {
       hooks.onChange();
       api.close();
+    },
+    onTestRun: (vehicle) => {
+      showView('testRun');
+      testRun.show(testRunFor(state, seed, state.design, vehicle), missionGoal(state).contract.id);
     },
     designWarnings: () => {
       const check = checkDesign(state, state.design);
@@ -225,21 +233,25 @@ export function showMissionDesigner(
       return check.problems.filter((p) => !blocking.has(p.kind)).map((p) => problemText(p, check));
     },
   });
-  panel.append(head, body, planner.root);
+  const testRun = makeTestRunScreen({ onBack: () => showView('planner') });
+  panel.append(head, body, planner.root, testRun.root);
 
-  const showPlanner = (on: boolean) => {
-    body.hidden = on;
-    planner.root.hidden = !on;
-    heading.textContent = t(on ? 'planner.heading' : 'designer.heading');
-    if (on) {
-      view.stop();
-      planner.render();
-    } else {
+  const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
+  const showView = (which: keyof typeof headings) => {
+    body.hidden = which !== 'design';
+    planner.root.hidden = which !== 'planner';
+    testRun.root.hidden = which !== 'testRun';
+    heading.textContent = t(headings[which]);
+    if (which !== 'testRun') testRun.stop();
+    if (which === 'design') {
       view.start();
       render();
+    } else {
+      view.stop();
+      if (which === 'planner') planner.render();
     }
   };
-  next.addEventListener('click', () => showPlanner(true));
+  next.addEventListener('click', () => showView('planner'));
 
   const report = (result: TradeResult) => {
     problem.textContent = result.ok ? '' : t(`market.problem.${result.problem}`);
@@ -316,13 +328,14 @@ export function showMissionDesigner(
       backdrop.hidden = false;
       problem.textContent = '';
       hooks.onOpen();
-      showPlanner(false);
+      showView('design');
       close.focus();
     },
     close() {
       if (backdrop.hidden) return;
       backdrop.hidden = true;
       view.stop();
+      testRun.stop();
       hooks.onClose();
     },
     get isOpen() {

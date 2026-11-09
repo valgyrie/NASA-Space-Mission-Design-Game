@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { generateSite } from '../site/site';
 import { CONTRACTS, acceptContract, availableContracts } from './contracts';
 import { LAUNCH_SITES, LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
-import { launch, missionStage, missionTimeline, planLaunch, shipMission } from './mission';
+import { launch, missionStage, missionTimeline, planLaunch, shipMission, testRunFor } from './mission';
 import { type SiteState, advanceDays, newSiteState } from './siteState';
 import { type Design, type OptionId, checkDesign, choose, emptyDesign, missionGoal, partsNeeded, spacecraftMass } from './spacecraft';
 
@@ -78,7 +78,7 @@ describe('shipping and Launch', () => {
     expect(state.money).toBe(money - plan.total);
     for (const p of partsNeeded(state.design)) expect(state.parts[p]).toBe(0);
     expect(missionStage(state)).toEqual({ stage: 'assembling', daysLeft: 30, fraction: 0 });
-    expect(launch(state)).toBeNull();
+    expect(launch(state, 'K7QXM2')).toBeNull();
     advanceDays(site, state, 15);
     expect(missionStage(state)).toEqual({ stage: 'assembling', daysLeft: 15, fraction: 0.5 });
     advanceDays(site, state, 15);
@@ -118,7 +118,7 @@ describe('shipping and Launch', () => {
     shipMission(state, state.design);
     advanceDays(site, state, 37);
     const money = state.money;
-    const report = launch(state)!;
+    const report = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(true);
     expect(report.findings.every((f) => f.ok)).toBe(true);
     expect(report.reward).toBe(CONTRACTS.explorer1.reward);
@@ -137,7 +137,7 @@ describe('shipping and Launch', () => {
     shipMission(state, state.design);
     advanceDays(site, state, 37);
     const money = state.money;
-    const report = launch(state)!;
+    const report = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(false);
     expect(report.reward).toBe(0);
     expect(state.money).toBe(money);
@@ -153,8 +153,27 @@ describe('shipping and Launch', () => {
     state.day = 300; // ready on day 337, ends on day 367: two days after the deadline
     shipMission(state, state.design);
     advanceDays(site, state, 37);
-    const report = launch(state)!;
+    const report = launch(state, 'K7QXM2')!;
     expect(report.success).toBe(false);
     expect(report.findings.find((f) => f.kind === 'time')).toEqual({ kind: 'time', ok: false, endDay: 367, deadlineDay: 365 });
+  });
+});
+
+describe('Test Run', () => {
+  it('is free, needs no Contract or Parts, and gives the same answer every time', () => {
+    const state = newSiteState();
+    const before = structuredClone(state);
+    const run = testRunFor(state, 'K7QXM2', design(EXPLORER));
+    expect(run.successPercent).toBe(100);
+    expect(testRunFor(state, 'K7QXM2', design(EXPLORER))).toEqual(run);
+    expect(state).toEqual(before);
+  });
+
+  it('agrees with the real Launch', () => {
+    const state = ready(swap('largeBattery', 'smallBattery'));
+    expect(testRunFor(state, 'K7QXM2', state.design).successPercent).toBe(0);
+    shipMission(state, state.design);
+    advanceDays(site, state, state.mission!.readyDay - state.day);
+    expect(launch(state, 'K7QXM2')?.success).toBe(false);
   });
 });

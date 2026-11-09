@@ -32,12 +32,15 @@ export interface Contract {
   reward: number;
   /** Game days from accepting to the deadline. */
   deadlineDays: number;
+  /** The real Mission's orbit, kilometres above the ground at its lowest and highest. Drawn in the Test Run. */
+  orbitKm: { low: number; high: number };
 }
 
 /**
  * Explorer 1: the first US satellite (1958). The US Army's ABMA and JPL built and launched it;
  * its cosmic-ray detector found the Van Allen belts. See docs/research/milestones.md.
  * Data for 30 days matches its high-power transmitter (31 days on mercury batteries).
+ * Orbit: perigee 358 km, apogee 2,550 km (docs/research/earth-map.md).
  */
 export const CONTRACTS: Record<ContractId, Contract> = {
   explorer1: {
@@ -50,6 +53,7 @@ export const CONTRACTS: Record<ContractId, Contract> = {
     ],
     reward: CONTRACT_REWARD.explorer1,
     deadlineDays: CONTRACT_DEADLINE_DAYS.explorer1,
+    orbitKm: { low: 358, high: 2_550 },
   },
 };
 

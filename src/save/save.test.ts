@@ -129,7 +129,7 @@ describe('local save', () => {
     saveGame(storage, busy);
     expect(loadGame(storage)?.state.mission).toEqual(busy.state.mission);
     busy.state.day = busy.state.mission!.readyDay;
-    launch(busy.state);
+    launch(busy.state, busy.site.seed);
     saveGame(storage, busy);
     const loaded = loadGame(storage)!.state;
     expect(loaded.mission).toBeNull();

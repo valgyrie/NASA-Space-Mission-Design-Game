@@ -138,3 +138,18 @@ export const RIDESHARE_PER_KG = {
 export const SHIPPING = {
   capeCanaveral: { cost: 25_000, days: 7 },
 } as const;
+
+/**
+ * Real Parts never match their label exactly: a battery holds a little more or less, electronics draw a
+ * little more or less, a radio link is better some days than others. Each flight (and each Test Run run)
+ * varies them by up to this share, either way, most often by little. Game estimates, kept small so
+ * results come from the design, not luck: a 10% margin always holds.
+ */
+export const PART_SPREAD = {
+  batteryWh: 0.05,
+  powerUseW: 0.05,
+  sendPerDay: 0.1,
+} as const;
+
+/** Quick runs behind a Test Run's estimated success. */
+export const TEST_RUNS = 200;

@@ -143,6 +143,10 @@ _Avoid_: delay, abort
 A free, simplified 2D simulation of a Mission before the real Launch.
 _Avoid_: simulation (alone), practice
 
+**Estimated success**:
+The share of a Test Run's quick runs in which the Mission met its Contract, shown as a percentage.
+_Avoid_: success rate, odds, probability
+
 **Launch**:
 The real attempt to fly a Mission, with costs and risks.
 
