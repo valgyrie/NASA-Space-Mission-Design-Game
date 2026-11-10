@@ -12,7 +12,7 @@ function design(ids: OptionId[]): Design {
   return d;
 }
 
-const plan = (ids: OptionId[] = EXPLORER): FlightPlan => ({ contract: 'explorer1', design: design(ids), vehicle: 'juno1' });
+const plan = (ids: OptionId[] = EXPLORER): FlightPlan => ({ contract: 'explorer1', design: design(ids), vehicle: 'juno1', tech: [] });
 const SEED = 'K7QXM2';
 
 describe('flight', () => {

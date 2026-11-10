@@ -33,7 +33,7 @@ const swap = (from: OptionId, to: OptionId) => EXPLORER.map((id) => (id === from
 
 describe('Mission Designer slots', () => {
   it('offers at least one unlocked option in every slot', () => {
-    for (const slot of SLOTS) expect(optionsFor(slot).some((o) => isUnlocked(o.id)), slot).toBe(true);
+    for (const slot of SLOTS) expect(optionsFor(slot).some((o) => isUnlocked(newSiteState(), o.id)), slot).toBe(true);
   });
 
   it('puts every option in exactly one slot, and every Part it needs exists', () => {
@@ -44,10 +44,15 @@ describe('Mission Designer slots', () => {
     }
   });
 
-  it('keeps solar cells locked for now (Explorer 1 flew on batteries)', () => {
+  it('keeps Solar Cells locked until the Vanguard 1 card (Explorer 1 flew on batteries)', () => {
+    const state = newSiteState();
     const d = emptyDesign();
-    expect(choose(d, 'solarCells')).toBe(false);
+    expect(choose(d, 'solarCells', state)).toBe(false);
     expect(d.power).toBeNull();
+    state.history.push('vanguard1');
+    expect(isUnlocked(state, 'solarCells')).toBe(true);
+    expect(choose(d, 'solarCells', state)).toBe(true);
+    expect(d.power).toBe('solarCells');
   });
 
   it('replaces the option in a slot', () => {
@@ -72,7 +77,7 @@ describe('checking a design', () => {
   it('is too heavy for Juno I with a Medium Bus', () => {
     const check = checkDesign(newSiteState(), design(...swap('smallBus', 'mediumBus')));
     expect(check.gauges.mass.status).toBe('short');
-    expect(check.problems).toContainEqual({ kind: 'tooHeavy', overKg: spacecraftMass(design(...swap('smallBus', 'mediumBus'))) - 14 });
+    expect(check.problems).toContainEqual({ kind: 'tooHeavy', overKg: spacecraftMass(design(...swap('smallBus', 'mediumBus'))) - 14, bigger: null });
   });
 
   it('runs out of Power before 30 days with a Small Battery, so Data falls short too', () => {

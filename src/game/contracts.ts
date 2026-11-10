@@ -6,7 +6,7 @@ import type { SiteState } from './siteState';
  * Text (client, objective) lives in strings.ts under `contract.<id>.*`.
  */
 
-export const CONTRACT_IDS = ['explorer1'] as const;
+export const CONTRACT_IDS = ['explorer1', 'tiros1'] as const;
 export type ContractId = (typeof CONTRACT_IDS)[number];
 
 /** A Milestone is a Campaign Contract based on a real event; side Contracts come later. */
@@ -16,7 +16,7 @@ export type ContractKind = 'milestone';
 export type Orbit = 'lowEarthOrbit';
 
 /** Payloads named by Contracts. The Mission Designer (ticket 07) adds them as Parts. */
-export type PayloadKind = 'radiationDetector';
+export type PayloadKind = 'radiationDetector' | 'tvCamera';
 
 /** What the Mission must do to fulfil the Contract. Checked by the Mission Report later. */
 export type Requirement =
@@ -36,6 +36,8 @@ export interface Contract {
   orbitKm: { low: number; high: number };
   /** The real orbit's tilt to the equator, in degrees. Drawn in the Space view. */
   inclinationDeg: number;
+  /** A Milestone that must be done before this one is offered: the Campaign follows history in order. */
+  after?: ContractId;
 }
 
 /**
@@ -59,6 +61,23 @@ export const CONTRACTS: Record<ContractId, Contract> = {
     // docs/research/launch-vehicles.md (Explorer 1's orbit).
     inclinationDeg: 33.24,
   },
+  // TIROS-1: the first weather satellite (1 April 1960), built by RCA for NASA. Two TV cameras, spin-stabilised,
+  // powered by about 9,000 solar cells charging its batteries. NASA: "operational for only 78 days".
+  // Orbit 693 × 750 km at 48.4°. Launched on a Thor-Able. See docs/research/milestones.md.
+  tiros1: {
+    id: 'tiros1',
+    kind: 'milestone',
+    requirements: [
+      { kind: 'orbit', orbit: 'lowEarthOrbit' },
+      { kind: 'payload', payload: 'tvCamera' },
+      { kind: 'dataDays', days: 78 },
+    ],
+    reward: CONTRACT_REWARD.tiros1,
+    deadlineDays: CONTRACT_DEADLINE_DAYS.tiros1,
+    orbitKm: { low: 693, high: 750 },
+    inclinationDeg: 48.4,
+    after: 'explorer1',
+  },
 };
 
 /** A Contract the Company has taken on. */
@@ -74,15 +93,22 @@ export function accepted(state: SiteState, id: ContractId): AcceptedContract | u
 
 /** Contracts on the board that the Company hasn't taken or finished yet. */
 export function availableContracts(state: SiteState): Contract[] {
-  return CONTRACT_IDS.filter((id) => !accepted(state, id) && !state.completed.includes(id)).map((id) => CONTRACTS[id]);
+  return CONTRACT_IDS.filter((id) => !accepted(state, id) && !state.completed.includes(id) && isOffered(state, id)).map((id) => CONTRACTS[id]);
 }
 
-export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' | 'done' };
+/** A Contract is offered once the Milestone before it is done. */
+export function isOffered(state: Pick<SiteState, 'completed'>, id: ContractId): boolean {
+  const before = CONTRACTS[id].after;
+  return !before || state.completed.includes(before);
+}
+
+export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' | 'done' | 'notYet' };
 
 /** Take on a Contract: it becomes active and its deadline starts today. */
 export function acceptContract(state: SiteState, id: ContractId): AcceptResult {
   if (accepted(state, id)) return { ok: false, problem: 'taken' };
   if (state.completed.includes(id)) return { ok: false, problem: 'done' };
+  if (!isOffered(state, id)) return { ok: false, problem: 'notYet' };
   state.contracts.push({ id, acceptedDay: state.day });
   return { ok: true };
 }

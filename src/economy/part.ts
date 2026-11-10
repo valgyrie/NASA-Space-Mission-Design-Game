@@ -3,7 +3,7 @@ export const FACTORY_KINDS = ['metalWorks', 'electronicsLab', 'solarFab', 'batte
 export type FactoryKind = (typeof FACTORY_KINDS)[number];
 
 /** Every building the player can place on a Site. */
-export const BUILDING_KINDS = ['mine', ...FACTORY_KINDS, 'warehouse'] as const;
+export const BUILDING_KINDS = ['mine', ...FACTORY_KINDS, 'warehouse', 'researchLab'] as const;
 export type BuildingKind = (typeof BUILDING_KINDS)[number];
 
 export function isFactory(kind: BuildingKind): kind is FactoryKind {
@@ -20,5 +20,6 @@ export const PARTS = [
   'smallBattery',
   'largeBattery',
   'radiationDetector',
+  'tvCamera',
 ] as const;
 export type Part = (typeof PARTS)[number];

@@ -2,7 +2,8 @@ import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { ANOMALY_KINDS } from '../game/anomalies';
 import { CONTRACT_IDS, type ContractId } from '../game/contracts';
-import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, historyCardFor } from '../game/history';
+import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCardFor } from '../game/history';
+import { TECH_IDS, newResearch } from '../game/research';
 import { type SiteState, newSiteState } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
@@ -11,7 +12,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 10;
+export const SAVE_VERSION = 11;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -73,6 +74,8 @@ function isMission(value: unknown): boolean {
     isComplete(m.design!) &&
     isOneOf(m.vehicle, LAUNCH_VEHICLE_IDS) &&
     isOneOf(m.site, LAUNCH_SITE_IDS) &&
+    Array.isArray(m.tech) &&
+    m.tech.every((id) => isOneOf(id, TECH_IDS)) &&
     isNumber(m.startDay) &&
     isNumber(m.shipDay) &&
     isNumber(m.readyDay)
@@ -118,6 +121,11 @@ const isPatch = (v: unknown): boolean => {
   return !!p && isOneOf(p.contract, CONTRACT_IDS) && isNumber(p.day);
 };
 
+const isResearch = (v: unknown): boolean => {
+  const r = v as Partial<SiteState['research']> | null;
+  return !!r && isNumber(r.processedKb) && Array.isArray(r.tech) && r.tech.every((id) => isOneOf(id, TECH_IDS));
+};
+
 const isTutorial = (v: unknown): boolean => {
   const t = v as Partial<SiteState['tutorial']> | null;
   return !!t && typeof t.skipped === 'boolean' && typeof t.testRun === 'boolean';
@@ -135,6 +143,8 @@ function isSiteState(value: unknown): value is SiteState {
     v.factories.every(isFactory) &&
     Array.isArray(v.warehouses) &&
     v.warehouses.every(isTile) &&
+    Array.isArray(v.labs) &&
+    v.labs.every(isTile) &&
     isCounts(v.stock, RAW_MATERIALS) &&
     isCounts(v.parts, PARTS) &&
     Array.isArray(v.contracts) &&
@@ -150,7 +160,9 @@ function isSiteState(value: unknown): value is SiteState {
     v.history.every((id) => isOneOf(id, HISTORY_CARD_IDS)) &&
     Array.isArray(v.patches) &&
     v.patches.every(isPatch) &&
-    isTutorial(v.tutorial)
+    isTutorial(v.tutorial) &&
+    isResearch(v.research) &&
+    isOneOf(v.vehicle, LAUNCH_VEHICLE_IDS)
   );
 }
 
@@ -183,7 +195,7 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
     const id = ids(report?.contract);
     if (!id || report?.success !== true || !isNumber(report.launchDay)) continue;
     add(historyCardFor(id, 'before'));
-    add(historyCardFor(id, 'after'));
+    for (const card of cardsAfter(id)) add(card);
     patches.push({ contract: id, day: report.launchDay });
   }
   return { history, patches };
@@ -198,6 +210,8 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Version 7 didn't keep the design in Mission Reports: the Space view shows those Spacecraft as a plain model.
  * Version 8 had no Anomalies: its reports had none, and the Company has played none yet.
  * Version 9 had no History Archive, Mission Patches or tutorial: they are worked out from its Contracts and reports.
+ * Version 10 had no Research Labs, Research Points or Launch Vehicle choice, and no Vanguard 1 card: a Company that
+ * had done Explorer 1 gets the card (and so Solar Cells).
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -232,6 +246,14 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   if (v?.version === 9) {
     const old = (v as { state?: Record<string, unknown> }).state;
     v = { ...v, version: 10, state: { ...old, ...historyFrom(old ?? {}), tutorial: { skipped: false, testRun: false } } } as typeof v;
+  }
+  if (v?.version === 10) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const history = Array.isArray(old.history) ? [...old.history] : old.history;
+    const done = Array.isArray(old.completed) && old.completed.includes('explorer1');
+    if (done && Array.isArray(history) && !history.includes('vanguard1')) history.push('vanguard1');
+    const mission = old.mission && typeof old.mission === 'object' ? { ...old.mission, tech: [] } : old.mission;
+    v = { ...v, version: 11, state: { ...old, history, mission, labs: [], research: newResearch(), vehicle: 'juno1' } } as typeof v;
   }
   return v;
 }

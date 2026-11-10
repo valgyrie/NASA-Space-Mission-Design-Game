@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
 import { mat } from './buildingParts';
 import { buildSpacecraft } from './spacecraftMesh';
@@ -69,6 +70,10 @@ export interface RocketModel {
   /** Everything from stage 2 up turns: the tub was spun on the pad so the small motors fire straight. */
   spinner: THREE.Group;
   spacecraft: THREE.Group;
+  /** Metres from the base to where stage 2 starts: the space shot shows the rocket from here up. */
+  upperBase: number;
+  /** Metres from there to the top. */
+  upperLength: number;
 }
 
 function firstStage(): StageModel {
@@ -126,8 +131,26 @@ function cluster(count: number, ringRadius: number, base: number, length: number
   return { group: g, nozzles, nozzleRadius: radius * 0.55 };
 }
 
+/** The player's Spacecraft, scaled to `height` metres and standing on y = 0. */
+function spacecraftOnTop(design: Design, height: number): THREE.Group {
+  const spacecraft = new THREE.Group();
+  const model = buildSpacecraft(design);
+  const box = new THREE.Box3().setFromObject(model);
+  const size = box.getSize(new THREE.Vector3());
+  const scale = height / Math.max(size.y, 0.01);
+  model.scale.setScalar(scale);
+  model.position.y = -box.min.y * scale;
+  spacecraft.add(model);
+  return spacecraft;
+}
+
+/** The Launch Vehicle with the player's Spacecraft on top. */
+export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1'): RocketModel {
+  return vehicle === 'thorAble' ? buildThorAble(design) : buildJuno(design);
+}
+
 /** The whole Juno I with the player's Spacecraft on top. */
-export function buildRocket(design: Design): RocketModel {
+function buildJuno(design: Design): RocketModel {
   const root = new THREE.Group();
   root.name = 'rocket';
   const first = firstStage();
@@ -150,18 +173,107 @@ export function buildRocket(design: Design): RocketModel {
   spinner.add(stage2.group, stage3.group, stage4.group);
 
   // The Spacecraft sits on stage 4, scaled to about a metre tall.
-  const spacecraft = new THREE.Group();
-  const model = buildSpacecraft(design);
-  const box = new THREE.Box3().setFromObject(model);
-  const size = box.getSize(new THREE.Vector3());
-  const scale = (JUNO.top - JUNO.stage4Top) / Math.max(size.y, 0.01);
-  model.scale.setScalar(scale);
-  model.position.y = -box.min.y * scale;
-  spacecraft.add(model);
+  const spacecraft = spacecraftOnTop(design, JUNO.top - JUNO.stage4Top);
   spacecraft.position.y = JUNO.stage4Top - JUNO.coneTop;
   spinner.add(spacecraft);
 
-  return { root, stages: [first, stage2, stage3, stage4], spinner, spacecraft };
+  return {
+    root,
+    stages: [first, stage2, stage3, stage4],
+    spinner,
+    spacecraft,
+    upperBase: JUNO.coneTop,
+    upperLength: JUNO.top - JUNO.coneTop,
+  };
+}
+
+/**
+ * A low-poly Thor-Able, in metres: 27 m tall (docs/research/launch-vehicles.md). A wide white Thor first stage
+ * that narrows towards the top, with a black roll pattern and two small vernier engines by the main one;
+ * the slim Able second stage; then the Altair solid third stage on a spin table with the Spacecraft on top.
+ * Proportions are approximate.
+ */
+export const THOR = {
+  radius: 1.22,
+  taperFrom: 10.5,
+  thorTop: 18.4,
+  topRadius: 0.5,
+  ableTop: 23.6,
+  ableRadius: 0.42,
+  altairTop: 25.4,
+  top: 27,
+};
+
+function thorStage(): StageModel {
+  const g = new THREE.Group();
+  const r = THOR.radius;
+  g.add(cyl(r, r, THOR.taperFrom - 0.8, R.white, 0.8));
+  g.add(cyl(r, r * 0.95, 0.8, R.dark, 0));
+  g.add(cyl(THOR.topRadius, r, THOR.thorTop - THOR.taperFrom, R.white, THOR.taperFrom));
+  // Roll pattern and a band at the tank joint.
+  for (const [y, start] of [
+    [3.2, 0],
+    [3.2, Math.PI],
+    [6.4, Math.PI / 2],
+    [6.4, Math.PI * 1.5],
+  ] as const) {
+    g.add(quarter(r, 1.6, y, start, R.black));
+  }
+  g.add(cyl(r * 1.01, r * 1.01, 0.15, R.black, THOR.taperFrom - 0.1));
+  // Interstage up to the Able.
+  g.add(cyl(THOR.ableRadius + 0.04, THOR.topRadius, 0.6, R.steel, THOR.thorTop));
+  // Main engine and two verniers.
+  g.add(cyl(r * 0.45, r * 0.62, 0.6, R.nozzle, -0.55));
+  for (const sx of [-1, 1]) {
+    const vernier = cyl(0.08, 0.14, 0.3, R.nozzle, 0.1);
+    vernier.position.x = sx * (r + 0.05);
+    g.add(vernier);
+  }
+  return { group: g, nozzles: [new THREE.Vector3(0, -0.55, 0)], nozzleRadius: r * 0.45 };
+}
+
+function ableStage(): StageModel {
+  const g = new THREE.Group();
+  const r = THOR.ableRadius;
+  const base = THOR.thorTop + 0.6;
+  g.add(cyl(r, r, THOR.ableTop - base, R.white, base));
+  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, base + 1.2));
+  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, THOR.ableTop - 0.5));
+  g.add(cyl(0.12, r * 0.5, 0.35, R.steel, THOR.ableTop));
+  g.add(cyl(r * 0.35, r * 0.5, 0.4, R.nozzle, base - 0.4));
+  return { group: g, nozzles: [new THREE.Vector3(0, base - 0.4, 0)], nozzleRadius: r * 0.35 };
+}
+
+function buildThorAble(design: Design): RocketModel {
+  const root = new THREE.Group();
+  root.name = 'rocket';
+  const first = thorStage();
+  const second = ableStage();
+  root.add(first.group, second.group);
+
+  // The Altair and the Spacecraft turn on a spin table on top of the Able.
+  const spinner = new THREE.Group();
+  spinner.position.y = THOR.ableTop + 0.35;
+  root.add(spinner);
+  const third = new THREE.Group();
+  const altairLength = THOR.altairTop - spinner.position.y;
+  third.add(cyl(0.24, 0.24, altairLength - 0.2, R.motor, 0.2));
+  third.add(cyl(0.25, 0.25, 0.06, R.dark, altairLength - 0.4));
+  third.add(cyl(0.1, 0.16, 0.2, R.nozzle, 0));
+  spinner.add(third);
+  const spacecraft = spacecraftOnTop(design, THOR.top - THOR.altairTop);
+  spacecraft.position.y = altairLength;
+  spinner.add(spacecraft);
+
+  const upperBase = THOR.thorTop + 0.6 - 0.4;
+  return {
+    root,
+    stages: [first, second, { group: third, nozzles: [new THREE.Vector3(0, 0, 0)], nozzleRadius: 0.1 }],
+    spinner,
+    spacecraft,
+    upperBase,
+    upperLength: THOR.top - upperBase,
+  };
 }
 
 /** Free the geometry the rocket built (materials are shared and kept). */

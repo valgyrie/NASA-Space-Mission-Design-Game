@@ -5,12 +5,14 @@ import {
   LAUNCH_VEHICLES,
   type LaunchSiteId,
   type LaunchVehicleId,
+  isVehicleOpen,
   rideshareCost,
 } from './launchVehicles';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { awardMission } from './history';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
+import type { TechId } from './research';
 import {
   type Design,
   type DesignProblem,
@@ -42,6 +44,8 @@ export interface Mission {
   design: Design;
   vehicle: LaunchVehicleId;
   site: LaunchSiteId;
+  /** Tech tree Upgrades the Company had when it shipped: its Parts were built with them. */
+  tech: TechId[];
   /** Game day it was booked and assembly began. */
   startDay: number;
   /** Game day assembly ends and Shipping begins. */
@@ -54,6 +58,7 @@ export interface Mission {
 export type PlanProblem =
   | { kind: 'noContract' }
   | { kind: 'underway' }
+  | { kind: 'vehicleClosed' }
   | { kind: 'emptySlots'; slots: Slot[] }
   | { kind: 'tooHeavy'; overKg: number }
   | Extract<DesignProblem, { kind: 'busFull' }>
@@ -85,7 +90,7 @@ export interface LaunchPlan {
 export function planLaunch(
   state: SiteState,
   design: Design,
-  vehicle: LaunchVehicleId = 'juno1',
+  vehicle: LaunchVehicleId = state.vehicle,
   site: LaunchSiteId = 'capeCanaveral',
 ): LaunchPlan {
   const goal = missionGoal(state);
@@ -103,6 +108,7 @@ export function planLaunch(
   const problems: PlanProblem[] = [];
   if (!taken) problems.push({ kind: 'noContract' });
   if (state.mission) problems.push({ kind: 'underway' });
+  if (!isVehicleOpen(state, vehicle)) problems.push({ kind: 'vehicleClosed' });
   const slots = emptySlots(design);
   if (slots.length > 0) problems.push({ kind: 'emptySlots', slots });
   if (massKg > liftKg + 1e-9) problems.push({ kind: 'tooHeavy', overKg: massKg - liftKg });
@@ -141,11 +147,11 @@ export function testRunFor(
   state: SiteState,
   seed: string,
   design: Design,
-  vehicle: LaunchVehicleId = 'juno1',
+  vehicle: LaunchVehicleId = state.vehicle,
   site: LaunchSiteId = 'capeCanaveral',
 ): TestRun {
   const plan = planLaunch(state, design, vehicle, site);
-  return testRun(seed, { contract: plan.goal.contract.id, design, vehicle }, plan.readyDay, plan.deadlineDay);
+  return testRun(seed, { contract: plan.goal.contract.id, design, vehicle, tech: [...state.research.tech] }, plan.readyDay, plan.deadlineDay);
 }
 
 /**
@@ -155,7 +161,7 @@ export function testRunFor(
 export function shipMission(
   state: SiteState,
   design: Design,
-  vehicle: LaunchVehicleId = 'juno1',
+  vehicle: LaunchVehicleId = state.vehicle,
   site: LaunchSiteId = 'capeCanaveral',
 ): LaunchPlan {
   const plan = planLaunch(state, design, vehicle, site);
@@ -168,6 +174,7 @@ export function shipMission(
     design: { ...design },
     vehicle,
     site,
+    tech: [...state.research.tech],
     startDay,
     shipDay: startDay + plan.assemblyDays,
     readyDay: plan.readyDay,

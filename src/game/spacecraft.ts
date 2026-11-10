@@ -1,7 +1,9 @@
 import type { Part } from '../economy/part';
 import { OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
 import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
-import { LAUNCH_SITES, LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId } from './launchVehicles';
+import type { HistoryCardId } from './history';
+import { type Boosted, type TechId, boost } from './research';
+import { LAUNCH_SITES, LAUNCH_VEHICLES, LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen } from './launchVehicles';
 import { type TradeResult, buy, buyPrice } from './market';
 import { type SiteState, storageFree } from './siteState';
 
@@ -24,6 +26,7 @@ export const OPTION_IDS = [
   'simpleAntenna',
   'spin',
   'radiationDetector',
+  'tvCamera',
 ] as const;
 export type OptionId = (typeof OPTION_IDS)[number];
 
@@ -56,16 +59,28 @@ export const OPTIONS: Record<OptionId, SpacecraftOption> = {
   // Explorer 1 kept steady by spinning around its long axis at 750 rpm: no Part needed.
   spin: option('spin', 'pointing', null),
   radiationDetector: option('radiationDetector', 'payload', 'radiationDetector', 'radiationDetector'),
+  tvCamera: option('tvCamera', 'payload', 'tvCamera', 'tvCamera'),
 };
 
 /**
- * Options shown but not yet available. Explorer 1 flew on batteries alone; solar cells unlock
- * later in Era 1 with Vanguard 1 (ticket 14 replaces this with the real unlock).
+ * Options shown but locked until a Real History card is unlocked. Explorer 1 flew on batteries alone;
+ * Vanguard 1 (17 March 1958) was the first solar-powered satellite, so Solar Cells come with its card.
  */
-const LOCKED: ReadonlySet<OptionId> = new Set(['solarCells']);
+export const UNLOCKED_BY: Partial<Record<OptionId, HistoryCardId>> = { solarCells: 'vanguard1' };
 
-export function isUnlocked(id: OptionId): boolean {
-  return !LOCKED.has(id);
+export function isUnlocked(state: Pick<SiteState, 'history'>, id: OptionId): boolean {
+  const card = UNLOCKED_BY[id];
+  return !card || state.history.includes(card);
+}
+
+/** An option's numbers with the Company's tech tree Upgrades applied. */
+export function statsOf(o: SpacecraftOption, tech: readonly TechId[] = []): OptionStats {
+  if (tech.length === 0) return o.stats;
+  const out: OptionStats = { ...o.stats };
+  for (const stat of ['solarW', 'sendPerDay', 'batteryWh', 'powerUseW'] as Boosted[]) {
+    if (out[stat] !== undefined) out[stat] = out[stat]! * boost(tech, stat);
+  }
+  return out;
 }
 
 /** The options for a slot, in menu order. */
@@ -80,9 +95,9 @@ export function emptyDesign(): Design {
   return { bus: null, power: null, battery: null, comms: null, pointing: null, payload: null };
 }
 
-/** Pick an option for its slot. Locked options are refused. */
-export function choose(design: Design, id: OptionId): boolean {
-  if (!isUnlocked(id)) return false;
+/** Pick an option for its slot. Options locked for this Company (`state`, when given) are refused. */
+export function choose(design: Design, id: OptionId, state?: Pick<SiteState, 'history'>): boolean {
+  if (state && !isUnlocked(state, id)) return false;
   design[OPTIONS[id].slot] = id;
   return true;
 }
@@ -98,8 +113,8 @@ function picked(design: Design): SpacecraftOption[] {
   });
 }
 
-const sum = (options: SpacecraftOption[], stat: keyof OptionStats) =>
-  options.reduce((total, o) => total + (o.stats[stat] ?? 0), 0);
+const sum = (options: SpacecraftOption[], stat: keyof OptionStats, tech: readonly TechId[] = []) =>
+  options.reduce((total, o) => total + (statsOf(o, tech)[stat] ?? 0), 0);
 
 export function emptySlots(design: Design): Slot[] {
   return SLOTS.filter((slot) => design[slot] === null);
@@ -189,7 +204,7 @@ export function missionGoal(state: SiteState): MissionGoal {
   const contract = taken ? CONTRACTS[taken.id] : (offered ?? CONTRACTS[state.completed.at(-1) ?? CONTRACT_IDS[0]]);
   const status = taken ? 'accepted' : offered ? 'offered' : 'done';
   const { orbit, payload, missionDays } = contractNeeds(contract);
-  const vehicle: LaunchVehicleId = 'juno1';
+  const vehicle: LaunchVehicleId = state.vehicle;
   const site: LaunchSiteId = 'capeCanaveral';
   return {
     contract,
@@ -208,19 +223,19 @@ export function missionGoal(state: SiteState): MissionGoal {
 // ---- How the Spacecraft works in flight ----
 
 /** Power over a Mission: watts used, watts from sunlight on average, energy stored, and days it lasts. */
-export function powerOf(design: Design): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
+export function powerOf(design: Design, tech: readonly TechId[] = []): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
   const options = picked(design);
-  const powerUseW = sum(options, 'powerUseW');
-  const sunW = sum(options, 'solarW') * SUNLIT_SHARE;
-  const batteryWh = sum(options, 'batteryWh');
+  const powerUseW = sum(options, 'powerUseW', tech);
+  const sunW = sum(options, 'solarW', tech) * SUNLIT_SHARE;
+  const batteryWh = sum(options, 'batteryWh', tech);
   const drainW = powerUseW - sunW;
   return { powerUseW, sunW, batteryWh, lastsDays: drainW > 0 ? batteryWh / drainW / 24 : Infinity };
 }
 
 /** Kilobytes of Data the Payload makes each day, and what the Comms can send home. */
-export function dataOf(design: Design): { dataPerDay: number; sendPerDay: number } {
+export function dataOf(design: Design, tech: readonly TechId[] = []): { dataPerDay: number; sendPerDay: number } {
   const options = picked(design);
-  return { dataPerDay: sum(options, 'dataPerDay'), sendPerDay: sum(options, 'sendPerDay') };
+  return { dataPerDay: sum(options, 'dataPerDay', tech), sendPerDay: sum(options, 'sendPerDay', tech) };
 }
 
 /** Does the Payload slot hold what the Contract asks for? Any Payload counts when it names none. */
@@ -254,7 +269,7 @@ export interface Gauge {
 
 /** A clear reason a resource is short, for the warning list. */
 export type DesignProblem =
-  | { kind: 'tooHeavy'; overKg: number }
+  | { kind: 'tooHeavy'; overKg: number; bigger: LaunchVehicleId | null }
   | { kind: 'busFull'; bus: OptionId; carriesKg: number; partsKg: number }
   | { kind: 'powerShort'; lastsDays: number; needDays: number }
   | { kind: 'money'; short: number }
@@ -292,7 +307,11 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   // Mass: the whole Spacecraft against the Launch Vehicle, and the Parts against what the Bus can carry.
   const mass = spacecraftMass(design);
   const massGauge = gauge(mass, goal.liftKg, 'max');
-  if (massGauge.status === 'short') problems.push({ kind: 'tooHeavy', overKg: mass - goal.liftKg });
+  if (massGauge.status === 'short') {
+    // A Launch Vehicle the Company can book that would lift it, if there is one.
+    const bigger = LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id) && LAUNCH_VEHICLES[id].liftKg[goal.orbit] >= mass) ?? null;
+    problems.push({ kind: 'tooHeavy', overKg: mass - goal.liftKg, bigger });
+  }
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
   const partsKg = carriedMass(design);
@@ -303,7 +322,8 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
 
   // Power: energy stored plus sunlight, against what the Spacecraft uses over the Mission.
   const hours = goal.missionDays * 24;
-  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design);
+  const tech = state.research.tech;
+  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design, tech);
   const powerGauge = gauge(batteryWh + sunW * hours, powerUseW * hours, 'min', empty('power', 'battery'));
   if (powerGauge.status === 'short') problems.push({ kind: 'powerShort', lastsDays, needDays: goal.missionDays });
 
@@ -319,7 +339,7 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   if (design.payload && !rightPayload && goal.payload) problems.push({ kind: 'wrongPayload', payload: goal.payload });
 
   // Communications: Data the antenna can send each day, against what the Payload makes.
-  const { dataPerDay, sendPerDay } = dataOf(design);
+  const { dataPerDay, sendPerDay } = dataOf(design, tech);
   const commsGauge = gauge(sendPerDay, dataPerDay, 'min', empty('comms', 'payload'));
   if (commsGauge.status === 'short') problems.push({ kind: 'commsShort', sendPerDay, dataPerDay });
 

@@ -320,16 +320,19 @@ export class LaunchView {
     const coastEnd = this.stages[1]?.start ?? burnEnd;
     this.path = climbPath(burnEnd, coastEnd);
 
-    this.climbing = buildRocket(design);
+    this.climbing = buildRocket(design, vehicle);
     this.climbing.root.position.y = 1.8;
     this.flames = this.climbing.stages.map((s, i) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? 9 : 1.2)));
     this.pad.add(this.climbing.root);
 
     // The upper stages again for the space shot, lying along +x (flying east) without the first stage.
-    this.upper = buildRocket(design);
+    // A taller upper rocket is shown smaller, so it fits the shot like Juno I's.
+    this.upper = buildRocket(design, vehicle);
     this.upper.stages[0]!.group.visible = false;
+    const fit = Math.min(1, (JUNO.top - JUNO.coneTop) / this.upper.upperLength);
+    this.upper.root.scale.setScalar(fit);
     this.upper.root.rotation.z = -Math.PI / 2;
-    this.upper.root.position.x = -JUNO.coneTop;
+    this.upper.root.position.x = -this.upper.upperBase * fit;
     this.upperFlames = this.upper.stages.map((s) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius * 1.4, 1.6)));
     this.space.add(this.upper.root);
 

@@ -37,7 +37,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Mines on deposits (Aluminium, Copper, Silicon first), detailed model with a turning wheel
 - [x] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant, detailed models that move while working
 - [x] Warehouse: storage by mass, shown in the top bar
-- [ ] Assembly Hall, Research Lab, Ground Station, HQ
+- [x] Research Lab (ticket 14)
+- [ ] Assembly Hall, Ground Station, HQ
 - [ ] Building Upgrades (levels)
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
 - [x] Shipping (money + days)
@@ -48,7 +49,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Contracts board
 - [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [ ] Easy and Advanced Part sets
-- [ ] Launch Vehicle catalogue with mass check (Juno I and the mass check done; more vehicles come with their Eras)
+- [ ] Launch Vehicle catalogue with mass check (Juno I, Thor-Able and the mass check done; more vehicles come with their Eras)
 - [x] Rideshare priced per kg
 - [ ] Launch site choice, latitude and coast effects
 - [ ] Weather from real climate, Scrubs
@@ -63,10 +64,10 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Campaign
 - [ ] Tutorial: Explorer 1, first Launch in under 10 minutes
-- [ ] Era 1: Explorer 1, TIROS-1
+- [x] Era 1: Explorer 1, TIROS-1 (ticket 14: TIROS-1, Vanguard 1 card unlocks Solar Cells, Thor-Able)
 - [ ] Era 2: Telstar 1, Syncom 3
 - [ ] HQ Upgrade moves to the next Era
-- [ ] Research Points and tech tree
+- [ ] Research Points and tech tree (Era 1's four Upgrades done, ticket 14; later Eras add theirs)
 - [x] Real History cards (before and after), History Archive (Explorer 1's; later Milestones add theirs)
 - [ ] Failure stories, retryable Milestones
 

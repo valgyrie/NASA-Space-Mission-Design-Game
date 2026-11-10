@@ -274,3 +274,49 @@ export function buildWarehouse(): THREE.Group {
   p.lamp(-0.42, 0.42);
   return g;
 }
+
+/**
+ * Research Lab: a white two-storey lab with a band of windows, a rooftop observatory dome that turns while
+ * it researches, a small dish and whip antenna for the Data coming down, and a tape-reel machine in the yard.
+ */
+export function buildResearchLab(): THREE.Group {
+  const g = buildingGroup('researchLab');
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  // Lab block: x −0.36…0.2, z −0.36…0.14, flat roof with a parapet.
+  p.add(box(0.56, 0.4, 0.5), M.white, -0.08, 0.25, -0.11);
+  p.add(box(0.58, 0.03, 0.52), M.darkRoof, -0.08, 0.465, -0.11);
+  p.add(box(0.565, 0.025, 0.505), M.steel, -0.08, 0.26, -0.11);
+  windowsZ(p, [-0.28, -0.16, -0.04, 0.08], 0.36, 0.142, 0.08, 0.07);
+  windowsZ(p, [-0.28, 0.08], 0.17, 0.142, 0.08, 0.07);
+  windowsX(p, [-0.3, -0.18, -0.06, 0.06], 0.36, 0.202, 0.08, 0.07);
+  windowsX(p, [-0.3, 0.06], 0.17, 0.202, 0.08, 0.07);
+  // Glass doors with a canopy.
+  p.add(box(0.12, 0.15, 0.015), M.glass, -0.1, 0.125, 0.142);
+  p.add(box(0.18, 0.015, 0.08), M.steel, -0.1, 0.215, 0.18);
+
+  // Observatory dome on the roof: drum, dome with a slit, turning while the Lab works.
+  p.cyl(0.11, 0.06, M.white, -0.2, 0.48, -0.2, 14);
+  const dome = p.mover('spinY', -0.2, 0.54, -0.2);
+  dome.userData.speed = 0.4;
+  const shell = p.add(new THREE.SphereGeometry(0.11, 14, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.tank, 0, 0, 0, dome);
+  shell.castShadow = true;
+  p.add(box(0.03, 0.1, 0.05), M.dark, 0.0, 0.055, 0.085, dome).rotation.x = -0.5;
+
+  // Small dish on a post and a whip antenna, pointing up.
+  p.cyl(0.012, 0.12, M.steel, 0.08, 0.48, -0.25, 6);
+  const dish = p.add(new THREE.SphereGeometry(0.07, 10, 5, 0, Math.PI * 2, 0, Math.PI / 3), M.dish, 0.08, 0.66, -0.25);
+  dish.rotation.x = Math.PI;
+  dish.rotation.z = 0.5;
+  p.bar(v(0.15, 0.48, 0.05), v(0.15, 0.72, 0.05), 0.008, M.steel);
+
+  // Yard: a tape-reel data machine (reels turn while working) and a bench.
+  p.add(box(0.14, 0.2, 0.08), M.tank, 0.33, 0.15, 0.3);
+  for (const y of [0.19, 0.12]) {
+    const reel = p.mover('spin', 0.33, y, 0.345);
+    p.add(new THREE.CylinderGeometry(0.03, 0.03, 0.01, 10), M.dark, 0, 0, 0, reel).rotation.x = Math.PI / 2;
+  }
+  p.add(box(0.2, 0.03, 0.06), M.wood, -0.25, 0.08, 0.3);
+  p.lamp(0.4, -0.4);
+  return g;
+}

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { acceptContract } from './contracts';
-import { HISTORY_CARD_IDS, HISTORY_CARDS, awardMission, historyCardFor, patchFor, unlockCard } from './history';
+import { HISTORY_CARD_IDS, HISTORY_CARDS, awardMission, cardsAfter, historyCardFor, patchFor, unlockCard } from './history';
 import { launch, shipMission } from './mission';
 import { type SiteState, newSiteState } from './siteState';
 import { type OptionId, choose, partsNeeded } from './spacecraft';
@@ -23,6 +23,13 @@ describe('Real History cards', () => {
   it('gives the Explorer 1 Milestone a card before and after', () => {
     expect(historyCardFor('explorer1', 'before')).toBe('explorer1Before');
     expect(historyCardFor('explorer1', 'after')).toBe('explorer1After');
+    expect(historyCardFor('tiros1', 'before')).toBe('tiros1Before');
+    expect(historyCardFor('tiros1', 'after')).toBe('tiros1After');
+  });
+
+  it('follows Explorer 1 with the Vanguard 1 side story, which unlocks Solar Cells', () => {
+    expect(cardsAfter('explorer1')).toEqual(['explorer1After', 'vanguard1']);
+    expect(cardsAfter('tiros1')).toEqual(['tiros1After']);
   });
 
   it('has text, a credited photo and an official NASA Learn more link for every card', () => {
@@ -47,7 +54,7 @@ describe('Mission Patches', () => {
     const report = state.reports[0]!;
     expect(report.success).toBe(true);
     expect(state.patches).toEqual([{ contract: 'explorer1', day: report.launchDay }]);
-    expect(state.history).toContain('explorer1After');
+    expect(state.history.slice(-2)).toEqual(['explorer1After', 'vanguard1']);
     expect(patchFor(state, report)).toEqual(state.patches[0]);
   });
 
@@ -63,7 +70,7 @@ describe('Mission Patches', () => {
   it('only reports the "after" card as new the first time', () => {
     const state = flown();
     const again = awardMission(state, state.reports[0]!);
-    expect(again.card).toBeNull();
+    expect(again.cards).toEqual([]);
     expect(again.patch).not.toBeNull();
   });
 });

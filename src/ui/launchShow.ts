@@ -68,18 +68,24 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
     case 'countdown':
       return {
         title: t('launch.countdown'),
-        detail: t('launch.countdownDetail', { vehicle, m: formatDecimal(lv.heightM), site: t(`launchSite.${report.site}.short`) }),
+        detail: t(`launch.countdownDetail.${report.vehicle}`, { vehicle, m: formatDecimal(lv.heightM), site: t(`launchSite.${report.site}.short`) }),
       };
     case 'burn': {
       const n = seg.stage ?? 1;
       const stage = lv.stages[n - 1]!;
       const s = formatNumber(stage.burnS);
       if (n === 1) return { title: t('launch.liftoff'), detail: t('launch.firstStage', { s }) };
-      const detail = stage.motors > 1 ? t('launch.motors', { count: formatNumber(stage.motors), s }) : t('launch.motor', { s });
+      const last = n === lv.stages.length;
+      const detail =
+        stage.motors > 1
+          ? t('launch.motors', { count: formatNumber(stage.motors), s })
+          : last
+            ? t(lv.lastStageStays ? 'launch.motor' : 'launch.lastStage', { s })
+            : t('launch.engine', { s });
       return { title: t('launch.stage', { n: formatNumber(n) }), detail };
     }
     case 'coast':
-      return { title: t('launch.coast'), detail: t('launch.coastDetail', { s: formatNumber(lv.coastS) }) };
+      return { title: t(`launch.coast.${report.vehicle}`), detail: t(`launch.coastDetail.${report.vehicle}`, { s: formatNumber(lv.coastS) }) };
     case 'orbit': {
       const km = CONTRACTS[report.contract].orbitKm;
       return { title: t('launch.orbit'), detail: t('launch.orbitDetail', { contract, low: formatNumber(km.low), high: formatNumber(km.high) }) };

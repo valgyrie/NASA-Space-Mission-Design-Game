@@ -26,7 +26,7 @@ function design(ids: OptionId[]): Design {
   return d;
 }
 
-const plan = (ids: OptionId[] = EXPLORER) => ({ contract: 'explorer1' as const, design: design(ids), vehicle: 'juno1' as const });
+const plan = (ids: OptionId[] = EXPLORER) => ({ contract: 'explorer1' as const, design: design(ids), vehicle: 'juno1' as const, tech: [] });
 
 /** Fly Explorer 1 for real: accepted, shipped, launched on the day it arrives. */
 function launched(state: SiteState = newSiteState(), ids: OptionId[] = EXPLORER, seed = 'K7QXM2') {

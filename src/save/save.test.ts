@@ -20,7 +20,7 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 
 const state = { ...newSiteState(), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4 }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 10, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: 11, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -59,7 +59,7 @@ describe('local save', () => {
     const storage = memoryStorage();
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 1, company: { name: 'Comet Works' } }));
     expect(loadGame(storage, () => 'BCD234')).toEqual({
-      version: 10,
+      version: 11,
       company: { name: 'Comet Works' },
       site: { seed: 'BCD234' },
       state: newSiteState(),
@@ -78,7 +78,7 @@ describe('local save', () => {
     const v3State = { money: 1_000_000, day: 40, mines: [{ x: 3, z: 4 }], stock: { aluminium: 5, copper: 6, silicon: 7 } };
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 3, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v3State }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state).toEqual({ ...newSiteState(), ...v3State });
   });
 
@@ -88,7 +88,7 @@ describe('local save', () => {
     v4State.parts.smallBus = 2;
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 4, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v4State }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state).toEqual({ ...v4State, contracts: [] });
   });
 
@@ -99,7 +99,7 @@ describe('local save', () => {
     const v5 = { ...v5State, parts: v5Parts, contracts: [{ id: 'explorer1', acceptedDay: 3 }] };
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 5, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v5 }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state).toEqual({
       ...v5,
       parts: { ...v5Parts, radiationDetector: 0 },
@@ -116,7 +116,7 @@ describe('local save', () => {
     const { completed: _c, mission: _m, reports: _r, ...v6State } = structuredClone({ ...newSiteState(), money: 600_000 });
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 6, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v6State }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state).toEqual({ ...v6State, completed: [], mission: null, reports: [] });
   });
 
@@ -133,7 +133,7 @@ describe('local save', () => {
     const { anomalyBest: _b, ...v7State } = busy.state;
     storage.data.set(SAVE_KEY, JSON.stringify({ ...busy, version: 7, state: { ...v7State, reports: [v7Report] } }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state.reports).toEqual([{ ...v7Report, design: null, anomaly: null }]);
   });
 
@@ -150,7 +150,7 @@ describe('local save', () => {
     const { anomalyBest: _b, ...v8State } = busy.state;
     storage.data.set(SAVE_KEY, JSON.stringify({ ...busy, version: 8, state: { ...v8State, reports: [v8Report] } }));
     const loaded = loadGame(storage);
-    expect(loaded?.version).toBe(10);
+    expect(loaded?.version).toBe(11);
     expect(loaded?.state.reports).toEqual([{ ...v8Report, anomaly: null }]);
     expect(loaded?.state.anomalyBest).toEqual({});
   });
@@ -167,11 +167,56 @@ describe('local save', () => {
     const { history: _h, patches: _p, tutorial: _t, ...v9State } = busy.state;
     storage.data.set(SAVE_KEY, JSON.stringify({ ...busy, version: 9, state: v9State }));
     const loaded = loadGame(storage)!;
-    expect(loaded.version).toBe(10);
+    expect(loaded.version).toBe(11);
     const success = busy.state.reports[0]!.success;
-    expect(loaded.state.history).toEqual(success ? ['explorer1Before', 'explorer1After'] : []);
+    expect(loaded.state.history).toEqual(success ? ['explorer1Before', 'explorer1After', 'vanguard1'] : []);
     expect(loaded.state.patches).toEqual(success ? [{ contract: 'explorer1', day: busy.state.reports[0]!.launchDay }] : []);
     expect(loaded.state.tutorial).toEqual({ skipped: false, testRun: false });
+  });
+
+  it('upgrades a version 10 save: no Labs or research yet, Juno I picked, Vanguard 1 card if Explorer 1 is done', () => {
+    const storage = memoryStorage();
+    const busy = structuredClone(game);
+    for (const id of EXPLORER) choose(busy.state.design, id);
+    for (const p of partsNeeded(busy.state.design)) busy.state.parts[p] += 1;
+    acceptContract(busy.state, 'explorer1');
+    shipMission(busy.state, busy.state.design);
+    busy.state.day = busy.state.mission!.readyDay;
+    launch(busy.state, busy.site.seed);
+    expect(busy.state.completed).toEqual(['explorer1']);
+    const { labs: _l, research: _r, vehicle: _v, ...v10State } = busy.state;
+    v10State.history = v10State.history.filter((id) => id !== 'vanguard1');
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...busy, version: 10, state: v10State }));
+    const loaded = loadGame(storage)!;
+    expect(loaded.version).toBe(11);
+    expect(loaded.state).toEqual(busy.state);
+  });
+
+  it('upgrades a version 10 save with a Mission on its way: built with no tech tree Upgrades', () => {
+    const storage = memoryStorage();
+    const busy = structuredClone(game);
+    for (const id of EXPLORER) choose(busy.state.design, id);
+    for (const p of partsNeeded(busy.state.design)) busy.state.parts[p] += 1;
+    acceptContract(busy.state, 'explorer1');
+    shipMission(busy.state, busy.state.design);
+    const { labs: _l, research: _r, vehicle: _v, ...v10State } = busy.state;
+    const { tech: _t, ...v10Mission } = busy.state.mission!;
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...busy, version: 10, state: { ...v10State, mission: v10Mission } }));
+    const loaded = loadGame(storage)!;
+    expect(loaded.state.mission).toEqual({ ...v10Mission, tech: [] });
+    expect(loaded.state.history).not.toContain('vanguard1');
+  });
+
+  it('keeps Research Labs, research and the picked Launch Vehicle', () => {
+    const storage = memoryStorage();
+    const kept = structuredClone(game);
+    kept.state.labs.push({ x: 5, z: 6 });
+    kept.state.research = { processedKb: 640, tech: ['strongerRadio'] };
+    kept.state.vehicle = 'thorAble';
+    saveGame(storage, kept);
+    expect(loadGame(storage)?.state).toEqual(kept.state);
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...kept, state: { ...kept.state, research: { processedKb: 0, tech: ['warpDrive'] } } }));
+    expect(loadGame(storage)).toBeNull();
   });
 
   it('upgrades a version 9 save with an accepted Contract: its "before" card is in the Archive', () => {
@@ -230,7 +275,7 @@ describe('local save', () => {
 
   it('ignores a save with a half-built Spacecraft on its way', () => {
     const storage = memoryStorage();
-    const mission = { contract: 'explorer1', design: emptyDesign(), vehicle: 'juno1', site: 'capeCanaveral', startDay: 0, shipDay: 30, readyDay: 37 };
+    const mission = { contract: 'explorer1', design: emptyDesign(), vehicle: 'juno1', site: 'capeCanaveral', tech: [], startDay: 0, shipDay: 30, readyDay: 37 };
     storage.data.set(SAVE_KEY, JSON.stringify({ ...game, state: { ...state, mission } }));
     expect(loadGame(storage)).toBeNull();
   });

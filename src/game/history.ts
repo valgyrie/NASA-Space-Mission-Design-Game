@@ -10,13 +10,14 @@ import type { SiteState } from './siteState';
  * Card text and photo credits live in strings.ts under `history.<id>.*`; facts in docs/research/milestones.md.
  */
 
-export const HISTORY_CARD_IDS = ['explorer1Before', 'explorer1After'] as const;
+export const HISTORY_CARD_IDS = ['explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After'] as const;
 export type HistoryCardId = (typeof HISTORY_CARD_IDS)[number];
 
 export interface HistoryCard {
   id: HistoryCardId;
   contract: ContractId;
-  when: 'before' | 'after';
+  /** Before the Milestone, after it, or a side story unlocked after it (and after its "after" card). */
+  when: 'before' | 'after' | 'side';
   /** The real year it happened, shown on the card. */
   year: number;
   /** A real NASA photo in public/history/, credited on the card. */
@@ -43,6 +44,34 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
     image: 'history/explorer1-model.jpg',
     learnMore: 'https://science.nasa.gov/missions/explorer/10-things-to-know-about-explorer-1-americas-first-satellite/',
   },
+  // Side story after Explorer 1: Vanguard 1, the first solar-powered satellite. It unlocks Solar Cells.
+  // Photo: NASA image article "Vanguard Satellite, 1958" (NASA).
+  vanguard1: {
+    id: 'vanguard1',
+    contract: 'explorer1',
+    when: 'side',
+    year: 1958,
+    image: 'history/vanguard1.jpg',
+    learnMore: 'https://www.nasa.gov/image-article/vanguard-satellite-1958/',
+  },
+  // Photo: NASA Image and Video Library 9141922 (NASA/MSFC), a Thor-Able launching Explorer 6 in 1959.
+  tiros1Before: {
+    id: 'tiros1Before',
+    contract: 'tiros1',
+    when: 'before',
+    year: 1960,
+    image: 'history/thor-able-launch.jpg',
+    learnMore: 'https://science.nasa.gov/mission/tiros/',
+  },
+  // Photo: NASA Image and Video Library GSFC_20171208_Archive_e000942 (NASA Goddard MODIS Rapid Response).
+  tiros1After: {
+    id: 'tiros1After',
+    contract: 'tiros1',
+    when: 'after',
+    year: 1960,
+    image: 'history/hurricane-gonzalo.jpg',
+    learnMore: 'https://science.nasa.gov/mission/tiros/',
+  },
 };
 
 /** The Real History card a Contract shows before or after, if it has one (Milestones do). */
@@ -65,20 +94,26 @@ export interface Patch {
   day: number;
 }
 
+/** The cards a Milestone's success unlocks, in the order they show: its "after" card, then its side stories. */
+export function cardsAfter(contract: ContractId): HistoryCardId[] {
+  const after = historyCardFor(contract, 'after');
+  const side = HISTORY_CARD_IDS.filter((id) => HISTORY_CARDS[id].contract === contract && HISTORY_CARDS[id].when === 'side');
+  return [...(after ? [after] : []), ...side];
+}
+
 /** What a Mission earned for the History Archive. */
 export interface HistoryAward {
   patch: Patch | null;
-  /** The "after" card, when it is new. */
-  card: HistoryCardId | null;
+  /** The cards it unlocked that are new, in the order they show. */
+  cards: HistoryCardId[];
 }
 
-/** A successful Mission earns its Mission Patch and unlocks its "after" card. A failed one earns nothing. */
+/** A successful Mission earns its Mission Patch and unlocks its "after" card and side stories. A failed one earns nothing. */
 export function awardMission(state: SiteState, report: MissionReport): HistoryAward {
-  if (!report.success) return { patch: null, card: null };
+  if (!report.success) return { patch: null, cards: [] };
   const patch: Patch = { contract: report.contract, day: report.launchDay };
   state.patches.push(patch);
-  const after = historyCardFor(report.contract, 'after');
-  return { patch, card: after && unlockCard(state, after) ? after : null };
+  return { patch, cards: cardsAfter(report.contract).filter((id) => unlockCard(state, id)) };
 }
 
 /** The patch a Mission Report earned, if any. */

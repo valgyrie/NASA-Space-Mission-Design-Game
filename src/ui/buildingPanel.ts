@@ -1,5 +1,6 @@
 import type { RawMaterial } from '../economy/rawMaterial';
-import { MINE_OUTPUT_PER_DAY, RECIPES, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { LAB_KB_PER_DAY, MINE_OUTPUT_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { TECH_IDS, buyTech, dataWaiting, labRate, nextPointShare, researchPoints } from '../game/research';
 import {
   type Factory,
   type SiteState,
@@ -109,6 +110,61 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     };
   };
 
+  // A Research Lab: Data waiting, Research Points, and the tech tree to spend them on.
+  const labBody = () => {
+    body.append(el('p', 'side-note', t('panel.lab', { kb: formatNumber(LAB_KB_PER_DAY) })));
+    const points = el('p', 'research-points');
+    const bar = el('div', 'progress');
+    const fill = el('div', 'progress-fill');
+    bar.append(fill);
+    const next = el('p', 'side-note');
+    const status = el('p', 'side-note');
+    const list = el('div', 'part-choices tech-tree');
+    list.append(el('h3', '', t('research.tree')), el('p', 'side-note', t('research.treeNote')));
+    const problem = el('p', 'side-problem');
+    problem.setAttribute('aria-live', 'polite');
+    const items = TECH_IDS.map((id) => {
+      const item = el('div', 'part-choice tech');
+      item.append(
+        el('span', 'part-name', t(`tech.${id}`)),
+        el('span', 'part-sub', t(`tech.${id}.about`)),
+        el('span', 'part-sub', t('research.cost', { cost: TECH_TREE[id].cost })),
+      );
+      const b = el('button', 'small trade', t('research.buy', { cost: TECH_TREE[id].cost }));
+      b.type = 'button';
+      b.dataset.tech = id;
+      b.addEventListener('click', () => {
+        const r = buyTech(state, id);
+        problem.textContent = r.ok ? '' : t(`research.problem.${r.problem}`);
+        refresh();
+      });
+      item.append(b);
+      list.append(item);
+      return { id, item, b };
+    });
+    body.append(points, bar, next, status, list, problem);
+    refresh = () => {
+      const rp = researchPoints(state);
+      setText(points, t('research.points', { points: rp }));
+      const share = nextPointShare(state);
+      fill.style.width = `${Math.round(share * 100)}%`;
+      setText(next, t('research.next', { pct: Math.floor(share * 100) }));
+      const waiting = dataWaiting(state);
+      setText(
+        status,
+        waiting > 0
+          ? `${t('research.working', { kb: formatNumber(labRate(state)) })} · ${t('research.waiting', { kb: formatNumber(Math.floor(waiting)) })}`
+          : t('research.idle'),
+      );
+      for (const { id, item, b } of items) {
+        const owned = state.research.tech.includes(id);
+        item.setAttribute('aria-pressed', String(owned));
+        setText(b, owned ? t('research.owned') : t('research.buy', { cost: TECH_TREE[id].cost }));
+        b.disabled = owned || rp < TECH_TREE[id].cost;
+      }
+    };
+  };
+
   const api: BuildingPanel = {
     show(x, z) {
       const building = buildingAt(state, x, z);
@@ -132,6 +188,8 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
         const used = el('p', 'side-note');
         body.append(used);
         refresh = () => setText(used, storageText(state));
+      } else if (building.kind === 'researchLab') {
+        labBody();
       } else {
         factoryBody(building.factory);
       }

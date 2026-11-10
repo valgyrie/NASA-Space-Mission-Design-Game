@@ -59,11 +59,11 @@ function ring(radius: number, y: number, material: THREE.Material, height = 0.03
 }
 
 /** Small bolts evenly round a circle. */
-function bolts(g: THREE.Group, radius: number, y: number, count: number, size = 0.014): void {
+function bolts(g: THREE.Group, radius: number, y: number, count: number, size = 0.014, cx = 0, cz = 0): void {
   const geo = new THREE.SphereGeometry(size, 5, 3);
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2;
-    g.add(at(geo, S.bolt, Math.sin(a) * radius, y, Math.cos(a) * radius));
+    g.add(at(geo, S.bolt, cx + Math.sin(a) * radius, y, cz + Math.cos(a) * radius));
   }
 }
 
@@ -306,6 +306,37 @@ function addRadiationDetector(g: THREE.Group, bus: BusShape): void {
   g.add(rod(new THREE.Vector3(r * 0.2, base + 0.72, 0), new THREE.Vector3(r * 0.2, base + 0.86, 0), 0.006, S.antenna));
 }
 
+/**
+ * Two TV cameras on a deck in the nose, like TIROS-1's: a short wide-angle one and a long narrow-angle one,
+ * each a barrel with a lens hood and glass, plus the box of electronics and tape recorder between them.
+ */
+function addTvCamera(g: THREE.Group, bus: BusShape): void {
+  const base = bus.height / 2;
+  const r = Math.min(bus.radius, 0.5) * 0.8;
+  g.add(mesh(cylinder(r, r, 0.04, ROUND), S.deck, base + 0.02));
+  g.add(ring(r + 0.01, base + 0.045, S.steel, 0.012));
+  // Electronics and tape recorder: a box with a reel window.
+  g.add(at(new THREE.BoxGeometry(r * 0.7, 0.14, r * 0.5), S.payload, -r * 0.1, base + 0.11, -r * 0.35));
+  for (const x of [-0.07, 0.05]) {
+    const reel = at(new THREE.CylinderGeometry(0.04, 0.04, 0.01, 12), S.hullDark, -r * 0.1 + x, base + 0.12, -r * 0.35 + r * 0.25 + 0.006);
+    reel.rotation.x = Math.PI / 2;
+    g.add(reel);
+  }
+  // Cameras: [x, z, barrel length, radius].
+  for (const [x, z, len, cr] of [
+    [-r * 0.4, r * 0.3, 0.16, 0.07],
+    [r * 0.38, r * 0.15, 0.3, 0.06],
+  ] as const) {
+    g.add(at(new THREE.CylinderGeometry(cr, cr, len, 14), S.hull, x, base + 0.04 + len / 2, z));
+    g.add(at(new THREE.CylinderGeometry(cr * 1.15, cr, 0.05, 14), S.hullDark, x, base + 0.04 + len + 0.025, z));
+    g.add(at(new THREE.CylinderGeometry(cr * 0.8, cr * 0.8, 0.01, 14), S.glass, x, base + 0.04 + len + 0.045, z));
+    g.add(at(new THREE.CylinderGeometry(cr * 1.05, cr * 1.05, 0.02, 14), S.gold, x, base + 0.07, z));
+    bolts(g, cr + 0.01, base + 0.05, 6, 0.008, x, z);
+  }
+  g.add(rod(new THREE.Vector3(-r * 0.4, base + 0.08, r * 0.3), new THREE.Vector3(-r * 0.1, base + 0.1, -r * 0.2), 0.008, S.cable));
+  g.add(rod(new THREE.Vector3(r * 0.38, base + 0.08, r * 0.15), new THREE.Vector3(0, base + 0.1, -r * 0.2), 0.008, S.cableBlack));
+}
+
 /** The ring that holds the Spacecraft to the Launch Vehicle. */
 function addAdapter(g: THREE.Group, bus: BusShape, below: number): void {
   const y = -bus.height / 2 - below - 0.05;
@@ -326,6 +357,7 @@ export function buildSpacecraft(design: Design): THREE.Group {
   if (design.comms === 'simpleAntenna') addSimpleAntenna(g, bus, below);
   if (design.pointing === 'spin') addSpin(g, bus);
   if (design.payload === 'radiationDetector') addRadiationDetector(g, bus);
+  if (design.payload === 'tvCamera') addTvCamera(g, bus);
   // Stand the whole stack around its middle so it turns in place.
   const box = new THREE.Box3().setFromObject(g);
   g.position.y = -(box.min.y + box.max.y) / 2;

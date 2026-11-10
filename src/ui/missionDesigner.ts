@@ -14,10 +14,13 @@ import {
   choose,
   costToBuy,
   isComplete,
+  UNLOCKED_BY,
   isUnlocked,
   missionGoal,
   optionsFor,
+  statsOf,
 } from '../game/spacecraft';
+import type { TechId } from '../game/research';
 import { makeLaunchPlanner } from './launchPlanner';
 import { makeTestRunScreen } from './testRun';
 import { testRunFor } from '../game/mission';
@@ -49,9 +52,9 @@ export function optionName(o: SpacecraftOption): string {
   return o.part ? t(`part.${o.part}`) : t(`option.${o.id as 'batteriesOnly' | 'spin'}`);
 }
 
-/** "3 kg · carries 9 kg": mass and the one number that matters for the option. */
-export function optionStats(o: SpacecraftOption): string {
-  const s = o.stats;
+/** "3 kg · carries 9 kg": mass and the one number that matters for the option, with tech tree Upgrades applied. */
+export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = []): string {
+  const s = statsOf(o, tech);
   const bits: string[] = [];
   if (o.part) bits.push(t('stat.mass', { kg: formatDecimal(RECIPES[o.part].massKg) }));
   if (s.carriesKg) bits.push(t('stat.carries', { kg: formatNumber(s.carriesKg) }));
@@ -93,7 +96,9 @@ export function gaugeText(resource: Resource, g: Gauge, check: DesignCheck, mone
 export function problemText(p: DesignProblem, check: DesignCheck): string {
   switch (p.kind) {
     case 'tooHeavy':
-      return t('problem.tooHeavy', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`) });
+      return p.bigger
+        ? t('problem.tooHeavyBigger', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`), bigger: t(`launchVehicle.${p.bigger}`) })
+        : t('problem.tooHeavy', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`) });
     case 'busFull':
       return t('problem.busFull', {
         bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`),
@@ -155,6 +160,7 @@ export function showMissionDesigner(
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
   const slotRows = new Map<Slot, { options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
+  const optionUi: { o: SpacecraftOption; b: HTMLButtonElement; stats: HTMLElement; locked: HTMLElement | null }[] = [];
   for (const slot of SLOTS) {
     const row = el('div', 'slot');
     const label = el('div', 'slot-head');
@@ -163,13 +169,15 @@ export function showMissionDesigner(
     const options = new Map<string, HTMLButtonElement>();
     for (const o of optionsFor(slot)) {
       const b = button('option', '');
-      b.append(el('span', 'option-name', optionName(o)), el('span', 'option-stats', optionStats(o)));
-      if (!isUnlocked(o.id)) {
-        b.disabled = true;
-        b.append(el('span', 'option-locked', t('designer.locked')));
-      }
+      b.dataset.option = o.id;
+      const stats = el('span', 'option-stats');
+      b.append(el('span', 'option-name', optionName(o)), stats);
+      const card = UNLOCKED_BY[o.id];
+      const locked = card ? el('span', 'option-locked', t('designer.locked', { card: t(`history.${card}.title`) })) : null;
+      if (locked) b.append(locked);
+      optionUi.push({ o, b, stats, locked });
       b.addEventListener('click', () => {
-        if (choose(state.design, o.id)) changed();
+        if (choose(state.design, o.id, state)) changed();
       });
       choices.append(b);
       options.set(o.id, b);
@@ -228,6 +236,7 @@ export function showMissionDesigner(
       hooks.onTestRun?.();
       testRun.show(testRunFor(state, seed, state.design, vehicle), missionGoal(state).contract.id);
     },
+    onVehicle: () => hooks.onChange(),
     designWarnings: () => {
       const check = checkDesign(state, state.design);
       // Mass blocks shipping (the planner says why) and missing Parts are bought in the designer.
@@ -268,6 +277,12 @@ export function showMissionDesigner(
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
 
+    for (const { o, b, stats, locked } of optionUi) {
+      const open = isUnlocked(state, o.id);
+      b.disabled = !open;
+      if (locked) locked.hidden = open;
+      stats.textContent = optionStats(o, state.research.tech);
+    }
     for (const slot of SLOTS) {
       const { options, stock } = slotRows.get(slot)!;
       const picked = state.design[slot];

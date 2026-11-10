@@ -6,7 +6,7 @@ Payload to **low Earth orbit (LEO)** unless noted. Sources often disagree becaus
 |---|---|---|---|---|
 | Juno I | 1 | **~14 kg** (enough for Explorer 1, 13.97 kg) _(verify: no direct capacity figure found)_ | | [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1) |
 | Vanguard | 1 | _(not researched; used only in the failure story)_ | | |
-| Thor-Able | 1 | **120 kg** (to 640 km) | | [Astronautix: Thor Able](http://www.astronautix.com/t/thorable.html) |
+| Thor-Able | 1 | **120 kg** (to 640 km at 48°) | Launched TIROS-1 (1 Apr 1960, its last flight) | [Astronautix: Thor Able](http://www.astronautix.com/t/thorable.html) · [Wikipedia: Thor-Able](https://en.wikipedia.org/wiki/Thor-Able) |
 | Thor-Delta | 2 | **226 kg** (Astronautix) / 270 kg (Wikipedia) | | [Wikipedia](https://en.wikipedia.org/wiki/Thor-Delta) · [Astronautix](http://www.astronautix.com/t/thordelta.html) |
 | Delta A | 2 | **250 kg** | | [Astronautix: Thor Delta A](http://astronautix.com/t/thordeltaa.html) |
 | Delta D | 2 | _(verify)_ | Launched Syncom 3 to GEO | [Wikipedia: Syncom](https://en.wikipedia.org/wiki/Syncom) |
@@ -42,3 +42,21 @@ Used for the 3D Launch. Researched 2026-11-09.
 - The Falcon 9 numbers show a real trade-off: landing the booster costs about a third of the payload, but the rocket can fly again.
 - GEO and Moon capacities are much lower than LEO. Use GTO numbers where found, and a fixed fraction of LEO otherwise _(document the fraction when chosen)_.
 - **Rideshare price:** recent third-party reports put SpaceX's sun-synchronous rideshare at about **$7,000/kg** in 2026 (about $350,000 for 50 kg), up from about $5,500–6,000/kg earlier. SpaceX publishes no official price card. Sources: [NewSpace Economy: rideshare market 2026](https://newspaceeconomy.ca/2026/02/27/satellite-ridesharing-market-analysis-2026/) · [SpaceNexus: rideshare launches](https://spacenexus.us/blog/rideshare-launches-small-satellites-affordably).
+
+## Thor-Able: how TIROS-1 flew (ticket 14)
+
+Researched 2026-11-10.
+
+| Fact | Value | Source |
+|---|---|---|
+| Height | 26.9–27.8 m (Wikipedia); Astronautix says 30.00 m. The game uses **27 m**. | [Wikipedia: Thor-Able](https://en.wikipedia.org/wiki/Thor-Able) · [Astronautix](http://www.astronautix.com/t/thorable.html) |
+| Stage 1 | Thor, 1 × LR79-7, burns **165 s** | Wikipedia · Astronautix |
+| Stage 2 | Able, 1 × AJ10-101, burns **115 s** | Wikipedia · Astronautix |
+| Stage 3 | Altair, 1 × X-248 solid, burns **38 s** (optional third stage) | Wikipedia |
+| Payload | **120 kg** to a 640 km orbit at 48° | Wikipedia · Astronautix |
+| Flights | First 24 Apr 1958; last 1 Apr 1960 (Thor-Able 148, "Thor DM-18 Able-II", orbiting TIROS-1) | Wikipedia |
+
+**Game notes**
+- The 10 s gap between stage 1 and stage 2 is a game estimate _(verify)_; the show calls it "Staging", not a coast. No gap before stage 3 _(verify)_.
+- Rideshare $25,000 per kg is a game estimate (bigger rocket, cheaper per kg). It opens after Explorer 1, since it first flew in April 1958.
+- The 3D model's proportions (Thor narrowing towards the top, slim Able, Altair on a spin table) are approximate.

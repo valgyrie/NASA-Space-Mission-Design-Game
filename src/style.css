@@ -2380,3 +2380,37 @@ button.archive-card {
 button.archive-card:hover {
   border-color: var(--accent);
 }
+
+/* Research Lab: Research Points and the tech tree. */
+.research-points {
+  margin: 8px 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.tech-tree h3 {
+  margin-bottom: 0;
+}
+
+.part-choice.tech {
+  cursor: default;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+}
+
+.part-choice.tech .part-sub {
+  grid-column: 1;
+}
+
+.part-choice.tech .trade {
+  grid-column: 2;
+  grid-row: 1 / span 3;
+  align-self: center;
+}
+
+.stat[hidden],
+.option-locked[hidden],
+.planner-fit[hidden] {
+  display: none;
+}
