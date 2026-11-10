@@ -1,6 +1,7 @@
 import type { Part } from '../economy/part';
 import { type ContractId, type Orbit, type PayloadKind, CONTRACTS, accepted, completeContract, deadlineDay } from './contracts';
-import { type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom, rideshareCost } from './launchVehicles';
+import { INSURANCE } from './balance';
+import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom, rideshareCost } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { awardMission } from './history';
@@ -54,6 +55,14 @@ export interface Mission {
   shipDay: number;
   /** Game day it arrives at the Launch Site, ready to Launch. */
   readyDay: number;
+  /** The Launch Insurance bought with it, or null. */
+  insurance: Insurance | null;
+}
+
+/** Launch Insurance: paid when shipping; pays back `payout` if the Mission fails. */
+export interface Insurance {
+  price: number;
+  payout: number;
 }
 
 /** Why the Spacecraft can't ship yet. */
@@ -78,7 +87,10 @@ export interface LaunchPlan {
   liftKg: number;
   rideshare: number;
   shipping: number;
+  /** Rideshare and Shipping: what the Mission costs. */
   total: number;
+  /** The Launch Insurance price, when it is bought (0 when not). */
+  insurance: number;
   assemblyDays: number;
   shippingDays: number;
   /** Game day it would reach the Launch Site if shipped today. */
@@ -96,6 +108,7 @@ export function planLaunch(
   design: Design,
   vehicle: LaunchVehicleId = state.vehicle,
   site: LaunchSiteId = state.launchSite,
+  insurance = 0,
 ): LaunchPlan {
   const goal = missionGoal(state);
   const taken = goal.status === 'accepted' ? accepted(state, goal.contract.id) : undefined;
@@ -125,7 +138,7 @@ export function planLaunch(
   if (bus && !hallFits(state, design)) problems.push({ kind: 'hallTooSmall', bus, need: hallNeeded(design), level: hallLevel(state) });
   const missing = partsToBuy(state, design);
   if (missing.length > 0) problems.push({ kind: 'missingParts', parts: missing });
-  if (state.money < total) problems.push({ kind: 'money', short: total - state.money });
+  if (state.money < total + insurance) problems.push({ kind: 'money', short: total + insurance - state.money });
 
   return {
     goal,
@@ -137,6 +150,7 @@ export function planLaunch(
     rideshare,
     shipping,
     total,
+    insurance,
     assemblyDays: building,
     shippingDays,
     readyDay,
@@ -160,12 +174,49 @@ export function testRunFor(
 ): TestRun {
   const plan = planLaunch(state, design, vehicle, site);
   const flightPlan = { contract: plan.goal.contract.id, design, vehicle, site, tech: [...state.research.tech], marks: plan.marks };
-  return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay);
+  return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay, { reliability: rocketReliability(state, vehicle) });
+}
+
+/**
+ * Share of Launches the rocket gets a light enough Spacecraft to orbit. The Company's first Launch always
+ * works, as Explorer 1's did, so the tutorial can't be lost to luck; after that, the Launch Vehicle's own.
+ */
+export function rocketReliability(state: Pick<SiteState, 'reports'>, vehicle: LaunchVehicleId): number {
+  return state.reports.length === 0 ? 1 : LAUNCH_VEHICLES[vehicle].reliability;
+}
+
+/** What Launch Insurance would cost for this design, or why nobody will sell it. */
+export type InsuranceQuote =
+  | { ok: true; price: number; payout: number; successPercent: number }
+  | { ok: false; payout: number; successPercent: number };
+
+const thousands = (n: number) => Math.max(1_000, Math.round(n / 1_000) * 1_000);
+
+/**
+ * Price Launch Insurance from the Test Run's estimated success: it pays back most of the Rideshare and
+ * Shipping if the Mission fails, and costs that payout times the chance of failure, plus the insurer's
+ * margin. Too risky a flight (under half) can't be insured.
+ */
+export function insuranceQuote(
+  state: SiteState,
+  seed: string,
+  design: Design,
+  vehicle: LaunchVehicleId = state.vehicle,
+  site: LaunchSiteId = state.launchSite,
+): InsuranceQuote {
+  const plan = planLaunch(state, design, vehicle, site);
+  const { successPercent } = testRunFor(state, seed, design, vehicle, site);
+  const payout = thousands(plan.total * INSURANCE.payoutShare);
+  if (successPercent < INSURANCE.minSuccess * 100) return { ok: false, payout, successPercent };
+  const failShare = 1 - successPercent / 100;
+  const price = thousands(Math.max(INSURANCE.minShare, failShare * INSURANCE.margin) * payout);
+  return { ok: true, price, payout, successPercent };
 }
 
 /**
  * Book the Rideshare and ship: pay for both, take the Parts out of the Warehouse and start the Mission.
- * The Assembly Hall puts it together, then it is shipped.
+ * The Assembly Hall puts it together, then it is shipped. With `insure` (and the Seed, for the Test Run
+ * behind the price) it also buys Launch Insurance, if it can be had.
  * Does nothing unless the plan has no problems.
  */
 export function shipMission(
@@ -173,10 +224,13 @@ export function shipMission(
   design: Design,
   vehicle: LaunchVehicleId = state.vehicle,
   site: LaunchSiteId = state.launchSite,
+  { insure = false, seed = '' }: { insure?: boolean; seed?: string } = {},
 ): LaunchPlan {
-  const plan = planLaunch(state, design, vehicle, site);
+  const quote = insure ? insuranceQuote(state, seed, design, vehicle, site) : null;
+  const insurance = quote?.ok ? { price: quote.price, payout: quote.payout } : null;
+  const plan = planLaunch(state, design, vehicle, site, insurance?.price ?? 0);
   if (!plan.ok) return plan;
-  state.money -= plan.total;
+  state.money -= plan.total + plan.insurance;
   // The best Parts in the Warehouse go: the Marks the plan was worked out with.
   for (const p of partsNeeded(design)) takePart(state, p, 'best');
   const startDay = Math.floor(state.day);
@@ -190,6 +244,7 @@ export function shipMission(
     startDay,
     shipDay: startDay + plan.assemblyDays,
     readyDay: plan.readyDay,
+    insurance,
   };
   return plan;
 }
@@ -243,7 +298,16 @@ export function missionTimeline(state: SiteState): MissionTimeline | null {
 
 /** One thing the Contract asked for, whether the Spacecraft did it, and the design numbers that explain why. */
 export type Finding =
-  | { kind: 'orbit'; ok: boolean; orbit: Orbit; vehicle: LaunchVehicleId; massKg: number; liftKg: number }
+  | {
+      kind: 'orbit';
+      ok: boolean;
+      orbit: Orbit;
+      vehicle: LaunchVehicleId;
+      massKg: number;
+      liftKg: number;
+      /** The rocket stage that failed, or null when the rocket worked. Missing in saves from before rocket failures. */
+      failedStage?: number | null;
+    }
   | { kind: 'payload'; ok: boolean; payload: PayloadKind | null; carried: OptionId | null }
   | {
       kind: 'power';
@@ -272,6 +336,8 @@ export interface MissionReport {
   design: Design | null;
   /** The Anomaly met in flight, or null. Null in saves from before Anomalies. */
   anomaly: Anomaly | null;
+  /** Money Launch Insurance paid back after a failure (0 when it wasn't bought or the Mission worked). */
+  insurancePaid: number;
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -302,10 +368,13 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   if (weatherOn(m.site, state.day).scrub) return null;
   const launchDay = Math.floor(state.day);
   const taken = accepted(state, m.contract);
-  const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);
+  const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null, rocketReliability(state, m.vehicle));
   const { findings, success } = flight;
   const anomaly = rollAnomaly(state, seed, m, flight, launchDay);
   const reward = success ? completeContract(state, m.contract, !anomaly) : 0;
+  // Launch Insurance pays back most of the cost of a failed Mission.
+  const insurancePaid = !success && m.insurance ? m.insurance.payout : 0;
+  state.money += insurancePaid;
   const report: MissionReport = {
     contract: m.contract,
     vehicle: m.vehicle,
@@ -316,6 +385,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
     findings,
     design: { ...m.design },
     anomaly,
+    insurancePaid,
   };
   state.reports.push(report);
   state.mission = null;

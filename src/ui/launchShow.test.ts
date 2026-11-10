@@ -11,7 +11,7 @@ function result(ids: OptionId[]): LaunchResult {
   const design: Design = emptyDesign();
   for (const id of ids) choose(design, id);
   const flight = fly({ contract: 'explorer1', design, vehicle: 'juno1', tech: [] }, 40, 365);
-  const report = { contract: 'explorer1' as const, vehicle: 'juno1' as const, site: 'capeCanaveral' as const, launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design, anomaly: null };
+  const report = { contract: 'explorer1' as const, vehicle: 'juno1' as const, site: 'capeCanaveral' as const, launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design, anomaly: null, insurancePaid: 0 };
   return { report, flight, design };
 }
 

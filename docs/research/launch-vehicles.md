@@ -60,3 +60,18 @@ Researched 2026-11-10.
 - The 10 s gap between stage 1 and stage 2 is a game estimate _(verify)_; the show calls it "Staging", not a coast. No gap before stage 3 _(verify)_.
 - Rideshare $25,000 per kg is a game estimate (bigger rocket, cheaper per kg). It opens after Explorer 1, since it first flew in April 1958.
 - The 3D model's proportions (Thor narrowing towards the top, slim Able, Altair on a spin table) are approximate.
+
+## Launch records: how often Juno I and Thor-Able worked (ticket 17)
+
+Researched 2026-11-10.
+
+| Rocket | Record | Details | Source |
+|---|---|---|---|
+| Juno I | **3 of 6** reached orbit (50%), all in 1958 | Explorer 1 (1 Feb), Explorer 3 and Explorer 4 reached orbit; Explorer 2, Explorer 5 and Beacon 1 didn't. Last flight 23 Oct 1958, a failure. Then replaced by Juno II. | [Wikipedia: Juno I](https://en.wikipedia.org/wiki/Juno_I) |
+| Thor-Able | **10 of 16** worked; 6 failures, 1958–1960 | 9 sub-orbital re-entry tests, 4 probes, 3 satellites, all from LC-17A. Three failures were the Altair third stage not firing (Pioneer 2, Transit 1A, and one more); Pioneer 0's Thor exploded at 77 s (turbopump). | [Wikipedia: Thor-Able](https://en.wikipedia.org/wiki/Thor-Able) |
+
+**Game notes**
+- The game's reliability is kinder than history, so the design decides most results: each rocket's real failure share is cut to 40% of itself (game estimate). Juno I works **80%** of the time, Thor-Able **85%**. The planner shows both the game figure and the real record.
+- The Company's first Launch always works (Explorer 1 did), so the tutorial can't be lost to luck.
+- Which stage fails is drawn evenly among the stages (game choice; real failures happened at every stage).
+- Both Launch Sites launch east over the Atlantic, so a failed rocket falls into the sea: the Launch show says so (the GDD's "coast effect").

@@ -102,6 +102,8 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       field(t('contracts.reward'), formatMoney(contract.reward)),
       field(t('contracts.deadline'), deadline),
     );
+    // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
+    if (!taken && state.reopened.includes(contract.id)) box.append(el('p', 'side-note', t('contracts.reopened')));
     if (!taken) {
       const accept = el('button', 'small accept', t('contracts.accept'));
       accept.type = 'button';
@@ -118,6 +120,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
   };
 
   const render = () => {
+    shownTaken = state.contracts.map((c) => c.id).join();
     dueLines = [];
     body.replaceChildren();
     if (state.contracts.length > 0) {
@@ -137,8 +140,16 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     update();
   };
 
+  // Redraw when a Contract changes column on its own (a missed deadline puts it back on the board).
+  let shownTaken = '';
   const update = () => {
     if (panel.hidden) return;
+    const taken = state.contracts.map((c) => c.id).join();
+    if (taken !== shownTaken) {
+      shownTaken = taken;
+      render();
+      return;
+    }
     for (const d of dueLines) {
       setText(d.line, deadlineText(state, d.contract));
       d.line.classList.toggle('warn', daysLeft(state, d.contract) === 0);

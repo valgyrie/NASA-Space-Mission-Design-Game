@@ -110,7 +110,22 @@ export function acceptContract(state: SiteState, id: ContractId): AcceptResult {
   if (state.completed.includes(id)) return { ok: false, problem: 'done' };
   if (!isOffered(state, id)) return { ok: false, problem: 'notYet' };
   state.contracts.push({ id, acceptedDay: state.day });
+  state.reopened = state.reopened.filter((c) => c !== id);
   return { ok: true };
+}
+
+/**
+ * Failed Milestones can always be tried again. A Contract whose deadline has passed goes back on the board,
+ * marked as reopened, once no Mission for it is on its way (a Spacecraft at the Launch Site can still fly).
+ * Accepting it again starts a fresh deadline. Returns the Contracts it reopened.
+ */
+export function expireContracts(state: SiteState): ContractId[] {
+  const today = Math.floor(state.day);
+  const late = state.contracts.filter((c) => today >= deadlineDay(c) && state.mission?.contract !== c.id).map((c) => c.id);
+  if (late.length === 0) return [];
+  state.contracts = state.contracts.filter((c) => !late.includes(c.id));
+  for (const id of late) if (!state.reopened.includes(id)) state.reopened.push(id);
+  return late;
 }
 
 /** The Game day an accepted Contract is due: whole days from the date it was accepted. */

@@ -22,6 +22,8 @@ import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
 import { launch, launchWeather, missionStage } from './game/mission';
 import { adviseLaunch, siteClimateFor } from './game/places';
 import { showScrubCard } from './ui/scrubCard';
+import { showGrantCard } from './ui/grantCard';
+import { payGrant } from './game/grant';
 import { dataWaiting } from './game/research';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
@@ -254,6 +256,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const archive = showArchive(ui, state, game.company.name, { ...pauser(), onCard: (id) => history.show(id) });
   // Real History cards go above everything else, the History Archive included.
   const history = showHistoryCard(ui, pauser());
+  // The one-time startup grant, when money runs low.
+  const grant = showGrantCard(ui, pauser());
   // The tutorial guide sits above the Mission Designer, so it can lead the player through it.
   const tutorial = showTutorialGuide(ui, () => {
     state.tutorial.skipped = true;
@@ -306,6 +310,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
+      else if (grant.isOpen) grant.close();
       else if (history.isOpen) history.close();
       else if (menu.isOpen) menu.close();
       else if (archive.isOpen) archive.close();
@@ -320,7 +325,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen || history.isOpen || archive.isOpen) return;
+    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen || history.isOpen || archive.isOpen || grant.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -355,11 +360,19 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     tracker.update();
     hud.update(state);
     panel.update();
-    const covered = launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen;
+    const covered = launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen;
     tutorial.update(state, covered, designer.isOpen);
+    // The startup grant waits until nothing else is on screen (a failed Mission's report and cards first).
+    if (!covered && !designer.isOpen) {
+      const paid = payGrant(state);
+      if (paid > 0) {
+        saveGame(localStorage, game);
+        grant.show(paid);
+      }
+    }
   });
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report } });
 }

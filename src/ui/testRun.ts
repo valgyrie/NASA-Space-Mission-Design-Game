@@ -247,11 +247,13 @@ export function makeTestRunScreen(hooks: { onBack(): void }): TestRunScreen {
   const verdict = el('section', 'planner-card testrun-verdict');
   const percent = el('p', 'testrun-percent');
   const runs = el('p', 'planner-hint');
+  const rocket = el('p', 'planner-hint');
   const problems = el('ul', 'testrun-problems');
   const none = el('p', 'testrun-none', t('testRun.none'));
   verdict.append(
     el('h3', '', t('testRun.success')),
     percent,
+    rocket,
     runs,
     el('h3', '', t('testRun.problems')),
     problems,
@@ -337,6 +339,9 @@ export function makeTestRunScreen(hooks: { onBack(): void }): TestRunScreen {
       percent.textContent = t('testRun.percent', { percent: formatNumber(run.successPercent) });
       percent.dataset.level = run.successPercent >= 90 ? 'good' : run.successPercent >= 50 ? 'fair' : 'poor';
       runs.textContent = t('testRun.runs', { runs: formatNumber(run.runs) });
+      // The rocket can fail too: the estimate is the design's runs times the rocket's record in the game.
+      const odds = { design: formatNumber(run.designPercent), rocket: formatNumber(Math.round(run.reliability * 100)), vehicle: t(`launchVehicle.${run.vehicle}`) };
+      rocket.textContent = t(run.reliability < 1 ? 'testRun.rocket' : 'testRun.rocketFirst', odds);
       const lines = predictedProblems(run);
       problems.replaceChildren(...lines.map((line) => el('li', '', line)));
       none.hidden = lines.length > 0;

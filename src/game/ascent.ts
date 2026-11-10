@@ -36,22 +36,30 @@ const MISSION_PLAY_MAX_S = 45;
 /** Screen seconds to hold the last moment before the Mission Report. */
 const END_PLAY_S = 3;
 
-/** The show for one flight. A Spacecraft that doesn't reach orbit stops after the last stage. */
+/**
+ * The show for one flight. A Spacecraft too heavy to reach orbit stops after the last stage; when a rocket
+ * stage fails, the show stops half-way through that stage's burn ('lost' then carries the stage).
+ */
 export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findings' | 'missionDays'>): Segment[] {
   const lv = LAUNCH_VEHICLES[vehicle];
   const segments: Segment[] = [{ phase: 'countdown', from: -COUNTDOWN_S, to: 0, playS: COUNTDOWN_S }];
+  const orbit = flight.findings.find((f) => f.kind === 'orbit');
+  const failed = orbit?.kind === 'orbit' ? (orbit.failedStage ?? null) : null;
   let t = 0;
   lv.stages.forEach((s, i) => {
+    if (failed !== null && i + 1 > failed) return;
     if (i === 1) {
       segments.push({ phase: 'coast', from: t, to: t + lv.coastS, playS: COAST_PLAY_S });
       t += lv.coastS;
     }
-    segments.push({ phase: 'burn', stage: i + 1, from: t, to: t + s.burnS, playS: i === 0 ? FIRST_STAGE_PLAY_S : UPPER_STAGE_PLAY_S });
-    t += s.burnS;
+    const share = failed === i + 1 ? 0.5 : 1;
+    const playS = (i === 0 ? FIRST_STAGE_PLAY_S : UPPER_STAGE_PLAY_S) * share;
+    segments.push({ phase: 'burn', stage: i + 1, from: t, to: t + s.burnS * share, playS });
+    t += s.burnS * share;
   });
-  const reachedOrbit = flight.findings.find((f) => f.kind === 'orbit')?.ok ?? true;
+  const reachedOrbit = orbit?.ok ?? true;
   if (!reachedOrbit) {
-    segments.push({ phase: 'lost', from: t, to: t, playS: ORBIT_PLAY_S });
+    segments.push({ phase: 'lost', ...(failed !== null ? { stage: failed } : {}), from: t, to: t, playS: ORBIT_PLAY_S });
     return segments;
   }
   segments.push({ phase: 'orbit', from: t, to: t, playS: ORBIT_PLAY_S });

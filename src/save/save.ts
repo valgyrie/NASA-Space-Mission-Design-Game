@@ -13,7 +13,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 13;
+export const SAVE_VERSION = 14;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -97,7 +97,8 @@ function isMission(value: unknown): boolean {
     isMarks(m.marks) &&
     isNumber(m.startDay) &&
     isNumber(m.shipDay) &&
-    isNumber(m.readyDay)
+    isNumber(m.readyDay) &&
+    (m.insurance === null || (isNumber(m.insurance?.price) && isNumber(m.insurance?.payout)))
   );
 }
 
@@ -131,7 +132,8 @@ function isReport(value: unknown): boolean {
     Array.isArray(r.findings) &&
     r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean') &&
     (r.design === null || (isDesign(r.design) && isComplete(r.design!))) &&
-    isAnomaly(r.anomaly)
+    isAnomaly(r.anomaly) &&
+    isNumber(r.insurancePaid)
   );
 }
 
@@ -172,6 +174,9 @@ function isSiteState(value: unknown): value is SiteState {
     v.contracts.every(isAcceptedContract) &&
     Array.isArray(v.completed) &&
     v.completed.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    Array.isArray(v.reopened) &&
+    v.reopened.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    (v.grantDay === null || isNumber(v.grantDay)) &&
     isDesign(v.design) &&
     isMission(v.mission) &&
     Array.isArray(v.reports) &&
@@ -242,6 +247,8 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * had done Explorer 1 gets the card (and so Solar Cells).
  * Version 11 had no building levels, Assembly Hall or Part Marks: every building is level 1, every Part Mk 1,
  * and the Assembly Hall is placed when the Site is shown.
+ * Version 12 had no real place: see below.
+ * Version 13 had no Launch Insurance, reopened Contracts or startup grant: none bought, none reopened, grant still to come.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -309,6 +316,12 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     // Before real places: the Site keeps its made-up climate, and ships from JPL (the Historic start) as before.
     const old = (v as { state?: Record<string, unknown> }).state ?? {};
     v = { ...v, version: 13, state: { ...old, place: { ...JPL, start: 'legacy' }, launchSite: 'capeCanaveral' } } as typeof v;
+  }
+  if (v?.version === 13) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const mission = old.mission && typeof old.mission === 'object' ? { ...old.mission, insurance: null } : old.mission;
+    const reports = Array.isArray(old.reports) ? old.reports.map((r: object) => ({ ...r, insurancePaid: 0 })) : old.reports;
+    v = { ...v, version: 14, state: { ...old, mission, reports, reopened: [], grantDay: null } } as typeof v;
   }
   return v;
 }

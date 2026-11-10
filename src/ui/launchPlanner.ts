@@ -9,7 +9,7 @@ import {
   liftFrom,
   spinSpeed,
 } from '../game/launchVehicles';
-import { type LaunchPlan, type PlanProblem, planLaunch, shipMission } from '../game/mission';
+import { type LaunchPlan, type PlanProblem, insuranceQuote, planLaunch, shipMission } from '../game/mission';
 import { adviseLaunch, shippingTo } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
 import type { SiteState } from '../game/siteState';
@@ -68,13 +68,15 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
 }
 
 /**
- * The Launch planner, shown inside the Mission Designer: pick the Launch Vehicle (mass check), see
- * the Launch Site, what the Rideshare and Shipping cost, and when the Mission would end; try a free
- * Test Run; then ship.
+ * The Launch planner, shown inside the Mission Designer: pick the Launch Vehicle (mass check, how often it
+ * works), see the Launch Site, what the Rideshare and Shipping cost, choose Launch Insurance, and when the
+ * Mission would end; try a free Test Run; then ship.
  * `designWarnings` gives the Mission Designer's warnings, so a weak design ships knowingly.
+ * The Seed prices the insurance from the same Test Run the player sees.
  */
 export function makeLaunchPlanner(
   state: SiteState,
+  seed: string,
   hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void; designWarnings(): string[] },
 ): LaunchPlanner {
   const root = el('div', 'planner');
@@ -84,7 +86,8 @@ export function makeLaunchPlanner(
 
   // Launch Vehicle and Launch Site
   const choices = el('section', 'planner-card');
-  choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')));
+  const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
+  choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
   const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement }>();
   for (const id of LAUNCH_VEHICLE_IDS) {
     const v = LAUNCH_VEHICLES[id];
@@ -98,6 +101,11 @@ export function makeLaunchPlanner(
       el('span', 'option-name', t(`launchVehicle.${id}`)),
       lifts,
       el('span', 'option-stats', t('planner.perKg', { price: formatMoney(v.perKg) })),
+      el('span', 'option-stats', t('planner.reliability', {
+        pct: formatNumber(Math.round(v.reliability * 100)),
+        worked: formatNumber(v.record.worked),
+        flights: formatNumber(v.record.flights),
+      })),
       fit,
       locked,
     );
@@ -146,7 +154,19 @@ export function makeLaunchPlanner(
   // Costs and timeline
   const costs = el('section', 'planner-card');
   const costRows = el('dl', 'planner-rows');
-  costs.append(el('h3', '', t('planner.costs')), costRows, el('p', 'planner-hint', t('planner.lighter')));
+  // Launch Insurance: a tick box, its price, and one line on what it pays and why it costs that much.
+  let insure = false;
+  const insureBox = el('input', 'planner-insure-box');
+  insureBox.type = 'checkbox';
+  insureBox.addEventListener('change', () => {
+    insure = insureBox.checked;
+    render();
+  });
+  const insurePrice = el('span', 'planner-insure-price');
+  const insureLabel = el('label', 'planner-insure');
+  insureLabel.append(insureBox, el('span', '', t('planner.insurance')), insurePrice);
+  const insureLine = el('p', 'planner-hint');
+  costs.append(el('h3', '', t('planner.costs')), costRows, insureLabel, insureLine, el('p', 'planner-hint', t('planner.lighter')));
   const timeline = el('section', 'planner-card');
   const timeRows = el('dl', 'planner-rows');
   timeline.append(el('h3', '', t('planner.timeline')), timeRows);
@@ -177,14 +197,19 @@ export function makeLaunchPlanner(
   };
 
   ship.addEventListener('click', () => {
-    if (shipMission(state, state.design, state.vehicle, state.launchSite).ok) hooks.onShip();
-    else render();
+    if (shipMission(state, state.design, state.vehicle, state.launchSite, { insure, seed }).ok) {
+      insure = insureBox.checked = false;
+      hooks.onShip();
+    } else render();
   });
 
   const render = () => {
     const vehicle = state.vehicle;
     const site = state.launchSite;
-    const plan = planLaunch(state, state.design, vehicle, site);
+    const quote = insuranceQuote(state, seed, state.design, vehicle, site);
+    const insured = insure && quote.ok;
+    const plan = planLaunch(state, state.design, vehicle, site, insured ? quote.price : 0);
+    firstLaunch.hidden = state.reports.length > 0;
     for (const [id, b] of siteButtons) b.setAttribute('aria-pressed', String(id === site));
     for (const [id, ui] of vehicleButtons) {
       const open = isVehicleOpen(state, id);
@@ -202,8 +227,17 @@ export function makeLaunchPlanner(
     costRows.replaceChildren();
     row(costRows, t('planner.rideshare', { kg: formatDecimal(plan.massKg), perKg: formatMoney(LAUNCH_VEHICLES[vehicle].perKg) }), formatMoney(plan.rideshare));
     row(costRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), formatMoney(plan.shipping));
-    row(costRows, t('planner.total'), formatMoney(plan.total), 'total');
-    row(costRows, t('planner.money'), formatMoney(state.money), state.money < plan.total ? 'warn' : '');
+    if (insured) row(costRows, t('planner.insurance'), formatMoney(plan.insurance));
+    const total = plan.total + plan.insurance;
+    row(costRows, t('planner.total'), formatMoney(total), 'total');
+    row(costRows, t('planner.money'), formatMoney(state.money), state.money < total ? 'warn' : '');
+    const pct = formatNumber(quote.successPercent);
+    insureBox.disabled = !quote.ok;
+    insureBox.checked = insured;
+    insurePrice.textContent = quote.ok ? formatMoney(quote.price) : '';
+    insureLine.textContent = quote.ok
+      ? t('planner.insuranceLine', { payout: formatMoney(quote.payout), pct })
+      : t('planner.insuranceRefused', { pct });
 
     timeRows.replaceChildren();
     const bus = state.design.bus;
@@ -222,7 +256,7 @@ export function makeLaunchPlanner(
     warnings.replaceChildren(...warn.map((w) => el('li', '', w)));
     warnHead.hidden = warnNote.hidden = warn.length === 0;
     problems.replaceChildren(...plan.problems.map((p) => el('li', '', planProblemText(p, plan))));
-    ship.textContent = t('planner.ship', { price: formatMoney(plan.total) });
+    ship.textContent = t('planner.ship', { price: formatMoney(total) });
     ship.disabled = !plan.ok;
   };
 

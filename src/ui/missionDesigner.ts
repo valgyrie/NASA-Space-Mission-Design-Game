@@ -254,7 +254,7 @@ export function showMissionDesigner(
   body.append(slotsBox, viewBox, resBox);
 
   // The Launch planner takes the designer's place once the design is complete; a Test Run takes the planner's.
-  const planner = makeLaunchPlanner(state, {
+  const planner = makeLaunchPlanner(state, seed, {
     onBack: () => showView('design'),
     onShip: () => {
       hooks.onChange();

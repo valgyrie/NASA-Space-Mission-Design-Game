@@ -2,7 +2,7 @@ import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildin
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
-import type { AcceptedContract, ContractId } from './contracts';
+import { type AcceptedContract, type ContractId, expireContracts } from './contracts';
 import type { HistoryCardId, Patch } from './history';
 import type { LaunchSiteId, LaunchVehicleId } from './launchVehicles';
 import { JPL, type Place } from './places';
@@ -91,6 +91,10 @@ export interface SiteState {
   contracts: AcceptedContract[];
   /** Contracts the Company has fulfilled, oldest first. */
   completed: ContractId[];
+  /** Contracts whose deadline passed before they were fulfilled: back on the board to try again. */
+  reopened: ContractId[];
+  /** Game day the one-time startup grant was paid, or null while it is still to come. */
+  grantDay: number | null;
   /** The Spacecraft on the Mission Designer's table. */
   design: Design;
   /** The Mission being assembled and shipped, or waiting at the Launch Site; null when none. */
@@ -135,6 +139,8 @@ export function newSiteState(place: Place = JPL): SiteState {
     betterParts: noBetterParts(),
     contracts: [],
     completed: [],
+    reopened: [],
+    grantDay: null,
     design: emptyDesign(),
     mission: null,
     reports: [],
@@ -518,6 +524,7 @@ export function advanceDays(site: Site, state: SiteState, days: number): void {
   for (const m of RAW_MATERIALS) state.stock[m] += out[m] * days * share;
   for (const factory of state.factories) runFactory(state, factory, days);
   runLabs(state, days);
+  expireContracts(state);
 }
 
 /** Game days that pass in `seconds` of real time at `speed`. Long gaps are capped. */
