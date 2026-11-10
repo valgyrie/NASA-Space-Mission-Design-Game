@@ -6,13 +6,14 @@ import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCa
 import { TECH_IDS, newResearch } from '../game/research';
 import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
+import { JPL, START_KINDS } from '../game/places';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 12;
+export const SAVE_VERSION = 13;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -182,9 +183,16 @@ function isSiteState(value: unknown): value is SiteState {
     v.patches.every(isPatch) &&
     isTutorial(v.tutorial) &&
     isResearch(v.research) &&
-    isOneOf(v.vehicle, LAUNCH_VEHICLE_IDS)
+    isOneOf(v.vehicle, LAUNCH_VEHICLE_IDS) &&
+    isPlace(v.place) &&
+    isOneOf(v.launchSite, LAUNCH_SITE_IDS)
   );
 }
+
+const isPlace = (v: unknown): boolean => {
+  const p = v as { lat?: unknown; lon?: unknown; start?: unknown } | null;
+  return isNumber(p?.lat) && isNumber(p?.lon) && (p!.start === 'legacy' || isOneOf(p!.start, START_KINDS));
+};
 
 function isSaveData(value: unknown): value is SaveData {
   if (typeof value !== 'object' || value === null) return false;
@@ -296,6 +304,11 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
         mission,
       },
     } as typeof v;
+  }
+  if (v?.version === 12) {
+    // Before real places: the Site keeps its made-up climate, and ships from JPL (the Historic start) as before.
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    v = { ...v, version: 13, state: { ...old, place: { ...JPL, start: 'legacy' }, launchSite: 'capeCanaveral' } } as typeof v;
   }
   return v;
 }

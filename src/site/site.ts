@@ -17,11 +17,18 @@ export interface Tile {
 }
 
 /**
- * Stand-in climate until real NASA POWER data arrives (ticket 16).
- * `dryness` 0 = wet and green, 1 = desert.
+ * How the climate shapes a Site. Real places (ticket 16) set it from NASA POWER data (game/places.ts);
+ * older saves keep a made-up one drawn from the Seed, with only `dryness`.
  */
 export interface SiteClimate {
+  /** 0 = wet and green, 1 = desert. */
   dryness: number;
+  /** 'coast': the sea is next door. 'inland': no sea, so a lake, a river or none. Missing: the Seed decides. */
+  water?: 'coast' | 'inland';
+  /** -1 flat … 0 rolling … 1 mountainous. Missing: 0. */
+  relief?: number;
+  /** 0 = no snow … 1 = the land is white with snow. Missing: 0. */
+  snow?: number;
 }
 
 export interface Site {
@@ -70,13 +77,16 @@ function makeLand(seed: string, climate?: SiteClimate): { land: Land; rng: Rng }
   const drawn = placeholderClimate(rng); // always drawn, so the numbers after it don't depend on `climate`
   const siteClimate = climate ?? drawn;
 
-  const height = heightField(rng);
-  const water = pickWeighted<WaterKind>(rng, [
+  const height = heightField(rng, siteClimate.relief ?? 0);
+  let water = pickWeighted<WaterKind>(rng, [
     ['coast', 0.35],
     ['lake', 0.25],
     ['river', 0.25],
     ['none', 0.15],
   ]);
+  // A real place decides the coast; inland, a coast drawn from the Seed becomes a lake (or nothing in a desert).
+  if (siteClimate.water === 'coast') water = 'coast';
+  else if (siteClimate.water === 'inland' && water === 'coast') water = siteClimate.dryness > 0.7 ? 'none' : 'lake';
   const carve = waterCarver(rng, seed, SITE_SIZE, water);
   const moisture = makeNoise(rng, 14);
 
@@ -113,8 +123,8 @@ export function landOf(site: Site): Land {
   return makeLand(site.seed, site.climate).land;
 }
 
-/** Rolling land: a few layers of noise, flattened so most of the Site is buildable. */
-function heightField(rng: Rng): (x: number, z: number) => number {
+/** Rolling land: a few layers of noise, flattened so most of the Site is buildable. `relief` -1 flat to 1 mountainous. */
+function heightField(rng: Rng, relief: number): (x: number, z: number) => number {
   const layers = [
     { noise: makeNoise(rng, 24), weight: 0.64 },
     { noise: makeNoise(rng, 10), weight: 0.3 },
@@ -124,7 +134,7 @@ function heightField(rng: Rng): (x: number, z: number) => number {
     const n = layers.reduce((sum, l) => sum + l.noise(x, z) * l.weight, 0);
     // Stretch the middle range so there are plains, hills and some peaks. Land never dips
     // below sea level here: the only water is the coast, lake or river carved next.
-    return Math.min(1, Math.max(LAND_FLOOR, (n - 0.5) * 1.8 + 0.5));
+    return Math.min(1, Math.max(LAND_FLOOR, (n - 0.5) * (1.8 + 0.5 * relief) + 0.5 + 0.12 * relief));
   };
 }
 

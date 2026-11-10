@@ -2,6 +2,8 @@ import { type MissionStage, missionStage, missionTimeline } from '../game/missio
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { formatDays, formatGameDate, formatNumber } from './format';
+import { adviseLaunch } from '../game/places';
+import { adviceText, weatherText } from './weatherText';
 
 export interface MissionTracker {
   toggle(): void;
@@ -101,6 +103,8 @@ export function showMissionTracker(
     rows.set(s, { li, name, when, bar, fill });
   }
   const deadline = el('p', 'tracker-deadline');
+  const weather = el('p', 'tracker-weather');
+  const advice = el('p', 'tracker-advice');
 
   const follow = el('button', 'small tracker-follow', t('tracker.follow'));
   follow.type = 'button';
@@ -112,7 +116,7 @@ export function showMissionTracker(
   const buttons = el('div', 'row tracker-buttons');
   buttons.append(follow, launch);
 
-  body.append(subtitle, road, now, stages, deadline, buttons);
+  body.append(subtitle, road, now, stages, deadline, weather, advice, buttons);
   panel.append(head, none, body);
   root.append(panel);
 
@@ -166,6 +170,10 @@ export function showMissionTracker(
       setText(deadline, t(late ? 'tracker.deadlineLate' : 'tracker.deadline', { date: formatGameDate(dates.deadlineDay) }));
       deadline.classList.toggle('warn', late);
     }
+
+    // Launch weather on the first day it can go, and the Launch Window advisor's pick.
+    setText(weather, weatherText(m.site, dates.launchDay));
+    setText(advice, adviceText(adviseLaunch(m.site, dates.launchDay)));
 
     follow.hidden = stage.stage === 'ready';
     follow.setAttribute('aria-pressed', String(hooks.isFollowing()));

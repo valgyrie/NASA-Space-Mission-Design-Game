@@ -4,7 +4,8 @@ import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
 import type { AcceptedContract, ContractId } from './contracts';
 import type { HistoryCardId, Patch } from './history';
-import type { LaunchVehicleId } from './launchVehicles';
+import type { LaunchSiteId, LaunchVehicleId } from './launchVehicles';
+import { JPL, type Place } from './places';
 import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
@@ -108,6 +109,10 @@ export interface SiteState {
   research: Research;
   /** The Launch Vehicle picked in the Launch planner: the Mission Designer's Mass bar measures against it. */
   vehicle: LaunchVehicleId;
+  /** Where on Earth the Site is (ticket 16): its real climate, and how far Shipping goes. */
+  place: Place;
+  /** The Launch Site picked in the Launch planner. */
+  launchSite: LaunchSiteId;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -116,7 +121,7 @@ export function noBetterParts(): Record<Part, number[]> {
   return Object.fromEntries(PARTS.map((p) => [p, []])) as unknown as Record<Part, number[]>;
 }
 
-export function newSiteState(): SiteState {
+export function newSiteState(place: Place = JPL): SiteState {
   return {
     money: START_MONEY,
     day: 0,
@@ -139,6 +144,8 @@ export function newSiteState(): SiteState {
     tutorial: { skipped: false, testRun: false },
     research: newResearch(),
     vehicle: 'juno1',
+    place: { ...place },
+    launchSite: 'capeCanaveral',
   };
 }
 

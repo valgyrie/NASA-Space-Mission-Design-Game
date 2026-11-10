@@ -1,17 +1,47 @@
 import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
 import { SEED_MAX, checkSeed, randomSeed } from '../site/seed';
+import { JPL, type Place, START_KINDS, type StartKind, climateAt, isInUs, landAt, placeProblem, randomPlace } from '../game/places';
 import { t } from '../strings';
+import { GlobePicker } from '../world/globePicker';
+import { formatDecimal } from './format';
 
 export interface NewCompanyChoice {
   name: string;
   seed: string;
+  place: Place;
 }
 
 interface Options {
-  /** Called whenever the Seed field holds a usable Seed, so the Site can be previewed. */
-  onSeed: (seed: string) => void;
-  /** Called once, with an accepted name and Seed. */
+  /** Called whenever the Seed field holds a usable Seed or the place changes, so the Site can be previewed. */
+  onPreview: (seed: string, place: Place) => void;
+  /** Called once, with an accepted name, Seed and place. */
   onDone: (choice: NewCompanyChoice) => void;
+}
+
+/** "34.2° N, 118.2° W" */
+function latLonText(lat: number, lon: number): string {
+  return t('place.latLon', {
+    lat: formatDecimal(Math.abs(lat)),
+    ns: t(lat >= 0 ? 'place.north' : 'place.south'),
+    lon: formatDecimal(Math.abs(lon)),
+    ew: t(lon >= 0 ? 'place.east' : 'place.west'),
+  });
+}
+
+/** One line on a place: where, the land, and its real 2025 climate. */
+export function placeText(place: Place): string {
+  const c = climateAt(place.lat, place.lon);
+  const where = place.start === 'historic' ? t('place.jpl') : latLonText(place.lat, place.lon);
+  if (!c) return where;
+  const land = landAt(place.lat, place.lon);
+  return t('place.climate', {
+    where,
+    land: t(`place.land.${land === '.' ? 'f' : land}`),
+    temp: Math.round(c.tempC),
+    rain: formatDecimal(c.rainMm),
+    sun: formatDecimal(c.sunKwh),
+    wind: formatDecimal(c.windMs),
+  });
 }
 
 function field(id: string, label: string): { label: HTMLLabelElement; input: HTMLInputElement } {
@@ -35,9 +65,9 @@ function note(id: string, text: string): HTMLParagraphElement {
 }
 
 /** Show the "Start your Company" dialog. */
-export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): void {
+export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options): void {
   const form = document.createElement('form');
-  form.className = 'panel dialog';
+  form.className = 'panel dialog new-company';
   form.noValidate = true;
 
   const heading = document.createElement('h1');
@@ -73,10 +103,81 @@ export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): 
   start.type = 'submit';
   start.textContent = t('newCompany.start');
 
+  // Where on Earth: the Historic start, anywhere in the US or anywhere on Earth, on a globe.
+  let place: Place = { ...JPL };
+  const where = document.createElement('fieldset');
+  where.className = 'start-picker';
+  const legend = document.createElement('legend');
+  legend.textContent = t('newCompany.where');
+  const kinds = document.createElement('div');
+  kinds.className = 'row start-kinds';
+  const kindButtons = new Map<StartKind, HTMLButtonElement>();
+  for (const kind of START_KINDS) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'start-kind';
+    b.dataset.start = kind;
+    b.textContent = t(`newCompany.start.${kind}`);
+    b.title = t(`newCompany.start.${kind}.name`);
+    b.addEventListener('click', () => {
+      if (kind === 'historic') setPlace({ ...JPL }, true);
+      else if (place.start === 'historic' || (kind === 'us' && !isInUs(place.lat, place.lon))) setPlace(randomPlace(kind), true);
+      else setPlace({ ...place, start: kind }, false);
+    });
+    kinds.append(b);
+    kindButtons.set(kind, b);
+  }
+  const random = document.createElement('button');
+  random.type = 'button';
+  random.className = 'icon start-random';
+  random.textContent = t('newCompany.random');
+  random.title = t('newCompany.randomName');
+  kinds.append(random);
+  const canvas = document.createElement('canvas');
+  canvas.className = 'start-globe';
+  canvas.setAttribute('aria-label', t('newCompany.globeName'));
+  const placeNote = note('place-note', '');
+  placeNote.setAttribute('aria-live', 'polite');
+  const placeKind = note('place-kind', '');
+  where.append(legend, kinds, canvas, placeKind, placeNote);
+
+  let globe: GlobePicker | null = null;
+  try {
+    globe = new GlobePicker(canvas);
+  } catch {
+    canvas.hidden = true; // no WebGL: the buttons still work
+  }
+
   const previewSeed = () => {
     const check = checkSeed(seed.input.value);
-    if (check.ok) onSeed(check.seed);
+    if (check.ok) onPreview(check.seed, place);
   };
+  function setPlace(next: Place, turn: boolean) {
+    place = next;
+    for (const [kind, b] of kindButtons) b.setAttribute('aria-pressed', String(kind === place.start));
+    globe?.setPin(place.lat, place.lon, turn);
+    placeKind.textContent = t(`newCompany.start.${place.start as 'historic'}.note`);
+    placeNote.textContent = placeText(place);
+    error.textContent = '';
+    previewSeed();
+  }
+  if (globe) {
+    globe.onPick = (lat, lon) => {
+      // A spot in the US is a US start; anywhere else is alternate history.
+      const start: StartKind = isInUs(lat, lon) ? 'us' : 'anywhere';
+      const problem = placeProblem(lat, lon, start);
+      if (problem) {
+        placeNote.textContent = t(`newCompany.error.${problem}`);
+        return;
+      }
+      setPlace({ lat: Math.round(lat * 100) / 100, lon: Math.round(lon * 100) / 100, start }, false);
+    };
+  }
+  random.addEventListener('click', () => {
+    // Random: a new spot of the same kind (anywhere in the US from the Historic start), and a new Seed.
+    seed.input.value = randomSeed();
+    setPlace(randomPlace(place.start === 'historic' ? 'us' : place.start), true);
+  });
   let timer = 0;
   seed.input.addEventListener('input', () => {
     error.textContent = '';
@@ -107,12 +208,14 @@ export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): 
     }
     // A preview still waiting would redraw the Site after the game has put its buildings on it.
     window.clearTimeout(timer);
+    globe?.dispose();
     form.remove();
-    onDone({ name: nameCheck.name, seed: seedCheck.seed });
+    onDone({ name: nameCheck.name, seed: seedCheck.seed, place });
   });
 
-  form.append(
-    heading,
+  const left = document.createElement('div');
+  left.className = 'new-company-side';
+  left.append(
     name.label,
     name.input,
     note('company-note', t('newCompany.note')),
@@ -122,7 +225,12 @@ export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): 
     error,
     start,
   );
+  const columns = document.createElement('div');
+  columns.className = 'new-company-columns';
+  columns.append(left, where);
+  form.append(heading, columns);
   root.append(form);
-  previewSeed();
+  setPlace(place, true);
+  globe?.start();
   name.input.focus();
 }

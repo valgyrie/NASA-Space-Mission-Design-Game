@@ -172,9 +172,39 @@ export const RIDESHARE_PER_KG = {
   thorAble: 25_000,
 } as const;
 
-/** Shipping a finished Spacecraft from the Site to each Launch Site. Game estimates until real Site places (ticket 16). */
+/**
+ * Shipping a finished Spacecraft from the Site to a Launch Site, by the straight-line distance (ticket 16).
+ * Game estimates, chosen so the Historic start (JPL to Cape Canaveral, about 3,600 km) costs $25,000 and
+ * takes 7 days, as before real places: a fixed $5,000 plus $5.60 a km, rounded to $1,000; one day on the road
+ * per 650 km (rounded up), plus a day to load.
+ */
 export const SHIPPING = {
-  capeCanaveral: { cost: 25_000, days: 7 },
+  baseCost: 5_000,
+  perKm: 5.6,
+  kmPerDay: 650,
+  loadDays: 1,
+} as const;
+
+/**
+ * Earth's spin helps a rocket launched east: the ground moves at 465 m/s at the equator, less nearer the
+ * poles (docs/research/launch-sites-and-physics.md). Each 10 m/s more than at Cape Canaveral, where the
+ * Launch Vehicles' lift figures were measured, lets a rocket carry 1% more. Game estimate.
+ */
+export const SPIN_LIFT_PER_MS = 0.001;
+
+/**
+ * Launch weather rules (ticket 16), loosely after real ones (docs/research/places-and-weather.md).
+ * Game estimates: NASA POWER gives each day's strongest hourly wind at 10 m, and no lightning, so a day with
+ * heavy rain and heat stands in for thunderstorms.
+ */
+export const LAUNCH_WEATHER = {
+  /** Strongest wind at 10 m, m/s, over which the Launch is Scrubbed. */
+  windLimitMs: 12,
+  /** Rain (mm in the day) and top temperature (°C) that together mean thunderstorms: Scrub for lightning. */
+  stormRainMm: 10,
+  stormHotC: 24,
+  /** Days the Launch Window advisor looks ahead. */
+  adviseDays: 14,
 } as const;
 
 /**

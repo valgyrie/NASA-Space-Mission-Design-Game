@@ -26,6 +26,10 @@ _Avoid_: launch base
 A Site-sized piece of land next to a Site that the Company can buy to make the Site bigger.
 _Avoid_: chunk, parcel, lot
 
+**Historic start**:
+Starting the Company at JPL, Pasadena, where Explorer 1 was built. The other starts are anywhere in the US, or anywhere on Earth (alternate history).
+_Avoid_: default start
+
 **Seed**:
 A code that generates the same Site map every time it is used.
 _Avoid_: map code
@@ -148,7 +152,7 @@ The place a Launch Vehicle lifts off from: a real spaceport the Company ships it
 _Avoid_: launch base, pad (alone)
 
 **Launch Window**:
-A time period when a launch to a destination is possible and sensible.
+A time period when a launch to a destination is possible and sensible. The Launch Window advisor suggests a day and says why.
 
 **Scrub**:
 A launch cancelled at the last moment, usually because of weather.

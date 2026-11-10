@@ -4,11 +4,11 @@
 
 **Blocked by:** 03, 08
 
-**Status:** ready-for-agent
+**Status:** built, waiting for a team test
 
-- [ ] Globe picker offers Historic start, US, Anywhere (labelled alternate history) and Random
-- [ ] Climate (sunshine, wind, rain, temperature) comes from baked NASA POWER 2025 data
-- [ ] Site terrain and deposits reflect the real land type
-- [ ] Launch sites nearer the equator give more payload capacity
-- [ ] Weather over the limits Scrubs the launch with a short explanation
-- [ ] Launch Window advisor suggests a day and says why
+- [x] Globe picker offers Historic start, US, Anywhere (labelled alternate history) and Random
+- [x] Climate (sunshine, wind, rain, temperature) comes from baked NASA POWER 2025 data
+- [x] Site terrain and deposits reflect the real land type
+- [x] Launch sites nearer the equator give more payload capacity
+- [x] Weather over the limits Scrubs the launch with a short explanation
+- [x] Launch Window advisor suggests a day and says why

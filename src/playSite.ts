@@ -19,7 +19,9 @@ import { showTutorialGuide } from './ui/tutorialGuide';
 import { historyCardFor, patchFor, unlockCard } from './game/history';
 import { accepted, deadlineDay } from './game/contracts';
 import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
-import { launch, missionStage } from './game/mission';
+import { launch, launchWeather, missionStage } from './game/mission';
+import { adviseLaunch, siteClimateFor } from './game/places';
+import { showScrubCard } from './ui/scrubCard';
 import { dataWaiting } from './game/research';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
@@ -32,7 +34,7 @@ const CLICK_SLOP = 6;
 
 /** Run the Site view for a game: the map, the clock, buildings, the Market and the UI around them. */
 export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
-  const site = generateSite(game.site.seed);
+  const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
   const state = game.state;
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
   settleUnanswered(state);
@@ -174,8 +176,15 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     onLaunch: () => launchMission(),
     isFollowing: () => world.isFollowingTruck,
   });
+  const scrub = showScrubCard(ui);
   const launchMission = () => {
     const contract = state.mission?.contract;
+    // Weather over the limits Scrubs the Launch: say why and when the next good day is.
+    const weather = launchWeather(state);
+    if (weather?.scrub && state.mission) {
+      scrub.show(state.mission.site, weather, adviseLaunch(state.mission.site, state.day + 1));
+      return;
+    }
     const cardsBefore = state.history.length;
     const result = launch(state, game.site.seed);
     if (!result || !contract) return;

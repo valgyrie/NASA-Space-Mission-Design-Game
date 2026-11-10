@@ -3,7 +3,8 @@ import { MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from
 import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
 import type { HistoryCardId } from './history';
 import { type Boosted, type TechId, boost } from './research';
-import { LAUNCH_SITES, LAUNCH_VEHICLES, LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen } from './launchVehicles';
+import { LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom } from './launchVehicles';
+import { shippingTo } from './places';
 import { type TradeResult, buy, buyPrice } from './market';
 import { type SiteState, bestMark, partMass, storageFree } from './siteState';
 import { type BusId, hallLevel, hallLevelFor, hallTakes } from './upgrades';
@@ -227,7 +228,7 @@ export function missionGoal(state: SiteState): MissionGoal {
   const status = taken ? 'accepted' : offered ? 'offered' : 'done';
   const { orbit, payload, missionDays } = contractNeeds(contract);
   const vehicle: LaunchVehicleId = state.vehicle;
-  const site: LaunchSiteId = 'capeCanaveral';
+  const site: LaunchSiteId = state.launchSite;
   return {
     contract,
     status,
@@ -236,9 +237,9 @@ export function missionGoal(state: SiteState): MissionGoal {
     daysLeft: taken ? daysLeft(state, taken) : contract.deadlineDays,
     orbit,
     vehicle,
-    liftKg: LAUNCH_VEHICLES[vehicle].liftKg[orbit],
+    liftKg: liftFrom(vehicle, orbit, site),
     site,
-    shippingDays: LAUNCH_SITES[site].shippingDays,
+    shippingDays: shippingTo(state.place, site).days,
   };
 }
 
@@ -349,7 +350,7 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   const massGauge = gauge(mass, goal.liftKg, 'max');
   if (massGauge.status === 'short') {
     // A Launch Vehicle the Company can book that would lift it, if there is one.
-    const bigger = LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id) && LAUNCH_VEHICLES[id].liftKg[goal.orbit] >= mass) ?? null;
+    const bigger = LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id) && liftFrom(id, goal.orbit, goal.site) >= mass) ?? null;
     problems.push({ kind: 'tooHeavy', overKg: mass - goal.liftKg, bigger });
   }
   const bus = design.bus;
