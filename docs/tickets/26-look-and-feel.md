@@ -14,7 +14,9 @@
 - [ ] Title screen (LEAP logo, subtitle, acronym line) leads to the main menu
 - [ ] Main menu and full-screen menus use a live 3D scene as background
 - [ ] Loading screens show a rendered shot plus one sourced fact or gameplay tip, and never delay loading
-- [ ] Earth looks smooth up close: in the 3D Launch's upper-stage shot and the Space view's follow camera, the globe's flat triangles show as big blocks (`buildEarth` in `src/world/earthMesh.ts` uses one icosahedron detail, 48, for every view). Use a finer globe, or a finer patch, only where the camera is close, and keep it fast on slow laptops
+- [x] Earth looks smooth, from far and up close (done early, 2026-11-10, asked for by the team). `buildEarth` in `src/world/earthMesh.ts` is now a smooth sphere with a picture made from the Natural Earth grid (`src/world/earthTexture.ts`): the shader cuts the coastline, so it stays sharp at any zoom; clouds are a soft shell. One set of pictures for every view, made once (about a third of a second) when the first Earth is shown
 - [ ] The 3D Launch's horizon high in the climb is a flat haze band over a flat floor (`src/world/launchView.ts`, pad shot): give it a curve or fade it into the space shot sooner
 
-**Notes from tickets 10 and 31:** both blocky-Earth spots and the flat horizon were seen in testing and left for this pass; the whole-Earth views (Mission Designer, Space view overview, orbit shot) look fine at detail 48.
+**Notes from tickets 10 and 31:** the flat horizon was seen in testing and left for this pass. The blocky Earth is fixed.
+
+**Building size (2026-11-10, asked for by the team):** buildings were one tile and too small to see from the whole-Site view. They now take 3 × 3 tiles (GDD §3) and the models are three times as big; the Site stays 64 × 64. When checking "buildings look right", check the whole-Site view too.

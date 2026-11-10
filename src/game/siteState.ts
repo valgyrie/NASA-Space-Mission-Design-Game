@@ -149,13 +149,40 @@ export function partsMadeBy(kind: FactoryKind): Part[] {
 
 // ---- Building ----
 
-export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'occupied' | 'money';
+export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money';
 
 export type PlaceCheck = { ok: true } | { ok: false; problem: PlaceProblem };
 
-function occupied(state: SiteState, x: number, z: number): boolean {
-  const here = (b: { x: number; z: number }) => b.x === x && b.z === z;
-  return allBuildings(state).some(({ building }) => here(building));
+/**
+ * Tiles a building takes along each side. Every building stands on FOOTPRINT × FOOTPRINT tiles, centred on
+ * its own tile (x, z): big enough to see from the whole-Site view, small enough that a Site holds hundreds.
+ */
+export const FOOTPRINT = 3;
+const REACH = (FOOTPRINT - 1) / 2;
+
+/** The tiles under a building centred on (x, z), nearest the centre first. Some may be off the Site. */
+export function footprint(x: number, z: number): { x: number; z: number }[] {
+  const tiles: { x: number; z: number }[] = [];
+  for (let dz = -REACH; dz <= REACH; dz++) for (let dx = -REACH; dx <= REACH; dx++) tiles.push({ x: x + dx, z: z + dz });
+  return tiles.sort((a, b) => Math.abs(a.x - x) + Math.abs(a.z - z) - (Math.abs(b.x - x) + Math.abs(b.z - z)));
+}
+
+/** Does the building centred on `b` stand on tile (x, z)? */
+export function covers(b: { x: number; z: number }, x: number, z: number): boolean {
+  return Math.abs(b.x - x) <= REACH && Math.abs(b.z - z) <= REACH;
+}
+
+/** Would two buildings centred on `a` and `b` stand on the same tile? */
+function overlap(a: { x: number; z: number }, b: { x: number; z: number }): boolean {
+  return Math.abs(a.x - b.x) < FOOTPRINT && Math.abs(a.z - b.z) < FOOTPRINT;
+}
+
+/**
+ * Height step a building centred on (x, z) stands at: the highest ground under it. Its foundation fills
+ * the lower tiles, so buildings can go on slopes.
+ */
+export function foundationLevel(site: Site, x: number, z: number): number {
+  return Math.max(0, ...footprint(x, z).map((t) => tileAt(site, t.x, t.z)?.level ?? 0));
 }
 
 /** Every building on the Site with its kind. */
@@ -171,10 +198,14 @@ export function allBuildings(state: SiteState): { kind: SiteBuildingKind; buildi
 
 /** How much further from the middle the Assembly Hall would rather go than build on high ground (squared tiles). */
 const HIGH_GROUND = { hills: 100, mountain: 400 } as const;
+/** The same, for each height step of slope under it. */
+const SLOPE = 60;
+/** The same, for each height step that land close by towers over it: behind a cliff it would be hard to see. */
+const WALLED_IN = { within: 4, above: 2, each: 40 };
 
 /**
- * Put the Assembly Hall on the free dry tile nearest the middle of the Site, if it has none yet: on flat land
- * if any is near, and never on a Deposit, so Deposits stay free for Mines. Returns the hall.
+ * Put the Assembly Hall on the free dry land nearest the middle of the Site, if it has none yet: on flat, open
+ * land if any is near, and never on a Deposit, so Deposits stay free for Mines. Returns the hall.
  */
 export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
   if (state.assemblyHall) return state.assemblyHall;
@@ -183,9 +214,20 @@ export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
   let bestD = Infinity;
   for (let z = 0; z < site.size; z++) {
     for (let x = 0; x < site.size; x++) {
-      const tile = tileAt(site, x, z);
-      if (!tile || tile.terrain === 'water' || tile.deposit || occupied(state, x, z)) continue;
-      const d = (x - mid) ** 2 + (z - mid) ** 2 + (tile.terrain === 'hills' || tile.terrain === 'mountain' ? HIGH_GROUND[tile.terrain] : 0);
+      if (placeProblem(site, state, 'assemblyHall', x, z)) continue;
+      const tile = tileAt(site, x, z)!;
+      const levels = footprint(x, z).map((t) => tileAt(site, t.x, t.z)!.level);
+      const top = Math.max(...levels);
+      let around = top;
+      for (let dz = -WALLED_IN.within; dz <= WALLED_IN.within; dz++) {
+        for (let dx = -WALLED_IN.within; dx <= WALLED_IN.within; dx++) around = Math.max(around, tileAt(site, x + dx, z + dz)?.level ?? 0);
+      }
+      const d =
+        (x - mid) ** 2 +
+        (z - mid) ** 2 +
+        (tile.terrain === 'hills' || tile.terrain === 'mountain' ? HIGH_GROUND[tile.terrain] : 0) +
+        (top - Math.min(...levels)) * SLOPE +
+        Math.max(0, around - top - WALLED_IN.above) * WALLED_IN.each;
       if (d < bestD) [best, bestD] = [{ x, z }, d];
     }
   }
@@ -194,20 +236,77 @@ export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
 }
 
 /**
- * Can a building of `kind` go on tile (x, z)? Mines need a free Deposit; everything else needs
- * dry land without one, so Deposits stay free for Mines. All of them cost money.
+ * What stops a building of `kind` from standing centred on tile (x, z), money aside; null if nothing does.
+ * `ignore` is a building to leave out of the check (the one being moved).
+ */
+function placeProblem(
+  site: Site,
+  state: SiteState,
+  kind: SiteBuildingKind,
+  x: number,
+  z: number,
+  ignore?: Building,
+): PlaceProblem | null {
+  const tiles = footprint(x, z).map((t) => tileAt(site, t.x, t.z));
+  if (tiles.some((t) => !t)) return 'edge';
+  if (kind === 'mine') {
+    if (!tiles.some((t) => t!.deposit)) return 'noDeposit';
+    if (tiles[0]!.terrain === 'water') return 'water';
+  } else {
+    if (tiles.some((t) => t!.terrain === 'water')) return 'water';
+    if (tiles.some((t) => t!.deposit)) return 'onDeposit';
+  }
+  if (allBuildings(state).some(({ building }) => building !== ignore && overlap(building, { x, z }))) return 'occupied';
+  return null;
+}
+
+/**
+ * Can a building of `kind` go centred on tile (x, z)? It takes FOOTPRINT × FOOTPRINT tiles, all on the Site
+ * and free. A Mine must touch a Deposit and stand on dry land; everything else needs dry land without a
+ * Deposit, so Deposits stay free for Mines. All of them cost money.
  */
 export function checkBuild(site: Site, state: SiteState, kind: BuildingKind, x: number, z: number): PlaceCheck {
-  const tile = tileAt(site, x, z);
-  if (kind === 'mine') {
-    if (!tile?.deposit) return { ok: false, problem: 'noDeposit' };
-  } else {
-    if (!tile || tile.terrain === 'water') return { ok: false, problem: 'water' };
-    if (tile.deposit) return { ok: false, problem: 'onDeposit' };
-  }
-  if (occupied(state, x, z)) return { ok: false, problem: 'occupied' };
+  const problem = placeProblem(site, state, kind, x, z);
+  if (problem) return { ok: false, problem };
   if (state.money < BUILD_COST[kind]) return { ok: false, problem: 'money' };
   return { ok: true };
+}
+
+/**
+ * Make room in a save from when buildings took one tile: a building that no longer fits where it stands
+ * (it overlaps another, hangs off the Site, or a Mine lost its Deposit) moves to the nearest spot where it
+ * does. The Assembly Hall goes first, then the rest in the order they were built. Returns true if any moved.
+ */
+export function fitBuildings(site: Site, state: SiteState): boolean {
+  const kept: Building[] = [];
+  let moved = false;
+  for (const { kind, building } of allBuildings(state)) {
+    const material = kind === 'mine' ? mineMaterial(site, building) : null;
+    const fits = (x: number, z: number, strict: boolean) => {
+      const problem = placeProblem(site, state, kind, x, z, building);
+      // Where it already stands, only the ground rules that can't be bent count; a new spot must pass them all.
+      if (problem && (strict || problem === 'edge' || problem === 'noDeposit')) return false;
+      if (kept.some((other) => overlap(other, { x, z }))) return false;
+      return kind !== 'mine' || !strict || mineMaterial(site, { x, z }) === material;
+    };
+    if (!fits(building.x, building.z, false)) {
+      let best: { x: number; z: number } | null = null;
+      let bestD = Infinity;
+      for (let z = 0; z < site.size; z++) {
+        for (let x = 0; x < site.size; x++) {
+          const d = (x - building.x) ** 2 + (z - building.z) ** 2;
+          if (d < bestD && fits(x, z, true)) [best, bestD] = [{ x, z }, d];
+        }
+      }
+      if (best) {
+        building.x = best.x;
+        building.z = best.z;
+        moved = true;
+      }
+    }
+    kept.push(building);
+  }
+  return moved;
 }
 
 /** Build if allowed. Returns what was checked, so the caller can explain a "no". */
@@ -223,7 +322,7 @@ export function build(site: Site, state: SiteState, kind: BuildingKind, x: numbe
   return check;
 }
 
-/** What stands on tile (x, z), if anything. */
+/** What stands on tile (x, z), if anything: any tile under a building counts. */
 export function buildingAt(
   state: SiteState,
   x: number,
@@ -235,7 +334,7 @@ export function buildingAt(
   | { kind: 'researchLab'; building: Lab }
   | { kind: 'assemblyHall'; building: AssemblyHall }
   | null {
-  const found = allBuildings(state).find(({ building: b }) => b.x === x && b.z === z);
+  const found = allBuildings(state).find(({ building }) => covers(building, x, z));
   if (!found) return null;
   const { kind, building } = found;
   if (kind === 'mine') return { kind, building, mine: building as Mine };
@@ -260,9 +359,13 @@ export function warehouseStorage(warehouse: Warehouse): number {
   return WAREHOUSE_STORAGE_KG * levelBoost(warehouse.level);
 }
 
-/** Raw Material each Mine digs up, keyed by what is under it. */
+/** Raw Material a Mine digs up: the Deposit under it, the one nearest its middle if it touches two. */
 export function mineMaterial(site: Site, mine: Pick<Mine, 'x' | 'z'>): RawMaterial | null {
-  return tileAt(site, mine.x, mine.z)?.deposit ?? null;
+  for (const t of footprint(mine.x, mine.z)) {
+    const deposit = tileAt(site, t.x, t.z)?.deposit;
+    if (deposit) return deposit;
+  }
+  return null;
 }
 
 // ---- Storage ----

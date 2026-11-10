@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { FACTORY_KINDS, PARTS } from '../economy/part';
-import { RAW_MATERIALS } from '../economy/rawMaterial';
-import { generateSite } from '../site/site';
+import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
+import { generateSite, tileAt } from '../site/site';
 import {
   BASE_STORAGE_KG,
   BUILD_COST,
@@ -15,10 +15,18 @@ import {
 } from './balance';
 import { buy, buyPrice, checkBuy, makingCost, MARKET_ITEMS, sell, sellPrice } from './market';
 import {
+  FOOTPRINT,
   advanceDays,
+  allBuildings,
   build,
+  buildingAt,
   checkBuild,
+  covers,
   daysFor,
+  fitBuildings,
+  footprint,
+  foundationLevel,
+  mineMaterial,
   newSiteState,
   partsMadeBy,
   setMaking,
@@ -29,18 +37,43 @@ import {
 const site = generateSite('K7QXM2');
 const tileIndex = (pred: (i: number) => boolean) => site.tiles.findIndex((_, i) => pred(i));
 const xz = (i: number) => [i % site.size, Math.floor(i / site.size)] as const;
-const copper = xz(tileIndex((i) => site.tiles[i]!.deposit === 'copper'));
-const silicon = xz(tileIndex((i) => site.tiles[i]!.deposit === 'silicon'));
-const bareTiles = site.tiles.flatMap((tile, i) => (tile.deposit === null && tile.terrain !== 'water' ? [xz(i)] : []));
+/** Is every tile under a building centred on tile i on the Site? */
+const inside = (i: number) => footprint(...xz(i)).every((t) => tileAt(site, t.x, t.z));
+const canMine = (material: RawMaterial) => (i: number) =>
+  site.tiles[i]!.deposit === material && checkBuild(site, newSiteState(), 'mine', ...xz(i)).ok;
+const copper = xz(tileIndex(canMine('copper')));
+const silicon = xz(tileIndex(canMine('silicon')));
+const bareTiles = site.tiles.flatMap((_, i) => (checkBuild(site, newSiteState(), 'warehouse', ...xz(i)).ok ? [xz(i)] : []));
 const bare = bareTiles[0]!;
-const water = xz(tileIndex((i) => site.tiles[i]!.terrain === 'water'));
+const water = xz(tileIndex((i) => site.tiles[i]!.terrain === 'water' && inside(i)));
 
 describe('Mines', () => {
   it('can only go on a Deposit', () => {
     const state = newSiteState();
     expect(build(site, state, 'mine', ...bare)).toEqual({ ok: false, problem: 'noDeposit' });
-    expect(build(site, state, 'mine', -1, 0)).toEqual({ ok: false, problem: 'noDeposit' });
+    expect(build(site, state, 'mine', -1, 0)).toEqual({ ok: false, problem: 'edge' });
     expect(state.mines).toEqual([]);
+  });
+
+  it('only need to touch a Deposit, and dig the one nearest their middle', () => {
+    const [x, z] = copper;
+    const beside = footprint(x, z).find((t) => !tileAt(site, t.x, t.z)!.deposit && checkBuild(site, newSiteState(), 'mine', t.x, t.z).ok);
+    expect(beside).toBeDefined();
+    expect(mineMaterial(site, beside!)).toBe('copper');
+    expect(mineMaterial(site, { x: bare[0], z: bare[1] })).toBeNull();
+  });
+
+  it('can dig every Raw Material on any Site', () => {
+    for (const seed of ['K7QXM2', 'AB12CD', 'ZZ99', 'COAST1', 'maple-42', 'LAKE7', 'R1VER', 'DRY000']) {
+      const s = generateSite(seed);
+      for (const material of RAW_MATERIALS) {
+        const spot = s.tiles.findIndex((_, i) => {
+          const at = { x: i % s.size, z: Math.floor(i / s.size) };
+          return mineMaterial(s, at) === material && checkBuild(s, newSiteState(), 'mine', at.x, at.z).ok;
+        });
+        expect(spot, `${material} on ${seed}`).toBeGreaterThanOrEqual(0);
+      }
+    }
   });
 
   it('dig up whatever their Deposit holds', () => {
@@ -62,6 +95,56 @@ describe('Mines', () => {
     const state = newSiteState();
     build(site, state, 'mine', ...copper);
     expect(build(site, state, 'mine', ...copper)).toEqual({ ok: false, problem: 'occupied' });
+  });
+});
+
+describe('Building footprints', () => {
+  it('take 3 × 3 tiles, centred on their own tile', () => {
+    expect(FOOTPRINT).toBe(3);
+    const tiles = footprint(10, 20);
+    expect(tiles).toHaveLength(9);
+    expect(tiles[0]).toEqual({ x: 10, z: 20 });
+    expect(covers({ x: 10, z: 20 }, 11, 19)).toBe(true);
+    expect(covers({ x: 10, z: 20 }, 12, 20)).toBe(false);
+  });
+
+  it('keep buildings from overlapping, and off the edge of the Site', () => {
+    const state = newSiteState();
+    const [x, z] = bare;
+    build(site, state, 'warehouse', x, z);
+    for (const t of footprint(x + 1, z + 1)) {
+      expect(checkBuild(site, state, 'warehouse', t.x, t.z)).toMatchObject({ ok: false });
+    }
+    expect(buildingAt(state, x + 1, z - 1)).toMatchObject({ kind: 'warehouse' });
+    expect(buildingAt(state, x + 2, z)).toBeNull();
+    expect(checkBuild(site, newSiteState(), 'warehouse', 0, 0)).toEqual({ ok: false, problem: 'edge' });
+    expect(checkBuild(site, newSiteState(), 'warehouse', site.size - 1, 5)).toEqual({ ok: false, problem: 'edge' });
+  });
+
+  it('stand on the highest ground under them', () => {
+    for (const [x, z] of bareTiles.slice(0, 200)) {
+      const levels = footprint(x, z).map((t) => tileAt(site, t.x, t.z)!.level);
+      expect(foundationLevel(site, x, z)).toBe(Math.max(...levels));
+    }
+  });
+
+  it('move apart in a save from when buildings took one tile', () => {
+    const state = newSiteState();
+    const [x, z] = bare;
+    const at = (dx: number) => ({ x: x + dx, z, level: 2, upgradeDay: null });
+    state.warehouses.push(at(0), at(1));
+    state.labs.push(at(2));
+    state.mines.push({ x: copper[0], z: copper[1], level: 1, upgradeDay: null });
+    expect(fitBuildings(site, state)).toBe(true);
+    const all = allBuildings(state).map((b) => b.building);
+    for (const a of all) {
+      for (const b of all) if (a !== b) expect(Math.abs(a.x - b.x) >= FOOTPRINT || Math.abs(a.z - b.z) >= FOOTPRINT).toBe(true);
+    }
+    // The first keeps its place and the Mine its Deposit; levels are untouched.
+    expect(state.warehouses[0]).toMatchObject({ x, z, level: 2 });
+    expect(state.mines[0]).toMatchObject({ x: copper[0], z: copper[1] });
+    expect(mineMaterial(site, state.mines[0]!)).toBe('copper');
+    expect(fitBuildings(site, state)).toBe(false);
   });
 });
 

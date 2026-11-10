@@ -1,6 +1,6 @@
 import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
-import { advanceDays, allBuildings, build, checkBuild, daysFor, mineMaterial, placeAssemblyHall, storageFree } from './game/siteState';
+import { advanceDays, allBuildings, build, checkBuild, daysFor, fitBuildings, mineMaterial, placeAssemblyHall, storageFree } from './game/siteState';
 import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
@@ -39,6 +39,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   world.showSite(site);
   // Every Site starts with an Assembly Hall near its middle; a new game (or an older save) gets it now.
   const hall = placeAssemblyHall(site, state);
+  // A save from when buildings took one tile: move apart the ones that now overlap.
+  if (fitBuildings(site, state)) saveGame(localStorage, game);
   world.addBuilding('assemblyHall', hall.x, hall.z);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);

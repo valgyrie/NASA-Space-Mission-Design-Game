@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { covers, footprint } from '../game/siteState';
 import { generateSite, tileAt } from '../site/site';
 import { DRIVE_BEYOND_SITE, shippingRoute, truckPosition } from './shippingRoute';
 
@@ -6,13 +7,17 @@ const site = generateSite('K7QXM2');
 const nothing = () => false;
 
 describe('Shipping route', () => {
-  it('parks the truck on dry, free land without a Deposit', () => {
+  it('parks the truck on dry, free land without a Deposit, clear of the building it starts from', () => {
     for (const seed of ['K7QXM2', 'AB12CD', 'ZZ99', 'COAST1']) {
       const s = generateSite(seed);
-      const route = shippingRoute(s, { x: 32, z: 32 }, nothing);
-      const tile = tileAt(s, route.dock.x, route.dock.z)!;
-      expect(tile.terrain).not.toBe('water');
-      expect(tile.deposit).toBeFalsy();
+      const start = { x: 32, z: 32 };
+      const route = shippingRoute(s, start, nothing);
+      for (const t of footprint(route.dock.x, route.dock.z)) {
+        const tile = tileAt(s, t.x, t.z)!;
+        expect(tile.terrain).not.toBe('water');
+        expect(tile.deposit).toBeFalsy();
+        expect(covers(start, t.x, t.z)).toBe(false);
+      }
     }
   });
 
@@ -20,7 +25,7 @@ describe('Shipping route', () => {
     const start = { x: 32, z: 32 };
     const free = shippingRoute(site, start, nothing).dock;
     const blocked = shippingRoute(site, start, (x, z) => x === free.x && z === free.z).dock;
-    expect(blocked).not.toEqual(free);
+    expect(covers(blocked, free.x, free.z)).toBe(false);
   });
 
   it('drives straight off the Site and on past its edge', () => {

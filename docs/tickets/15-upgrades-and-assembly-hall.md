@@ -21,4 +21,5 @@
 - Marks: `state.parts` is the total; `state.betterParts[part]` counts Mk 2, Mk 3 (the rest are Mk 1). Change stock only through `addPart`/`takePart`. A design's `marksFor(state, design)`, a Mission's `marks`, and `statsOf`/`spacecraftMass`/`powerOf` take them. `FlightPlan.marks` is optional (all Mk 1).
 - Ticket 18: a Large Bus goes in `BUS_HALL_LEVEL` at 3 and `MAX_LEVEL.assemblyHall` goes to 3. The HQ can reuse `nextUpgrade`.
 - The hall is placed by `placeAssemblyHall` when the Site is first shown; until then `hallLevel` counts it as level 1. Save v12.
+- Since 2026-11-10 every building takes 3 × 3 tiles: `FOOTPRINT`, `footprint`, `covers`, `foundationLevel` in siteState.ts. A building's `x`, `z` is its middle tile. `fitBuildings` moves apart the buildings of older saves when the Site is shown (no save version change).
 - Not done: the Market panel still shows only totals per Part (the Mission Designer and Factory panel show Marks); no sound or toast when an Upgrade finishes.

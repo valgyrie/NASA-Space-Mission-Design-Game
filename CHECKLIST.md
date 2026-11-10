@@ -81,6 +81,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Look and sound
 - [ ] Cozy low-poly art, clean NASA-style UI
+- [x] Buildings big enough to see from the whole-Site view (3 × 3 tiles each; the Site stays 64 × 64)
+- [x] Smooth Earth from space: rounded coasts and soft clouds, far and close up
 - [ ] Sound effects
 - [ ] Music (licensed or generated, credited)
 - [ ] Learn more → links on real things

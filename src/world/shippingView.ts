@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { FOOTPRINT, footprint } from '../game/siteState';
 import type { Design } from '../game/spacecraft';
 import { M, box, colourMat, parts, v } from './buildingParts';
 import { type ShippingRoute, truckPosition } from './shippingRoute';
@@ -21,7 +22,12 @@ export interface ShippingScene {
 const CAB = colourMat(0xd9583a);
 const TYRE = new THREE.MeshStandardMaterial({ color: 0x1d1f23, flatShading: true, roughness: 0.95 });
 
-/** A flatbed truck about one tile long, facing +x. Cargo sits on the bed in a group named "cargo". */
+/** How much the truck and dock models are scaled up, to match the buildings. */
+const SCALE = FOOTPRINT;
+/** Thickness of the dock's pad, in world units. */
+const PAD = 0.04 * SCALE;
+
+/** A flatbed truck, drawn about 1 long and facing +x, then scaled up. Cargo sits on the bed in a group named "cargo". */
 function buildTruck(): THREE.Group {
   const g = new THREE.Group();
   g.name = 'truck';
@@ -98,12 +104,13 @@ function buildCargo(cargo: THREE.Group, design: Design): void {
   cargo.add(crate);
 }
 
-/** A concrete loading pad with a swinging crane and two lamps, on the dock tile. */
+/** A concrete loading pad with a swinging crane and two lamps, as big as a building, on a base that reaches into the ground. */
 function buildDock(): THREE.Group {
   const g = new THREE.Group();
   g.name = 'dock';
   const p = parts(g);
   p.add(box(0.98, 0.04, 0.98), M.concrete, 0, 0.02, 0);
+  p.add(box(0.96, 1.7, 0.96), M.foundation, 0, -0.85, 0);
   for (const x of [-0.45, 0.45]) p.add(box(0.03, 0.045, 0.98), M.yellow, x, 0.025, 0);
   p.cyl(0.03, 0.62, M.yellow, 0.05, 0.04, 0.36, 8);
   const jib = p.mover('crane', 0.05, 0.66, 0.36);
@@ -160,11 +167,17 @@ export class ShippingView {
     const crane = this.dock?.getObjectByName('crane');
     if (crane && this.scene.stage === 'assembling') crane.rotation.y = Math.sin(this.clock * 0.6) * 0.9;
     const { x, z } = this.truck.position;
-    const target = this.ground(x, z) + 0.04; // on the dock's pad, and just clear of the land
+    // It rides on the highest land under its length, and on the dock's pad while it is there.
+    const { dir, from } = this.scene.route;
+    const reach = 0.4 * this.truck.scale.x;
+    const land = Math.max(...[-reach, 0, reach].map((d) => this.ground(x + dir.x * d, z + dir.z * d)));
+    const onDock = this.dock && Math.abs(x - from.x) <= FOOTPRINT / 2 && Math.abs(z - from.z) <= FOOTPRINT / 2;
+    const target = onDock ? Math.max(land, this.dock!.position.y + PAD) : land + 0.04;
     this.truck.position.y += (target - this.truck.position.y) * Math.min(1, realSeconds * 6);
     const moved = this.lastPos ? Math.hypot(x - this.lastPos.x, z - this.lastPos.z) : 0;
     this.lastPos = { x, z };
-    if (moved > 0 && moved < 2) this.truck.traverse((o) => o.name === 'wheel' && (o.rotation.z -= moved / 0.065));
+    const wheel = 0.065 * this.truck.scale.x;
+    if (moved > 0 && moved < 2 * SCALE) this.truck.traverse((o) => o.name === 'wheel' && (o.rotation.z -= moved / wheel));
   }
 
   /** Where the truck is, for a camera that follows it; null when it isn't on screen. */
@@ -174,14 +187,17 @@ export class ShippingView {
 
   private build(scene: ShippingScene): void {
     const { route } = scene;
+    // The dock stands on the highest land under it, like a building.
+    const top = Math.max(...footprint(0, 0).map((t) => this.ground(route.from.x + t.x, route.from.z + t.z)));
     this.dock = buildDock();
-    this.dock.position.set(route.from.x, this.ground(route.from.x, route.from.z), route.from.z);
+    this.dock.scale.setScalar(SCALE);
+    this.dock.position.set(route.from.x, top, route.from.z);
     this.dock.rotation.y = Math.atan2(-route.dir.z, route.dir.x);
     this.truck = buildTruck();
     buildCargo(this.truck.getObjectByName('cargo') as THREE.Group, scene.design);
-    this.truck.scale.setScalar(1.1);
+    this.truck.scale.setScalar(1.1 * SCALE);
     this.truck.rotation.y = Math.atan2(-route.dir.z, route.dir.x);
-    this.truck.position.set(route.from.x, this.ground(route.from.x, route.from.z) + 0.04, route.from.z);
+    this.truck.position.set(route.from.x, top + PAD, route.from.z);
     this.lastPos = null;
     this.group.add(this.dock, this.truck);
   }

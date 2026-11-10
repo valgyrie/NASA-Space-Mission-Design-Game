@@ -105,6 +105,8 @@ export function showNewCompany(root: HTMLElement, { onSeed, onDone }: Options): 
       seed.input.focus();
       return;
     }
+    // A preview still waiting would redraw the Site after the game has put its buildings on it.
+    window.clearTimeout(timer);
     form.remove();
     onDone({ name: nameCheck.name, seed: seedCheck.seed });
   });

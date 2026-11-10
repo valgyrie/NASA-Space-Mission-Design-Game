@@ -1,6 +1,6 @@
-# Earth map (Mission Designer globe)
+# Earth map (the globe seen from space)
 
-The Earth behind the Spacecraft in the Mission Designer uses real geography. Researched 2026-11-09.
+The Earth in the Mission Designer, the 3D Launch and the Space view uses real geography. Researched 2026-11-09.
 
 ## Source
 
@@ -13,6 +13,10 @@ The Earth behind the Spacecraft in the Mission Designer uses real geography. Res
 | `ne_110m_geography_regions_polys.geojson` | Deserts (Sahara, Gobi, Arabian Peninsula, Australia's Western Plateau), rainforest basins (Amazon, Congo, Malay Archipelago), mountain ranges and the Plateau of Tibet, tundra (Canadian Shield), plains (Great Plains, Kazakh Steppe, North China Plain, Northern European Plain) |
 
 `scripts/build_earth_map.py` turns these into a 1° grid (`src/world/earthMap.ts`, about 8 KB run-length coded). Land not inside a named region is coloured by latitude: tropical forest within 12° of the equator, temperate forest, boreal forest from 50°N, tundra from 64°, and ice south of 62°S. That is a game simplification, not a vegetation map. Clouds are decoration, thicker near the equator and the storm belts around 50°.
+
+## Drawing it smooth (2026-11-10)
+
+The grid is only 1° per cell (about 111 km at the equator), so drawing its cells as they are gives blocks and stair-step coasts. The game keeps the same data and smooths it when it draws: every pixel of the globe's picture blends the nine cells around it, and the coastline is cut where that blend is half land. Islands of one or two cells are kept. So coasts are rounded, not more accurate: the real detail is still 1°. No new data source.
 
 ## Size
 

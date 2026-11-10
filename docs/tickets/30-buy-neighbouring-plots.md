@@ -18,5 +18,6 @@
 
 **Notes for the agent:**
 - `src/site/site.ts` `landOf(site).groundAt(x, z)` already gives the land anywhere; Plot (px, pz) covers tiles `px*64 … px*64+63`. The 8 neighbours are already drawn in full detail (`NEAR_REACH = 64` in `src/world/siteMesh.ts`).
+- Buildings take 3 × 3 tiles (`footprint` in `src/game/siteState.ts`), and the "edge" build problem keeps them inside the Site: with more Plots, check the tiles against every owned Plot.
 - Save the list of owned Plots (e.g. `[[0,0],[1,0]]`), not their tiles. Bump `SAVE_VERSION` with an upgrade step.
 - Open question for the team: show a Plot's Deposits for free, or charge a small Survey fee first? Free is simpler for younger players; a Survey adds a decision. Default to free.

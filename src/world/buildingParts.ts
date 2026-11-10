@@ -1,9 +1,10 @@
 import * as THREE from 'three';
 import type { FactoryKind } from '../economy/part';
+import { FOOTPRINT } from '../game/siteState';
 
 /**
- * Shared pieces for the low-poly building models. Every building fits one tile (about 0.9 × 0.9)
- * and is scaled up slightly by its builder.
+ * Shared pieces for the low-poly building models. Every model is drawn about 0.9 × 0.9 and then scaled
+ * up by `BUILDING_SCALE` to fill its building's tiles (`FOOTPRINT` in siteState.ts).
  *
  * Moving parts are found by name and turned by `World.animateBuildings` while the building works:
  * - "spin": turns around its own z axis (wheels)
@@ -19,6 +20,7 @@ export const mat = (color: number, extra: THREE.MeshStandardMaterialParameters =
 /** One palette for every building, so the Site looks like one place. */
 export const M = {
   concrete: mat(0xa39e94),
+  foundation: mat(0x8a857c),
   asphalt: mat(0x55575c),
   wall: mat(0xf3eee4),
   white: mat(0xf7f8fa, { roughness: 0.6 }),
@@ -120,11 +122,21 @@ export function parts(g: THREE.Group) {
   return { add, bar, cyl, lamp, mover };
 }
 
-/** A new building group, scaled like the Mine. */
+/** How much the models are scaled up: a 0.9-wide model then just fills its building's tiles. */
+export const BUILDING_SCALE = FOOTPRINT * 1.1;
+
+/** How far the foundation reaches down, in model units: past the lowest ground a building can stand over. */
+const FOUNDATION_DEPTH = 1.7;
+
+/**
+ * A new building group at full size, on a foundation block that reaches down into the ground. On flat
+ * land the block is hidden; on a slope it fills the gap under the building.
+ */
 export function buildingGroup(name: string): THREE.Group {
   const g = new THREE.Group();
   g.name = name;
-  g.scale.setScalar(1.15);
+  g.scale.setScalar(BUILDING_SCALE);
+  parts(g).add(box(0.9, FOUNDATION_DEPTH, 0.9), M.foundation, 0, -FOUNDATION_DEPTH / 2, 0);
   return g;
 }
 

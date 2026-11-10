@@ -87,6 +87,7 @@ export const STRINGS = {
   'build.problem.onDeposit': 'Keep Deposits for Mines. Build on free land.',
   'build.problem.water': "You can't build on water.",
   'build.problem.occupied': 'Something is already built here.',
+  'build.problem.edge': 'Too close to the edge of your Site.',
   'build.problem.money': 'Not enough money.',
 
   'part.smallBus': 'Small Bus',

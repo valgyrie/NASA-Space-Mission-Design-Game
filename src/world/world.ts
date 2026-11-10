@@ -23,6 +23,7 @@ import {
   polarFromElevation,
 } from './camera';
 import { buildAssemblyHall, buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
+import { FOOTPRINT, covers, footprint, foundationLevel } from '../game/siteState';
 import { buildCrane, buildLevelSign } from './buildingParts';
 import { buildMine } from './mineMesh';
 import type { Design } from '../game/spacecraft';
@@ -30,7 +31,7 @@ import { type ShippingRoute, shippingRoute } from './shippingRoute';
 import { ShippingView } from './shippingView';
 
 /** How close the camera comes when it follows the Shipping truck. */
-const FOLLOW_DISTANCE = 11;
+const FOLLOW_DISTANCE = 26;
 
 /** The Mission as the Site should show it: where it is and what is being shipped. */
 export interface ShippingState {
@@ -129,7 +130,7 @@ export class World {
   private site: Site | null = null;
   private land: Land | null = null;
   private readonly buildings = new THREE.Group();
-  /** Building models by tile key "x,z". */
+  /** Building models by the key "x,z" of their middle tile. */
   private readonly buildingAt = new Map<string, THREE.Group>();
   private readonly marker: THREE.Mesh;
   private readonly sky = makeSky();
@@ -358,7 +359,8 @@ export class World {
     }
     if (this.route?.id !== state.id) {
       // The route is fixed when the Mission ships, so a building placed later doesn't move the dock.
-      const occupied = (x: number, z: number) => this.buildingAt.has(`${x},${z}`);
+      const occupied = (x: number, z: number) =>
+        [...this.buildingAt.values()].some((model) => covers(model.userData.tile as { x: number; z: number }, x, z));
       this.route = { id: state.id, route: shippingRoute(this.site, state.start, occupied) };
     }
     this.shipping.show({ route: this.route.route, design: state.design, stage: state.stage, fraction: state.fraction });
@@ -393,7 +395,7 @@ export class World {
     this.camera.position.y += dy;
   }
 
-  /** Put a building model on tile (x, z). A Mine needs the Raw Material it digs, for its ore piles. */
+  /** Put a building model centred on tile (x, z). A Mine needs the Raw Material it digs, for its ore piles. */
   addBuilding(kind: SiteBuildingKind, x: number, z: number, material?: RawMaterial): void {
     if (!this.site) return;
     const model =
@@ -407,12 +409,12 @@ export class World {
               ? buildAssemblyHall()
               : buildWarehouse();
     const c = tileCentre(this.site, x, z);
-    model.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
+    model.position.set(c.x, foundationLevel(this.site, x, z) * STEP, c.z);
     model.userData.tile = { x, z };
     this.buildings.add(model);
     this.buildingAt.set(`${x},${z}`, model);
     this.setWorking(x, z, true);
-    if (this.siteGroup) clearRocks(this.siteGroup, this.site, x, z);
+    if (this.siteGroup) for (const t of footprint(x, z)) clearRocks(this.siteGroup, this.site, t.x, t.z);
   }
 
   /** Start or stop the moving parts of the building on tile (x, z). Factories move only while they make something. */
@@ -501,14 +503,14 @@ export class World {
     return tileAt(this.site, x, z) ? { x, z } : null;
   }
 
-  /** Highlight one tile in green (allowed) or red (not allowed). Pass null to hide it. */
+  /** Highlight where a building centred on a tile would stand, in green (allowed) or red (not allowed). Pass null to hide it. */
   markTile(tile: { x: number; z: number } | null, allowed = true): void {
     if (!tile || !this.site) {
       this.marker.visible = false;
       return;
     }
     const c = tileCentre(this.site, tile.x, tile.z);
-    this.marker.position.set(c.x, (tileAt(this.site, tile.x, tile.z)?.level ?? 0) * STEP + 0.02, c.z);
+    this.marker.position.set(c.x, foundationLevel(this.site, tile.x, tile.z) * STEP + 0.03, c.z);
     (this.marker.material as THREE.MeshBasicMaterial).color.setHex(allowed ? 0x5dff8a : 0xff5d5d);
     this.marker.visible = true;
   }
@@ -519,7 +521,7 @@ export class World {
   }
 
   private makeMarker(): THREE.Mesh {
-    const geometry = new THREE.PlaneGeometry(0.96, 0.96);
+    const geometry = new THREE.PlaneGeometry(FOOTPRINT - 0.06, FOOTPRINT - 0.06);
     geometry.rotateX(-Math.PI / 2);
     const marker = new THREE.Mesh(
       geometry,

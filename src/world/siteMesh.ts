@@ -176,7 +176,7 @@ function depositMesh(site: Site): THREE.InstancedMesh {
         x: x + (rng() - 0.5) * 0.6,
         y: topY(tile.level),
         z: z + (rng() - 0.5) * 0.6,
-        s: 0.16 + rng() * 0.1,
+        s: 0.2 + rng() * 0.12,
         r: rng() * Math.PI,
         colour: DEPOSIT_COLOUR[tile.deposit],
       });

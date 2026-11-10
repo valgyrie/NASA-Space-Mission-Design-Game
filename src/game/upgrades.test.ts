@@ -20,6 +20,8 @@ import {
   bestMark,
   build,
   buildingAt,
+  checkBuild,
+  footprint,
   newSiteState,
   partsByMark,
   placeAssemblyHall,
@@ -32,8 +34,11 @@ import { checkUpgrade, hallLevel, maxLevel, nextUpgrade, startUpgrade, upgradeDa
 
 const site = generateSite('K7QXM2');
 const xz = (i: number) => [i % site.size, Math.floor(i / site.size)] as const;
-const bare = site.tiles.flatMap((tile, i) => (tile.deposit === null && tile.terrain !== 'water' ? [xz(i)] : []));
-const copper = xz(site.tiles.findIndex((tile) => tile.deposit === 'copper'));
+/** Spots a building fits, far enough apart for one on each. */
+const bare = site.tiles
+  .flatMap((_, i) => (checkBuild(site, newSiteState(), 'warehouse', ...xz(i)).ok ? [xz(i)] : []))
+  .filter(([x, z], _i, all) => (x - all[0]![0]) % 4 === 0 && (z - all[0]![1]) % 4 === 0);
+const copper = xz(site.tiles.findIndex((tile, i) => tile.deposit === 'copper' && checkBuild(site, newSiteState(), 'mine', ...xz(i)).ok));
 
 const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'radiationDetector'];
 const TIROS: OptionId[] = ['mediumBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'radiationDetector'];
@@ -157,12 +162,14 @@ describe('Part Marks', () => {
 });
 
 describe('Assembly Hall', () => {
-  it('stands on the free dry tile nearest the middle, once', () => {
+  it('stands on free dry land near the middle, once', () => {
     const state = newSiteState();
     const hall = placeAssemblyHall(site, state);
-    const tile = tileAt(site, hall.x, hall.z)!;
-    expect(tile.terrain).not.toBe('water');
-    expect(tile.deposit).toBeNull();
+    for (const t of footprint(hall.x, hall.z)) {
+      const tile = tileAt(site, t.x, t.z)!;
+      expect(tile.terrain).not.toBe('water');
+      expect(tile.deposit).toBeNull();
+    }
     expect(placeAssemblyHall(site, state)).toBe(hall);
     expect(build(site, state, 'warehouse', hall.x, hall.z)).toEqual({ ok: false, problem: 'occupied' });
   });
