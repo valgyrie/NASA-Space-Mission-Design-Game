@@ -320,3 +320,55 @@ export function buildResearchLab(): THREE.Group {
   p.lamp(0.4, -0.4);
   return g;
 }
+
+/**
+ * Assembly Hall: a tall white clean-room hangar with a blue band, its big door open on a Spacecraft standing
+ * on a work stand inside, a gantry crane that runs over the yard while a Spacecraft is put together, and
+ * air-filter fans on the clean-room annex.
+ */
+export function buildAssemblyHall(): THREE.Group {
+  const g = buildingGroup('assemblyHall');
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  // Hangar: x −0.34…0.22, z −0.38…0.06, tall, with a blue band and a shallow roof.
+  p.add(box(0.56, 0.56, 0.44), M.white, -0.06, 0.33, -0.16);
+  p.add(box(0.565, 0.05, 0.445), colourMat(0x2f5fa8), -0.06, 0.52, -0.16);
+  p.add(gableRoof(0.46, 0.08, 0.58), M.darkRoof, -0.06, 0.61, -0.16);
+  // Open door on +z: dark inside, door panels pushed aside, a Spacecraft on a stand in the opening.
+  p.add(box(0.3, 0.42, 0.01), M.dark, -0.06, 0.26, 0.062);
+  p.add(box(0.1, 0.44, 0.02), M.shutter, -0.27, 0.27, 0.07);
+  p.add(box(0.1, 0.44, 0.02), M.shutter, 0.15, 0.27, 0.07);
+  p.add(box(0.12, 0.04, 0.12), M.yellow, -0.06, 0.07, 0.03);
+  p.cyl(0.045, 0.12, colourMat(PRODUCT_COLOUR.metalWorks, { metalness: 0.5, roughness: 0.35 }), -0.06, 0.09, 0.03, 8);
+  p.add(new THREE.ConeGeometry(0.045, 0.06, 8), M.tank, -0.06, 0.24, 0.03);
+  p.bar(v(-0.06, 0.27, 0.03), v(-0.06, 0.34, 0.03), 0.006, M.steel);
+  windowsX(p, [-0.3, -0.16, -0.02], 0.44, 0.222, 0.08, 0.05);
+
+  // Clean-room annex on +x with two air-filter fans on its roof.
+  p.add(box(0.18, 0.26, 0.3), M.wall, 0.31, 0.18, -0.2);
+  p.add(box(0.19, 0.02, 0.31), M.darkRoof, 0.31, 0.32, -0.2);
+  windowsX(p, [-0.28, -0.12], 0.2, 0.402, 0.07, 0.05);
+  for (const z of [-0.28, -0.12]) {
+    p.cyl(0.04, 0.02, M.steel, 0.31, 0.33, z, 10);
+    const fan = p.mover('spinY', 0.31, 0.355, z);
+    fan.userData.speed = 3;
+    p.add(box(0.07, 0.006, 0.015), M.dark, 0, 0, 0, fan);
+    p.add(box(0.015, 0.006, 0.07), M.dark, 0, 0, 0, fan);
+  }
+
+  // Gantry crane over the yard: two rails along z, a bridge that runs back and forth with a hook.
+  for (const x of [-0.36, 0.3]) p.add(box(0.02, 0.01, 0.34), M.rail, x, 0.055, 0.25);
+  const gantry = p.mover('shuttle', 0, 0, 0.25);
+  gantry.userData.base = 0.25;
+  gantry.userData.range = 0.1;
+  for (const x of [-0.36, 0.3]) {
+    p.bar(v(x, 0.06, 0), v(x, 0.4, 0), 0.025, M.yellow, gantry);
+    p.add(box(0.05, 0.03, 0.06), M.dark, x, 0.075, 0, gantry);
+  }
+  p.add(box(0.7, 0.04, 0.04), M.yellow, -0.03, 0.42, 0, gantry);
+  p.add(box(0.06, 0.04, 0.06), M.dark, -0.06, 0.38, 0, gantry);
+  p.bar(v(-0.06, 0.36, 0), v(-0.06, 0.22, 0), 0.004, M.dark, gantry);
+  p.add(box(0.03, 0.02, 0.03), M.steel, -0.06, 0.21, 0, gantry);
+  p.lamp(0.42, 0.42);
+  return g;
+}

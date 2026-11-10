@@ -16,6 +16,7 @@ import type { TechId } from './research';
 import {
   type Design,
   type DesignProblem,
+  type Marks,
   type MissionGoal,
   type OptionId,
   type Slot,
@@ -24,11 +25,16 @@ import {
   carriedMass,
   contractNeeds,
   emptySlots,
+  hallFits,
+  hallNeeded,
+  marksFor,
   missionGoal,
   partsNeeded,
   partsToBuy,
   spacecraftMass,
 } from './spacecraft';
+import { takePart } from './siteState';
+import { hallLevel } from './upgrades';
 
 /**
  * A Mission from shipping to Mission Report. The player books a Rideshare and ships the Spacecraft:
@@ -46,6 +52,8 @@ export interface Mission {
   site: LaunchSiteId;
   /** Tech tree Upgrades the Company had when it shipped: its Parts were built with them. */
   tech: TechId[];
+  /** The Mark of each Part it took from the Warehouse. */
+  marks: Marks;
   /** Game day it was booked and assembly began. */
   startDay: number;
   /** Game day assembly ends and Shipping begins. */
@@ -61,7 +69,7 @@ export type PlanProblem =
   | { kind: 'vehicleClosed' }
   | { kind: 'emptySlots'; slots: Slot[] }
   | { kind: 'tooHeavy'; overKg: number }
-  | Extract<DesignProblem, { kind: 'busFull' }>
+  | Extract<DesignProblem, { kind: 'busFull' | 'hallTooSmall' }>
   | { kind: 'missingParts'; parts: Part[] }
   | { kind: 'money'; short: number };
 
@@ -70,6 +78,8 @@ export interface LaunchPlan {
   goal: MissionGoal;
   vehicle: LaunchVehicleId;
   site: LaunchSiteId;
+  /** The Marks of the Parts it would take from the Warehouse. */
+  marks: Marks;
   massKg: number;
   liftKg: number;
   rideshare: number;
@@ -95,7 +105,8 @@ export function planLaunch(
 ): LaunchPlan {
   const goal = missionGoal(state);
   const taken = goal.status === 'accepted' ? accepted(state, goal.contract.id) : undefined;
-  const massKg = spacecraftMass(design);
+  const marks = marksFor(state, design);
+  const massKg = spacecraftMass(design, marks);
   const liftKg = LAUNCH_VEHICLES[vehicle].liftKg[goal.orbit];
   const rideshare = rideshareCost(vehicle, massKg);
   const shipping = LAUNCH_SITES[site].shippingCost;
@@ -114,8 +125,9 @@ export function planLaunch(
   if (massKg > liftKg + 1e-9) problems.push({ kind: 'tooHeavy', overKg: massKg - liftKg });
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
-  const partsKg = carriedMass(design);
+  const partsKg = carriedMass(design, marks);
   if (bus && partsKg > carriesKg) problems.push({ kind: 'busFull', bus, carriesKg, partsKg });
+  if (bus && !hallFits(state, design)) problems.push({ kind: 'hallTooSmall', bus, need: hallNeeded(design), level: hallLevel(state) });
   const missing = partsToBuy(state, design);
   if (missing.length > 0) problems.push({ kind: 'missingParts', parts: missing });
   if (state.money < total) problems.push({ kind: 'money', short: total - state.money });
@@ -124,6 +136,7 @@ export function planLaunch(
     goal,
     vehicle,
     site,
+    marks,
     massKg,
     liftKg,
     rideshare,
@@ -151,11 +164,13 @@ export function testRunFor(
   site: LaunchSiteId = 'capeCanaveral',
 ): TestRun {
   const plan = planLaunch(state, design, vehicle, site);
-  return testRun(seed, { contract: plan.goal.contract.id, design, vehicle, tech: [...state.research.tech] }, plan.readyDay, plan.deadlineDay);
+  const flightPlan = { contract: plan.goal.contract.id, design, vehicle, tech: [...state.research.tech], marks: plan.marks };
+  return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay);
 }
 
 /**
  * Book the Rideshare and ship: pay for both, take the Parts out of the Warehouse and start the Mission.
+ * The Assembly Hall puts it together, then it is shipped.
  * Does nothing unless the plan has no problems.
  */
 export function shipMission(
@@ -167,7 +182,8 @@ export function shipMission(
   const plan = planLaunch(state, design, vehicle, site);
   if (!plan.ok) return plan;
   state.money -= plan.total;
-  for (const p of partsNeeded(design)) state.parts[p] -= 1;
+  // The best Parts in the Warehouse go: the Marks the plan was worked out with.
+  for (const p of partsNeeded(design)) takePart(state, p, 'best');
   const startDay = Math.floor(state.day);
   state.mission = {
     contract: plan.goal.contract.id,
@@ -175,6 +191,7 @@ export function shipMission(
     vehicle,
     site,
     tech: [...state.research.tech],
+    marks: { ...plan.marks },
     startDay,
     shipDay: startDay + plan.assemblyDays,
     readyDay: plan.readyDay,

@@ -13,9 +13,9 @@ describe('Explorer 1 tutorial', () => {
     expect(tutorialStep(state)).toBe('contract');
     acceptContract(state, 'explorer1');
     expect(tutorialStep(state)).toBe('mine');
-    state.mines.push({ x: 1, z: 1 });
+    state.mines.push({ x: 1, z: 1, level: 1, upgradeDay: null });
     expect(tutorialStep(state)).toBe('factory');
-    state.factories.push({ kind: 'metalWorks', x: 2, z: 2, making: 'smallBus', progress: null });
+    state.factories.push({ kind: 'metalWorks', x: 2, z: 2, making: 'smallBus', progress: null, level: 1, upgradeDay: null });
     expect(tutorialStep(state)).toBe('design');
     for (const id of EXPLORER) choose(state.design, id);
     expect(tutorialStep(state)).toBe('testRun');

@@ -1,7 +1,7 @@
 import { KB_PER_RESEARCH_POINT, LAB_KB_PER_DAY, TECH_TREE } from './balance';
 import { CONTRACTS } from './contracts';
 import type { MissionReport } from './mission';
-import type { SiteState } from './siteState';
+import { type SiteState, levelBoost } from './siteState';
 
 /**
  * Research: Spacecraft in orbit send Data home while they work; Research Labs turn it into Research Points;
@@ -57,9 +57,9 @@ export function dataWaiting(state: SiteState): number {
   return Math.max(0, dataReceived(state) - state.research.processedKb);
 }
 
-/** Kilobytes a day the Research Labs can turn into Research Points. */
+/** Kilobytes a day the Research Labs can turn into Research Points: each Lab's pace grows with its level. */
 export function labRate(state: SiteState): number {
-  return state.labs.length * LAB_KB_PER_DAY;
+  return state.labs.reduce((kb, lab) => kb + LAB_KB_PER_DAY * levelBoost(lab.level), 0);
 }
 
 /** Run the Research Labs for `days`. */

@@ -125,7 +125,7 @@ describe('Parts from the Warehouse or the Market', () => {
   });
 
   it('buys every missing Part at once', () => {
-    const state = { ...newSiteState(), warehouses: [{ x: 0, z: 0 }] };
+    const state = { ...newSiteState(), warehouses: [{ x: 0, z: 0, level: 1, upgradeDay: null }] };
     const cost = costToBuy(state, design(...EXPLORER));
     expect(buyMissing(state, design(...EXPLORER))).toEqual({ ok: true });
     expect(state.money).toBe(newSiteState().money - cost);

@@ -1,6 +1,6 @@
 import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
-import { advanceDays, build, checkBuild, daysFor, mineMaterial, storageFree } from './game/siteState';
+import { advanceDays, allBuildings, build, checkBuild, daysFor, mineMaterial, placeAssemblyHall, storageFree } from './game/siteState';
 import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
@@ -17,7 +17,6 @@ import { showArchive } from './ui/archive';
 import { showHistoryCard } from './ui/historyCard';
 import { showTutorialGuide } from './ui/tutorialGuide';
 import { historyCardFor, patchFor, unlockCard } from './game/history';
-import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
 import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
 import { launch, missionStage } from './game/mission';
@@ -38,6 +37,9 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
   settleUnanswered(state);
   world.showSite(site);
+  // Every Site starts with an Assembly Hall near its middle; a new game (or an older save) gets it now.
+  const hall = placeAssemblyHall(site, state);
+  world.addBuilding('assemblyHall', hall.x, hall.z);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
     if (material) world.addBuilding('mine', mine.x, mine.z, material);
@@ -94,7 +96,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (card && unlockCard(state, card)) history.show(card);
     saveGame(localStorage, game);
   });
-  const panel = showBuildingPanel(ui, site, state);
+  const panel = showBuildingPanel(ui, site, state, () => saveGame(localStorage, game));
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
   const designer = showMissionDesigner(ui, state, game.site.seed, {
@@ -322,12 +324,15 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
     const researching = dataWaiting(state) > 0;
     for (const l of state.labs) world.setWorking(l.x, l.z, researching);
+    world.setWorking(hall.x, hall.z, missionStage(state)?.stage === 'assembling');
+    // Each building shows its level, and a crane while an Upgrade is under way.
+    for (const { building: b } of allBuildings(state)) world.setLevel(b.x, b.z, b.level, b.upgradeDay !== null);
     const gameSeconds = Math.min(seconds, 0.1) * speed;
     world.animateBuildings(gameSeconds);
-    // The Mission on its way, on the Site: the truck loads at the dock beside the Warehouse, then drives off.
+    // The Mission on its way, on the Site: the truck loads at the dock beside the Assembly Hall, then drives off.
     const stage = missionStage(state);
     const m = state.mission;
-    const dock = state.warehouses[0] ?? { x: SITE_SIZE / 2, z: SITE_SIZE / 2 };
+    const dock = { x: hall.x, z: hall.z };
     world.updateShipping(
       m && stage ? { id: `${m.contract}@${m.startDay}`, start: dock, design: m.design, ...stage } : null,
       gameSeconds,

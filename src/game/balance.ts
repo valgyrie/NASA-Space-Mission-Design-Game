@@ -36,6 +36,35 @@ export const BUILD_COST: Record<BuildingKind, number> = {
   researchLab: 250_000,
 };
 
+// ---- Building levels and Upgrades ----
+
+/** The Assembly Hall every Site starts with. Not built by the player; its Upgrades are priced from this. */
+export const ASSEMBLY_HALL_COST = 300_000;
+
+/** Highest level each building reaches in Era 1. The Assembly Hall's next level comes with a bigger Bus (Era 2). */
+export const MAX_LEVEL = { assemblyHall: 2, other: 3 } as const;
+
+/**
+ * What an Upgrade to each level costs, as a share of the building's price, and the game days it takes.
+ * The building keeps working while it is upgraded. Game estimates.
+ */
+export const UPGRADE = {
+  2: { costShare: 1, days: 15 },
+  3: { costShare: 2, days: 30 },
+} as const;
+
+/** How much each level above the first adds to a Mine's output, a Warehouse's storage and a Research Lab's pace. */
+export const LEVEL_OUTPUT_STEP = 0.5;
+
+/** The Assembly Hall level each Bus needs: a bigger Bus needs a bigger hall. */
+export const BUS_HALL_LEVEL = { smallBus: 1, mediumBus: 2 } as const;
+
+/**
+ * A Factory makes Parts of its own level, their Mark: each Mark above Mk 1 makes a Part this much lighter,
+ * its electronics use this much less power and its solar cells make this much more. Game estimates.
+ */
+export const MARK_STEP = { lighter: 0.15, lessPower: 0.1, moreSolar: 0.1 } as const;
+
 /** Kilograms the Site can store without a Warehouse (piles in the yard). */
 export const BASE_STORAGE_KG = 500;
 /** Kilograms each Warehouse adds. Raw Materials and Parts both count by mass. */

@@ -1,20 +1,29 @@
+import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { LAB_KB_PER_DAY, MINE_OUTPUT_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { missionStage } from '../game/mission';
+import { type BusId, busesAt, checkUpgrade, maxLevel, nextUpgrade, startUpgrade, upgradeDaysLeft } from '../game/upgrades';
 import { TECH_IDS, buyTech, dataWaiting, labRate, nextPointShare, researchPoints } from '../game/research';
 import {
+  type Building,
   type Factory,
   type SiteState,
   buildingAt,
+  levelBoost,
   mineMaterial,
+  mineOutput,
   missingInputs,
+  partMass,
   partsMadeBy,
   setMaking,
   storageFree,
+  warehouseStorage,
 } from '../game/siteState';
 import type { Site } from '../site/site';
 import { t } from '../strings';
-import { formatNumber } from './format';
+import { formatDays, formatDecimal, formatMoney, formatNumber } from './format';
 import { itemColour, storageText } from './marketPanel';
+import { stockText } from './missionDesigner';
 
 export interface BuildingPanel {
   /** Show the building on tile (x, z), or close the panel if nothing stands there. */
@@ -42,8 +51,11 @@ function inputsText(inputs: Partial<Record<RawMaterial, number>>): string {
     .join(t('panel.and'));
 }
 
-/** A panel about one building: what it does, how it is doing, and for a Factory, which Part it makes. */
-export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteState): BuildingPanel {
+/**
+ * A panel about one building: what it does, how it is doing, its level and Upgrade, and for a Factory, which
+ * Part it makes. `onChange` runs after an Upgrade starts, so it can be saved.
+ */
+export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteState, onChange: () => void = () => {}): BuildingPanel {
   const panel = el('div', 'panel side-panel building-panel');
   panel.hidden = true;
   panel.setAttribute('role', 'dialog');
@@ -65,6 +77,7 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
   let refresh = () => {};
 
   const factoryBody = (factory: Factory) => {
+    const mark = el('p', 'side-note');
     const status = el('p', 'side-note');
     const bar = el('div', 'progress');
     const fill = el('div', 'progress-fill');
@@ -80,18 +93,19 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       dot.style.background = itemColour(part);
       top.append(dot, t(`part.${part}`));
       const recipeLine = el('span', 'part-sub', t('panel.recipe', { inputs: inputsText(recipe.inputs), days: recipe.days }));
-      const mass = el('span', 'part-sub', t('panel.mass', { kg: recipe.massKg }));
+      const mass = el('span', 'part-sub');
       const made = el('span', 'part-sub');
       b.append(top, recipeLine, mass, made);
       b.addEventListener('click', () => {
         setMaking(state, factory, part);
         refresh();
       });
-      return { part, b, made };
+      return { part, b, made, mass };
     });
     list.append(...choices.map((c) => c.b));
-    body.append(status, bar, list);
+    body.append(mark, status, bar, list);
     refresh = () => {
+      setText(mark, t('panel.factoryMark', { mark: factory.level }));
       const missing = missingInputs(state, factory.making);
       const working = factory.progress !== null;
       setText(
@@ -105,14 +119,16 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       for (const c of choices) {
         const on = String(c.part === factory.making);
         if (c.b.getAttribute('aria-pressed') !== on) c.b.setAttribute('aria-pressed', on);
-        setText(c.made, t('panel.made', { count: state.parts[c.part] }));
+        setText(c.made, t('panel.made', { count: stockText(state, c.part) }));
+        setText(c.mass, t('panel.mass', { kg: formatDecimal(partMass(c.part, factory.level)) }));
       }
     };
   };
 
   // A Research Lab: Data waiting, Research Points, and the tech tree to spend them on.
-  const labBody = () => {
-    body.append(el('p', 'side-note', t('panel.lab', { kb: formatNumber(LAB_KB_PER_DAY) })));
+  const labBody = (lab: Building) => {
+    const about = el('p', 'side-note');
+    body.append(about);
     const points = el('p', 'research-points');
     const bar = el('div', 'progress');
     const fill = el('div', 'progress-fill');
@@ -144,6 +160,7 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     });
     body.append(points, bar, next, status, list, problem);
     refresh = () => {
+      setText(about, t('panel.lab', { kb: formatNumber(LAB_KB_PER_DAY * levelBoost(lab.level)) }));
       const rp = researchPoints(state);
       setText(points, t('research.points', { points: rp }));
       const share = nextPointShare(state);
@@ -165,6 +182,74 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     };
   };
 
+  // The Assembly Hall: the biggest Bus it takes, and the Spacecraft being put together.
+  const hallBody = (hall: Building) => {
+    const about = el('p', 'side-note');
+    const work = el('p', 'side-note');
+    body.append(about, work);
+    refresh = () => {
+      setText(about, t('panel.assemblyHall', { bus: t(`part.${busesAt(hall.level).at(-1) ?? 'smallBus'}`) }));
+      const stage = missionStage(state);
+      setText(
+        work,
+        state.mission && stage?.stage === 'assembling'
+          ? t('panel.assembling', { contract: t(`contract.${state.mission.contract}.name`), days: formatDays(stage.daysLeft) })
+          : '',
+      );
+    };
+  };
+
+  // Every building: its level, what the next one does, and the Upgrade to get there (or the one under way).
+  const levelBody = (kind: SiteBuildingKind, building: Building) => {
+    const box = el('div', 'level-box');
+    const label = el('h3', '');
+    const next = el('p', 'side-note');
+    const bar = el('div', 'progress');
+    const fill = el('div', 'progress-fill');
+    bar.append(fill);
+    const upgrade = el('button', 'small trade upgrade');
+    upgrade.type = 'button';
+    const note = el('p', 'side-note', t('level.keepsWorking'));
+    const problem = el('p', 'side-problem');
+    problem.setAttribute('aria-live', 'polite');
+    box.append(label, next, bar, upgrade, note, problem);
+    upgrade.addEventListener('click', () => {
+      const r = startUpgrade(state, kind, building);
+      problem.textContent = r.ok ? '' : t(`level.problem.${r.problem}`);
+      onChange();
+      refresh();
+    });
+    const nextText = (level: number): string => {
+      if (kind === 'mine') return t('level.next.mine', { level, kg: formatNumber(MINE_OUTPUT_PER_DAY * levelBoost(level)) });
+      if (kind === 'warehouse') return t('level.next.warehouse', { level, kg: formatNumber(WAREHOUSE_STORAGE_KG * levelBoost(level)) });
+      if (kind === 'researchLab') return t('level.next.researchLab', { level, kb: formatNumber(LAB_KB_PER_DAY * levelBoost(level)) });
+      if (kind === 'assemblyHall') return t('level.next.assemblyHall', { level, bus: t(`part.${busesAt(level).at(-1) as BusId}`) });
+      return isFactory(kind) ? t('level.next.factory', { level }) : '';
+    };
+    return {
+      box,
+      refresh() {
+        setText(label, t('level.label', { level: building.level, max: maxLevel(kind) }));
+        const up = nextUpgrade(kind, building);
+        const left = upgradeDaysLeft(state, building);
+        setText(next, up ? nextText(up.level) : t('level.top'));
+        bar.hidden = left === null;
+        upgrade.hidden = !up || left !== null;
+        note.hidden = !up;
+        if (left !== null && up) {
+          const total = up.days;
+          fill.style.width = `${Math.round(Math.min(1, Math.max(0, 1 - (building.upgradeDay! - state.day) / total)) * 100)}%`;
+          setText(upgrade, '');
+          setText(next, t('level.underway', { level: up.level, days: formatDays(left) }));
+        } else if (up) {
+          setText(upgrade, t('level.upgrade', { cost: formatMoney(up.cost), days: formatDays(up.days) }));
+          upgrade.title = t('level.upgradeName', { level: up.level, cost: formatMoney(up.cost), days: formatDays(up.days) });
+          upgrade.disabled = !checkUpgrade(state, kind, building).ok;
+        }
+      },
+    };
+  };
+
   const api: BuildingPanel = {
     show(x, z) {
       const building = buildingAt(state, x, z);
@@ -175,24 +260,40 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       tile = { x, z };
       body.replaceChildren();
       heading.textContent = t(`building.${building.kind}`);
+      const levels = levelBody(building.kind, building.building);
       if (building.kind === 'mine') {
-        const material = mineMaterial(site, building.mine) ?? 'aluminium';
-        body.append(
-          el('p', 'side-note', t('panel.mine', { kg: MINE_OUTPUT_PER_DAY, material: t(`material.${material}`) })),
-        );
+        const mine = building.mine;
+        const material = t(`material.${mineMaterial(site, mine) ?? 'aluminium'}`);
+        const digs = el('p', 'side-note');
         const full = el('p', 'side-note warn');
-        body.append(full);
-        refresh = () => setText(full, storageFree(state) <= 0 ? t('panel.mineFull') : '');
+        body.append(digs, full);
+        refresh = () => {
+          setText(digs, t('panel.mine', { kg: formatNumber(mineOutput(mine)), material }));
+          setText(full, storageFree(state) <= 0 ? t('panel.mineFull') : '');
+        };
       } else if (building.kind === 'warehouse') {
-        body.append(el('p', 'side-note', t('panel.warehouse', { kg: formatNumber(WAREHOUSE_STORAGE_KG) })));
+        const warehouse = building.building;
+        const adds = el('p', 'side-note');
         const used = el('p', 'side-note');
-        body.append(used);
-        refresh = () => setText(used, storageText(state));
+        body.append(adds, used);
+        refresh = () => {
+          setText(adds, t('panel.warehouse', { kg: formatNumber(warehouseStorage(warehouse)) }));
+          setText(used, storageText(state));
+        };
       } else if (building.kind === 'researchLab') {
-        labBody();
+        labBody(building.building);
+      } else if (building.kind === 'assemblyHall') {
+        hallBody(building.building);
       } else {
         factoryBody(building.factory);
       }
+      // The level and its Upgrade come last, under what the building does.
+      body.append(levels.box);
+      const inner = refresh;
+      refresh = () => {
+        inner();
+        levels.refresh();
+      };
       panel.hidden = false;
       refresh();
     },

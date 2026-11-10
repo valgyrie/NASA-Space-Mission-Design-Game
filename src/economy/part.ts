@@ -6,7 +6,10 @@ export type FactoryKind = (typeof FACTORY_KINDS)[number];
 export const BUILDING_KINDS = ['mine', ...FACTORY_KINDS, 'warehouse', 'researchLab'] as const;
 export type BuildingKind = (typeof BUILDING_KINDS)[number];
 
-export function isFactory(kind: BuildingKind): kind is FactoryKind {
+/** Every building on a Site: the ones the player places, and the Assembly Hall every Site starts with. */
+export type SiteBuildingKind = BuildingKind | 'assemblyHall';
+
+export function isFactory(kind: SiteBuildingKind): kind is FactoryKind {
   return (FACTORY_KINDS as readonly string[]).includes(kind);
 }
 
