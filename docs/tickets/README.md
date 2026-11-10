@@ -21,7 +21,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 13 🧪 | [Tutorial and Real History](13-tutorial-and-history.md) | 09, 11 | Explorer 1 tutorial: first Launch in under 10 minutes; Real History cards before and after; first Mission Patch; History Archive. |
 | 14 ✅ | [Era 1 complete](14-era-1-complete.md) | 13 | TIROS-1 Milestone; solar cells unlock; Thor-Able; Research Lab, Research Points, first tech tree items. |
 | 15 ✅ | [Upgrades and Assembly Hall](15-upgrades-and-assembly-hall.md) | 05 | Building levels (output and Part quality); Assembly Hall level limits Bus size. |
-| 16 | [Real places and weather](16-real-places-and-weather.md) | 03, 08 | Globe picker (Historic pin, US, anywhere, Random); real NASA POWER climate baked in; Site shaped by it; latitude boost; weather Scrubs; Launch Window advisor. |
+| 16 🧪 | [Real places and weather](16-real-places-and-weather.md) | 03, 08 | Globe picker (Historic pin, US, anywhere, Random); real NASA POWER climate baked in; Site shaped by it; latitude boost; weather Scrubs; Launch Window advisor. |
 | 17 | [Risk and failure](17-risk-and-failure.md) | 08 | Launch Insurance; retryable Milestones with real failure stories (Vanguard TV3); startup grant. |
 | 18 | [Era 2](18-era-2.md) | 14, 15 | HQ Upgrade to Era 2; Telstar 1 and Syncom 3; GEO, main engine, Thor-Delta/Delta D; Ground Stations set Communications. |
 | 19 | [Company logo](19-company-logo.md) | 02 | Logo maker; upload (128×128, ~200 KB); logo on rockets, flag and Mission Patches. |

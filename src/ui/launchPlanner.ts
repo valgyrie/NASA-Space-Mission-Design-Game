@@ -3,11 +3,15 @@ import {
   LAUNCH_SITES,
   LAUNCH_VEHICLE_IDS,
   LAUNCH_VEHICLES,
-  type LaunchSiteId,
   type LaunchVehicleId,
   isVehicleOpen,
+  liftFactor,
+  liftFrom,
+  spinSpeed,
 } from '../game/launchVehicles';
 import { type LaunchPlan, type PlanProblem, planLaunch, shipMission } from '../game/mission';
+import { adviseLaunch, shippingTo } from '../game/places';
+import { adviceText, weatherText } from './weatherText';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
@@ -73,8 +77,6 @@ export function makeLaunchPlanner(
   state: SiteState,
   hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void; designWarnings(): string[] },
 ): LaunchPlanner {
-  const site: LaunchSiteId = LAUNCH_SITE_IDS[0];
-
   const root = el('div', 'planner');
   root.hidden = true;
   const back = button('small planner-back', t('planner.back'));
@@ -83,7 +85,7 @@ export function makeLaunchPlanner(
   // Launch Vehicle and Launch Site
   const choices = el('section', 'planner-card');
   choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')));
-  const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement }>();
+  const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement }>();
   for (const id of LAUNCH_VEHICLE_IDS) {
     const v = LAUNCH_VEHICLES[id];
     const b = button('option planner-vehicle', '');
@@ -91,9 +93,10 @@ export function makeLaunchPlanner(
     const opensAfter = v.opensAfter;
     const locked = el('span', 'option-locked', opensAfter ? t('planner.opensAfter', { contract: t(`contract.${opensAfter}.name`) }) : '');
     b.dataset.vehicle = id;
+    const lifts = el('span', 'option-stats');
     b.append(
       el('span', 'option-name', t(`launchVehicle.${id}`)),
-      el('span', 'option-stats', t('planner.lifts', { kg: formatNumber(v.liftKg.lowEarthOrbit), orbit: t('orbit.lowEarthOrbit') })),
+      lifts,
       el('span', 'option-stats', t('planner.perKg', { price: formatMoney(v.perKg) })),
       fit,
       locked,
@@ -105,19 +108,40 @@ export function makeLaunchPlanner(
       render();
     });
     choices.append(b);
-    vehicleButtons.set(id, { button: b, fit, locked });
+    vehicleButtons.set(id, { button: b, fit, locked, lifts });
   }
   choices.append(el('h3', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
-  const siteBox = el('div', 'option planner-site');
-  siteBox.setAttribute('aria-pressed', 'true');
-  siteBox.append(
-    el('span', 'option-name', t(`launchSite.${site}`)),
-    el('span', 'option-stats', t('planner.shipping', {
-      price: formatMoney(LAUNCH_SITES[site].shippingCost),
-      days: formatNumber(LAUNCH_SITES[site].shippingDays),
-    })),
-  );
-  choices.append(siteBox);
+  const siteButtons = new Map<string, HTMLButtonElement>();
+  for (const id of LAUNCH_SITE_IDS) {
+    const ls = LAUNCH_SITES[id];
+    const route = shippingTo(state.place, id);
+    const b = button('option planner-site', '');
+    b.dataset.site = id;
+    const change = Math.round((liftFactor(id) - 1) * 100);
+    b.append(
+      el('span', 'option-name', t(`launchSite.${id}`)),
+      el('span', 'option-stats', t('planner.siteSpin', {
+        lat: formatDecimal(ls.lat),
+        speed: formatNumber(Math.round(spinSpeed(ls.lat))),
+      })),
+      el('span', 'option-stats', change === 0 ? t('planner.siteLiftSame') : t(change > 0 ? 'planner.siteLiftMore' : 'planner.siteLiftLess', { pct: Math.abs(change) })),
+      el('span', 'option-stats', t('planner.shipping', { price: formatMoney(route.cost), days: formatNumber(route.days), km: formatNumber(route.km) })),
+    );
+    if (ls.alternate) b.append(el('span', 'option-locked', t('planner.siteAlternate')));
+    b.addEventListener('click', () => {
+      state.launchSite = id;
+      hooks.onVehicle();
+      render();
+    });
+    choices.append(b);
+    siteButtons.set(id, b);
+  }
+
+  // Launch weather and the Launch Window advisor
+  const weather = el('section', 'planner-card');
+  const weatherLine = el('p', 'planner-weather');
+  const adviceLine = el('p', 'planner-advice');
+  weather.append(el('h3', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')));
 
   // Costs and timeline
   const costs = el('section', 'planner-card');
@@ -143,7 +167,7 @@ export function makeLaunchPlanner(
   footer.append(warnHead, warnings, warnNote, problems, testRun, ship);
 
   const grid = el('div', 'planner-grid');
-  grid.append(choices, costs, timeline);
+  grid.append(choices, costs, timeline, weather);
   root.append(back, grid, footer);
 
   const row = (rows: HTMLElement, label: string, value: string, className = '') => {
@@ -153,20 +177,23 @@ export function makeLaunchPlanner(
   };
 
   ship.addEventListener('click', () => {
-    if (shipMission(state, state.design, state.vehicle, site).ok) hooks.onShip();
+    if (shipMission(state, state.design, state.vehicle, state.launchSite).ok) hooks.onShip();
     else render();
   });
 
   const render = () => {
     const vehicle = state.vehicle;
+    const site = state.launchSite;
     const plan = planLaunch(state, state.design, vehicle, site);
+    for (const [id, b] of siteButtons) b.setAttribute('aria-pressed', String(id === site));
     for (const [id, ui] of vehicleButtons) {
       const open = isVehicleOpen(state, id);
       ui.button.disabled = !open;
       ui.locked.hidden = open;
       ui.fit.hidden = !open;
       ui.button.setAttribute('aria-pressed', String(id === vehicle));
-      const lift = LAUNCH_VEHICLES[id].liftKg[plan.goal.orbit];
+      const lift = liftFrom(id, plan.goal.orbit, site);
+      ui.lifts.textContent = t('planner.lifts', { kg: formatDecimal(lift), orbit: t(`orbit.${plan.goal.orbit}`) });
       const fits = plan.massKg <= lift + 1e-9;
       ui.fit.textContent = t(fits ? 'planner.fits' : 'planner.tooHeavyShort', { kg: formatDecimal(plan.massKg) });
       ui.fit.classList.toggle('warn', !fits);
@@ -187,6 +214,9 @@ export function makeLaunchPlanner(
     if (plan.deadlineDay !== null) {
       row(timeRows, t('planner.deadline'), formatGameDate(plan.deadlineDay), plan.endDay > plan.deadlineDay ? 'warn' : '');
     }
+
+    weatherLine.textContent = weatherText(site, plan.readyDay);
+    adviceLine.textContent = adviceText(adviseLaunch(site, plan.readyDay));
 
     const warn = hooks.designWarnings();
     warnings.replaceChildren(...warn.map((w) => el('li', '', w)));

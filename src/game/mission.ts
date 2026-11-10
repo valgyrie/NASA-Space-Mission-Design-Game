@@ -1,13 +1,7 @@
 import type { Part } from '../economy/part';
 import { type ContractId, type Orbit, type PayloadKind, CONTRACTS, accepted, completeContract, deadlineDay } from './contracts';
-import {
-  LAUNCH_SITES,
-  LAUNCH_VEHICLES,
-  type LaunchSiteId,
-  type LaunchVehicleId,
-  isVehicleOpen,
-  rideshareCost,
-} from './launchVehicles';
+import { type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom, rideshareCost } from './launchVehicles';
+import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { awardMission } from './history';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
@@ -101,18 +95,19 @@ export function planLaunch(
   state: SiteState,
   design: Design,
   vehicle: LaunchVehicleId = state.vehicle,
-  site: LaunchSiteId = 'capeCanaveral',
+  site: LaunchSiteId = state.launchSite,
 ): LaunchPlan {
   const goal = missionGoal(state);
   const taken = goal.status === 'accepted' ? accepted(state, goal.contract.id) : undefined;
   const marks = marksFor(state, design);
   const massKg = spacecraftMass(design, marks);
-  const liftKg = LAUNCH_VEHICLES[vehicle].liftKg[goal.orbit];
+  const liftKg = liftFrom(vehicle, goal.orbit, site);
   const rideshare = rideshareCost(vehicle, massKg);
-  const shipping = LAUNCH_SITES[site].shippingCost;
+  const route = shippingTo(state.place, site);
+  const shipping = route.cost;
   const total = rideshare + shipping;
   const building = assemblyDays(design);
-  const shippingDays = LAUNCH_SITES[site].shippingDays;
+  const shippingDays = route.days;
   const today = Math.floor(state.day);
   const readyDay = today + building + shippingDays;
 
@@ -161,10 +156,10 @@ export function testRunFor(
   seed: string,
   design: Design,
   vehicle: LaunchVehicleId = state.vehicle,
-  site: LaunchSiteId = 'capeCanaveral',
+  site: LaunchSiteId = state.launchSite,
 ): TestRun {
   const plan = planLaunch(state, design, vehicle, site);
-  const flightPlan = { contract: plan.goal.contract.id, design, vehicle, tech: [...state.research.tech], marks: plan.marks };
+  const flightPlan = { contract: plan.goal.contract.id, design, vehicle, site, tech: [...state.research.tech], marks: plan.marks };
   return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay);
 }
 
@@ -177,7 +172,7 @@ export function shipMission(
   state: SiteState,
   design: Design,
   vehicle: LaunchVehicleId = state.vehicle,
-  site: LaunchSiteId = 'capeCanaveral',
+  site: LaunchSiteId = state.launchSite,
 ): LaunchPlan {
   const plan = planLaunch(state, design, vehicle, site);
   if (!plan.ok) return plan;
@@ -293,9 +288,18 @@ export interface LaunchResult {
  * strikes, the reward is held back until it is settled (anomalies.ts), since it can cut the pay.
  * Success also earns a Mission Patch and the Milestone's "after" Real History card (history.ts).
  */
+/** Today's weather at the Launch Site the Mission waits at, or null when no Mission is ready. */
+export function launchWeather(state: SiteState): Weather | null {
+  const m = state.mission;
+  if (!m || missionStage(state)?.stage !== 'ready') return null;
+  return weatherOn(m.site, state.day);
+}
+
 export function launch(state: SiteState, seed: string): LaunchResult | null {
   const m = state.mission;
   if (!m || missionStage(state)?.stage !== 'ready') return null;
+  // Weather over the limits Scrubs the Launch: nothing happens, try another day (launchWeather says why).
+  if (weatherOn(m.site, state.day).scrub) return null;
   const launchDay = Math.floor(state.day);
   const taken = accepted(state, m.contract);
   const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null);

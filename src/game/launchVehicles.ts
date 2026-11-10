@@ -1,4 +1,4 @@
-import { RIDESHARE_PER_KG, SHIPPING } from './balance';
+import { RIDESHARE_PER_KG, SPIN_LIFT_PER_MS } from './balance';
 import type { ContractId, Orbit } from './contracts';
 import type { SiteState } from './siteState';
 
@@ -77,23 +77,45 @@ export function isVehicleOpen(state: Pick<SiteState, 'completed'>, id: LaunchVeh
   return !after || state.completed.includes(after);
 }
 
+/** Metres a second the ground moves east at a latitude, from Earth's spin: 465 m/s at the equator. */
+export function spinSpeed(lat: number): number {
+  return 465.1 * Math.cos((lat * Math.PI) / 180);
+}
+
+/** How much more (above 1) or less a rocket lifts from this Launch Site than from Cape Canaveral. */
+export function liftFactor(site: LaunchSiteId): number {
+  const ref = spinSpeed(LAUNCH_SITES.capeCanaveral.lat);
+  return 1 + (spinSpeed(LAUNCH_SITES[site].lat) - ref) * SPIN_LIFT_PER_MS;
+}
+
+/** Kilograms a Launch Vehicle can put into an orbit from a Launch Site, to the nearest 0.1 kg. */
+export function liftFrom(vehicle: LaunchVehicleId, orbit: Orbit, site: LaunchSiteId): number {
+  return Math.round(LAUNCH_VEHICLES[vehicle].liftKg[orbit] * liftFactor(site) * 10) / 10;
+}
+
 /** What a Rideshare costs: the Launch Vehicle's price times the Spacecraft's mass. */
 export function rideshareCost(vehicle: LaunchVehicleId, massKg: number): number {
   return Math.round(LAUNCH_VEHICLES[vehicle].perKg * massKg);
 }
 
-export const LAUNCH_SITE_IDS = ['capeCanaveral'] as const;
+export const LAUNCH_SITE_IDS = ['capeCanaveral', 'wallops'] as const;
 export type LaunchSiteId = (typeof LAUNCH_SITE_IDS)[number];
 
 export interface LaunchSite {
   id: LaunchSiteId;
-  /** Dollars to ship a finished Spacecraft there from the Site. */
-  shippingCost: number;
-  /** Game days on the road. */
-  shippingDays: number;
+  /** Where the launch pad is, in degrees (north and east positive). */
+  lat: number;
+  lon: number;
+  /** Not where these rockets really flew from: an alternate-history choice, labelled as such. */
+  alternate?: boolean;
 }
 
-/** Cape Canaveral, Florida: Explorer 1 launched from here on Juno I (docs/research/milestones.md). */
+/**
+ * Cape Canaveral, Florida: Explorer 1 (LC-26) and TIROS-1 launched from here (docs/research/milestones.md).
+ * Wallops Island, Virginia: a real NASA launch site further north; Juno I and Thor-Able never flew from it, so it
+ * is alternate history (docs/research/places-and-weather.md).
+ */
 export const LAUNCH_SITES: Record<LaunchSiteId, LaunchSite> = {
-  capeCanaveral: { id: 'capeCanaveral', shippingCost: SHIPPING.capeCanaveral.cost, shippingDays: SHIPPING.capeCanaveral.days },
+  capeCanaveral: { id: 'capeCanaveral', lat: 28.44, lon: -80.57 },
+  wallops: { id: 'wallops', lat: 37.84, lon: -75.48, alternate: true },
 };

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { hashText, makeRng } from '../site/random';
-import { type Land, SITE_SIZE, type Site, landOf, tileAt } from '../site/site';
+import { type Land, SITE_SIZE, type Site, type Terrain, landOf, tileAt } from '../site/site';
 import { STEP, WATER, WATER_Y, buildTerrainGeometry, terrainMaterial } from './terrainMesh';
 
 export { STEP } from './terrainMesh';
@@ -54,6 +54,13 @@ function mesh(geometry: THREE.BufferGeometry, name: string, castShadow: boolean)
   return m;
 }
 
+/** Snow over a cold Site's land (ticket 16): the colder the real place, the whiter. */
+function snowTint(land: Land, terrain: Terrain): { colour: number; amount: number } | undefined {
+  const snow = land.climate.snow ?? 0;
+  if (snow <= 0 || terrain === 'water') return undefined;
+  return { colour: 0xf1f4f8, amount: Math.min(0.9, snow * (terrain === 'mountain' ? 1 : 0.85)) };
+}
+
 function siteTerrain(site: Site, land: Land): THREE.Mesh {
   const geometry = buildTerrainGeometry({
     from: 0,
@@ -62,7 +69,7 @@ function siteTerrain(site: Site, land: Land): THREE.Mesh {
     origin: -site.size / 2,
     cellAt: (x, z) => {
       const tile = tileAt(site, x, z)!;
-      const tint = tile.deposit ? { colour: DEPOSIT_COLOUR[tile.deposit], amount: 0.55 } : undefined;
+      const tint = tile.deposit ? { colour: DEPOSIT_COLOUR[tile.deposit], amount: 0.55 } : snowTint(land, tile.terrain);
       return { terrain: tile.terrain, level: tile.level, tint };
     },
     levelAt: (x, z) => land.groundAt(x, z).level,
@@ -80,7 +87,11 @@ function nearScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
     to,
     cellSize: 1,
     origin: -site.size / 2,
-    cellAt: (x, z) => (inSite(x, z) ? undefined : land.groundAt(x, z)),
+    cellAt: (x, z) => {
+      if (inSite(x, z)) return undefined;
+      const ground = land.groundAt(x, z);
+      return { ...ground, tint: snowTint(land, ground.terrain) };
+    },
     levelAt: (x, z) => (x >= from && z >= from && x < to && z < to ? land.groundAt(x, z).level : undefined),
     haze: 0.12,
     hazeColour,
@@ -102,7 +113,11 @@ function farScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
     to,
     cellSize: FAR_BLOCK,
     origin: -site.size / 2,
-    cellAt: (bx, bz) => (inHole(bx, bz) ? undefined : blockGround(bx, bz)),
+    cellAt: (bx, bz) => {
+      if (inHole(bx, bz)) return undefined;
+      const ground = blockGround(bx, bz);
+      return { ...ground, tint: snowTint(land, ground.terrain) };
+    },
     levelAt: (bx, bz) => (bx >= from && bz >= from && bx < to && bz < to ? blockGround(bx, bz).level : undefined),
     haze: 0.22,
     hazeColour,

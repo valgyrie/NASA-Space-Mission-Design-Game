@@ -1,7 +1,7 @@
 import { type Rng, hashText, makeRng } from '../site/random';
 import { PART_SPREAD, TEST_RUNS } from './balance';
 import { CONTRACTS } from './contracts';
-import { LAUNCH_VEHICLES } from './launchVehicles';
+import { liftFrom } from './launchVehicles';
 import type { Finding, Mission } from './mission';
 import { SLOTS, contractNeeds, dataOf, hasRightPayload, powerOf, spacecraftMass } from './spacecraft';
 
@@ -34,7 +34,7 @@ export function drawSpread(rng: Rng, share: Spread = PART_SPREAD): Spread {
  * What flies: the Contract, the design, the Launch Vehicle, and the tech tree Upgrades and Marks its Parts
  * were built with (all Mk 1 when `marks` is left out).
  */
-export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks'>>;
+export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks' | 'site'>>;
 
 /** One flight. The day lists hold the value at the start of each Mission day, 0 to `missionDays`. */
 export interface Flight {
@@ -57,7 +57,7 @@ export function fly(plan: FlightPlan, launchDay: number, deadline: number | null
   const design = plan.design;
   const marks = plan.marks ?? {};
   const massKg = spacecraftMass(design, marks);
-  const liftKg = LAUNCH_VEHICLES[plan.vehicle].liftKg[orbit];
+  const liftKg = liftFrom(plan.vehicle, orbit, plan.site ?? 'capeCanaveral');
   const power = powerOf(design, plan.tech, marks);
   const data = dataOf(design, plan.tech);
   const rightPayload = hasRightPayload(design, payload);

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { generateSite } from '../site/site';
 import { CONTRACTS, acceptContract, availableContracts } from './contracts';
-import { LAUNCH_SITES, LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
+import { LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
 import { settleAnomaly } from './anomalies';
 import { launch, missionStage, missionTimeline, planLaunch, shipMission, testRunFor } from './mission';
 import { type SiteState, advanceDays, newSiteState } from './siteState';
@@ -33,7 +33,7 @@ describe('Launch planner', () => {
     expect(plan.massKg).toBe(11.5);
     expect(plan.rideshare).toBe(Math.round(11.5 * LAUNCH_VEHICLES.juno1.perKg));
     expect(rideshareCost('juno1', 5)).toBeLessThan(rideshareCost('juno1', 10));
-    expect(plan.shipping).toBe(LAUNCH_SITES.capeCanaveral.shippingCost);
+    expect(plan.shipping).toBe(25_000); // JPL to Cape Canaveral, as before real places
     expect(plan.total).toBe(plan.rideshare + plan.shipping);
     expect(plan.ok).toBe(true);
   });
@@ -42,7 +42,7 @@ describe('Launch planner', () => {
     const state = ready();
     state.day = 10.6;
     const plan = planLaunch(state, state.design);
-    expect(plan.readyDay).toBe(10 + 30 + LAUNCH_SITES.capeCanaveral.shippingDays);
+    expect(plan.readyDay).toBe(10 + 30 + 7);
     expect(plan.endDay).toBe(plan.readyDay + 30);
     expect(plan.deadlineDay).toBe(CONTRACTS.explorer1.deadlineDays);
   });

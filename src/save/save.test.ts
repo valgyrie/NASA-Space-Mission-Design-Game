@@ -5,6 +5,7 @@ import { sell, sellPrice } from '../game/market';
 import { newSiteState } from '../game/siteState';
 import { launch, shipMission } from '../game/mission';
 import { type OptionId, choose, emptyDesign, partsNeeded } from '../game/spacecraft';
+import { JPL } from '../game/places';
 import { SAVE_KEY, SAVE_VERSION, type SaveData, type SaveStorage, loadGame, saveGame } from './save';
 
 function memoryStorage(): SaveStorage & { data: Map<string, string> } {
@@ -18,9 +19,11 @@ function memoryStorage(): SaveStorage & { data: Map<string, string> } {
 
 const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'radiationDetector'];
 
-const state = { ...newSiteState(), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
+/** Where saves from before real places (version 12 and older) start: JPL, with their old made-up Site. */
+const LEGACY = { ...JPL, start: 'legacy' as const };
+const state = { ...newSiteState(LEGACY), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 12, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: 13, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -62,7 +65,7 @@ describe('local save', () => {
       version: SAVE_VERSION,
       company: { name: 'Comet Works' },
       site: { seed: 'BCD234' },
-      state: newSiteState(),
+      state: newSiteState(LEGACY),
     });
   });
 
@@ -70,7 +73,7 @@ describe('local save', () => {
     const storage = memoryStorage();
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 2, company: { name: 'A B' }, site: { seed: 'K7QXM2' } }));
     expect(loadGame(storage)?.site.seed).toBe('K7QXM2');
-    expect(loadGame(storage)?.state).toEqual(newSiteState());
+    expect(loadGame(storage)?.state).toEqual(newSiteState(LEGACY));
   });
 
   it('upgrades a version 3 save: keeps Mines and stock, adds Factories, Warehouses and Parts', () => {
@@ -79,12 +82,12 @@ describe('local save', () => {
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 3, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v3State }));
     const loaded = loadGame(storage);
     expect(loaded?.version).toBe(SAVE_VERSION);
-    expect(loaded?.state).toEqual({ ...newSiteState(), ...v3State, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] });
+    expect(loaded?.state).toEqual({ ...newSiteState(LEGACY), ...v3State, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] });
   });
 
   it('upgrades a version 4 save: keeps everything, no Contracts yet', () => {
     const storage = memoryStorage();
-    const { contracts: _, ...v4State } = { ...newSiteState(), money: 900_000, day: 80, mines: [{ x: 3, z: 4 }] };
+    const { contracts: _, ...v4State } = { ...newSiteState(LEGACY), money: 900_000, day: 80, mines: [{ x: 3, z: 4 }] };
     v4State.parts.smallBus = 2;
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 4, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v4State }));
     const loaded = loadGame(storage);
@@ -94,7 +97,7 @@ describe('local save', () => {
 
   it('upgrades a version 5 save: keeps everything, adds an empty design and the Radiation Detector Part', () => {
     const storage = memoryStorage();
-    const { design: _, completed: _c, mission: _m, reports: _r, ...v5State } = structuredClone({ ...newSiteState(), money: 700_000, day: 90 });
+    const { design: _, completed: _c, mission: _m, reports: _r, ...v5State } = structuredClone({ ...newSiteState(LEGACY), money: 700_000, day: 90 });
     const { radiationDetector: __, ...v5Parts } = { ...v5State.parts, smallBus: 1 };
     const v5 = { ...v5State, parts: v5Parts, contracts: [{ id: 'explorer1', acceptedDay: 3 }] };
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 5, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v5 }));
@@ -113,7 +116,7 @@ describe('local save', () => {
 
   it('upgrades a version 6 save: keeps everything, nothing shipped or done yet', () => {
     const storage = memoryStorage();
-    const { completed: _c, mission: _m, reports: _r, ...v6State } = structuredClone({ ...newSiteState(), money: 600_000 });
+    const { completed: _c, mission: _m, reports: _r, ...v6State } = structuredClone({ ...newSiteState(LEGACY), money: 600_000 });
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 6, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v6State }));
     const loaded = loadGame(storage);
     expect(loaded?.version).toBe(SAVE_VERSION);
@@ -353,6 +356,24 @@ describe('local save', () => {
     busy.parts.smallBattery = 3;
     saveGame(storage, { ...game, state: busy });
     expect(loadGame(storage)?.state).toEqual(busy);
+  });
+
+  it('upgrades a version 12 save: from before real places, it keeps its Site and ships from JPL to Cape Canaveral', () => {
+    const storage = memoryStorage();
+    const { place: _p, launchSite: _l, ...v12State } = game.state;
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...game, version: 12, state: v12State }));
+    const loaded = loadGame(storage)!;
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.state.place).toEqual({ ...JPL, start: 'legacy' });
+    expect(loaded.state.launchSite).toBe('capeCanaveral');
+  });
+
+  it('keeps a real start place', () => {
+    const storage = memoryStorage();
+    const far = { ...game, state: { ...state, place: { lat: -33.9, lon: 151.2, start: 'anywhere' as const }, launchSite: 'wallops' as const } };
+    saveGame(storage, far);
+    expect(loadGame(storage)?.state.place).toEqual(far.state.place);
+    expect(loadGame(storage)?.state.launchSite).toBe('wallops');
   });
 
   it('reports when the browser refuses to save', () => {

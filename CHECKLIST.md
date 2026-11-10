@@ -28,9 +28,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Company name (filtered) and logo maker
 - [ ] Logo upload (128×128, ~200 KB cap, "no photos of people" warning)
 - [ ] Default Company logo: an original preset (not the Space Apps logo)
-- [ ] Globe picker: Historic start pin, US, anywhere; Random; Seeds
-- [ ] Real climate and land type per location (NASA POWER 2025, baked in)
-- [ ] Site map generated from Seed + real data
+- [x] Globe picker: Historic start pin, US, anywhere; Random; Seeds
+- [x] Real climate and land type per location (NASA POWER 2025, baked in)
+- [x] Site map generated from Seed + real data
 - [x] Real-time Site with pause and 1×/2×/4× speed
 
 ### Economy
@@ -52,9 +52,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Easy and Advanced Part sets
 - [ ] Launch Vehicle catalogue with mass check (Juno I, Thor-Able and the mass check done; more vehicles come with their Eras)
 - [x] Rideshare priced per kg
-- [ ] Launch site choice, latitude and coast effects
-- [ ] Weather from real climate, Scrubs
-- [ ] Launch Window advisor
+- [ ] Launch site choice, latitude and coast effects (choice and latitude done; coast effect waits for Launch Vehicle failures, ticket 17)
+- [x] Weather from real climate, Scrubs
+- [ ] Launch Window advisor (weather done; Moon and Mars windows with their Eras)
 - [ ] Launch Insurance
 - [x] Test Run (2D) with estimated success %
 - [x] 3D Launch and flight
