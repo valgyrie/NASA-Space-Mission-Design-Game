@@ -11,7 +11,7 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 function report(anomaly: Partial<Anomaly> | null): MissionReport {
   const design: Design = emptyDesign();
   for (const id of EXPLORER) choose(design, id);
-  const flight = fly({ contract: 'explorer1', design, vehicle: 'juno1' }, 40, 365);
+  const flight = fly({ contract: 'explorer1', design, vehicle: 'juno1', tech: [] }, 40, 365);
   const base: Anomaly = {
     kind: 'antenna',
     day: 12,

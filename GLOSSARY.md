@@ -72,7 +72,11 @@ Moving Parts or a finished Spacecraft between Sites or to a launch site, costing
 _Avoid_: transport, logistics
 
 **Upgrade**:
-Raising a building's level to make it produce more or better output.
+An improvement the Company pays for: raising a building's level (with money and days), or a tech tree item (with Research Points). Either way the Company makes more or better.
+
+**Research Lab**:
+A building that turns the Data Spacecraft send home into Research Points.
+_Avoid_: lab (alone, it could mean the Electronics Lab)
 
 **HQ**:
 The Company's main building; upgrading it moves the Company into the next Era once that Era's Milestones are done.
@@ -182,11 +186,19 @@ _Avoid_: badge (Weekly Challenge badges are different), achievement
 How much clients trust the Company; higher Reputation unlocks better Contracts.
 
 **Research Points**:
-Points earned from science Missions, spent on Upgrades within the current Era.
+Points a Research Lab makes from the Data Spacecraft send home, spent on tech tree Upgrades within the current Era.
 _Avoid_: XP, science (as currency)
 
+**Tech tree**:
+The Upgrades bought with Research Points, a few per Era, each making one kind of Part work better (e.g. better solar cells).
+_Avoid_: skill tree, research tree
+
+**Side story**:
+A Real History card about a real event next to a Milestone, shown after the Milestone's "after" card, such as Vanguard 1 after Explorer 1.
+_Avoid_: bonus card
+
 **Real History card**:
-A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next).
+A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next), and sometimes a side story.
 _Avoid_: lore, fun fact
 
 **History Archive**:

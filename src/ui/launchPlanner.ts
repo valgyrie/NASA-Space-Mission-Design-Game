@@ -1,4 +1,12 @@
-import { LAUNCH_SITE_IDS, LAUNCH_SITES, LAUNCH_VEHICLE_IDS, LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId } from '../game/launchVehicles';
+import {
+  LAUNCH_SITE_IDS,
+  LAUNCH_SITES,
+  LAUNCH_VEHICLE_IDS,
+  LAUNCH_VEHICLES,
+  type LaunchSiteId,
+  type LaunchVehicleId,
+  isVehicleOpen,
+} from '../game/launchVehicles';
 import { type LaunchPlan, type PlanProblem, planLaunch, shipMission } from '../game/mission';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
@@ -29,6 +37,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
       return t('planner.problem.noContract', { contract: t(`contract.${plan.goal.contract.id}.name`) });
     case 'underway':
       return t('planner.problem.underway');
+    case 'vehicleClosed':
+      return t('planner.problem.vehicleClosed');
     case 'emptySlots':
       return t('planner.problem.emptySlots', { slots: p.slots.map((s) => t(`slot.${s}`)).join(t('planner.list')) });
     case 'tooHeavy':
@@ -59,9 +69,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
  */
 export function makeLaunchPlanner(
   state: SiteState,
-  hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; designWarnings(): string[] },
+  hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void; designWarnings(): string[] },
 ): LaunchPlanner {
-  let vehicle: LaunchVehicleId = LAUNCH_VEHICLE_IDS[0];
   const site: LaunchSiteId = LAUNCH_SITE_IDS[0];
 
   const root = el('div', 'planner');
@@ -72,23 +81,29 @@ export function makeLaunchPlanner(
   // Launch Vehicle and Launch Site
   const choices = el('section', 'planner-card');
   choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')));
-  const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement }>();
+  const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement }>();
   for (const id of LAUNCH_VEHICLE_IDS) {
     const v = LAUNCH_VEHICLES[id];
     const b = button('option planner-vehicle', '');
     const fit = el('span', 'planner-fit');
+    const opensAfter = v.opensAfter;
+    const locked = el('span', 'option-locked', opensAfter ? t('planner.opensAfter', { contract: t(`contract.${opensAfter}.name`) }) : '');
+    b.dataset.vehicle = id;
     b.append(
       el('span', 'option-name', t(`launchVehicle.${id}`)),
       el('span', 'option-stats', t('planner.lifts', { kg: formatNumber(v.liftKg.lowEarthOrbit), orbit: t('orbit.lowEarthOrbit') })),
       el('span', 'option-stats', t('planner.perKg', { price: formatMoney(v.perKg) })),
       fit,
+      locked,
     );
     b.addEventListener('click', () => {
-      vehicle = id;
+      if (!isVehicleOpen(state, id)) return;
+      state.vehicle = id;
+      hooks.onVehicle();
       render();
     });
     choices.append(b);
-    vehicleButtons.set(id, { button: b, fit });
+    vehicleButtons.set(id, { button: b, fit, locked });
   }
   choices.append(el('h3', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
   const siteBox = el('div', 'option planner-site');
@@ -119,7 +134,7 @@ export function makeLaunchPlanner(
   problems.setAttribute('aria-live', 'polite');
   const testRun = button('planner-testrun', t('planner.testRun'));
   testRun.title = t('planner.testRunName');
-  testRun.addEventListener('click', () => hooks.onTestRun(vehicle));
+  testRun.addEventListener('click', () => hooks.onTestRun(state.vehicle));
   const ship = button('planner-ship', '');
   ship.dataset.tutorial = 'planner-ship';
   testRun.dataset.tutorial = 'planner-testrun';
@@ -136,13 +151,18 @@ export function makeLaunchPlanner(
   };
 
   ship.addEventListener('click', () => {
-    if (shipMission(state, state.design, vehicle, site).ok) hooks.onShip();
+    if (shipMission(state, state.design, state.vehicle, site).ok) hooks.onShip();
     else render();
   });
 
   const render = () => {
+    const vehicle = state.vehicle;
     const plan = planLaunch(state, state.design, vehicle, site);
     for (const [id, ui] of vehicleButtons) {
+      const open = isVehicleOpen(state, id);
+      ui.button.disabled = !open;
+      ui.locked.hidden = open;
+      ui.fit.hidden = !open;
       ui.button.setAttribute('aria-pressed', String(id === vehicle));
       const lift = LAUNCH_VEHICLES[id].liftKg[plan.goal.orbit];
       const fits = plan.massKg <= lift + 1e-9;

@@ -22,7 +22,7 @@ import {
   hazeFor,
   polarFromElevation,
 } from './camera';
-import { buildFactory, buildWarehouse } from './factoryMesh';
+import { buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
 import { buildMine } from './mineMesh';
 import type { Design } from '../game/spacecraft';
 import { type ShippingRoute, shippingRoute } from './shippingRoute';
@@ -396,7 +396,13 @@ export class World {
   addBuilding(kind: BuildingKind, x: number, z: number, material?: RawMaterial): void {
     if (!this.site) return;
     const model =
-      kind === 'mine' ? buildMine(material ?? 'aluminium') : isFactory(kind) ? buildFactory(kind) : buildWarehouse();
+      kind === 'mine'
+        ? buildMine(material ?? 'aluminium')
+        : isFactory(kind)
+          ? buildFactory(kind)
+          : kind === 'researchLab'
+            ? buildResearchLab()
+            : buildWarehouse();
     const c = tileCentre(this.site, x, z);
     model.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
     model.userData.tile = { x, z };

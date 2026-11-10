@@ -1,11 +1,12 @@
 import { RIDESHARE_PER_KG, SHIPPING } from './balance';
-import type { Orbit } from './contracts';
+import type { ContractId, Orbit } from './contracts';
+import type { SiteState } from './siteState';
 
 /**
  * Launch Vehicles the Company can book a Rideshare on, and the Launch Sites it ships to.
- * Era 1 has only Juno I from Cape Canaveral. Capacities: docs/research/launch-vehicles.md.
+ * Era 1 has Juno I, then Thor-Able, from Cape Canaveral. Capacities: docs/research/launch-vehicles.md.
  */
-export const LAUNCH_VEHICLE_IDS = ['juno1'] as const;
+export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble'] as const;
 export type LaunchVehicleId = (typeof LAUNCH_VEHICLE_IDS)[number];
 
 /** One stage of a Launch Vehicle, from the bottom up. */
@@ -28,6 +29,10 @@ export interface LaunchVehicle {
   liftKg: Record<Orbit, number>;
   /** Rideshare price for each kilogram of Spacecraft. */
   perKg: number;
+  /** The last stage stays on the Spacecraft in orbit, as Juno I's did with Explorer 1. */
+  lastStageStays?: boolean;
+  /** Bookable only once this Milestone is done; offered from the start when missing. */
+  opensAfter?: ContractId;
 }
 
 export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
@@ -46,8 +51,31 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
       { motors: 1, burnS: 6 },
     ],
     coastS: 247,
+    lastStageStays: true,
+  },
+  // Thor-Able: 120 kg to a 640 km orbit; 26.9–27.8 m tall. A Thor first stage (165 s), the Able second stage
+  // (AJ10, 115 s) and an Altair solid third stage (38 s). It launched TIROS-1 on 1 April 1960. First flew
+  // 24 April 1958, so it opens after Explorer 1. The short coast between the first two stages is a game estimate.
+  thorAble: {
+    id: 'thorAble',
+    liftKg: { lowEarthOrbit: 120 },
+    perKg: RIDESHARE_PER_KG.thorAble,
+    heightM: 27,
+    stages: [
+      { motors: 1, burnS: 165 },
+      { motors: 1, burnS: 115 },
+      { motors: 1, burnS: 38 },
+    ],
+    coastS: 10,
+    opensAfter: 'explorer1',
   },
 };
+
+/** The Company can book this Launch Vehicle: it is out of the factory by now in history. */
+export function isVehicleOpen(state: Pick<SiteState, 'completed'>, id: LaunchVehicleId): boolean {
+  const after = LAUNCH_VEHICLES[id].opensAfter;
+  return !after || state.completed.includes(after);
+}
 
 /** What a Rideshare costs: the Launch Vehicle's price times the Spacecraft's mass. */
 export function rideshareCost(vehicle: LaunchVehicleId, massKg: number): number {

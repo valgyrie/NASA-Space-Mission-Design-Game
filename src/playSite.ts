@@ -21,6 +21,7 @@ import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
 import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
 import { launch, missionStage } from './game/mission';
+import { dataWaiting } from './game/research';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
 import { LaunchView } from './world/launchView';
@@ -43,6 +44,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   }
   for (const f of state.factories) world.addBuilding(f.kind, f.x, f.z);
   for (const w of state.warehouses) world.addBuilding('warehouse', w.x, w.z);
+  for (const l of state.labs) world.addBuilding('researchLab', l.x, l.z);
 
   let speed: Speed = 1;
   let lastSpeed: Speed = 1;
@@ -318,6 +320,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     const room = storageFree(state) > 0;
     for (const m of state.mines) world.setWorking(m.x, m.z, room);
     for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
+    const researching = dataWaiting(state) > 0;
+    for (const l of state.labs) world.setWorking(l.x, l.z, researching);
     const gameSeconds = Math.min(seconds, 0.1) * speed;
     world.animateBuildings(gameSeconds);
     // The Mission on its way, on the Site: the truck loads at the dock beside the Warehouse, then drives off.

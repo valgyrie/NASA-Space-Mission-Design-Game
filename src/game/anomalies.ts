@@ -66,7 +66,7 @@ export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, fl
   const rng = makeRng(hashText(`${seed}|anomaly|${plan.contract}|${launchDay}`));
   // The link as it flew (Parts are a little off their labels), the same numbers the Mission Report shows.
   const comms = flight.findings.find((f) => f.kind === 'comms');
-  const { sendPerDay, dataPerDay } = comms ?? dataOf(plan.design);
+  const { sendPerDay, dataPerDay } = comms ?? dataOf(plan.design, plan.tech);
   const chance = antennaChance(sendPerDay, dataPerDay);
   const first = isMandatory(state, 'antenna');
   const happens = rng() < chance;

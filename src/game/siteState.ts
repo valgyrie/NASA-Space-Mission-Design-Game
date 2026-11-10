@@ -4,6 +4,8 @@ import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
 import type { AcceptedContract, ContractId } from './contracts';
 import type { HistoryCardId, Patch } from './history';
+import type { LaunchVehicleId } from './launchVehicles';
+import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
 import { type Design, emptyDesign } from './spacecraft';
@@ -39,6 +41,12 @@ export interface Warehouse {
   z: number;
 }
 
+/** A Research Lab: turns the Data Spacecraft send home into Research Points. */
+export interface Lab {
+  x: number;
+  z: number;
+}
+
 /** Everything about the running Site that changes over time and is saved. */
 export interface SiteState {
   money: number;
@@ -47,6 +55,7 @@ export interface SiteState {
   mines: Mine[];
   factories: Factory[];
   warehouses: Warehouse[];
+  labs: Lab[];
   /** Kilograms of each Raw Material in stock. */
   stock: Record<RawMaterial, number>;
   /** How many of each Part are in stock. */
@@ -69,6 +78,10 @@ export interface SiteState {
   patches: Patch[];
   /** The Explorer 1 tutorial. */
   tutorial: TutorialProgress;
+  /** Research Points earned and the tech tree Upgrades bought with them. */
+  research: Research;
+  /** The Launch Vehicle picked in the Launch planner: the Mission Designer's Mass bar measures against it. */
+  vehicle: LaunchVehicleId;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -80,6 +93,7 @@ export function newSiteState(): SiteState {
     mines: [],
     factories: [],
     warehouses: [],
+    labs: [],
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
     contracts: [],
@@ -91,6 +105,8 @@ export function newSiteState(): SiteState {
     history: [],
     patches: [],
     tutorial: { skipped: false, testRun: false },
+    research: newResearch(),
+    vehicle: 'juno1',
   };
 }
 
@@ -107,7 +123,7 @@ export type PlaceCheck = { ok: true } | { ok: false; problem: PlaceProblem };
 
 function occupied(state: SiteState, x: number, z: number): boolean {
   const here = (b: { x: number; z: number }) => b.x === x && b.z === z;
-  return state.mines.some(here) || state.factories.some(here) || state.warehouses.some(here);
+  return state.mines.some(here) || state.factories.some(here) || state.warehouses.some(here) || state.labs.some(here);
 }
 
 /**
@@ -134,6 +150,7 @@ export function build(site: Site, state: SiteState, kind: BuildingKind, x: numbe
   state.money -= BUILD_COST[kind];
   if (kind === 'mine') state.mines.push({ x, z });
   else if (kind === 'warehouse') state.warehouses.push({ x, z });
+  else if (kind === 'researchLab') state.labs.push({ x, z });
   else state.factories.push({ kind, x, z, making: partsMadeBy(kind)[0]!, progress: null });
   return check;
 }
@@ -143,13 +160,14 @@ export function buildingAt(
   state: SiteState,
   x: number,
   z: number,
-): { kind: 'mine'; mine: Mine } | { kind: FactoryKind; factory: Factory } | { kind: 'warehouse' } | null {
+): { kind: 'mine'; mine: Mine } | { kind: FactoryKind; factory: Factory } | { kind: 'warehouse' } | { kind: 'researchLab' } | null {
   const here = (b: { x: number; z: number }) => b.x === x && b.z === z;
   const mine = state.mines.find(here);
   if (mine) return { kind: 'mine', mine };
   const factory = state.factories.find(here);
   if (factory) return { kind: factory.kind, factory };
   if (state.warehouses.some(here)) return { kind: 'warehouse' };
+  if (state.labs.some(here)) return { kind: 'researchLab' };
   return null;
 }
 
@@ -236,7 +254,7 @@ export function setMaking(state: SiteState, factory: Factory, part: Part): void 
   factory.progress = null;
 }
 
-/** Move the Site forward by `days` game days: the date advances, Mines dig and Factories make Parts. */
+/** Move the Site forward by `days` game days: the date advances, Mines dig, Factories make Parts and Research Labs research. */
 export function advanceDays(site: Site, state: SiteState, days: number): void {
   if (days <= 0) return;
   state.day += days;
@@ -246,6 +264,7 @@ export function advanceDays(site: Site, state: SiteState, days: number): void {
   const share = total > 0 ? Math.min(1, storageFree(state) / total) : 0;
   for (const m of RAW_MATERIALS) state.stock[m] += out[m] * days * share;
   for (const factory of state.factories) runFactory(state, factory, days);
+  runLabs(state, days);
 }
 
 /** Game days that pass in `seconds` of real time at `speed`. Long gaps are capped. */

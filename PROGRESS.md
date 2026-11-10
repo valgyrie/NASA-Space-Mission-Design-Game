@@ -4,25 +4,25 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–11 and 31 done and merged; local launchers merged. **Ticket 13 is built** (branch `claude/ticket-12-sltuz3`, merged by PR) and waits only for a person to time the first Launch. The loop: name the Company, the tutorial guide leads through accepting Explorer 1 (its "before" Real History card), a Mine, a Metal Works, the Mission Designer, a Test Run, shipping, the truck and the Launch; Point the antenna; the Mission Report with the first Mission Patch; the "after" card; the History Archive.
+**State:** tickets 01–11, 13 (waits for a person to time the first Launch), 14 and 31 done; local launchers merged. **Ticket 14 is built** on `claude/focused-shannon-y99w5e`: Era 1's Milestones are both playable.
 
-**Why ticket 13 and not 12:** ticket 12 is blocked by 14 (Solar Cells are locked until Vanguard 1, so a Stuck solar panel can't happen yet). The user chose to do 13 first. The branch name still says ticket 12.
-
-**Just finished: ticket 13, Tutorial and Real History.** How it plays: GDD §16 "As built (ticket 13)". Code notes: ticket 13's "For later tickets".
-- **Domain:** `src/game/tutorial.ts` (`tutorialStep`, 8 steps read from the state, never blocking), `src/game/history.ts` (`HISTORY_CARDS`, `historyCardFor`, `unlockCard`, `awardMission` called by `launch`, `patchFor`). `SiteState.history`, `.patches`, `.tutorial`; **save v10** (a v9 save gets the cards and patches it had already earned).
-- **UI:** `src/ui/tutorialGuide.ts` (guide card, glow on `data-tutorial` buttons), `historyCard.ts`, `archive.ts`, `patch.ts` (SVG patch drawn in code); report shows the patch; HUD button "History Archive". Photos: `public/history/` (NASA/MSFC, sources in `docs/research/milestones.md`).
-- **Tested** in headless Chromium at 1280×800 and 1024×768: a scripted new player walked all 8 steps and reached the Launch button in 1 min 45 s; before card on accept (pauses, Esc closes); Test Run step advances when it opens; Launch → Anomaly → report with "Your first Mission Patch!" → after card → History Archive shows the patch and both cards, a card reopens from it; reload keeps them; Skip hides the guide for good. No console errors. 192 unit tests pass; build passes.
-- Not tested: a person timing it (the ticket's last box), real mouse/touch, Learn more links opening (both URLs fetched fine).
+**Just finished: ticket 14, Era 1 complete.** How it plays: GDD §6 "Research (ticket 14)" and "TIROS-1 Milestone", §7 "TIROS-1 numbers", §8 "Thor-Able". Code notes: the ticket's "For later tickets".
+- **Loop:** Explorer 1 succeeds → "after" card → **Vanguard 1** side story card ("Power from the Sun") unlocks Solar Cells → **TIROS-1** appears on the board (NASA, TV camera, 78 days, $5M) → its "before" card → design with Medium Bus, Solar Cells, a battery and the new **TV Camera** → too heavy for Juno I, so pick **Thor-Able** (120 kg, $25K/kg, opens after Explorer 1) → 3D Thor-Able Launch → "after" card and second Mission Patch.
+- **Research:** Spacecraft in orbit send Data home while they work; a **Research Lab** ($250K, new 3D model with a turning dome) turns 50 kB a day into Research Points (100 kB each). Top bar shows RP. Click a Lab for the **tech tree**: Better solar cells, Stronger radio, Better batteries (5 RP each), Low-power electronics (8). A shipped Spacecraft keeps the Upgrades it shipped with.
+- **Code:** `src/game/research.ts` (new), `statsOf`/`UNLOCKED_BY` in spacecraft.ts, `Contract.after`, `LaunchVehicle.opensAfter`, side story cards in history.ts, Thor-Able in rocketMesh.ts. **Save v11** (a v10 Company that had done Explorer 1 gets the Vanguard 1 card).
+- **Photos:** NASA "Vanguard Satellite, 1958"; NASA/MSFC Thor-Able launching Explorer 6 (no TIROS-1 photo in NASA's library); NASA Terra image of Hurricane Gonzalo. Sources in `docs/research/milestones.md`.
+- **Tested** in headless Chromium at 1280×800: flew Explorer 1 → Vanguard 1 card; TIROS-1 on the board, accepted with its "before" card; built a Research Lab, Data turned into 6 RP, bought Better solar cells; Mission Designer showed Solar Cells unlocked, the TV Camera model and the "Thor-Able in the Launch planner" warning; planner showed Juno I too heavy and Thor-Able fits; shipped, launched the 3D Thor-Able, report all green, "after" card, Archive with both patches and cards; reload kept it. No console errors. 205 unit tests pass; build passes.
+- Not tested: a person playing it through at normal speed; Learn more links opening (all fetched fine).
 
 **Next:**
-1. Team: play a new game and time the first Launch (ticket 13's open box); judge the guide's wording for a 10-year-old.
-2. Ticket 14 (Era 1 complete) is now unblocked; it unblocks 12. Also open: 15, 16, 17, 19, 20, 25, 30.
+1. Team: play Explorer 1 → TIROS-1 at normal speed; judge the TIROS-1 balance (78 days at 1× is about 2.5 minutes of waiting) and the RP pace. Also ticket 13's open box (time the first Launch).
+2. Ticket 12 (Stuck solar panel, Survive the eclipse) is now unblocked. Also open: 15, 16, 17, 19, 20, 25, 30; 18 needs 15.
 
 **Open:**
-- The guide shows "Step 1" after the Company name; the Historic start and globe come with ticket 16. GDD §16 step 6 "fix one warning" isn't forced: the guide asks whether the battery lasts 30 days.
-- The glow stays on the next button while a dialog covers the guide (harmless).
-- Patches don't carry the Company logo yet (ticket 19).
-- From before: Anomaly chance fixed (~32%) until Comms Parts differ (14) and Ground Stations (18); one Anomaly per flight; Space view's day count ignores lost days; Explorer 1's coast timing _(verify)_; blocky close-up Earth (26); Game date still during the show; orbits never decay; Era 1 designs are 0% or 100%; no "New game"; Speed not saved.
+- No Computer slot, so TIROS-1's tape recorder isn't modelled. Thor-Able's staging gaps are game estimates _(verify)_.
+- The Lab panel lists every tech tree item; later Eras need an Era filter.
+- TIROS-1's real mass (122.5 kg) is far above the game's design (18–21 kg): Era 1 Parts are scaled-down estimates.
+- From before: guide shows "Step 1" after the Company name; glow stays under dialogs; patches have no Company logo yet (19); Anomaly chance fixed until Ground Stations (18); one Anomaly per flight; Explorer 1's coast timing _(verify)_; blocky close-up Earth (26); orbits never decay; no "New game"; Speed not saved.
 - Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
@@ -30,6 +30,7 @@
 
 ## Log
 
+- 2026-11-10: Ticket 14 built: TIROS-1 Milestone, Vanguard 1 card unlocks Solar Cells, TV Camera, Thor-Able (3D too), Research Lab, Research Points and four Era 1 tech tree Upgrades, save v11.
 - 2026-11-10: Ticket 13 built: Explorer 1 tutorial guide, Real History cards with NASA photos, Mission Patches, History Archive, save v10 (ticket 12 waits for 14).
 - 2026-11-10: Synced the launcher branch with newer main; kept its game, tickets and current handoff.
 - 2026-11-10: Deferred further launcher validation to the final ticket; existing game checks stay in place.

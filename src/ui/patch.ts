@@ -8,6 +8,7 @@ const SVG = 'http://www.w3.org/2000/svg';
 /** Colours of each Milestone's patch: ring, sky and Earth. */
 const PATCH_COLOURS: Record<ContractId, { ring: string; sky: string; earth: string; trim: string }> = {
   explorer1: { ring: '#1d3b6e', sky: '#0f1b33', earth: '#3f8fd0', trim: '#f2c14e' },
+  tiros1: { ring: '#1f5f63', sky: '#0d2629', earth: '#5bb3c9', trim: '#e9eef2' },
 };
 
 let uid = 0;

@@ -11,7 +11,7 @@ function design(ids: OptionId[]): Design {
   return d;
 }
 
-const plan = (ids: OptionId[]) => ({ contract: 'explorer1' as const, design: design(ids), vehicle: 'juno1' as const });
+const plan = (ids: OptionId[]) => ({ contract: 'explorer1' as const, design: design(ids), vehicle: 'juno1' as const, tech: [] });
 
 describe('predicted problems', () => {
   it('lists nothing for the Explorer 1 design', () => {

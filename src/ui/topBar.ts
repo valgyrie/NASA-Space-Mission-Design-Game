@@ -1,6 +1,7 @@
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { SPEEDS, type Speed } from '../game/balance';
 import { type SiteState, outputPerDay, storageCapacity, storageFree, storageUsed } from '../game/siteState';
+import { dataWaiting, researchPoints } from '../game/research';
 import type { Site } from '../site/site';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
@@ -48,6 +49,11 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
   const storage = stat(t('topBar.storage'));
   storage.sub.classList.add('warn');
   bar.append(storage.box);
+  // Research Points: shown once there is a Research Lab or Data waiting for one.
+  const research = stat(t('topBar.research'));
+  research.box.hidden = true;
+  research.sub.classList.add('warn');
+  bar.append(research.box);
 
   const speeds = document.createElement('div');
   speeds.className = 'speeds';
@@ -80,6 +86,15 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
       }
       setText(storage.value, formatStorage(storageUsed(state), storageCapacity(state)));
       setText(storage.sub, full ? t('topBar.storageFull') : '');
+      const waiting = dataWaiting(state);
+      const noLab = state.labs.length === 0;
+      research.box.hidden = noLab && waiting <= 0;
+      if (!research.box.hidden) {
+        setText(research.value, t('topBar.researchValue', { points: researchPoints(state) }));
+        setText(research.sub, noLab ? t('research.waiting', { kb: Math.floor(waiting) }) : '');
+        const title = noLab ? t('topBar.researchNoLab') : t('topBar.researchName');
+        if (research.box.title !== title) research.box.title = title;
+      }
       for (const [sp, b] of buttons) {
         const on = String(sp === speed);
         if (b.getAttribute('aria-pressed') !== on) b.setAttribute('aria-pressed', on);

@@ -19,7 +19,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 11 ✅ | [Anomalies: framework + Point the antenna](11-anomaly-framework-antenna.md) | 10 | First Anomaly mini-game; first time required, then skippable; driven by design weaknesses; failure lowers the result. |
 | 12 | [Anomalies: Stuck solar panel, Survive the eclipse](12-anomalies-panel-eclipse.md) | 11, 14 | Two more Anomaly mini-games. |
 | 13 🧪 | [Tutorial and Real History](13-tutorial-and-history.md) | 09, 11 | Explorer 1 tutorial: first Launch in under 10 minutes; Real History cards before and after; first Mission Patch; History Archive. |
-| 14 | [Era 1 complete](14-era-1-complete.md) | 13 | TIROS-1 Milestone; solar cells unlock; Thor-Able; Research Lab, Research Points, first tech tree items. |
+| 14 ✅ | [Era 1 complete](14-era-1-complete.md) | 13 | TIROS-1 Milestone; solar cells unlock; Thor-Able; Research Lab, Research Points, first tech tree items. |
 | 15 | [Upgrades and Assembly Hall](15-upgrades-and-assembly-hall.md) | 05 | Building levels (output and Part quality); Assembly Hall level limits Bus size. |
 | 16 | [Real places and weather](16-real-places-and-weather.md) | 03, 08 | Globe picker (Historic pin, US, anywhere, Random); real NASA POWER climate baked in; Site shaped by it; latitude boost; weather Scrubs; Launch Window advisor. |
 | 17 | [Risk and failure](17-risk-and-failure.md) | 08 | Launch Insurance; retryable Milestones with real failure stories (Vanguard TV3); startup grant. |

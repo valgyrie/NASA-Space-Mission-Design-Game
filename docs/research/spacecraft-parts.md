@@ -63,6 +63,18 @@ Checked 2026-11-09 against [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki
 
 All other Era 1 option numbers (Wh, W, kB a day, assembly days, Bus capacity) are game estimates in `src/game/balance.ts`, not measurements.
 
+## TIROS-1, the second Milestone (ticket 14)
+
+| Item | Real value | Game |
+|---|---|---|
+| Mass | 122.5 kg | A TIROS-1 design weighs 18–21 kg (Era 1 Parts are scaled-down game estimates); still too heavy for Juno I, so it needs Thor-Able |
+| Power | About 9,000 solar cells charging nickel-cadmium batteries | Solar Cells (unlocked by Vanguard 1) plus a battery |
+| Cameras | Two vidicon TV cameras, wide- and narrow-angle | TV Camera Payload, 4 kg, 40 kB a day, 1.4 W (game estimates); the 3D model shows two |
+| Tape recorder | One (Wikipedia) or one per camera (NASA) | Not modelled yet: no Computer slot |
+| Pointing | Spin-stabilised, 8–12 rpm | Spin |
+
+Sources: [Wikipedia: TIROS-1](https://en.wikipedia.org/wiki/TIROS-1) · [NASA Science: TIROS](https://science.nasa.gov/mission/tiros/).
+
 ## How the game uses this
 
 - **Easy mode:** 2–3 options per slot with rounded numbers inside these ranges.

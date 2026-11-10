@@ -33,6 +33,7 @@ export const BUILD_COST: Record<BuildingKind, number> = {
   solarFab: 200_000,
   batteryPlant: 150_000,
   warehouse: 80_000,
+  researchLab: 250_000,
 };
 
 /** Kilograms the Site can store without a Warehouse (piles in the yard). */
@@ -69,6 +70,7 @@ export const RECIPES: Record<Part, Recipe> = {
   smallBattery: { factory: 'batteryPlant', inputs: { copper: 15 }, days: 3, massKg: 3, work: 2_500 },
   largeBattery: { factory: 'batteryPlant', inputs: { copper: 35 }, days: 5, massKg: 6, work: 5_000 },
   radiationDetector: { factory: 'electronicsLab', inputs: { silicon: 4, copper: 3 }, days: 3, massKg: 1.5, work: 6_000 },
+  tvCamera: { factory: 'electronicsLab', inputs: { silicon: 10, copper: 6 }, days: 5, massKg: 4, work: 15_000 },
 };
 
 /** The Market sells to you at this many times the making cost... */
@@ -81,11 +83,13 @@ export const MARKET_LOT_KG = 10;
 /** Money each Contract pays on success. Game estimates, not real contract values. */
 export const CONTRACT_REWARD = {
   explorer1: 3_000_000,
+  tiros1: 5_000_000,
 } as const;
 
 /** Game days from accepting a Contract to its deadline. A year keeps the tutorial relaxed (about 12 minutes at 1×). */
 export const CONTRACT_DEADLINE_DAYS = {
   explorer1: 365,
+  tiros1: 365,
 } as const;
 
 /**
@@ -120,6 +124,9 @@ export const OPTION_STATS = {
   simpleAntenna: { powerUseW: 0.6, sendPerDay: 50 },
   spin: {},
   radiationDetector: { powerUseW: 0.3, dataPerDay: 20 },
+  // TIROS-1-like: with the Simple Antenna it uses 2 W, a little more than Solar Cells give on average (1.8 W),
+  // so a Large Battery covers the gap for 78 days and a Small Battery lasts only about 75.
+  tvCamera: { powerUseW: 1.4, dataPerDay: 40 },
 } as const satisfies Record<string, OptionStats>;
 
 /** Share of each orbit a Low Earth Orbit Spacecraft spends in sunlight (the rest is in Earth's shadow). Game estimate. */
@@ -132,6 +139,8 @@ export const SUNLIT_SHARE = 0.6;
  */
 export const RIDESHARE_PER_KG = {
   juno1: 40_000,
+  // A bigger rocket: cheaper per kilogram. Game estimate.
+  thorAble: 25_000,
 } as const;
 
 /** Shipping a finished Spacecraft from the Site to each Launch Site. Game estimates until real Site places (ticket 16). */
@@ -170,3 +179,22 @@ export const ANOMALY_MAX_DATA_LOSS = 0.3;
 
 /** Score an Anomaly gets when the game closed before it was answered and there is no best past result. */
 export const ANOMALY_UNANSWERED_SCORE = 0.5;
+
+// ---- Research ----
+
+/** Kilobytes of Data a Research Lab turns into Research Points each game day. Game estimate: one keeps up with Era 1. */
+export const LAB_KB_PER_DAY = 50;
+
+/** Kilobytes of Data for one Research Point. Explorer 1's 30 days (600 kB) give 6; TIROS-1's 78 days give 31. */
+export const KB_PER_RESEARCH_POINT = 100;
+
+/**
+ * The tech tree's Era 1 Upgrades: what each costs in Research Points and how much it multiplies one number
+ * of every Part it touches. Game estimates, not real figures.
+ */
+export const TECH_TREE = {
+  betterSolarCells: { era: 1, cost: 5, boost: { solarW: 1.5 } },
+  strongerRadio: { era: 1, cost: 5, boost: { sendPerDay: 1.5 } },
+  betterBatteries: { era: 1, cost: 5, boost: { batteryWh: 1.25 } },
+  lowPowerElectronics: { era: 1, cost: 8, boost: { powerUseW: 0.8 } },
+} as const;

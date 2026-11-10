@@ -129,9 +129,10 @@ describe('shipping and Launch', () => {
     expect(state.money).toBe(money + CONTRACTS.explorer1.reward);
     expect(state.contracts).toEqual([]);
     expect(state.completed).toEqual(['explorer1']);
-    expect(availableContracts(state)).toEqual([]);
+    // TIROS-1 comes next on the board.
+    expect(availableContracts(state).map((c) => c.id)).toEqual(['tiros1']);
     expect(acceptContract(state, 'explorer1')).toEqual({ ok: false, problem: 'done' });
-    expect(missionGoal(state).status).toBe('done');
+    expect(missionGoal(state).contract.id).toBe('tiros1');
     expect(state.mission).toBeNull();
     expect(state.reports).toEqual([report]);
   });
