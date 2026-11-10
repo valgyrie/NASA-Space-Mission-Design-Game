@@ -35,6 +35,7 @@ export const M = {
   rail: mat(0x7d838c, { metalness: 0.6, roughness: 0.4 }),
   wood: mat(0x8a6542),
   yellow: mat(0xf2b632),
+  gold: mat(0xffc93c, { metalness: 0.2, roughness: 0.4, emissive: 0xb07800, emissiveIntensity: 0.6 }),
   stripe: mat(0x2a2a2a),
   tank: mat(0xe9edf0, { metalness: 0.3, roughness: 0.4 }),
   pipe: mat(0xb8bec6, { metalness: 0.6, roughness: 0.35 }),
@@ -138,4 +139,47 @@ export function addSmoke(g: THREE.Group, x: number, y: number, z: number, puffs 
     smoke.add(puff);
   }
   g.add(smoke);
+}
+
+/**
+ * A small sign at the front-left corner of a building: one gold star per level. Named "level" so the World
+ * can replace it when the level changes.
+ */
+export function buildLevelSign(level: number): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'level';
+  const p = parts(g);
+  const height = 0.1 + level * 0.09;
+  p.add(new THREE.CylinderGeometry(0.009, 0.009, height, 5), M.dark, 0, 0.05 + height / 2, 0);
+  for (let i = 0; i < level; i++) p.add(new THREE.IcosahedronGeometry(0.04, 0), M.gold, 0, 0.15 + i * 0.09, 0);
+  return g;
+}
+
+/** A yellow tower crane with a turning jib ("craneJib"), shown while a building is upgraded. */
+export function buildCrane(): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'crane';
+  const p = parts(g);
+  p.add(box(0.1, 0.03, 0.1), M.concrete, 0, 0.065, 0);
+  // Lattice mast: four corner posts with cross bars.
+  for (const [x, z] of [
+    [-0.025, -0.025],
+    [0.025, -0.025],
+    [-0.025, 0.025],
+    [0.025, 0.025],
+  ] as const) {
+    p.bar(v(x, 0.08, z), v(x, 1.0, z), 0.008, M.yellow);
+  }
+  for (let y = 0.15; y < 1; y += 0.12) {
+    p.bar(v(-0.025, y, 0.025), v(0.025, y + 0.1, 0.025), 0.005, M.yellow);
+    p.bar(v(0.025, y, -0.025), v(-0.025, y + 0.1, -0.025), 0.005, M.yellow);
+  }
+  const jib = p.mover('craneJib', 0, 1.0, 0);
+  jib.userData.speed = 0.35;
+  p.add(box(0.05, 0.06, 0.05), M.dark, 0, 0.02, 0, jib);
+  p.add(box(0.75, 0.03, 0.035), M.yellow, 0.2, 0.06, 0, jib);
+  p.add(box(0.08, 0.06, 0.06), M.concrete, -0.17, 0.04, 0, jib);
+  p.bar(v(0.45, 0.05, 0), v(0.45, -0.35, 0), 0.004, M.dark, jib);
+  p.add(box(0.06, 0.06, 0.06), M.wood, 0.45, -0.38, 0, jib);
+  return g;
 }

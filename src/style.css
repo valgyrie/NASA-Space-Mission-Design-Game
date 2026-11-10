@@ -2414,3 +2414,22 @@ button.archive-card:hover {
 .planner-fit[hidden] {
   display: none;
 }
+
+/* Building level and its Upgrade, at the bottom of a building's panel. */
+.level-box {
+  margin-top: 12px;
+  padding-top: 4px;
+  border-top: 1px solid rgba(140, 170, 210, 0.15);
+}
+
+.level-box .progress[hidden],
+.level-box button[hidden],
+.level-box .side-note[hidden] {
+  display: none;
+}
+
+button.upgrade {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}

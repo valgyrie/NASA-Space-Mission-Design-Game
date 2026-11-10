@@ -71,12 +71,15 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 | **Battery Plant** (Factory) | Copper (later Lithium) → batteries | |
 | **Propellant Plant** (Factory) | Water → propellant | Era 3 |
 | **Research Lab** | Turns science Data into **Research Points** | 50 kB a day each; Data waits until there is one |
-| **Assembly Hall** | Builds the Spacecraft; its level sets the biggest Bus | |
+| **Assembly Hall** | Builds the Spacecraft; its level sets the biggest Bus | Every Site starts with one near its middle |
 | **Warehouse** | Stores Raw Materials and Parts | Storage counts by mass (kg) |
 | **Ground Station** | Antenna that talks to Spacecraft; sets Communications | Bigger dish = more Data |
 | **Launch Pad** | Launch your own rockets | Spaceport Site, Era 4 |
 
 - **Upgrades** work like town halls in base-builders: each building has levels that raise output or quality (lighter, more efficient Parts). Upgrades cost money and take days (**Time**).
+- **Building levels (ticket 15):** click any building to see its level, what the next one does, and its Upgrade. Level 2 costs the building's price and takes 15 days; level 3 costs twice that and takes 30. The building keeps working meanwhile, and a tower crane stands beside it; gold stars on a small sign show its level. Each level above 1 adds half again: Mines dig 10 → 15 → 20 kg a day, Warehouses store 2,000 → 3,000 → 4,000 kg, Research Labs research 50 → 75 → 100 kB a day.
+- **Marks:** a Factory makes Parts of its own level: **Mk 1, Mk 2, Mk 3**. Each Mark above Mk 1 is 15% lighter, uses 10% less power and its solar cells make 10% more. The Warehouse keeps each Part's Mark; a Spacecraft takes the best ones, the Market buys back the worst first and sells only Mk 1. A lighter Spacecraft pays less Rideshare, so Factory Upgrades teach mass.
+- **Assembly Hall:** every Site starts with a level 1 hall on the flat dry tile nearest its middle. Level 1 takes a Small Bus, level 2 a Medium Bus ($300K, 15 days; TIROS-1 needs it). Its top level in Era 1 is 2; a bigger Bus in Era 2 opens level 3. A Bus the hall can't take can still be designed and test-run, but not shipped. The Shipping truck docks beside the hall. Game estimates in `src/game/balance.ts`.
 - **Income:** Contract rewards (main), selling Raw Materials and Parts (small), science Missions (Research Points and Reputation).
 - **Costs:** buildings and Upgrades, Plots of land (Optional), **Rideshare** (priced per kg, which teaches mass), **Shipping**, **Launch Insurance**.
 - **Safety net:** starting money covers the tutorial. A one-time startup grant appears if money gets dangerously low.

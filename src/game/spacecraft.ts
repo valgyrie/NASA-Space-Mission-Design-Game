@@ -1,11 +1,12 @@
 import type { Part } from '../economy/part';
-import { OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
+import { MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
 import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
 import type { HistoryCardId } from './history';
 import { type Boosted, type TechId, boost } from './research';
 import { LAUNCH_SITES, LAUNCH_VEHICLES, LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen } from './launchVehicles';
 import { type TradeResult, buy, buyPrice } from './market';
-import { type SiteState, storageFree } from './siteState';
+import { type SiteState, bestMark, partMass, storageFree } from './siteState';
+import { type BusId, hallLevel, hallLevelFor, hallTakes } from './upgrades';
 
 /**
  * The Spacecraft the player designs in the Mission Designer: one option per slot.
@@ -73,14 +74,35 @@ export function isUnlocked(state: Pick<SiteState, 'history'>, id: OptionId): boo
   return !card || state.history.includes(card);
 }
 
-/** An option's numbers with the Company's tech tree Upgrades applied. */
-export function statsOf(o: SpacecraftOption, tech: readonly TechId[] = []): OptionStats {
-  if (tech.length === 0) return o.stats;
+/** An option's numbers with the Company's tech tree Upgrades and its Part's Mark applied. */
+export function statsOf(o: SpacecraftOption, tech: readonly TechId[] = [], mark = 1): OptionStats {
+  if (tech.length === 0 && mark <= 1) return o.stats;
   const out: OptionStats = { ...o.stats };
   for (const stat of ['solarW', 'sendPerDay', 'batteryWh', 'powerUseW'] as Boosted[]) {
     if (out[stat] !== undefined) out[stat] = out[stat]! * boost(tech, stat);
   }
+  if (out.powerUseW !== undefined) out.powerUseW *= 1 - MARK_STEP.lessPower * (mark - 1);
+  if (out.solarW !== undefined) out.solarW *= 1 + MARK_STEP.moreSolar * (mark - 1);
   return out;
+}
+
+/**
+ * The Mark of the Part in each slot: a Part's Mark is the level of the Factory that made it.
+ * Missing slots are Mk 1 (options with no Part, and Parts bought on the Market).
+ */
+export type Marks = Partial<Record<Slot, number>>;
+
+/** The Marks a Spacecraft would get if it shipped now: the best of each Part in the Warehouse. */
+export function marksFor(state: SiteState, design: Design): Marks {
+  const marks: Marks = {};
+  for (const slot of SLOTS) {
+    const part = design[slot] ? OPTIONS[design[slot]!].part : null;
+    if (part) {
+      const mark = bestMark(state, part);
+      if (mark > 1) marks[slot] = mark;
+    }
+  }
+  return marks;
 }
 
 /** The options for a slot, in menu order. */
@@ -113,8 +135,8 @@ function picked(design: Design): SpacecraftOption[] {
   });
 }
 
-const sum = (options: SpacecraftOption[], stat: keyof OptionStats, tech: readonly TechId[] = []) =>
-  options.reduce((total, o) => total + (statsOf(o, tech)[stat] ?? 0), 0);
+const sum = (options: SpacecraftOption[], stat: keyof OptionStats, tech: readonly TechId[] = [], marks: Marks = {}) =>
+  options.reduce((total, o) => total + (statsOf(o, tech, marks[o.slot])[stat] ?? 0), 0);
 
 export function emptySlots(design: Design): Slot[] {
   return SLOTS.filter((slot) => design[slot] === null);
@@ -125,9 +147,9 @@ export function partsNeeded(design: Design): Part[] {
   return picked(design).flatMap((o) => (o.part ? [o.part] : []));
 }
 
-/** Total Spacecraft mass in kilograms: the Bus plus everything on it. */
-export function spacecraftMass(design: Design): number {
-  return partsNeeded(design).reduce((kg, p) => kg + RECIPES[p].massKg, 0);
+/** Total Spacecraft mass in kilograms: the Bus plus everything on it. Better Marks are lighter. */
+export function spacecraftMass(design: Design, marks: Marks = {}): number {
+  return picked(design).reduce((kg, o) => kg + (o.part ? partMass(o.part, marks[o.slot]) : 0), 0);
 }
 
 /** Every slot is filled. */
@@ -136,10 +158,10 @@ export function isComplete(design: Design): boolean {
 }
 
 /** Kilograms of Parts carried by the Bus (everything except the Bus itself). */
-export function carriedMass(design: Design): number {
+export function carriedMass(design: Design, marks: Marks = {}): number {
   return picked(design)
     .filter((o) => o.slot !== 'bus' && o.part)
-    .reduce((kg, o) => kg + RECIPES[o.part!].massKg, 0);
+    .reduce((kg, o) => kg + partMass(o.part!, marks[o.slot]), 0);
 }
 
 /** Parts the design needs that the Warehouse doesn't have. */
@@ -223,11 +245,15 @@ export function missionGoal(state: SiteState): MissionGoal {
 // ---- How the Spacecraft works in flight ----
 
 /** Power over a Mission: watts used, watts from sunlight on average, energy stored, and days it lasts. */
-export function powerOf(design: Design, tech: readonly TechId[] = []): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
+export function powerOf(
+  design: Design,
+  tech: readonly TechId[] = [],
+  marks: Marks = {},
+): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
   const options = picked(design);
-  const powerUseW = sum(options, 'powerUseW', tech);
-  const sunW = sum(options, 'solarW', tech) * SUNLIT_SHARE;
-  const batteryWh = sum(options, 'batteryWh', tech);
+  const powerUseW = sum(options, 'powerUseW', tech, marks);
+  const sunW = sum(options, 'solarW', tech, marks) * SUNLIT_SHARE;
+  const batteryWh = sum(options, 'batteryWh', tech, marks);
   const drainW = powerUseW - sunW;
   return { powerUseW, sunW, batteryWh, lastsDays: drainW > 0 ? batteryWh / drainW / 24 : Infinity };
 }
@@ -242,6 +268,16 @@ export function dataOf(design: Design, tech: readonly TechId[] = []): { dataPerD
 export function hasRightPayload(design: Design, payload: PayloadKind | null): boolean {
   const p = design.payload ? OPTIONS[design.payload] : null;
   return !!p && (payload === null || p.payload === payload);
+}
+
+/** The Assembly Hall level the design's Bus needs, or 0 with no Bus. */
+export function hallNeeded(design: Design): number {
+  return design.bus ? hallLevelFor(design.bus as BusId) : 0;
+}
+
+/** Can the Company's Assembly Hall put this design together? True while there is no Bus yet. */
+export function hallFits(state: Pick<SiteState, 'assemblyHall'>, design: Design): boolean {
+  return !design.bus || hallTakes(state, design.bus as BusId);
 }
 
 /** Game days to put the Spacecraft together, set by its Bus. */
@@ -271,6 +307,7 @@ export interface Gauge {
 export type DesignProblem =
   | { kind: 'tooHeavy'; overKg: number; bigger: LaunchVehicleId | null }
   | { kind: 'busFull'; bus: OptionId; carriesKg: number; partsKg: number }
+  | { kind: 'hallTooSmall'; bus: OptionId; need: number; level: number }
   | { kind: 'powerShort'; lastsDays: number; needDays: number }
   | { kind: 'money'; short: number }
   | { kind: 'wrongPayload'; payload: PayloadKind }
@@ -281,6 +318,8 @@ export interface DesignCheck {
   goal: MissionGoal;
   gauges: Record<Resource, Gauge>;
   problems: DesignProblem[];
+  /** The Marks of the Parts it would take from the Warehouse. */
+  marks: Marks;
   /** Watts used all the time. */
   powerUseW: number;
   /** Days the Power lasts (Infinity when sunlight alone covers it). */
@@ -288,7 +327,7 @@ export interface DesignCheck {
   dataPerDay: number;
   sendPerDay: number;
   buildDays: number;
-  /** Every slot filled and nothing short. */
+  /** Every slot filled, nothing short, and the Assembly Hall can put it together. */
   ready: boolean;
 }
 
@@ -305,7 +344,8 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   const problems: DesignProblem[] = [];
 
   // Mass: the whole Spacecraft against the Launch Vehicle, and the Parts against what the Bus can carry.
-  const mass = spacecraftMass(design);
+  const marks = marksFor(state, design);
+  const mass = spacecraftMass(design, marks);
   const massGauge = gauge(mass, goal.liftKg, 'max');
   if (massGauge.status === 'short') {
     // A Launch Vehicle the Company can book that would lift it, if there is one.
@@ -314,16 +354,19 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   }
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
-  const partsKg = carriedMass(design);
+  const partsKg = carriedMass(design, marks);
   if (bus && partsKg > carriesKg) {
     problems.push({ kind: 'busFull', bus, carriesKg, partsKg });
     massGauge.status = 'short';
   }
+  // The Assembly Hall must be big enough for the Bus.
+  const hallOk = hallFits(state, design);
+  if (bus && !hallOk) problems.push({ kind: 'hallTooSmall', bus, need: hallNeeded(design), level: hallLevel(state) });
 
   // Power: energy stored plus sunlight, against what the Spacecraft uses over the Mission.
   const hours = goal.missionDays * 24;
   const tech = state.research.tech;
-  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design, tech);
+  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design, tech, marks);
   const powerGauge = gauge(batteryWh + sunW * hours, powerUseW * hours, 'min', empty('power', 'battery'));
   if (powerGauge.status === 'short') problems.push({ kind: 'powerShort', lastsDays, needDays: goal.missionDays });
 
@@ -357,6 +400,6 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
     communications: commsGauge,
     time: timeGauge,
   };
-  const ready = isComplete(design) && RESOURCES.every((r) => gauges[r].status === 'ok');
-  return { goal, gauges, problems, powerUseW, lastsDays, dataPerDay, sendPerDay, buildDays, ready };
+  const ready = isComplete(design) && hallOk && RESOURCES.every((r) => gauges[r].status === 'ok');
+  return { goal, gauges, problems, marks, powerUseW, lastsDays, dataPerDay, sendPerDay, buildDays, ready };
 }

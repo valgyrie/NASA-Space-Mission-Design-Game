@@ -38,8 +38,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Factories: Metal Works, Electronics Lab, Solar Fab, Battery Plant, detailed models that move while working
 - [x] Warehouse: storage by mass, shown in the top bar
 - [x] Research Lab (ticket 14)
-- [ ] Assembly Hall, Ground Station, HQ
-- [ ] Building Upgrades (levels)
+- [x] Assembly Hall (ticket 15)
+- [ ] Ground Station, HQ
+- [x] Building Upgrades (levels): output, storage, research pace, Part Marks, biggest Bus (ticket 15)
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
 - [x] Shipping (money + days)
 - [x] Watch the Shipping: Spacecraft assembled on a truck at a dock, the truck drives off, camera can follow; Mission tracker with the dates to come

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
-import { type BuildingKind, isFactory } from '../economy/part';
+import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { type Land, SITE_SIZE, type Site, landOf, tileAt } from '../site/site';
 import {
@@ -22,7 +22,8 @@ import {
   hazeFor,
   polarFromElevation,
 } from './camera';
-import { buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
+import { buildAssemblyHall, buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
+import { buildCrane, buildLevelSign } from './buildingParts';
 import { buildMine } from './mineMesh';
 import type { Design } from '../game/spacecraft';
 import { type ShippingRoute, shippingRoute } from './shippingRoute';
@@ -393,7 +394,7 @@ export class World {
   }
 
   /** Put a building model on tile (x, z). A Mine needs the Raw Material it digs, for its ore piles. */
-  addBuilding(kind: BuildingKind, x: number, z: number, material?: RawMaterial): void {
+  addBuilding(kind: SiteBuildingKind, x: number, z: number, material?: RawMaterial): void {
     if (!this.site) return;
     const model =
       kind === 'mine'
@@ -402,7 +403,9 @@ export class World {
           ? buildFactory(kind)
           : kind === 'researchLab'
             ? buildResearchLab()
-            : buildWarehouse();
+            : kind === 'assemblyHall'
+              ? buildAssemblyHall()
+              : buildWarehouse();
     const c = tileCentre(this.site, x, z);
     model.position.set(c.x, (tileAt(this.site, x, z)?.level ?? 0) * STEP, c.z);
     model.userData.tile = { x, z };
@@ -421,10 +424,39 @@ export class World {
     if (smoke) smoke.visible = on;
   }
 
-  /** Move the parts of working buildings (see `buildingParts.ts`), by how much game time passed. */
+  /**
+   * Show a building's level (a sign with one star per level) and, while it is upgraded, a tower crane beside it.
+   * Cheap to call every frame: it only rebuilds when something changed.
+   */
+  setLevel(x: number, z: number, level: number, upgrading: boolean): void {
+    const model = this.buildingAt.get(`${x},${z}`);
+    if (!model) return;
+    if (model.userData.level !== level) {
+      model.userData.level = level;
+      const old = model.getObjectByName('level');
+      if (old) model.remove(old);
+      const sign = buildLevelSign(level);
+      sign.position.set(-0.43, 0, 0.43);
+      model.add(sign);
+    }
+    if (model.userData.upgrading !== upgrading) {
+      model.userData.upgrading = upgrading;
+      const old = model.getObjectByName('crane');
+      if (old) model.remove(old);
+      if (upgrading) {
+        const crane = buildCrane();
+        crane.position.set(-0.4, 0, -0.4);
+        model.add(crane);
+      }
+    }
+  }
+
+  /** Move the parts of working buildings (see `buildingParts.ts`), by how much game time passed. Cranes always turn. */
   animateBuildings(gameSeconds: number): void {
     if (gameSeconds === 0) return;
     for (const model of this.buildingAt.values()) {
+      const crane = model.userData.upgrading ? model.getObjectByName('crane')?.getObjectByName('craneJib') : undefined;
+      if (crane) crane.rotation.y += gameSeconds * (crane.userData.speed as number);
       if (!model.userData.working) continue;
       const clock = (model.userData.clock = ((model.userData.clock as number | undefined) ?? 0) + gameSeconds);
       model.traverse((o) => {

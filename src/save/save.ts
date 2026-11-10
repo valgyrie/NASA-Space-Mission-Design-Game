@@ -4,7 +4,7 @@ import { ANOMALY_KINDS } from '../game/anomalies';
 import { CONTRACT_IDS, type ContractId } from '../game/contracts';
 import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCardFor } from '../game/history';
 import { TECH_IDS, newResearch } from '../game/research';
-import { type SiteState, newSiteState } from '../game/siteState';
+import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
@@ -12,7 +12,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 11;
+export const SAVE_VERSION = 12;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -38,13 +38,30 @@ const isTile = (b: unknown): boolean => {
   return isNumber(t?.x) && isNumber(t?.z);
 };
 
+/** A building: its tile, level and the Upgrade under way. */
+const isBuilding = (b: unknown): boolean => {
+  const l = b as { level?: unknown; upgradeDay?: unknown } | null;
+  return isTile(b) && isNumber(l!.level) && l!.level >= 1 && (l!.upgradeDay === null || isNumber(l!.upgradeDay));
+};
+
+const isBetterParts = (v: unknown): boolean =>
+  typeof v === 'object' &&
+  v !== null &&
+  PARTS.every((p) => {
+    const counts = (v as Record<string, unknown>)[p];
+    return Array.isArray(counts) && counts.every(isNumber);
+  });
+
+const isMarks = (v: unknown): boolean =>
+  typeof v === 'object' && v !== null && Object.entries(v).every(([slot, m]) => isOneOf(slot, SLOTS) && isNumber(m));
+
 const isCounts = (v: unknown, keys: readonly string[]): boolean =>
   typeof v === 'object' && v !== null && keys.every((k) => isNumber((v as Record<string, unknown>)[k]));
 
 function isFactory(value: unknown): boolean {
   const f = value as Partial<SiteState['factories'][number]> | null;
   return (
-    isTile(f) &&
+    isBuilding(f) &&
     (FACTORY_KINDS as readonly unknown[]).includes(f!.kind) &&
     (PARTS as readonly unknown[]).includes(f!.making) &&
     (f!.progress === null || isNumber(f!.progress))
@@ -76,6 +93,7 @@ function isMission(value: unknown): boolean {
     isOneOf(m.site, LAUNCH_SITE_IDS) &&
     Array.isArray(m.tech) &&
     m.tech.every((id) => isOneOf(id, TECH_IDS)) &&
+    isMarks(m.marks) &&
     isNumber(m.startDay) &&
     isNumber(m.shipDay) &&
     isNumber(m.readyDay)
@@ -138,15 +156,17 @@ function isSiteState(value: unknown): value is SiteState {
     isNumber(v.money) &&
     isNumber(v.day) &&
     Array.isArray(v.mines) &&
-    v.mines.every(isTile) &&
+    v.mines.every(isBuilding) &&
     Array.isArray(v.factories) &&
     v.factories.every(isFactory) &&
     Array.isArray(v.warehouses) &&
-    v.warehouses.every(isTile) &&
+    v.warehouses.every(isBuilding) &&
     Array.isArray(v.labs) &&
-    v.labs.every(isTile) &&
+    v.labs.every(isBuilding) &&
+    (v.assemblyHall === null || isBuilding(v.assemblyHall)) &&
     isCounts(v.stock, RAW_MATERIALS) &&
     isCounts(v.parts, PARTS) &&
+    isBetterParts(v.betterParts) &&
     Array.isArray(v.contracts) &&
     v.contracts.every(isAcceptedContract) &&
     Array.isArray(v.completed) &&
@@ -212,6 +232,8 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Version 9 had no History Archive, Mission Patches or tutorial: they are worked out from its Contracts and reports.
  * Version 10 had no Research Labs, Research Points or Launch Vehicle choice, and no Vanguard 1 card: a Company that
  * had done Explorer 1 gets the card (and so Solar Cells).
+ * Version 11 had no building levels, Assembly Hall or Part Marks: every building is level 1, every Part Mk 1,
+ * and the Assembly Hall is placed when the Site is shown.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -254,6 +276,26 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     if (done && Array.isArray(history) && !history.includes('vanguard1')) history.push('vanguard1');
     const mission = old.mission && typeof old.mission === 'object' ? { ...old.mission, tech: [] } : old.mission;
     v = { ...v, version: 11, state: { ...old, history, mission, labs: [], research: newResearch(), vehicle: 'juno1' } } as typeof v;
+  }
+  if (v?.version === 11) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const levelled = (list: unknown) =>
+      Array.isArray(list) ? list.map((b: object) => ({ ...b, level: 1, upgradeDay: null })) : list;
+    const mission = old.mission && typeof old.mission === 'object' ? { ...old.mission, marks: {} } : old.mission;
+    v = {
+      ...v,
+      version: 12,
+      state: {
+        ...old,
+        mines: levelled(old.mines),
+        factories: levelled(old.factories),
+        warehouses: levelled(old.warehouses),
+        labs: levelled(old.labs),
+        assemblyHall: null,
+        betterParts: noBetterParts(),
+        mission,
+      },
+    } as typeof v;
   }
   return v;
 }

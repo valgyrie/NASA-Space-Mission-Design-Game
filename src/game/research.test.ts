@@ -12,9 +12,10 @@ const SEED = 'K7QXM2';
 const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'radiationDetector'];
 const TIROS: OptionId[] = ['mediumBus', 'solarCells', 'largeBattery', 'simpleAntenna', 'spin', 'tvCamera'];
 
-/** A Company that has flown Explorer 1 with every Part in stock. */
+/** A Company that has flown Explorer 1 with every Part in stock, and upgraded its Assembly Hall for a Medium Bus. */
 function afterExplorer(): SiteState {
   const state = newSiteState();
+  state.assemblyHall = { x: 0, z: 0, level: 2, upgradeDay: null };
   acceptContract(state, 'explorer1');
   for (const id of EXPLORER) choose(state.design, id);
   for (const p of partsNeeded(state.design)) state.parts[p] += 1;
@@ -111,11 +112,11 @@ describe('Research', () => {
     const state = afterExplorer();
     state.reports[0]!.anomaly = null;
     state.day = state.reports[0]!.launchDay + 30;
-    state.labs.push({ x: 1, z: 1 });
+    state.labs.push({ x: 1, z: 1, level: 1, upgradeDay: null });
     runLabs(state, 4);
     expect(state.research.processedKb).toBeCloseTo(4 * LAB_KB_PER_DAY, 6);
     expect(pointsEarned(state)).toBe(Math.floor((4 * LAB_KB_PER_DAY) / KB_PER_RESEARCH_POINT));
-    state.labs.push({ x: 2, z: 1 });
+    state.labs.push({ x: 2, z: 1, level: 1, upgradeDay: null });
     runLabs(state, 100);
     expect(state.research.processedKb).toBeCloseTo(600, 6);
     expect(researchPoints(state)).toBe(6);

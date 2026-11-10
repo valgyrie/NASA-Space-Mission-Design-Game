@@ -1,5 +1,6 @@
 import { type TradeResult, buy, buyPrice } from '../game/market';
-import type { SiteState } from '../game/siteState';
+import { type SiteState, bestMark, partMass, partsByMark } from '../game/siteState';
+import { type BusId, hallLevelFor, hallTakes } from '../game/upgrades';
 import {
   type DesignCheck,
   type DesignProblem,
@@ -24,7 +25,7 @@ import type { TechId } from '../game/research';
 import { makeLaunchPlanner } from './launchPlanner';
 import { makeTestRunScreen } from './testRun';
 import { testRunFor } from '../game/mission';
-import { RECIPES } from '../game/balance';
+import type { Part } from '../economy/part';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
 import { formatDecimal, formatMoney, formatNumber } from './format';
@@ -52,11 +53,15 @@ export function optionName(o: SpacecraftOption): string {
   return o.part ? t(`part.${o.part}`) : t(`option.${o.id as 'batteriesOnly' | 'spin'}`);
 }
 
-/** "3 kg · carries 9 kg": mass and the one number that matters for the option, with tech tree Upgrades applied. */
-export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = []): string {
-  const s = statsOf(o, tech);
+/**
+ * "3 kg · carries 9 kg": mass and the one number that matters for the option, with tech tree Upgrades and the
+ * Part's Mark applied. Better Marks are named first ("Mk 2 · 2.6 kg · ...").
+ */
+export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], mark = 1): string {
+  const s = statsOf(o, tech, mark);
   const bits: string[] = [];
-  if (o.part) bits.push(t('stat.mass', { kg: formatDecimal(RECIPES[o.part].massKg) }));
+  if (o.part && mark > 1) bits.push(t('stat.mark', { mark }));
+  if (o.part) bits.push(t('stat.mass', { kg: formatDecimal(partMass(o.part, mark)) }));
   if (s.carriesKg) bits.push(t('stat.carries', { kg: formatNumber(s.carriesKg) }));
   if (s.batteryWh) bits.push(t('stat.battery', { wh: formatNumber(s.batteryWh) }));
   if (s.solarW) bits.push(t('stat.solar', { w: formatDecimal(s.solarW) }));
@@ -65,6 +70,19 @@ export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = []): 
   if (s.powerUseW) bits.push(t('stat.uses', { w: formatDecimal(s.powerUseW) }));
   if (!o.part) bits.push(t(`option.${o.id as 'batteriesOnly' | 'spin'}.about`));
   return bits.join(t('stat.join'));
+}
+
+/** "3", or "3 (1 Mk 2, 2 Mk 1)" when some are better than Mk 1. Best Mark first. */
+export function stockText(state: SiteState, part: Part): string {
+  const counts = partsByMark(state, part);
+  if (counts.every((n, i) => i === 0 || n === 0)) return formatNumber(state.parts[part]);
+  const marks = counts
+    .map((count, i) => ({ count, mark: i + 1 }))
+    .filter(({ count }) => count > 0)
+    .reverse()
+    .map((m) => t('mark.count', m))
+    .join(t('stat.list'));
+  return `${formatNumber(state.parts[part])} (${marks})`;
 }
 
 /** The words under each bar. */
@@ -99,6 +117,8 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
       return p.bigger
         ? t('problem.tooHeavyBigger', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`), bigger: t(`launchVehicle.${p.bigger}`) })
         : t('problem.tooHeavy', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`) });
+    case 'hallTooSmall':
+      return t('problem.hallTooSmall', { bus: t(`part.${p.bus as BusId}`), need: p.need, level: p.level });
     case 'busFull':
       return t('problem.busFull', {
         bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`),
@@ -160,7 +180,13 @@ export function showMissionDesigner(
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
   const slotRows = new Map<Slot, { options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
-  const optionUi: { o: SpacecraftOption; b: HTMLButtonElement; stats: HTMLElement; locked: HTMLElement | null }[] = [];
+  const optionUi: {
+    o: SpacecraftOption;
+    b: HTMLButtonElement;
+    stats: HTMLElement;
+    locked: HTMLElement | null;
+    hall: HTMLElement | null;
+  }[] = [];
   for (const slot of SLOTS) {
     const row = el('div', 'slot');
     const label = el('div', 'slot-head');
@@ -175,7 +201,10 @@ export function showMissionDesigner(
       const card = UNLOCKED_BY[o.id];
       const locked = card ? el('span', 'option-locked', t('designer.locked', { card: t(`history.${card}.title`) })) : null;
       if (locked) b.append(locked);
-      optionUi.push({ o, b, stats, locked });
+      // A Bus the Assembly Hall can't take yet can still be picked and tested, but not shipped.
+      const hall = slot === 'bus' ? el('span', 'option-locked', t('designer.needsHall', { level: hallLevelFor(o.id as BusId) })) : null;
+      if (hall) b.append(hall);
+      optionUi.push({ o, b, stats, locked, hall });
       b.addEventListener('click', () => {
         if (choose(state.design, o.id, state)) changed();
       });
@@ -277,11 +306,12 @@ export function showMissionDesigner(
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
 
-    for (const { o, b, stats, locked } of optionUi) {
+    for (const { o, b, stats, locked, hall } of optionUi) {
       const open = isUnlocked(state, o.id);
       b.disabled = !open;
       if (locked) locked.hidden = open;
-      stats.textContent = optionStats(o, state.research.tech);
+      if (hall) hall.hidden = hallTakes(state, o.id as BusId);
+      stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1);
     }
     for (const slot of SLOTS) {
       const { options, stock } = slotRows.get(slot)!;
@@ -297,7 +327,7 @@ export function showMissionDesigner(
       if (!part) {
         stock.append(el('span', 'stock-ok', t('designer.noPart')));
       } else if (state.parts[part] > 0) {
-        stock.append(el('span', 'stock-ok', t('designer.inStock', { count: state.parts[part] })));
+        stock.append(el('span', 'stock-ok', t('designer.inStock', { count: stockText(state, part) })));
       } else {
         stock.append(el('span', 'stock-missing', t('designer.notInStock')));
         const b = button('small trade', t('designer.buy', { price: formatMoney(buyPrice(part)) }));

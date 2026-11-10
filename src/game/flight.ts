@@ -30,8 +30,11 @@ export function drawSpread(rng: Rng, share: Spread = PART_SPREAD): Spread {
   };
 }
 
-/** What flies: the Contract, the design, the Launch Vehicle and the tech tree Upgrades its Parts were built with. */
-export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'>;
+/**
+ * What flies: the Contract, the design, the Launch Vehicle, and the tech tree Upgrades and Marks its Parts
+ * were built with (all Mk 1 when `marks` is left out).
+ */
+export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks'>>;
 
 /** One flight. The day lists hold the value at the start of each Mission day, 0 to `missionDays`. */
 export interface Flight {
@@ -52,9 +55,10 @@ export interface Flight {
 export function fly(plan: FlightPlan, launchDay: number, deadline: number | null, spread: Spread = AS_LABELLED): Flight {
   const { orbit, payload, missionDays } = contractNeeds(CONTRACTS[plan.contract]);
   const design = plan.design;
-  const massKg = spacecraftMass(design);
+  const marks = plan.marks ?? {};
+  const massKg = spacecraftMass(design, marks);
   const liftKg = LAUNCH_VEHICLES[plan.vehicle].liftKg[orbit];
-  const power = powerOf(design, plan.tech);
+  const power = powerOf(design, plan.tech, marks);
   const data = dataOf(design, plan.tech);
   const rightPayload = hasRightPayload(design, payload);
 
@@ -134,7 +138,9 @@ export function testRun(
   { runs = TEST_RUNS, share = PART_SPREAD }: { runs?: number; share?: Spread } = {},
 ): TestRun {
   const design = SLOTS.map((s) => plan.design[s] ?? '-').join(',');
-  const rng = makeRng(hashText(`${seed}|test|${plan.contract}|${plan.vehicle}|${design}|${plan.tech.join(',')}`));
+  // Better Marks change the runs too; an all-Mk 1 design keeps the runs it always had.
+  const marks = SLOTS.some((s) => (plan.marks?.[s] ?? 1) > 1) ? `|${SLOTS.map((s) => plan.marks?.[s] ?? 1).join('')}` : '';
+  const rng = makeRng(hashText(`${seed}|test|${plan.contract}|${plan.vehicle}|${design}|${plan.tech.join(',')}${marks}`));
   const asLabelled = fly(plan, launchDay, deadline);
   const missed: Record<Finding['kind'], number> = { orbit: 0, payload: 0, power: 0, comms: 0, time: 0 };
   const batteryLowWh = [...asLabelled.batteryWh];

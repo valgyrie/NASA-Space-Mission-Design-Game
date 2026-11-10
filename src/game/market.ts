@@ -1,7 +1,7 @@
 import { PARTS, type Part } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { MARKET_BUY_FACTOR, MARKET_LOT_KG, MARKET_SELL_FACTOR, MATERIAL_VALUE, RECIPES } from './balance';
-import { type SiteState, storageFree } from './siteState';
+import { type SiteState, addPart, storageFree, takePart } from './siteState';
 
 /** Anything the Market trades: a Raw Material (by the lot) or a Part (one at a time). */
 export type MarketItem = RawMaterial | Part;
@@ -60,7 +60,7 @@ export function buy(state: SiteState, item: MarketItem): TradeResult {
   const check = checkBuy(state, item);
   if (!check.ok) return check;
   state.money -= buyPrice(item);
-  if (isPart(item)) state.parts[item] += 1;
+  if (isPart(item)) addPart(state, item, 1);
   else state.stock[item] += MARKET_LOT_KG;
   return check;
 }
@@ -69,12 +69,12 @@ export function checkSell(state: SiteState, item: MarketItem): TradeResult {
   return lotsInStock(state, item) >= 1 ? { ok: true } : { ok: false, problem: 'none' };
 }
 
-/** Sell one lot from storage. */
+/** Sell one lot from storage. Parts go lowest Mark first, so the best stay for Spacecraft. */
 export function sell(state: SiteState, item: MarketItem): TradeResult {
   const check = checkSell(state, item);
   if (!check.ok) return check;
   state.money += sellPrice(item);
-  if (isPart(item)) state.parts[item] -= 1;
+  if (isPart(item)) takePart(state, item, 'worst');
   else state.stock[item] -= MARKET_LOT_KG;
   return check;
 }

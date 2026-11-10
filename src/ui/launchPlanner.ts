@@ -48,6 +48,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
         max: formatNumber(plan.liftKg),
         orbit: t(`orbit.${plan.goal.orbit}`),
       });
+    case 'hallTooSmall':
+      return t('planner.problem.hallTooSmall', { bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`), need: p.need, level: p.level });
     case 'busFull':
       return t('planner.problem.busFull', {
         bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`),

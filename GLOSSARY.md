@@ -74,6 +74,14 @@ _Avoid_: transport, logistics
 **Upgrade**:
 An improvement the Company pays for: raising a building's level (with money and days), or a tech tree item (with Research Points). Either way the Company makes more or better.
 
+**Mark**:
+How good a Part is, written Mk 1, Mk 2, Mk 3: the level of the Factory that made it. A higher Mark is lighter and uses less power. Market Parts are Mk 1.
+_Avoid_: grade, quality, tier
+
+**Assembly Hall**:
+The building that puts a Spacecraft together from its Parts. Every Site starts with one; its level sets the biggest Bus it can take.
+_Avoid_: hangar, workshop
+
 **Research Lab**:
 A building that turns the Data Spacecraft send home into Research Points.
 _Avoid_: lab (alone, it could mean the Electronics Lab)
