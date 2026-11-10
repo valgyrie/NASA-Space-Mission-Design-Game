@@ -7,7 +7,7 @@
 **State:** tickets 01–11, 13 (waits for a person to time the first Launch), 14, 15 and 31 done; local launchers merged. This session (branch `claude/happy-hopper-1jm3ev`) fixed two things the team asked for; no new ticket.
 
 **Just finished: bigger buildings and a smooth Earth.**
-- **Buildings take 3 × 3 tiles** and their models are three times as big, so they show from the whole-Site view. The Site stays 64 × 64 (the team wants it spacious; it still holds hundreds of buildings). Rules: GDD §3 and §5 (Mines, Assembly Hall).
+- **Buildings take 3 × 3 tiles** and their models are three times as big, so they show from the whole-Site view. The Site stays 64 × 64 (the team wants it spacious; it still holds hundreds of buildings). Rules: GDD §4 (the Site) and §5 (Mines, Assembly Hall).
   - A building's `x`, `z` is its middle tile. `FOOTPRINT`, `footprint`, `covers`, `foundationLevel`, `fitBuildings` in `src/game/siteState.ts`; `BUILDING_SCALE` and the foundation block in `src/world/buildingParts.ts`.
   - On a slope a building stands on the highest ground under it, on a foundation. New build problem "edge" (too close to the Site's edge).
   - A Mine only has to touch a Deposit; it digs the one nearest its middle.

@@ -19,4 +19,4 @@
 
 **Notes from tickets 10 and 31:** the flat horizon was seen in testing and left for this pass. The blocky Earth is fixed.
 
-**Building size (2026-11-10, asked for by the team):** buildings were one tile and too small to see from the whole-Site view. They now take 3 × 3 tiles (GDD §3) and the models are three times as big; the Site stays 64 × 64. When checking "buildings look right", check the whole-Site view too.
+**Building size (2026-11-10, asked for by the team):** buildings were one tile and too small to see from the whole-Site view. They now take 3 × 3 tiles (GDD §4) and the models are three times as big; the Site stays 64 × 64. When checking "buildings look right", check the whole-Site view too.
