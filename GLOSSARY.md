@@ -184,6 +184,14 @@ _Avoid_: map, radar, tracker (that is the Mission tracker)
 **Launch Insurance**:
 A payment before Launch that returns most of the Mission's cost if it fails.
 
+**Reliability**:
+How often a Launch Vehicle gets a Spacecraft light enough for it into orbit, as a share of Launches. Each Launch Vehicle also has its real record of flights that worked.
+_Avoid_: success rate (that is the Test Run's estimated success)
+
+**Startup grant**:
+Money given once per game when the Company runs dangerously low, so a new Company can't go broke.
+_Avoid_: bailout, loan
+
 **Ground Station**:
 A building with an antenna that talks to Spacecraft; more and bigger ones improve Communications.
 _Avoid_: radar, dish (alone)
@@ -205,12 +213,16 @@ _Avoid_: XP, science (as currency)
 The Upgrades bought with Research Points, a few per Era, each making one kind of Part work better (e.g. better solar cells).
 _Avoid_: skill tree, research tree
 
+**Failure story**:
+A Real History card about a real failure, shown after the Company's first failed Mission, such as Vanguard TV3.
+_Avoid_: game over, defeat card
+
 **Side story**:
 A Real History card about a real event next to a Milestone, shown after the Milestone's "after" card, such as Vanguard 1 after Explorer 1.
 _Avoid_: bonus card
 
 **Real History card**:
-A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next), and sometimes a side story.
+A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next), and sometimes a side story. A failure story is one too.
 _Avoid_: lore, fun fact
 
 **History Archive**:

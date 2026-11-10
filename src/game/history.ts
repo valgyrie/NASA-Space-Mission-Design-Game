@@ -10,14 +10,17 @@ import type { SiteState } from './siteState';
  * Card text and photo credits live in strings.ts under `history.<id>.*`; facts in docs/research/milestones.md.
  */
 
-export const HISTORY_CARD_IDS = ['explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After'] as const;
+export const HISTORY_CARD_IDS = ['explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After', 'vanguardTV3'] as const;
 export type HistoryCardId = (typeof HISTORY_CARD_IDS)[number];
 
 export interface HistoryCard {
   id: HistoryCardId;
   contract: ContractId;
-  /** Before the Milestone, after it, or a side story unlocked after it (and after its "after" card). */
-  when: 'before' | 'after' | 'side';
+  /**
+   * Before the Milestone, after it, a side story unlocked after it (and after its "after" card), or a failure
+   * story, shown after the Company's first failed Mission.
+   */
+  when: 'before' | 'after' | 'side' | 'failure';
   /** The real year it happened, shown on the card. */
   year: number;
   /** A real NASA photo in public/history/, credited on the card. */
@@ -72,6 +75,17 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
     image: 'history/hurricane-gonzalo.jpg',
     learnMore: 'https://science.nasa.gov/mission/tiros/',
   },
+  // Failure story, after the Company's first failed Mission: Vanguard TV3 exploded on its pad on 6 December 1957.
+  // No NASA photo of the explosion was found; this is a Vanguard rocket on its Cape Canaveral pad in March 1958,
+  // waiting to launch Vanguard 1. Photo: NASA Image and Video Library KSC-58PD-06149A (NASA).
+  vanguardTV3: {
+    id: 'vanguardTV3',
+    contract: 'explorer1',
+    when: 'failure',
+    year: 1957,
+    image: 'history/vanguard-rocket.jpg',
+    learnMore: 'https://www.nasa.gov/history/60-years-ago-explorer-1-becomes-americas-first-satellite/',
+  },
 };
 
 /** The Real History card a Contract shows before or after, if it has one (Milestones do). */
@@ -108,9 +122,15 @@ export interface HistoryAward {
   cards: HistoryCardId[];
 }
 
-/** A successful Mission earns its Mission Patch and unlocks its "after" card and side stories. A failed one earns nothing. */
+/** The failure story shown after the Company's first failed Mission. */
+export const FAILURE_STORY: HistoryCardId = 'vanguardTV3';
+
+/**
+ * A successful Mission earns its Mission Patch and unlocks its "after" card and side stories. The first failed
+ * one unlocks the failure story: failure is part of history.
+ */
 export function awardMission(state: SiteState, report: MissionReport): HistoryAward {
-  if (!report.success) return { patch: null, cards: [] };
+  if (!report.success) return { patch: null, cards: unlockCard(state, FAILURE_STORY) ? [FAILURE_STORY] : [] };
   const patch: Patch = { contract: report.contract, day: report.launchDay };
   state.patches.push(patch);
   return { patch, cards: cardsAfter(report.contract).filter((id) => unlockCard(state, id)) };

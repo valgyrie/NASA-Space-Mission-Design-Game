@@ -23,7 +23,7 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 const LEGACY = { ...JPL, start: 'legacy' as const };
 const state = { ...newSiteState(LEGACY), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 13, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: 14, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -366,6 +366,18 @@ describe('local save', () => {
     expect(loaded.version).toBe(SAVE_VERSION);
     expect(loaded.state.place).toEqual({ ...JPL, start: 'legacy' });
     expect(loaded.state.launchSite).toBe('capeCanaveral');
+  });
+
+  it('upgrades a version 13 save: no Launch Insurance, nothing reopened, the startup grant still to come', () => {
+    const storage = memoryStorage();
+    const { reopened: _r, grantDay: _g, ...v13State } = game.state;
+    const report = { contract: 'explorer1', vehicle: 'juno1', site: 'capeCanaveral', launchDay: 40, success: false, reward: 0, findings: [], design: null, anomaly: null };
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...game, version: 13, state: { ...v13State, reports: [report] } }));
+    const loaded = loadGame(storage)!;
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.state.reopened).toEqual([]);
+    expect(loaded.state.grantDay).toBeNull();
+    expect(loaded.state.reports[0]!.insurancePaid).toBe(0);
   });
 
   it('keeps a real start place', () => {

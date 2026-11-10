@@ -73,7 +73,10 @@ describe('TIROS-1 Milestone', () => {
     state.research.processedKb = 1_000;
     expect(buyTech(state, 'betterSolarCells')).toEqual({ ok: true });
     expect(powerOf(state.design, state.research.tech).lastsDays).toBe(Infinity);
-    expect(testRunFor(state, SEED, state.design).successPercent).toBe(100);
+    // The design always gets through now; the Thor-Able can still fail (not on the first Launch, but this is the second).
+    const better = testRunFor(state, SEED, state.design);
+    expect(better.designPercent).toBe(100);
+    expect(better.successPercent).toBe(85);
   });
 
   it('flies to success with the Large Battery on Thor-Able', () => {

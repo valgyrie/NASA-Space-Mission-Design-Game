@@ -44,7 +44,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Market (buy/sell Raw Materials and Parts at worse prices)
 - [x] Shipping (money + days)
 - [x] Watch the Shipping: Spacecraft assembled on a truck at a dock, the truck drives off, camera can follow; Mission tracker with the dates to come
-- [ ] Startup grant safety net
+- [x] Startup grant safety net (ticket 17)
 
 ### Missions
 - [x] Contracts board
@@ -52,10 +52,10 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Easy and Advanced Part sets
 - [ ] Launch Vehicle catalogue with mass check (Juno I, Thor-Able and the mass check done; more vehicles come with their Eras)
 - [x] Rideshare priced per kg
-- [ ] Launch site choice, latitude and coast effects (choice and latitude done; coast effect waits for Launch Vehicle failures, ticket 17)
+- [x] Launch site choice, latitude and coast effects (ticket 16; ticket 17: a failed rocket falls into the Atlantic, which is why launch sites are on the coast)
 - [x] Weather from real climate, Scrubs
 - [ ] Launch Window advisor (weather done; Moon and Mars windows with their Eras)
-- [ ] Launch Insurance
+- [x] Launch Insurance (ticket 17: priced from the Test Run's estimated success, pays back 80% of the cost)
 - [x] Test Run (2D) with estimated success %
 - [x] 3D Launch and flight
 - [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
@@ -70,7 +70,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] HQ Upgrade moves to the next Era
 - [ ] Research Points and tech tree (Era 1's four Upgrades done, ticket 14; later Eras add theirs)
 - [x] Real History cards (before and after), History Archive (Explorer 1's; later Milestones add theirs)
-- [ ] Failure stories, retryable Milestones
+- [x] Failure stories, retryable Milestones (ticket 17: Vanguard TV3 card; a missed deadline puts the Milestone back on the board)
 
 ### Free Play and online
 - [ ] Free Play mode with generated Contracts

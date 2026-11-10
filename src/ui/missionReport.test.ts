@@ -36,6 +36,7 @@ function report(anomaly: Partial<Anomaly> | null): MissionReport {
     findings: flight.findings,
     design,
     anomaly: anomaly && { ...base, ...anomaly },
+    insurancePaid: 0,
   };
 }
 

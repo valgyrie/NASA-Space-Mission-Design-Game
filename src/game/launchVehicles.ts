@@ -1,4 +1,4 @@
-import { RIDESHARE_PER_KG, SPIN_LIFT_PER_MS } from './balance';
+import { RIDESHARE_PER_KG, ROCKET_RELIABILITY, SPIN_LIFT_PER_MS } from './balance';
 import type { ContractId, Orbit } from './contracts';
 import type { SiteState } from './siteState';
 
@@ -33,6 +33,10 @@ export interface LaunchVehicle {
   lastStageStays?: boolean;
   /** Bookable only once this Milestone is done; offered from the start when missing. */
   opensAfter?: ContractId;
+  /** Share of Launches it gets a light enough Spacecraft to orbit, in the game. */
+  reliability: number;
+  /** Its real record: flights that worked out of all it made. */
+  record: { worked: number; flights: number };
 }
 
 export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
@@ -52,6 +56,9 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     ],
     coastS: 247,
     lastStageStays: true,
+    // 6 flights in 1958: Explorer 1, 3 and 4 reached orbit; Explorer 2, Explorer 5 and Beacon 1 didn't.
+    reliability: ROCKET_RELIABILITY.juno1,
+    record: { worked: 3, flights: 6 },
   },
   // Thor-Able: 120 kg to a 640 km orbit; 26.9–27.8 m tall. A Thor first stage (165 s), the Able second stage
   // (AJ10, 115 s) and an Altair solid third stage (38 s). It launched TIROS-1 on 1 April 1960. First flew
@@ -68,6 +75,9 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     ],
     coastS: 10,
     opensAfter: 'explorer1',
+    // 16 flights, 1958–1960, 6 of them failures (three when the Altair third stage didn't fire).
+    reliability: ROCKET_RELIABILITY.thorAble,
+    record: { worked: 10, flights: 16 },
   },
 };
 

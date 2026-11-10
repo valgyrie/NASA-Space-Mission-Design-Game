@@ -1,7 +1,7 @@
 import { type Rng, hashText, makeRng } from '../site/random';
 import { PART_SPREAD, TEST_RUNS } from './balance';
 import { CONTRACTS } from './contracts';
-import { liftFrom } from './launchVehicles';
+import { LAUNCH_VEHICLES, type LaunchVehicleId, liftFrom } from './launchVehicles';
 import type { Finding, Mission } from './mission';
 import { SLOTS, contractNeeds, dataOf, hasRightPayload, powerOf, spacecraftMass } from './spacecraft';
 
@@ -52,7 +52,27 @@ export interface Flight {
   powerOutDay: number | null;
 }
 
-export function fly(plan: FlightPlan, launchDay: number, deadline: number | null, spread: Spread = AS_LABELLED): Flight {
+/**
+ * Whether the rocket fails this time, and if so which stage: null when it works. Each stage is as likely to be
+ * the one that fails. `reliability` is the share of Launches that work (1: it never fails).
+ */
+export function drawRocket(rng: Rng, vehicle: LaunchVehicleId, reliability: number): number | null {
+  const fails = rng() >= reliability;
+  const stage = 1 + Math.floor(rng() * LAUNCH_VEHICLES[vehicle].stages.length);
+  return fails ? stage : null;
+}
+
+/**
+ * Fly the design once. `failedStage` is the rocket stage that failed (from `drawRocket`), or null when the
+ * rocket worked; a Spacecraft too heavy for the rocket fails on that alone.
+ */
+export function fly(
+  plan: FlightPlan,
+  launchDay: number,
+  deadline: number | null,
+  spread: Spread = AS_LABELLED,
+  failedStage: number | null = null,
+): Flight {
   const { orbit, payload, missionDays } = contractNeeds(CONTRACTS[plan.contract]);
   const design = plan.design;
   const marks = plan.marks ?? {};
@@ -61,6 +81,8 @@ export function fly(plan: FlightPlan, launchDay: number, deadline: number | null
   const power = powerOf(design, plan.tech, marks);
   const data = dataOf(design, plan.tech);
   const rightPayload = hasRightPayload(design, payload);
+  const light = massKg <= liftKg + 1e-9;
+  const rocketFailed = light ? failedStage : null;
 
   const batteryWh = power.batteryWh * spread.batteryWh;
   const powerUseW = power.powerUseW * spread.powerUseW;
@@ -72,7 +94,7 @@ export function fly(plan: FlightPlan, launchDay: number, deadline: number | null
 
   const days = Array.from({ length: missionDays + 1 }, (_, d) => d);
   const findings: Finding[] = [
-    { kind: 'orbit', ok: massKg <= liftKg + 1e-9, orbit, vehicle: plan.vehicle, massKg, liftKg },
+    { kind: 'orbit', ok: light && rocketFailed === null, orbit, vehicle: plan.vehicle, massKg, liftKg, failedStage: rocketFailed },
     { kind: 'payload', ok: rightPayload, payload, carried: design.payload },
     {
       kind: 'power',
@@ -97,10 +119,14 @@ export function fly(plan: FlightPlan, launchDay: number, deadline: number | null
   };
 }
 
-/** The real flight: one Spread drawn from the Seed and the Launch day. */
-export function realFlight(seed: string, plan: FlightPlan, launchDay: number, deadline: number | null): Flight {
+/**
+ * The real flight: one Spread drawn from the Seed and the Launch day, and whether the rocket works
+ * (`reliability`: the share of Launches that do; 1 for the first Launch, see `rocketReliability`).
+ */
+export function realFlight(seed: string, plan: FlightPlan, launchDay: number, deadline: number | null, reliability = 1): Flight {
   const rng = makeRng(hashText(`${seed}|flight|${plan.contract}|${launchDay}`));
-  return fly(plan, launchDay, deadline, drawSpread(rng));
+  const rocket = makeRng(hashText(`${seed}|rocket|${plan.contract}|${launchDay}`));
+  return fly(plan, launchDay, deadline, drawSpread(rng), drawRocket(rocket, plan.vehicle, reliability));
 }
 
 // ---- Test Run ----
@@ -109,8 +135,17 @@ export interface TestRun {
   /** The flight with every Part exactly as labelled: what the graphs and the orbit view show. */
   asLabelled: Flight;
   runs: number;
+  /** Runs the design got through, with the rocket working. */
   successes: number;
-  /** Estimated success in whole percent. 0 and 100 only when every run agreed. */
+  /** The Launch Vehicle it flew on, and the share of Launches it works (1 when it can't fail). */
+  vehicle: LaunchVehicleId;
+  reliability: number;
+  /** The design alone: runs it got through, in whole percent. */
+  designPercent: number;
+  /**
+   * Estimated success in whole percent: the design's runs times the rocket's reliability, so a design
+   * change shows its effect without luck in the way. 0 and 100 only when every run agreed.
+   */
   successPercent: number;
   /** In how many runs each requirement was missed. */
   missed: Record<Finding['kind'], number>;
@@ -135,7 +170,7 @@ export function testRun(
   plan: FlightPlan,
   launchDay: number,
   deadline: number | null,
-  { runs = TEST_RUNS, share = PART_SPREAD }: { runs?: number; share?: Spread } = {},
+  { runs = TEST_RUNS, share = PART_SPREAD, reliability = 1 }: { runs?: number; share?: Spread; reliability?: number } = {},
 ): TestRun {
   const design = SLOTS.map((s) => plan.design[s] ?? '-').join(',');
   // Better Marks change the runs too; an all-Mk 1 design keeps the runs it always had.
@@ -155,5 +190,16 @@ export function testRun(
       batteryHighWh[d] = Math.max(batteryHighWh[d]!, wh);
     });
   }
-  return { asLabelled, runs, successes, successPercent: percent(successes, runs), missed, batteryLowWh, batteryHighWh };
+  return {
+    asLabelled,
+    runs,
+    successes,
+    vehicle: plan.vehicle,
+    reliability,
+    designPercent: percent(successes, runs),
+    successPercent: percent(successes * reliability, runs),
+    missed,
+    batteryLowWh,
+    batteryHighWh,
+  };
 }

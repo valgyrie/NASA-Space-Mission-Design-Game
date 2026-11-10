@@ -91,6 +91,7 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
       return { title: t('launch.orbit'), detail: t('launch.orbitDetail', { contract, low: formatNumber(km.low), high: formatNumber(km.high) }) };
     }
     case 'lost':
+      if (seg.stage !== undefined) return { title: t('launch.rocketFailed', { n: formatNumber(seg.stage) }), detail: t('launch.rocketFailedDetail') };
       return { title: t('launch.lost'), detail: t('launch.lostDetail', { vehicle }) };
     case 'mission': {
       const a = report.anomaly;
@@ -317,7 +318,8 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
       if (phase === 'orbit' || phase === 'mission' || phase === 'end') {
         drawOrbit(simpleCanvas, CONTRACTS[result.report.contract].orbitKm, showSeconds / LAP_SECONDS, powered);
       } else {
-        const tPlus = phase === 'lost' ? ascentEnd : Math.max(0, m.value);
+        // A failed stage stops the climb where it failed; too heavy, it falls back from the top.
+        const tPlus = phase === 'lost' ? (m.segment.stage !== undefined ? m.segment.from : ascentEnd) : Math.max(0, m.value);
         drawClimb(simpleCanvas, Math.min(1, tPlus / ascentEnd), stageShares);
       }
     } else {

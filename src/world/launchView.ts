@@ -384,11 +384,18 @@ export class LaunchView {
     this.spin += dt * SPIN_TURNS * Math.PI * 2;
     let shot: Shot;
     if (phase === 'mission' || phase === 'end' || (phase === 'orbit' && m.fraction >= CUT_TO_ORBIT)) shot = 'orbit';
-    else if (phase === 'countdown' || (phase === 'burn' && m.segment.stage === 1) || (phase === 'coast' && m.fraction < CUT_TO_SPACE)) shot = 'pad';
+    else if (
+      phase === 'countdown' ||
+      ((phase === 'burn' || phase === 'lost') && m.segment.stage === 1) ||
+      (phase === 'coast' && m.fraction < CUT_TO_SPACE)
+    )
+      shot = 'pad';
     else shot = 'space';
 
-    if (shot === 'pad') this.drawPad(m.value, dt);
-    else if (shot === 'space') this.drawSpace(phase === 'orbit' || phase === 'lost' ? m.segment.from + m.fraction * m.segment.playS * 2 : m.value, phase === 'lost' ? m.fraction : 0, dt);
+    // A failed stage stops pushing at once; the rocket tips over and falls.
+    const lost = phase === 'lost';
+    if (shot === 'pad') this.drawPad(lost ? m.segment.from : m.value, dt, lost ? m.fraction : 0);
+    else if (shot === 'space') this.drawSpace(phase === 'orbit' || lost ? m.segment.from + m.fraction * m.segment.playS * 2 : m.value, lost ? m.fraction : 0, dt, lost && m.segment.stage !== undefined);
     else this.drawOrbit(dt, powered);
     return shot;
   }
@@ -421,15 +428,18 @@ export class LaunchView {
     }
   }
 
-  private drawPad(t: number, dt: number): void {
+  /** The climb from the pad. `falling` (0–1) tips a rocket whose first stage failed over and drops it. */
+  private drawPad(t: number, dt: number, falling = 0): void {
     const rocket = this.climbing;
     if (!rocket) return;
-    const p = pathAt(this.path, t);
+    const climb = pathAt(this.path, t);
+    // A failed first stage: the rocket tips over and drops; the camera keeps it in view.
+    const p = { ...climb, x: climb.x + falling * climb.y * 0.3, y: climb.y * (1 - 0.5 * falling * falling), lean: climb.lean + falling * 1.4 };
     const alt = p.y;
     rocket.root.position.set(p.x, 1.8 + p.y, 0);
     rocket.root.rotation.z = -p.lean;
     rocket.spinner.rotation.y = this.spin;
-    const burn = this.burning(0, t);
+    const burn = this.burning(0, t) && falling === 0;
     this.flicker(this.flames[0]!, burn, 1 + Math.min(alt / 20_000, 0.8));
 
     // The first stage drops away after it burns out.
@@ -487,12 +497,13 @@ export class LaunchView {
     this.renderer.render(this.pad, this.padCamera);
   }
 
-  private drawSpace(t: number, falling: number, dt: number): void {
+  /** High up: the upper stages fire one after another. `failed`: a stage failed, so no flame burns. */
+  private drawSpace(t: number, falling: number, dt: number, failed = false): void {
     const rocket = this.upper;
     if (!rocket) return;
     rocket.spinner.rotation.y = this.spin;
     for (let s = 1; s < rocket.stages.length; s++) {
-      this.flicker(this.upperFlames[s]!, this.burning(s, t));
+      this.flicker(this.upperFlames[s]!, this.burning(s, t) && !failed);
       const g = rocket.stages[s]!.group;
       const back = this.separation(s, t);
       g.position.y = -back;
@@ -501,7 +512,7 @@ export class LaunchView {
     // Didn't reach orbit: it tips over and falls back towards Earth.
     rocket.root.rotation.z = -Math.PI / 2 - falling * 0.6;
     // Earth slides by underneath, faster while a stage pushes.
-    const pushing = this.stages.some((_, i) => i > 0 && this.burning(i, t));
+    const pushing = !failed && this.stages.some((_, i) => i > 0 && this.burning(i, t));
     this.spaceEarthPivot.rotation.z += dt * (pushing ? 0.004 : 0.0012);
     this.spaceEarth.spin(dt * 0.0005);
     const drift = t * 0.01;

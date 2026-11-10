@@ -257,3 +257,37 @@ export const TECH_TREE = {
   betterBatteries: { era: 1, cost: 5, boost: { batteryWh: 1.25 } },
   lowPowerElectronics: { era: 1, cost: 8, boost: { powerUseW: 0.8 } },
 } as const;
+
+// ---- Risk and failure (ticket 17) ----
+
+/**
+ * How often each Launch Vehicle gets the Spacecraft to orbit, when the Spacecraft is light enough.
+ * Real records (docs/research/launch-vehicles.md): Juno I reached orbit 3 times in 6 (1958); Thor-Able worked
+ * 10 times in 16 (1958–1960). The game fails rockets less often than history did, so the design matters most:
+ * each real failure share is cut to 40% of itself. Game estimates.
+ */
+export const ROCKET_RELIABILITY = {
+  juno1: 0.8,
+  thorAble: 0.85,
+} as const;
+
+/**
+ * Launch Insurance (game estimates). It pays back `payoutShare` of the Rideshare and Shipping if the Mission
+ * fails. The price is the payout times the chance of failure (from the Test Run) times `margin`, never less
+ * than `minShare` of the payout, rounded to $1,000. Below `minSuccess` estimated success nobody will insure it.
+ */
+export const INSURANCE = {
+  payoutShare: 0.8,
+  margin: 1.3,
+  minShare: 0.03,
+  minSuccess: 0.5,
+} as const;
+
+/**
+ * The one-time startup grant (game estimates): when the Company's money falls below `belowMoney` with no
+ * Mission on its way, it gets `amount`, once per game.
+ */
+export const STARTUP_GRANT = {
+  belowMoney: 300_000,
+  amount: 1_000_000,
+} as const;

@@ -1,5 +1,6 @@
 import type { Finding, MissionReport } from '../game/mission';
 import { antennaChance } from '../game/anomalies';
+import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { Patch } from '../game/history';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
@@ -31,6 +32,16 @@ export function findingText(f: Finding): string {
   const state = f.ok ? 'ok' : 'short';
   switch (f.kind) {
     case 'orbit':
+      if (!f.ok && f.failedStage != null) {
+        const { record } = LAUNCH_VEHICLES[f.vehicle];
+        return t('finding.orbit.rocket', {
+          orbit: t(`orbit.${f.orbit}`),
+          vehicle: t(`launchVehicle.${f.vehicle}`),
+          n: formatNumber(f.failedStage),
+          worked: formatNumber(record.worked),
+          flights: formatNumber(record.flights),
+        });
+      }
       return t(`finding.orbit.${state}`, {
         orbit: t(`orbit.${f.orbit}`),
         kg: formatDecimal(f.massKg),
@@ -143,8 +154,13 @@ export function showMissionReport(
       anomaly.replaceChildren(...lines.map((line, i) => el('p', i === 0 ? '' : 'report-anomaly-why', line)));
       anomalyHeading.hidden = anomaly.hidden = lines.length === 0;
       if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
-      else if (deadlineDay !== null && today < deadlineDay) reward.textContent = t('report.retry', { date: formatGameDate(deadlineDay) });
+      else if (deadlineDay !== null && today < deadlineDay) {
+        // Only the rocket let it down: the design was fine, so the same one can fly again.
+        const rocketOnly = report.findings.every((f) => f.ok || (f.kind === 'orbit' && f.failedStage != null));
+        reward.textContent = t(rocketOnly ? 'report.retryRocket' : 'report.retry', { date: formatGameDate(deadlineDay) });
+      }
       else reward.textContent = t('report.tooLate');
+      if (report.insurancePaid > 0) reward.textContent += ` ${t('report.insurance', { money: formatMoney(report.insurancePaid) })}`;
       patchHeading.hidden = patchBox.hidden = !earned;
       patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, companyName)] : []));
       patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';

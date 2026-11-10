@@ -11,7 +11,7 @@ function report(ids: OptionId[]): MissionReport {
   const design: Design = emptyDesign();
   for (const id of ids) choose(design, id);
   const flight = fly({ contract: 'explorer1', design, vehicle: 'juno1', tech: [] }, 40, 365);
-  return { contract: 'explorer1', vehicle: 'juno1', site: 'capeCanaveral', launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design, anomaly: null };
+  return { contract: 'explorer1', vehicle: 'juno1', site: 'capeCanaveral', launchDay: 40, success: flight.success, reward: 0, findings: flight.findings, design, anomaly: null, insurancePaid: 0 };
 }
 
 describe('Space view text', () => {

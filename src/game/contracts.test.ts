@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { CONTRACT_IDS, CONTRACTS, acceptContract, availableContracts, daysLeft, deadlineDay } from './contracts';
-import { advanceDays, newSiteState } from './siteState';
+import { CONTRACT_IDS, CONTRACTS, acceptContract, availableContracts, daysLeft, deadlineDay, expireContracts } from './contracts';
+import { type SiteState, advanceDays, newSiteState } from './siteState';
 import { generateSite } from '../site/site';
 import { STRINGS } from '../strings';
 
@@ -39,8 +39,31 @@ describe('Contracts board', () => {
     acceptContract(state, 'explorer1');
     advanceDays(site, state, 100);
     expect(daysLeft(state, state.contracts[0]!)).toBe(CONTRACTS.explorer1.deadlineDays - 100);
+    advanceDays(site, state, CONTRACTS.explorer1.deadlineDays - 101);
+    expect(daysLeft(state, state.contracts[0]!)).toBe(1);
+  });
+
+  it('puts a Milestone back on the board when its deadline passes, to try again with a new deadline', () => {
+    const site = generateSite('K7QXM2');
+    const state = newSiteState();
+    acceptContract(state, 'explorer1');
     advanceDays(site, state, CONTRACTS.explorer1.deadlineDays);
-    expect(daysLeft(state, state.contracts[0]!)).toBe(0);
+    expect(state.contracts).toEqual([]);
+    expect(state.reopened).toEqual(['explorer1']);
+    expect(availableContracts(state).map((c) => c.id)).toEqual(['explorer1']);
+    expect(acceptContract(state, 'explorer1')).toEqual({ ok: true });
+    expect(state.reopened).toEqual([]);
+    expect(daysLeft(state, state.contracts[0]!)).toBe(CONTRACTS.explorer1.deadlineDays);
+  });
+
+  it('waits for a Mission already on its way before reopening its Contract', () => {
+    const state = newSiteState();
+    acceptContract(state, 'explorer1');
+    state.mission = { contract: 'explorer1' } as SiteState['mission'];
+    state.day = CONTRACTS.explorer1.deadlineDays + 5;
+    expect(expireContracts(state)).toEqual([]);
+    state.mission = null;
+    expect(expireContracts(state)).toEqual(['explorer1']);
   });
 
   it('has a name, client and objective for every Contract', () => {

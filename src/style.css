@@ -1115,6 +1115,29 @@ button.planner-back {
   color: var(--text);
 }
 
+.planner-insure {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 4px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.planner-insure:has(input:disabled) {
+  color: var(--muted);
+  cursor: default;
+}
+
+.planner-insure-price {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
+
+.planner-card .planner-hint[hidden] {
+  display: none;
+}
+
 .planner-footer h3[hidden],
 .planner-footer .planner-hint[hidden] {
   display: none;
