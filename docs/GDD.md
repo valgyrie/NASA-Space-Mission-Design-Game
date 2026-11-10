@@ -261,6 +261,11 @@ Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Ra
 
 Each step teaches one idea, hands-on, with a short line of text. No walls of text.
 
+**As built (ticket 13):** a small guide card under the top bar ("Step N of 8", one line, **Skip**) and a glow on the button to press next. Steps: accept Explorer 1 → build a Mine → build a Metal Works → fill every slot in the Mission Designer → open a free Test Run → ship → wait for the truck (try 4×) → Launch. The guide reads the game itself, so it survives a reload and never blocks: buying Parts instead of building moves it on. It moves to the bottom of the screen inside the Mission Designer, hides during the Launch show and dialogs, and ends with the first Mission Report. Skip closes it for good. The Company name and Site come first (New game); the Historic start and globe come with ticket 16.
+- **Real History cards:** accepting a Milestone shows its "before" card (the real story); a successful Mission shows the "after" card once its Mission Report is closed. Each card has a real NASA photo with a credit line, a short true story and **Learn more →** to an official NASA page. Both pause the Site. Explorer 1's: "The race to space" (Sputnik, Vanguard TV3, 84 days) and "The Van Allen belts". Facts and photo sources: `docs/research/milestones.md`.
+- **Mission Patch:** every successful Mission earns one, drawn by the game: Company name round the top, Mission name round the bottom, Earth, the Spacecraft on its orbit and the year. The Mission Report shows it ("Your first Mission Patch!").
+- **History Archive** (HUD button, shown once it holds something): the patch gallery and every unlocked Real History card; click a card to read it again.
+
 ## 17. Design principles we follow
 
 - Teach one idea at a time, hands-on, then build on it.

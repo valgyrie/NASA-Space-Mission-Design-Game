@@ -121,6 +121,8 @@ export function makeLaunchPlanner(
   testRun.title = t('planner.testRunName');
   testRun.addEventListener('click', () => hooks.onTestRun(vehicle));
   const ship = button('planner-ship', '');
+  ship.dataset.tutorial = 'planner-ship';
+  testRun.dataset.tutorial = 'planner-testrun';
   footer.append(warnHead, warnings, warnNote, problems, testRun, ship);
 
   const grid = el('div', 'planner-grid');

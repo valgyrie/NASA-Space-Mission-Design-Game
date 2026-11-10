@@ -8,6 +8,7 @@ import {
   rideshareCost,
 } from './launchVehicles';
 import { type Anomaly, rollAnomaly } from './anomalies';
+import { awardMission } from './history';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
 import {
@@ -266,6 +267,7 @@ export interface LaunchResult {
  * Launch the Mission waiting at the Launch Site: fly it, pay the reward on success and file the Mission Report.
  * The flight is drawn from the Site's Seed and the Launch day, like one run of a Test Run. If an Anomaly
  * strikes, the reward is held back until it is settled (anomalies.ts), since it can cut the pay.
+ * Success also earns a Mission Patch and the Milestone's "after" Real History card (history.ts).
  */
 export function launch(state: SiteState, seed: string): LaunchResult | null {
   const m = state.mission;
@@ -289,5 +291,6 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   };
   state.reports.push(report);
   state.mission = null;
+  awardMission(state, report);
   return { report, flight, design: m.design };
 }

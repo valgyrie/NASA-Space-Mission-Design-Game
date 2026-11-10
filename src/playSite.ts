@@ -13,6 +13,10 @@ import { showLaunchShow } from './ui/launchShow';
 import { showMissionReport } from './ui/missionReport';
 import { showMissionTracker } from './ui/missionTracker';
 import { showSpaceScreen } from './ui/spaceScreen';
+import { showArchive } from './ui/archive';
+import { showHistoryCard } from './ui/historyCard';
+import { showTutorialGuide } from './ui/tutorialGuide';
+import { historyCardFor, patchFor, unlockCard } from './game/history';
 import { SITE_SIZE } from './site/site';
 import { accepted, deadlineDay } from './game/contracts';
 import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
@@ -64,7 +68,30 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     },
   );
   const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
-  const contracts = showContractsPanel(ui, state, () => saveGame(localStorage, game));
+  // Pause the Site while a dialog is up, and put the speed back afterwards (Real History cards, the History Archive).
+  const pauser = () => {
+    let before: Speed = 1;
+    let keyboard = true;
+    return {
+      onOpen() {
+        keyboard = world.keyboardEnabled;
+        world.keyboardEnabled = false;
+        before = speed;
+        setSpeed(0);
+        setPlacing(null);
+      },
+      onClose() {
+        world.keyboardEnabled = keyboard;
+        setSpeed(before);
+      },
+    };
+  };
+  // Accepting a Milestone shows its Real History card: the real story before you build it.
+  const contracts = showContractsPanel(ui, state, (id) => {
+    const card = historyCardFor(id, 'before');
+    if (card && unlockCard(state, card)) history.show(card);
+    saveGame(localStorage, game);
+  });
   const panel = showBuildingPanel(ui, site, state);
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
@@ -86,14 +113,30 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       setSpeed(speedBeforeDesigner);
     },
     onChange: () => saveGame(localStorage, game),
+    onTestRun() {
+      if (state.tutorial.testRun) return;
+      state.tutorial.testRun = true;
+      saveGame(localStorage, game);
+    },
   });
   // The Mission Report pauses the Site while it is read.
   let speedBeforeReport: Speed = 1;
+  // Real History cards unlocked by the last Mission, shown once its report is closed.
+  let cardsAfterReport: ReturnType<typeof historyCardFor>[] = [];
+  const showCardsAfterReport = () => {
+    const next = cardsAfterReport.shift();
+    if (next) history.show(next, showCardsAfterReport);
+  };
   const report = showMissionReport(
     ui,
+    game.company.name,
     () => {
       world.keyboardEnabled = true;
       setSpeed(speedBeforeReport);
+      // "See it in orbit" opens the Space view right after; the card then waits until that closes.
+      window.setTimeout(() => {
+        if (!space.isOpen) showCardsAfterReport();
+      });
     },
     (r) => space.open(state.reports.indexOf(r)),
   );
@@ -115,6 +158,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       world.keyboardEnabled = true;
       world.hidden = false;
       setSpeed(speedBeforeSpace);
+      showCardsAfterReport();
     },
   });
   // The Launch plays first, then the Mission Report. The result is already settled and saved.
@@ -126,6 +170,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   });
   const launchMission = () => {
     const contract = state.mission?.contract;
+    const cardsBefore = state.history.length;
     const result = launch(state, game.site.seed);
     if (!result || !contract) return;
     saveGame(localStorage, game);
@@ -138,6 +183,9 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     tracker.close();
     panel.close();
     const taken = accepted(state, contract);
+    cardsAfterReport = state.history.slice(cardsBefore);
+    const patch = patchFor(state, result.report);
+    const earned = patch && { patch, first: state.patches.length === 1 };
     world.hidden = true;
     const kind = result.report.anomaly?.kind;
     const hooks = kind && {
@@ -151,7 +199,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       result,
       () => {
         world.hidden = false;
-        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day));
+        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day), earned);
       },
       hooks || undefined,
     );
@@ -180,8 +228,22 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       tracker.toggle();
     },
     () => space.open(),
+    () => {
+      market.close();
+      contracts.close();
+      tracker.close();
+      archive.open();
+    },
   );
   const topBar = showTopBar(ui, setSpeed);
+  const archive = showArchive(ui, state, game.company.name, { ...pauser(), onCard: (id) => history.show(id) });
+  // Real History cards go above everything else, the History Archive included.
+  const history = showHistoryCard(ui, pauser());
+  // The tutorial guide sits above the Mission Designer, so it can lead the player through it.
+  const tutorial = showTutorialGuide(ui, () => {
+    state.tutorial.skipped = true;
+    saveGame(localStorage, game);
+  });
 
   let placing: BuildingKind | null = null;
   const setPlacing = (kind: BuildingKind | null) => {
@@ -229,7 +291,9 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
+      else if (history.isOpen) history.close();
       else if (menu.isOpen) menu.close();
+      else if (archive.isOpen) archive.close();
       else if (space.isOpen) space.close();
       else if (report.isOpen) report.close();
       else if (designer.isOpen) designer.close();
@@ -241,7 +305,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen) return;
+    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen || history.isOpen || archive.isOpen) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -271,9 +335,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     tracker.update();
     hud.update(state);
     panel.update();
+    const covered = launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen;
+    tutorial.update(state, covered, designer.isOpen);
   });
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive } });
 }

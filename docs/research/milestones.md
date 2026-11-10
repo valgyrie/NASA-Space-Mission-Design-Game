@@ -26,6 +26,13 @@ Facts used in Real History cards and Milestone Contracts. Researched 2026-11-07.
 - Telstar shows the Rideshare idea: a private company paying for a government launch.
 - Artemis IV is a future event: keep its data in one file and re-check before release.
 
+**Explorer 1 Real History cards (ticket 13, checked 2026-11-10)**
+- Before: Sputnik launched **4 Oct 1957**; Vanguard TV3 lost thrust and exploded on the pad **6 Dec 1957**; ABMA and JPL modified the Jupiter-C and built Explorer 1 **in 84 days**; it carried a cosmic-ray detector and was powered by batteries.[^e1card][^e1ten]
+- After: the cosmic-ray detector read **far lower** than expected; Van Allen proposed it was **saturated** by charged particles trapped by Earth's magnetic field: the radiation belts later named after him, the first US scientific discovery in space. Data until the batteries died in **May 1958** (one NASA page says last transmission 21 May, another batteries died 23 May, so the card says "May"). NASA began operating **1 Oct 1958**. Re-entered 31 Mar 1970.[^e1card][^e1ten]
+- Photos (NASA Image and Video Library, public domain NASA media, credited "NASA/MSFC"): [0100074](https://images.nasa.gov/details/0100074) Explorer 1's launch, 31 Jan 1958; [5663627](https://images.nasa.gov/details/5663627) Pickering, Van Allen and von Braun holding up the full-size Explorer 1 model at the 1 a.m. press conference after launch (described on [NASA Science: Explorer 1](https://science.nasa.gov/mission/explorer-1/)). Resized copies in `public/history/`.
+
+[^e1card]: [NASA History: 60 years ago, Explorer 1 becomes America's first satellite](https://www.nasa.gov/history/60-years-ago-explorer-1-becomes-americas-first-satellite/)
+[^e1ten]: [NASA Science: 10 things to know about Explorer 1](https://science.nasa.gov/missions/explorer/10-things-to-know-about-explorer-1-americas-first-satellite/)
 [^vtv3]: [Wikipedia: Vanguard TV-3](https://en.wikipedia.org/wiki/Vanguard_TV-3) · [Rockland Daily: first US attempt](https://rocklanddaily.com/news/today-in-history-disasterous-first-u-s-attempt-to-launch-a-satellite)
 [^e1]: [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1) · [JPL: Explorer 1 and the birth of the US space age](https://www.jpl.nasa.gov/images/explorer-1-and-the-birth-of-the-us-space-age/)
 [^nasa]: [Wikipedia: Creation of NASA](https://en.wikipedia.org/wiki/Creation_of_NASA)

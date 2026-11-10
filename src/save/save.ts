@@ -1,7 +1,8 @@
 import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { ANOMALY_KINDS } from '../game/anomalies';
-import { CONTRACT_IDS } from '../game/contracts';
+import { CONTRACT_IDS, type ContractId } from '../game/contracts';
+import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, historyCardFor } from '../game/history';
 import { type SiteState, newSiteState } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
@@ -10,7 +11,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 9;
+export const SAVE_VERSION = 10;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -112,6 +113,16 @@ function isReport(value: unknown): boolean {
   );
 }
 
+const isPatch = (v: unknown): boolean => {
+  const p = v as Partial<Patch> | null;
+  return !!p && isOneOf(p.contract, CONTRACT_IDS) && isNumber(p.day);
+};
+
+const isTutorial = (v: unknown): boolean => {
+  const t = v as Partial<SiteState['tutorial']> | null;
+  return !!t && typeof t.skipped === 'boolean' && typeof t.testRun === 'boolean';
+};
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -134,7 +145,12 @@ function isSiteState(value: unknown): value is SiteState {
     isMission(v.mission) &&
     Array.isArray(v.reports) &&
     v.reports.every(isReport) &&
-    isBest(v.anomalyBest)
+    isBest(v.anomalyBest) &&
+    Array.isArray(v.history) &&
+    v.history.every((id) => isOneOf(id, HISTORY_CARD_IDS)) &&
+    Array.isArray(v.patches) &&
+    v.patches.every(isPatch) &&
+    isTutorial(v.tutorial)
   );
 }
 
@@ -149,6 +165,30 @@ function isSaveData(value: unknown): value is SaveData {
   );
 }
 
+/** Cards and patches a version 9 save had already earned: its accepted and done Contracts, and its successful Missions. */
+function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; patches: Patch[] } {
+  const list = (v: unknown): unknown[] => (Array.isArray(v) ? v : []);
+  const history: HistoryCardId[] = [];
+  const add = (id: HistoryCardId | null) => {
+    if (id && !history.includes(id)) history.push(id);
+  };
+  const ids = (c: unknown): ContractId | null => (isOneOf(c, CONTRACT_IDS) ? (c as ContractId) : null);
+  for (const c of list(old.contracts)) {
+    const id = ids((c as { id?: unknown } | null)?.id);
+    if (id) add(historyCardFor(id, 'before'));
+  }
+  const patches: Patch[] = [];
+  for (const r of list(old.reports)) {
+    const report = r as { contract?: unknown; success?: unknown; launchDay?: unknown } | null;
+    const id = ids(report?.contract);
+    if (!id || report?.success !== true || !isNumber(report.launchDay)) continue;
+    add(historyCardFor(id, 'before'));
+    add(historyCardFor(id, 'after'));
+    patches.push({ contract: id, day: report.launchDay });
+  }
+  return { history, patches };
+}
+
 /**
  * Bring an older save up to date, one version at a time.
  * Version 1 had no Site, so it gets a fresh Seed. Version 2 had no economy, so it starts fresh.
@@ -157,6 +197,7 @@ function isSaveData(value: unknown): value is SaveData {
  * Version 6 had no Missions: nothing shipped, no Contracts done, no Mission Reports.
  * Version 7 didn't keep the design in Mission Reports: the Space view shows those Spacecraft as a plain model.
  * Version 8 had no Anomalies: its reports had none, and the Company has played none yet.
+ * Version 9 had no History Archive, Mission Patches or tutorial: they are worked out from its Contracts and reports.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -187,6 +228,10 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     const old = (v as { state?: { reports?: unknown } }).state;
     const reports = Array.isArray(old?.reports) ? old.reports.map((r: object) => ({ ...r, anomaly: null })) : old?.reports;
     v = { ...v, version: 9, state: { ...old, reports, anomalyBest: {} } } as typeof v;
+  }
+  if (v?.version === 9) {
+    const old = (v as { state?: Record<string, unknown> }).state;
+    v = { ...v, version: 10, state: { ...old, ...historyFrom(old ?? {}), tutorial: { skipped: false, testRun: false } } } as typeof v;
   }
   return v;
 }

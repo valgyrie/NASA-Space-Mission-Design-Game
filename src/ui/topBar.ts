@@ -60,6 +60,7 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
     b.textContent = t(`speed.${speed}`);
     b.title = t(`speed.${speed}.name`);
     b.setAttribute('aria-label', t(`speed.${speed}.name`));
+    b.dataset.tutorial = `speed-${speed}`;
     b.addEventListener('click', () => onSpeed(speed));
     buttons.set(speed, b);
     speeds.append(b);
