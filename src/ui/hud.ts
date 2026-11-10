@@ -28,6 +28,7 @@ export function showHud(
   onLaunch: () => void,
   onTrack: () => void,
   onSpace: () => void,
+  onArchive: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
@@ -76,6 +77,7 @@ export function showHud(
   contracts.className = 'small market-button';
   contracts.textContent = t('contracts.open');
   contracts.title = t('contracts.openName');
+  contracts.dataset.tutorial = 'contracts';
   contracts.addEventListener('click', onContracts);
 
   const designer = document.createElement('button');
@@ -83,6 +85,7 @@ export function showHud(
   designer.className = 'small market-button designer-button';
   designer.textContent = t('designer.open');
   designer.title = t('designer.openName');
+  designer.dataset.tutorial = 'designer';
   designer.addEventListener('click', onDesigner);
 
   // Shown once something is in orbit: the Space view with every Spacecraft up there.
@@ -93,6 +96,15 @@ export function showHud(
   space.title = t('space.openName');
   space.hidden = true;
   space.addEventListener('click', onSpace);
+
+  // Shown once there is something in it: Mission Patches and Real History cards.
+  const archive = document.createElement('button');
+  archive.type = 'button';
+  archive.className = 'small market-button designer-button';
+  archive.textContent = t('archive.open');
+  archive.title = t('archive.openName');
+  archive.hidden = true;
+  archive.addEventListener('click', onArchive);
 
   const buttons = document.createElement('div');
   buttons.className = 'row hud-buttons';
@@ -110,6 +122,7 @@ export function showHud(
   launch.textContent = t('mission.launch');
   launch.title = t('mission.launchName');
   launch.hidden = true;
+  launch.dataset.tutorial = 'launch';
   launch.addEventListener('click', onLaunch);
   const track = document.createElement('button');
   track.type = 'button';
@@ -122,7 +135,7 @@ export function showHud(
   const top = document.createElement('div');
   top.className = 'row hud-top';
   top.append(menu, name, home);
-  bar.append(top, legend, buttons, designer, space, active, mission, track, launch);
+  bar.append(top, legend, buttons, designer, space, archive, active, mission, track, launch);
   root.append(bar);
 
   // Panels on the left open just below the HUD, which grows while a Mission is on its way.
@@ -148,6 +161,8 @@ export function showHud(
       if (track.hidden !== !stage) track.hidden = !stage;
       const orbiting = satellitesInOrbit(state).length > 0;
       if (space.hidden === orbiting) space.hidden = !orbiting;
+      const kept = state.history.length > 0 || state.patches.length > 0;
+      if (archive.hidden === kept) archive.hidden = !kept;
       const first = state.contracts[0];
       if (!first) return setText(active, '');
       const name = t(`contract.${first.id}.name`);

@@ -59,7 +59,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
 - [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse (Point the antenna and the framework done, ticket 11)
 - [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
-- [ ] Mission Patches and patch gallery
+- [x] Mission Patches and patch gallery (ticket 13: drawn in code; the Company logo joins with ticket 19)
 
 ### Campaign
 - [ ] Tutorial: Explorer 1, first Launch in under 10 minutes
@@ -67,7 +67,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Era 2: Telstar 1, Syncom 3
 - [ ] HQ Upgrade moves to the next Era
 - [ ] Research Points and tech tree
-- [ ] Real History cards (before and after), History Archive
+- [x] Real History cards (before and after), History Archive (Explorer 1's; later Milestones add theirs)
 - [ ] Failure stories, retryable Milestones
 
 ### Free Play and online
@@ -83,7 +83,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Music (licensed or generated, credited)
 - [ ] Learn more → links on real things
 - [ ] Title screen → main menu with live 3D background; loading screens with sourced tips
-- [ ] Real NASA photos (credited) on Real History cards
+- [x] Real NASA photos (credited) on Real History cards
 - [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources)
 
 ### Judges and submission

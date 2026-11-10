@@ -173,7 +173,8 @@ A building with an antenna that talks to Spacecraft; more and bigger ones improv
 _Avoid_: radar, dish (alone)
 
 **Mission Patch**:
-A badge made for each Mission, collected in the patch gallery.
+A badge earned by each successful Mission, collected in the patch gallery in the History Archive.
+_Avoid_: badge (Weekly Challenge badges are different), achievement
 
 ### Progress
 
@@ -185,8 +186,16 @@ Points earned from science Missions, spent on Upgrades within the current Era.
 _Avoid_: XP, science (as currency)
 
 **Real History card**:
-A short, true story about a real mission, with a link to learn more.
+A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next).
 _Avoid_: lore, fun fact
+
+**History Archive**:
+Where the Company keeps every Real History card it has unlocked, with the patch gallery.
+_Avoid_: codex, library
+
+**Tutorial**:
+The guided first Mission (Explorer 1): one short step at a time from the first Contract to the first Launch.
+_Avoid_: onboarding (in game text)
 
 ### The six mission resources (from the challenge)
 

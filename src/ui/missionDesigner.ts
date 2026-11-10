@@ -130,7 +130,7 @@ export function showMissionDesigner(
   root: HTMLElement,
   state: SiteState,
   seed: string,
-  hooks: { onOpen(): void; onClose(): void; onChange(): void },
+  hooks: { onOpen(): void; onClose(): void; onChange(): void; onTestRun?(): void },
 ): MissionDesigner {
   const backdrop = el('div', 'backdrop designer-backdrop');
   backdrop.hidden = true;
@@ -210,6 +210,7 @@ export function showMissionDesigner(
   problem.setAttribute('aria-live', 'polite');
   const next = button('designer-next', t('designer.next'));
   next.title = t('designer.nextName');
+  next.dataset.tutorial = 'designer-next';
   resBox.append(warnings, status, buyAll, problem, next);
 
   const body = el('div', 'designer-body');
@@ -224,6 +225,7 @@ export function showMissionDesigner(
     },
     onTestRun: (vehicle) => {
       showView('testRun');
+      hooks.onTestRun?.();
       testRun.show(testRunFor(state, seed, state.design, vehicle), missionGoal(state).contract.id);
     },
     designWarnings: () => {

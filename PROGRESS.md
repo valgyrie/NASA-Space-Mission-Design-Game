@@ -4,41 +4,33 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–11 and 31 done. 01–10 and 31 are merged into `main`; **ticket 11 is on branch `claude/focused-noether-0sf8x6`, not merged yet.** The loop: accept Explorer 1, design, Test Run, ship, Launch, watch the 3D Launch, **play Point the antenna on its day**, read the Mission Report, get paid, see the Spacecraft in the Space view.
+**State:** tickets 01–11 and 31 done and merged; local launchers merged. **Ticket 13 is built** (branch `claude/ticket-12-sltuz3`, merged by PR) and waits only for a person to time the first Launch. The loop: name the Company, the tutorial guide leads through accepting Explorer 1 (its "before" Real History card), a Mine, a Metal Works, the Mission Designer, a Test Run, shipping, the truck and the Launch; Point the antenna; the Mission Report with the first Mission Patch; the "after" card; the History Archive.
 
-**Just finished: ticket 11, Anomalies framework + Point the antenna.** How it plays (chance, mini-game, scoring, Data and pay lost, skip rules, reload rule): GDD §9 "First Anomaly (ticket 11)". Code notes for the next Anomalies: ticket 11's "For tickets 12 and later".
-- **Domain:** `src/game/anomalies.ts` (`rollAnomaly` at Launch, `antennaChance`, `settleAnomaly`, `skipAnomaly`, `settleUnanswered`, `lostDaysFor`, `withContactLost`); `src/game/antennaGame.ts` (the mini-game as pure steps). `MissionReport.anomaly`, `SiteState.anomalyBest`; **save v9**. `completeContract(state, id, pay)`: the reward is held at Launch while an Anomaly is open. Balance numbers in `balance.ts` (`ANTENNA_CHANCE`, `ANOMALY_MAX_DATA_LOSS`, `ANOMALY_UNANSWERED_SCORE`).
-- **UI:** `src/ui/anomalyPanel.ts` (2D canvas over the Launch show, so it also works in Simple view); `launchShow.ts` pauses on the day, Skip/Esc jump to a first Anomaly or skip a later one with the best score; `missionReport.ts` `anomalyLines`; `playSite.ts` settles open ones on load and saves after each answer.
-- **Tested** in headless Chromium at 1280×800 and 1024×768: first Launch pauses on day 2; Esc can't close it; aiming locks in 3.5 s → 100%, $3M paid; aiming late → 35%, 6 days lost, $600K cut, "No contact" during the lost days; no aiming → "Contact lost", 0%, 9 days, $900K cut; Esc during the countdown jumps to the Anomaly; second flight (best 80%) Skip to the report → "Skipped, so your best score counted (80%)", $200K cut; reload mid-Anomaly → settled at 50% on load, best stays empty; no console errors. 180 unit tests pass; build passes.
-- Not tested: a real mouse by a person (Playwright moved the mouse); touch (pointer events are wired, untested).
+**Why ticket 13 and not 12:** ticket 12 is blocked by 14 (Solar Cells are locked until Vanguard 1, so a Stuck solar panel can't happen yet). The user chose to do 13 first. The branch name still says ticket 12.
+
+**Just finished: ticket 13, Tutorial and Real History.** How it plays: GDD §16 "As built (ticket 13)". Code notes: ticket 13's "For later tickets".
+- **Domain:** `src/game/tutorial.ts` (`tutorialStep`, 8 steps read from the state, never blocking), `src/game/history.ts` (`HISTORY_CARDS`, `historyCardFor`, `unlockCard`, `awardMission` called by `launch`, `patchFor`). `SiteState.history`, `.patches`, `.tutorial`; **save v10** (a v9 save gets the cards and patches it had already earned).
+- **UI:** `src/ui/tutorialGuide.ts` (guide card, glow on `data-tutorial` buttons), `historyCard.ts`, `archive.ts`, `patch.ts` (SVG patch drawn in code); report shows the patch; HUD button "History Archive". Photos: `public/history/` (NASA/MSFC, sources in `docs/research/milestones.md`).
+- **Tested** in headless Chromium at 1280×800 and 1024×768: a scripted new player walked all 8 steps and reached the Launch button in 1 min 45 s; before card on accept (pauses, Esc closes); Test Run step advances when it opens; Launch → Anomaly → report with "Your first Mission Patch!" → after card → History Archive shows the patch and both cards, a card reopens from it; reload keeps them; Skip hides the guide for good. No console errors. 192 unit tests pass; build passes.
+- Not tested: a person timing it (the ticket's last box), real mouse/touch, Learn more links opening (both URLs fetched fine).
 
 **Next:**
-1. Team: try the mini-game by hand and judge its difficulty (15 s, 2 s hold, 4 s par, wobble) for a 10-year-old; numbers are at the top of `src/game/antennaGame.ts`.
-2. Ticket 13 (Tutorial and Real History) is now unblocked (09, 11 done); also 15, 16, 17, 19, 20, 25, 30. Ticket 12 still waits for 14.
-
-**Local launchers:** `LEAP.bat` (Windows), `LEAP.command` (macOS), `LEAP.sh` (Linux), with setup in `scripts/leap.ps1` and shared `scripts/leap.mjs`. They fetch the current Node.js LTS from the official release index, verify its SHA-256 checksum, and keep the runtime and npm cache in ignored `.leap/`. `npm ci` uses the current lockfile, includes development/optional packages, and checks engines; package-file or runtime changes trigger reinstall, and an engine failure refreshes Node once. Later starts check the installed dependency tree. Vite starts in the launcher process on `localhost:5173`; readiness is checked before opening the browser. Reopening recognises both the launcher and the existing `npm run dev` command, prints the link and explains how to quit. Linux file-manager launches open a terminal. Setup has download progress and a moving install bar. Game code, saves, package files and tickets are unchanged.
-
-**Initial launcher validation (before syncing with newer main):** clean Linux download/install/start, repeat launch and Chromium play/reload passed (3D canvas, Company retained, no page errors). `node --test scripts/leap.test.mjs` checks real Vite with simulated installs/openers: setup, cached restart, updates, broken packages, failed install/retry, runtime refresh request, stale lock, simultaneous setup, occupied port, existing dev server, paths with spaces/punctuation, Linux terminal opening and rejected downloads. Shell and PowerShell syntax passed; PowerShell streaming download, archive/checksum handling and setup locking also checked on Linux with fixtures. `npm run check` (75 tests) and `npm run build` passed; the existing bundle-size warning remains. Native Windows and macOS desktop smoke tests are still due. README has run, reopen, quit and troubleshooting steps; AGENTS.md records launcher maintenance. The game handoff and next-ticket order above are kept from main.
-
-**Launcher test schedule:** the team wants launcher validation saved for the final ticket. Do not rerun launcher tests or setup/browser/progress/reopen/quit smoke tests for each ticket, update, dependency change or launcher edit unless explicitly asked. At the final ticket, run the separate launcher suite and clean Windows/macOS/Linux smoke tests, including the native checks still due. Keep the existing game tests, type checks and pre-commit hook. Normal dependency checks when a player starts LEAP are unchanged.
-
-**Branch sync:** brought in main at `103a9bf` before opening the launcher PR. Kept the newer game code, package files, tickets, checklist status, README play notes and handoff. Launcher checks remain deferred to the final ticket.
+1. Team: play a new game and time the first Launch (ticket 13's open box); judge the guide's wording for a 10-year-old.
+2. Ticket 14 (Era 1 complete) is now unblocked; it unblocks 12. Also open: 15, 16, 17, 19, 20, 25, 30.
 
 **Open:**
-- With Era 1's only antenna the chance is fixed (~32%); it varies once Comms Parts differ (ticket 14) and Ground Stations exist (ticket 18).
-- One Anomaly per flight at most. A score of 0 counts as a best of 0, so a later skip gives 0%.
-- The Test Run doesn't mention Anomalies yet; it could show the antenna's chance under Predicted problems.
-- The Space view's "Sending Data: day N of M" ignores the lost days.
-- The 247 s coast is read as starting at first-stage burnout (orbit at T+420 s); no source gives Explorer 1's own times _(verify)_.
-- Blocky Earth up close and the flat horizon high in the climb: in ticket 26.
-- The Game date doesn't move during the show. Orbits never decay. The "lost" path (too heavy) can't happen in play yet.
-- Every Era 1 design is 0% or 100% (needs ticket 14 Parts or 17 failures). Rideshare, Shipping and Part spreads are guesses; Juno I's 14 kg is still _(verify)_. No "New game"; Speed not saved; real-laptop performance unknown.
+- The guide shows "Step 1" after the Company name; the Historic start and globe come with ticket 16. GDD §16 step 6 "fix one warning" isn't forced: the guide asks whether the battery lasts 30 days.
+- The glow stays on the next button while a dialog covers the guide (harmless).
+- Patches don't carry the Company logo yet (ticket 19).
+- From before: Anomaly chance fixed (~32%) until Comms Parts differ (14) and Ground Stations (18); one Anomaly per flight; Space view's day count ignores lost days; Explorer 1's coast timing _(verify)_; blocky close-up Earth (26); Game date still during the show; orbits never decay; Era 1 designs are 0% or 100%; no "New game"; Speed not saved.
+- Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
 **Suggested skills:** `handoff`.
 
 ## Log
 
+- 2026-11-10: Ticket 13 built: Explorer 1 tutorial guide, Real History cards with NASA photos, Mission Patches, History Archive, save v10 (ticket 12 waits for 14).
 - 2026-11-10: Synced the launcher branch with newer main; kept its game, tickets and current handoff.
 - 2026-11-10: Deferred further launcher validation to the final ticket; existing game checks stay in place.
 - 2026-11-10: Added local launchers with dependency setup, progress, browser opening and reopening; game code and tickets unchanged.
@@ -53,7 +45,3 @@
 - 2026-11-09: Ticket 06 done: Contracts board, Explorer 1 Contract with deadline, save v5.
 - 2026-11-08: Checked existing Raw Material sales; added regression tests and a README note, fixed the stock message and pause overlay.
 - 2026-11-08: Ticket 05 done: Factories, Warehouse storage by mass, Market, detailed moving models; camera follows ground height.
-- 2026-11-08: Keyboard camera + H for the whole-Site view, pan past the Site, detailed Mine with turning wheel; ticket 30 (buy Plots, Optional) written.
-- 2026-11-08: Seed moved to a pause menu (Esc); land carries on to the horizon; perspective camera with tilt (ADR-0003); working sun shadows.
-- 2026-11-08: Ticket 04 done: Mines on Deposits, Game date with pause/1×/2×/4×, top bar, save v3.
-- 2026-11-08: Ticket 03 done: Site generated from a Seed (terrain, water, Deposits), Seed shown and copyable.

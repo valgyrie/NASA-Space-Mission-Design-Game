@@ -28,6 +28,7 @@ export function showBuildMenu(root: HTMLElement, onPick: (kind: BuildingKind) =>
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'build-item';
+    b.dataset.tutorial = `build-${kind}`;
     b.title = t(`build.hint.${kind}`, { kg: formatNumber(WAREHOUSE_STORAGE_KG) });
     const name = document.createElement('span');
     name.textContent = t(`building.${kind}`);

@@ -52,3 +52,8 @@ export function formatDecimal(n: number): string {
 export function formatDays(n: number): string {
   return n === 1 ? t('format.day') : t('format.days', { amount: kgFormat.format(n) });
 }
+
+/** The year of a Game date: 1958. */
+export function gameYear(day: number): number {
+  return new Date(START_DATE_UTC + Math.floor(day) * 86_400_000).getUTCFullYear();
+}

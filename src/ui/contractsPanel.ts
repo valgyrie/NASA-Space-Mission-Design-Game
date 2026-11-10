@@ -1,6 +1,7 @@
 import {
   type AcceptedContract,
   type Contract,
+  type ContractId,
   type Requirement,
   acceptContract,
   accepted,
@@ -52,7 +53,7 @@ export function deadlineText(state: SiteState, c: AcceptedContract): string {
 }
 
 /** The Contracts board: Contracts on offer and the ones the Company has accepted. `onAccept` runs after accepting. */
-export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept: () => void): ContractsPanel {
+export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept: (id: ContractId) => void): ContractsPanel {
   const panel = el('div', 'panel side-panel contracts');
   panel.hidden = true;
   panel.setAttribute('role', 'dialog');
@@ -104,11 +105,12 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     if (!taken) {
       const accept = el('button', 'small accept', t('contracts.accept'));
       accept.type = 'button';
+      accept.dataset.tutorial = `accept-${contract.id}`;
       accept.addEventListener('click', () => {
         const result = acceptContract(state, contract.id);
         setText(problem, result.ok ? '' : t(`contracts.problem.${result.problem}`));
-        if (result.ok) onAccept();
         render();
+        if (result.ok) onAccept(contract.id);
       });
       box.append(accept);
     }

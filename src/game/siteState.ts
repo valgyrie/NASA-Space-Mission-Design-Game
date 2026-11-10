@@ -3,6 +3,8 @@ import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
 import type { AcceptedContract, ContractId } from './contracts';
+import type { HistoryCardId, Patch } from './history';
+import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
 import { type Design, emptyDesign } from './spacecraft';
 import {
@@ -61,6 +63,12 @@ export interface SiteState {
   reports: MissionReport[];
   /** Best score (0–1) the Company has played for each kind of Anomaly. Missing until it has played one. */
   anomalyBest: Partial<Record<AnomalyKind, number>>;
+  /** Real History cards unlocked so far, in the order they were: the History Archive. */
+  history: HistoryCardId[];
+  /** Mission Patches earned, oldest first: the patch gallery. */
+  patches: Patch[];
+  /** The Explorer 1 tutorial. */
+  tutorial: TutorialProgress;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -80,6 +88,9 @@ export function newSiteState(): SiteState {
     mission: null,
     reports: [],
     anomalyBest: {},
+    history: [],
+    patches: [],
+    tutorial: { skipped: false, testRun: false },
   };
 }
 

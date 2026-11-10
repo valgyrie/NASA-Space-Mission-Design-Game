@@ -1,12 +1,20 @@
 import type { Finding, MissionReport } from '../game/mission';
 import { antennaChance } from '../game/anomalies';
+import type { Patch } from '../game/history';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
 import { lostText, percentText } from './anomalyPanel';
 import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
+import { makePatch } from './patch';
+
+/** The Mission Patch a report earned, and whether it is the Company's first. */
+export interface EarnedPatch {
+  patch: Patch;
+  first: boolean;
+}
 
 export interface MissionReportDialog {
-  show(report: MissionReport, deadlineDay: number | null, today: number): void;
+  show(report: MissionReport, deadlineDay: number | null, today: number, earned?: EarnedPatch | null): void;
   close(): void;
   readonly isOpen: boolean;
 }
@@ -70,7 +78,12 @@ export function anomalyLines(report: MissionReport): string[] {
 }
 
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
-export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeOrbit: (report: MissionReport) => void): MissionReportDialog {
+export function showMissionReport(
+  root: HTMLElement,
+  companyName: string,
+  onClose: () => void,
+  onSeeOrbit: (report: MissionReport) => void,
+): MissionReportDialog {
   const backdrop = el('div', 'backdrop report-backdrop');
   backdrop.hidden = true;
   const panel = el('div', 'panel report');
@@ -86,6 +99,12 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
   const anomalyHeading = el('h3', '', t('report.anomaly'));
   const anomaly = el('div', 'report-anomaly');
   const reward = el('p', 'report-reward');
+  // A successful Mission earns a Mission Patch, shown here and kept in the History Archive.
+  const patchHeading = el('h3', '', t('report.patch'));
+  const patchBox = el('div', 'report-patch');
+  const patchArt = el('div', 'report-patch-art');
+  const patchText = el('p', '');
+  patchBox.append(patchArt, patchText);
   const close = el('button', 'report-close', t('report.close'));
   close.type = 'button';
   // A Spacecraft that reached orbit is still up there: the Space view shows it.
@@ -93,13 +112,13 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, outcome, why, findings, anomalyHeading, anomaly, reward, buttons);
+  panel.append(heading, subtitle, outcome, why, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
 
   const api: MissionReportDialog = {
-    show(report, deadlineDay, today) {
+    show(report, deadlineDay, today, earned = null) {
       const contract = t(`contract.${report.contract}.name`);
       subtitle.textContent = t('report.subtitle', {
         contract,
@@ -126,6 +145,9 @@ export function showMissionReport(root: HTMLElement, onClose: () => void, onSeeO
       if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
       else if (deadlineDay !== null && today < deadlineDay) reward.textContent = t('report.retry', { date: formatGameDate(deadlineDay) });
       else reward.textContent = t('report.tooLate');
+      patchHeading.hidden = patchBox.hidden = !earned;
+      patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, companyName)] : []));
+      patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';
       shown = report;
       seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);
       backdrop.hidden = false;

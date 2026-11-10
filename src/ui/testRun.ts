@@ -219,6 +219,7 @@ export function makeTestRunScreen(hooks: { onBack(): void }): TestRunScreen {
   root.hidden = true;
   const back = el('button', 'small planner-back', t('testRun.back'));
   back.type = 'button';
+  back.dataset.tutorial = 'testrun-back';
   back.addEventListener('click', () => hooks.onBack());
 
   // Orbit
