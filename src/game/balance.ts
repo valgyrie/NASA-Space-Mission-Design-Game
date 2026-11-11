@@ -284,6 +284,27 @@ export const ANTENNA_CHANCE = {
   safeSpare: 2,
 } as const;
 
+/**
+ * Stuck solar panel: how likely, by the Mark of the Solar Cells. Cheap Mk 1 panels have the roughest hinges
+ * and latches; better Factories make ones that open more surely. Only a Spacecraft with Solar Cells can meet it.
+ * Game estimates.
+ */
+export const PANEL_CHANCE = { 1: 0.35, 2: 0.2, 3: 0.1 } as const;
+
+/**
+ * Survive the eclipse: how likely, from the Power margin (the days the battery would last against the Mission's
+ * days) and the battery's size. With no spare at all the chance is HIGH; with SAFE_SPARE (200% extra) or more,
+ * or when sunlight alone covers the Spacecraft's use, it is LOW. A Small Battery adds SMALL_BATTERY on top: it
+ * has less to fall back on in each pass through Earth's shadow. Only a Spacecraft with Solar Cells can meet it
+ * (one on batteries alone works the same in sunlight and shadow). Game estimates.
+ */
+export const ECLIPSE_CHANCE = {
+  low: 0.08,
+  high: 0.6,
+  safeSpare: 2,
+  smallBattery: 0.12,
+} as const;
+
 /** Share of the Mission's Data a fully failed Anomaly loses. The reward is cut by the same share. Game estimate. */
 export const ANOMALY_MAX_DATA_LOSS = 0.3;
 

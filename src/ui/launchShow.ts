@@ -102,8 +102,8 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
       const noContact = a !== null && a.score !== null && m.value >= a.day && m.value < a.day + a.lostDays;
       const detail = !powered
         ? t('testRun.powerOut', { day: formatNumber(Math.floor(flight.powerOutDay ?? 0)) })
-        : noContact
-          ? t('launch.noContact')
+        : noContact && a
+          ? t(`launch.lostDays.${a.kind}`)
           : t('launch.missionDetail');
       return { title: t('launch.mission', { contract }), detail };
     }

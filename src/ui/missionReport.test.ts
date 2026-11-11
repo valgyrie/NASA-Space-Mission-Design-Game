@@ -59,6 +59,22 @@ describe('Mission Report: the Anomaly', () => {
     expect(what).toContain('Skipped, so your best score counted (90%). 1 day of Data was lost.');
   });
 
+  it('explains Stuck solar panel from the Solar Cells\' Mark', () => {
+    const [what, why] = anomalyLines(report({ kind: 'panel', chance: 0.35, solarMark: 1 }));
+    expect(what).toContain('Day 12: Stuck solar panel.');
+    expect(why).toContain('the chance was 35%');
+    expect(why).toContain('The Solar Cells were Mk 1');
+  });
+
+  it('explains Survive the eclipse from the Power margin and the battery', () => {
+    const [what, why] = anomalyLines(report({ kind: 'eclipse', chance: 0.36, battery: 'largeBattery', lastsDays: 150.4, missionDays: 78 }));
+    expect(what).toContain('Day 12: Survive the eclipse.');
+    expect(why).toContain('the chance was 36%');
+    expect(why).toContain('With the Large Battery, the Power would last 150 days for a 78-day Mission.');
+    const [, sunny] = anomalyLines(report({ kind: 'eclipse', chance: 0.2, battery: 'smallBattery', lastsDays: null }));
+    expect(sunny).toContain('Sunlight covered what the Spacecraft used, with the Small Battery as backup.');
+  });
+
   it('shows nothing without an Anomaly, or before it is settled', () => {
     expect(anomalyLines(report(null))).toEqual([]);
     expect(anomalyLines(report({ score: null, answer: null }))).toEqual([]);
