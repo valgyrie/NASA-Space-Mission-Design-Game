@@ -22,3 +22,9 @@
 - Unlocks: `UNLOCKED_BY` (spacecraft.ts) ties an option to a Real History card; `Contract.after` orders Milestones; `LaunchVehicle.opensAfter` opens vehicles. Side story cards: `when: 'side'` in history.ts, shown after the "after" card.
 - Ticket 12 can now use Solar Cells (Stuck solar panel). Ticket 18: HQ Upgrade once `completed` holds explorer1 and tiros1.
 - No Computer slot: TIROS-1's tape recorder isn't modelled. `SiteState.vehicle` is the planner's pick; save v11.
+
+**QA (2026-11-11):**
+
+- [ ] Keep the Research display clear of the Company panel at **1024×768** as Data waiting grows. With four or five digits of Data waiting, the top bar covers the Whole Site button and part of the Deposit legend. Clicking the button's centre hits the Money panel instead. **H** still works. Also checked in the production build.
+
+![The Research display pushes the top bar over the Whole Site button](../qa/2026-11-11/research-overlaps-home.png)

@@ -11,3 +11,9 @@
 - [x] Raw Materials increase over time and are shown in the top bar
 - [x] Pause, 1×, 2× and 4× speed work and affect production
 - [x] Production survives save and reload
+
+**QA (2026-11-11):**
+
+- [ ] Keep the Site paused while the pause menu is open, including when using the keyboard. Open the menu, press Tab until **1×** behind it gets focus, then Enter. The Site runs but the menu still says **Paused**. The Game date advanced about 2.4 days in five seconds; Contract days keep counting down. Also checked in the production build.
+
+![The pause menu open while the Site runs at 1×](../qa/2026-11-11/pause-menu-running.png)

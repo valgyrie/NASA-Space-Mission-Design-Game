@@ -15,3 +15,9 @@
 - [x] Cards use real NASA photos with a visible credit line
 
 **For later tickets:** cards are in `src/game/history.ts` (`HISTORY_CARDS`, photo in `public/history/`, text and credit in `strings.ts` under `history.<id>.*`). A new Milestone adds its "before" and "after" cards there; `historyCardFor` finds them, accepting the Contract shows "before", a successful Mission unlocks "after" (`awardMission`, called by `launch`). Patch colours per Contract are in `src/ui/patch.ts`; the Company logo (ticket 19) should go in its centre. The tutorial steps are `src/game/tutorial.ts`; buttons it points at carry `data-tutorial` (`src/ui/tutorialGuide.ts`).
+
+**QA (2026-11-11):**
+
+- [ ] Keep the tutorial clear of the controls it points at. At **1440×900**, step 6 tells the player to book the Rideshare, but covers the Shipping button's label and price at the bottom of the Launch planner. Clicking the centre hits the guide; the exposed sides still work, or the player can skip the tutorial. The card can also cover part of Test Run. Checked after building a Mine and Metal Works.
+
+![Step 6 covers the Shipping button](../qa/2026-11-11/tutorial-covers-shipping.png)

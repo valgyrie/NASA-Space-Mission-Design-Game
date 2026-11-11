@@ -14,3 +14,15 @@
 - [x] Chains are never longer than Mine → Factory → Part
 - [x] Each Factory and the Warehouse has a detailed low-poly model at the Mine's level (`src/world/mineMesh.ts`): a building you can recognise (Metal Works: furnace and chimney; Electronics Lab: clean white lab with antenna; Solar Fab: panels on the roof; Battery Plant: tanks and pipes), small details (doors, windows, lamps), at least one moving part while it works (via `World.animateBuildings`), and something in the colour of what it makes
 - [x] Buildings look right both from the isometric start view and tilted low toward the horizon
+
+**QA (2026-11-11):**
+
+- [ ] Keep storage within capacity when a Factory finishes a Part or returns its inputs. With no Warehouse, start a Small Bus with 40 kg Aluminium, pause, then fill storage with 500 kg Copper. Letting the Bus finish gives **503 / 500 kg**. Switching to Medium Bus before it finishes returns the Aluminium and gives **540 / 500 kg**.
+
+![A finished Small Bus takes storage over capacity](../qa/2026-11-11/storage-finished-part.png)
+
+![Changing the Part returns inputs above capacity](../qa/2026-11-11/storage-returned-inputs.png)
+
+- [ ] Explain why a Factory with enough inputs is waiting while the Site is paused. Pause, put 40 kg Aluminium in stock, and open a Metal Works set to Small Bus. Its status says only **"Waiting for"**, with nothing after it. Production starts when the Site resumes.
+
+![The Metal Works has its inputs but shows an empty warning](../qa/2026-11-11/factory-waiting-blank.png)

@@ -21,3 +21,9 @@
 - [x] Follow the truck with the camera
 - [x] Mission tracker: where the Spacecraft is now, each stage with its dates, the deadline, and Launch once it has arrived
 - Watching the Launch itself is ticket 10.
+
+**QA (2026-11-11):**
+
+- [ ] Keep buildings off the occupied Shipping dock. While a Spacecraft is being assembled on the truck, place a Warehouse on the loading dock. The marker is green, money is spent, and the Warehouse appears through the truck and crane. After reload the Warehouse stays and the dock moves elsewhere. Checked on Seed **K7QXM2**, Historic start.
+
+![A Warehouse overlaps the Shipping truck and crane](../qa/2026-11-11/warehouse-on-shipping-dock.png)

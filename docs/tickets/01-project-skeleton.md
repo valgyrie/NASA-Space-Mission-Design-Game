@@ -13,3 +13,9 @@
 
 **Changed later (2026-11-08):** the camera became a perspective camera that can also tilt down to the horizon, and the ground became a Site with land around it (ADR-0003).
 - [x] README says how to run the game
+
+**QA (2026-11-11):**
+
+- [ ] Keep the camera above hills when zoomed close and tilted low. On Seed **K7QXM2**, Historic start, zoom into low land beside higher ground and hold **F**. The camera can go under the hillside: terrain disappears and the land looks cut open. **H** recovers the view.
+
+![The Site camera under a hillside](../qa/2026-11-11/site-camera-under-hill.png)
