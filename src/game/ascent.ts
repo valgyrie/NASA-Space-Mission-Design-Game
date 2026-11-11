@@ -14,6 +14,8 @@ export interface Segment {
   phase: ShowPhase;
   /** Which stage is burning (1 is the bottom one), for 'burn'. */
   stage?: number;
+  /** For 'lost': the rocket worked, but with no main engine the Spacecraft stayed in its transfer orbit. */
+  stuck?: boolean;
   from: number;
   to: number;
   /** Seconds it takes on screen at normal speed. */
@@ -59,7 +61,8 @@ export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findi
   });
   const reachedOrbit = orbit?.ok ?? true;
   if (!reachedOrbit) {
-    segments.push({ phase: 'lost', ...(failed !== null ? { stage: failed } : {}), from: t, to: t, playS: ORBIT_PLAY_S });
+    const stuck = orbit?.kind === 'orbit' && !!orbit.noEngine;
+    segments.push({ phase: 'lost', ...(failed !== null ? { stage: failed } : {}), ...(stuck ? { stuck } : {}), from: t, to: t, playS: ORBIT_PLAY_S });
     return segments;
   }
   segments.push({ phase: 'orbit', from: t, to: t, playS: ORBIT_PLAY_S });

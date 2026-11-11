@@ -23,7 +23,7 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 const LEGACY = { ...JPL, start: 'legacy' as const };
 const state = { ...newSiteState(LEGACY), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 14, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: 15, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
@@ -378,6 +378,40 @@ describe('local save', () => {
     expect(loaded.state.reopened).toEqual([]);
     expect(loaded.state.grantDay).toBeNull();
     expect(loaded.state.reports[0]!.insurancePaid).toBe(0);
+  });
+
+  it('upgrades a version 14 save: Era 1, no Ground Stations, no engine on any design, none of the Era 2 Parts', () => {
+    const storage = memoryStorage();
+    const { hq: _h, groundStations: _g, eraSeen: _e, ...v14State } = game.state;
+    const { propulsion: _p, ...oldDesign } = { ...emptyDesign(), bus: 'smallBus' as const };
+    const parts = Object.fromEntries(Object.entries(v14State.parts).filter(([p]) => !['largeBus', 'transponder', 'mainEngine'].includes(p)));
+    const betterParts = Object.fromEntries(Object.entries(v14State.betterParts).filter(([p]) => !['largeBus', 'transponder', 'mainEngine'].includes(p)));
+    const explorer = { bus: 'smallBus', power: 'batteriesOnly', battery: 'largeBattery', comms: 'simpleAntenna', pointing: 'spin', payload: 'radiationDetector' };
+    const mission = { contract: 'explorer1', design: explorer, vehicle: 'juno1', site: 'capeCanaveral', tech: [], marks: {}, startDay: 10, shipDay: 40, readyDay: 47, insurance: null };
+    const report = { contract: 'explorer1', vehicle: 'juno1', site: 'capeCanaveral', launchDay: 5, success: true, reward: 3_000_000, findings: [], design: explorer, anomaly: null, insurancePaid: 0 };
+    const v14 = { ...v14State, design: oldDesign, parts, betterParts, mission, reports: [report] };
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...game, version: 14, state: v14 }));
+    const loaded = loadGame(storage)!;
+    expect(loaded.version).toBe(SAVE_VERSION);
+    expect(loaded.state.hq).toBeNull();
+    expect(loaded.state.groundStations).toEqual([]);
+    expect(loaded.state.eraSeen).toBe(1);
+    expect(loaded.state.design.propulsion).toBe('noEngine');
+    expect(loaded.state.mission?.design.propulsion).toBe('noEngine');
+    expect(loaded.state.mission?.ground).toBe(1);
+    expect(loaded.state.reports[0]!.design?.propulsion).toBe('noEngine');
+    expect(loaded.state.parts.mainEngine).toBe(0);
+    expect(loaded.state.betterParts.transponder).toEqual([]);
+  });
+
+  it('keeps an HQ, its Era and Ground Stations', () => {
+    const storage = memoryStorage();
+    const era2 = {
+      ...game,
+      state: { ...state, hq: { x: 30, z: 30, level: 2, upgradeDay: null }, groundStations: [{ x: 10, z: 10, level: 2, upgradeDay: null }], eraSeen: 2 },
+    };
+    saveGame(storage, era2);
+    expect(loadGame(storage)).toEqual(era2);
   });
 
   it('keeps a real start place', () => {

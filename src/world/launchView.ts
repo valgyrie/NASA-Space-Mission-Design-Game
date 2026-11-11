@@ -245,6 +245,8 @@ export class LaunchView {
   private readonly craft = new THREE.Group();
   private readonly craftColour = new THREE.Color();
   private orbitShape = { a: 1, b: 1, e: 0 };
+  /** How far the orbit camera stands from Earth, so the whole orbit fits. */
+  private orbitDistance = 112;
 
   private climbing: RocketModel | null = null;
   private upper: RocketModel | null = null;
@@ -343,6 +345,8 @@ export class LaunchView {
     const e = (ra - rp) / (ra + rp);
     const b = a * Math.sqrt(1 - e * e);
     this.orbitShape = { a, b, e };
+    // Stand far enough back to see the whole orbit: a geostationary one is over six times Earth's size.
+    this.orbitDistance = Math.max(112, a * 2.7);
     const points: THREE.Vector3[] = [];
     for (let i = 0; i <= 180; i++) {
       const E = (i / 180) * Math.PI * 2;
@@ -393,9 +397,11 @@ export class LaunchView {
     else shot = 'space';
 
     // A failed stage stops pushing at once; the rocket tips over and falls.
-    const lost = phase === 'lost';
+    // A Spacecraft stuck in its transfer orbit (no main engine) doesn't fall: it drifts on with its last stage.
+    const lost = phase === 'lost' && !m.segment.stuck;
+    const after = phase === 'orbit' || phase === 'lost';
     if (shot === 'pad') this.drawPad(lost ? m.segment.from : m.value, dt, lost ? m.fraction : 0);
-    else if (shot === 'space') this.drawSpace(phase === 'orbit' || lost ? m.segment.from + m.fraction * m.segment.playS * 2 : m.value, lost ? m.fraction : 0, dt, lost && m.segment.stage !== undefined);
+    else if (shot === 'space') this.drawSpace(after ? m.segment.from + m.fraction * m.segment.playS * 2 : m.value, lost ? m.fraction : 0, dt, lost && m.segment.stage !== undefined);
     else this.drawOrbit(dt, powered);
     return shot;
   }
@@ -533,7 +539,8 @@ export class LaunchView {
     this.craftColour.setHex(powered ? 0x4fa3ff : 0x7b8798);
     this.orbitEarth.spin(dt * 0.05);
     const turn = 0.6 + this.orbitClock * 0.03;
-    this.orbitCamera.position.set(Math.sin(turn) * 112, 38, Math.cos(turn) * 112);
+    const d = this.orbitDistance;
+    this.orbitCamera.position.set(Math.sin(turn) * d, (38 * d) / 112, Math.cos(turn) * d);
     this.orbitCamera.lookAt(0, 0, 0);
     this.renderer.render(this.orbit, this.orbitCamera);
   }

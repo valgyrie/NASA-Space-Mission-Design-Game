@@ -13,7 +13,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 14;
+export const SAVE_VERSION = 15;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -95,6 +95,7 @@ function isMission(value: unknown): boolean {
     Array.isArray(m.tech) &&
     m.tech.every((id) => isOneOf(id, TECH_IDS)) &&
     isMarks(m.marks) &&
+    isNumber(m.ground) &&
     isNumber(m.startDay) &&
     isNumber(m.shipDay) &&
     isNumber(m.readyDay) &&
@@ -167,6 +168,10 @@ function isSiteState(value: unknown): value is SiteState {
     Array.isArray(v.labs) &&
     v.labs.every(isBuilding) &&
     (v.assemblyHall === null || isBuilding(v.assemblyHall)) &&
+    (v.hq === null || isBuilding(v.hq)) &&
+    Array.isArray(v.groundStations) &&
+    v.groundStations.every(isBuilding) &&
+    isNumber(v.eraSeen) &&
     isCounts(v.stock, RAW_MATERIALS) &&
     isCounts(v.parts, PARTS) &&
     isBetterParts(v.betterParts) &&
@@ -249,6 +254,8 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * and the Assembly Hall is placed when the Site is shown.
  * Version 12 had no real place: see below.
  * Version 13 had no Launch Insurance, reopened Contracts or startup grant: none bought, none reopened, grant still to come.
+ * Version 14 had no Eras, HQ, Ground Stations, Propulsion slot or Era 2 Parts: Era 1 (the HQ is placed when the
+ * Site is shown), no stations, every design without an engine, and none of the new Parts in stock.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -322,6 +329,24 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     const mission = old.mission && typeof old.mission === 'object' ? { ...old.mission, insurance: null } : old.mission;
     const reports = Array.isArray(old.reports) ? old.reports.map((r: object) => ({ ...r, insurancePaid: 0 })) : old.reports;
     v = { ...v, version: 14, state: { ...old, mission, reports, reopened: [], grantDay: null } } as typeof v;
+  }
+  if (v?.version === 14) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const noEngine = (d: unknown) => (d && typeof d === 'object' ? { ...d, propulsion: 'noEngine' } : d);
+    const mission =
+      old.mission && typeof old.mission === 'object'
+        ? { ...old.mission, design: noEngine((old.mission as { design?: unknown }).design), ground: 1 }
+        : old.mission;
+    const reports = Array.isArray(old.reports) ? old.reports.map((r: { design?: unknown }) => ({ ...r, design: noEngine(r.design) })) : old.reports;
+    const newParts = { largeBus: 0, transponder: 0, mainEngine: 0 };
+    const parts = old.parts && typeof old.parts === 'object' ? { ...old.parts, ...newParts } : old.parts;
+    const betterParts =
+      old.betterParts && typeof old.betterParts === 'object' ? { ...old.betterParts, largeBus: [], transponder: [], mainEngine: [] } : old.betterParts;
+    v = {
+      ...v,
+      version: 15,
+      state: { ...old, design: noEngine(old.design), mission, reports, parts, betterParts, hq: null, groundStations: [], eraSeen: 1 },
+    } as typeof v;
   }
   return v;
 }

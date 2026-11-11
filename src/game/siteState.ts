@@ -4,7 +4,8 @@ import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
 import { type AcceptedContract, type ContractId, expireContracts } from './contracts';
 import type { HistoryCardId, Patch } from './history';
-import type { LaunchSiteId, LaunchVehicleId } from './launchVehicles';
+import { type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen } from './launchVehicles';
+import { eraOf, eraStartDay, isBuildingOpen } from './eras';
 import { JPL, type Place } from './places';
 import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
@@ -64,8 +65,20 @@ export interface AssemblyHall extends Levels {
   z: number;
 }
 
+/** The HQ: the Company's main building. Every Site starts with one; its level is the Company's Era. */
+export interface HQ extends Levels {
+  x: number;
+  z: number;
+}
+
+/** A Ground Station: the Company's own antenna for talking to its Spacecraft (Era 2). */
+export interface GroundStation extends Levels {
+  x: number;
+  z: number;
+}
+
 /** Any building standing on the Site. */
-export type Building = Mine | Factory | Warehouse | Lab | AssemblyHall;
+export type Building = Mine | Factory | Warehouse | Lab | AssemblyHall | HQ | GroundStation;
 
 /** Everything about the running Site that changes over time and is saved. */
 export interface SiteState {
@@ -78,6 +91,11 @@ export interface SiteState {
   labs: Lab[];
   /** Null only until the Site is shown the first time, which places it (`placeAssemblyHall`). */
   assemblyHall: AssemblyHall | null;
+  /** The HQ, placed like the Assembly Hall when the Site is first shown (`placeHQ`). Its level is the Era. */
+  hq: HQ | null;
+  groundStations: GroundStation[];
+  /** The newest Era whose welcome card the player has seen. */
+  eraSeen: number;
   /** Kilograms of each Raw Material in stock. */
   stock: Record<RawMaterial, number>;
   /** How many of each Part are in stock. */
@@ -134,6 +152,9 @@ export function newSiteState(place: Place = JPL): SiteState {
     warehouses: [],
     labs: [],
     assemblyHall: null,
+    hq: null,
+    groundStations: [],
+    eraSeen: 1,
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
     betterParts: noBetterParts(),
@@ -162,7 +183,7 @@ export function partsMadeBy(kind: FactoryKind): Part[] {
 
 // ---- Building ----
 
-export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money';
+export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money' | 'era';
 
 export type PlaceCheck = { ok: true } | { ok: false; problem: PlaceProblem };
 
@@ -206,6 +227,8 @@ export function allBuildings(state: SiteState): { kind: SiteBuildingKind; buildi
     ...state.factories.map((building) => ({ kind: building.kind, building })),
     ...state.warehouses.map((building) => ({ kind: 'warehouse' as const, building })),
     ...state.labs.map((building) => ({ kind: 'researchLab' as const, building })),
+    ...(state.hq ? [{ kind: 'hq' as const, building: state.hq }] : []),
+    ...state.groundStations.map((building) => ({ kind: 'groundStation' as const, building })),
   ];
 }
 
@@ -222,12 +245,23 @@ const WALLED_IN = { within: 4, above: 2, each: 40 };
  */
 export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
   if (state.assemblyHall) return state.assemblyHall;
+  return (state.assemblyHall = { ...nearMiddle(site, state, 'assemblyHall'), level: 1, upgradeDay: null });
+}
+
+/** Put the HQ beside the Assembly Hall in the same way, if the Site has none yet (a new game, or an older save). */
+export function placeHQ(site: Site, state: SiteState): HQ {
+  if (state.hq) return state.hq;
+  return (state.hq = { ...nearMiddle(site, state, 'hq'), level: 1, upgradeDay: null });
+}
+
+/** The free spot for a building nearest the middle of the Site, preferring flat, open, low land. */
+function nearMiddle(site: Site, state: SiteState, kind: SiteBuildingKind): { x: number; z: number } {
   const mid = (site.size - 1) / 2;
   let best: { x: number; z: number } | null = null;
   let bestD = Infinity;
   for (let z = 0; z < site.size; z++) {
     for (let x = 0; x < site.size; x++) {
-      if (placeProblem(site, state, 'assemblyHall', x, z)) continue;
+      if (placeProblem(site, state, kind, x, z)) continue;
       const tile = tileAt(site, x, z)!;
       const levels = footprint(x, z).map((t) => tileAt(site, t.x, t.z)!.level);
       const top = Math.max(...levels);
@@ -244,8 +278,7 @@ export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
       if (d < bestD) [best, bestD] = [{ x, z }, d];
     }
   }
-  const at = best ?? { x: Math.floor(mid), z: Math.floor(mid) };
-  return (state.assemblyHall = { ...at, level: 1, upgradeDay: null });
+  return best ?? { x: Math.floor(mid), z: Math.floor(mid) };
 }
 
 /**
@@ -279,6 +312,7 @@ function placeProblem(
  * Deposit, so Deposits stay free for Mines. All of them cost money.
  */
 export function checkBuild(site: Site, state: SiteState, kind: BuildingKind, x: number, z: number): PlaceCheck {
+  if (!isBuildingOpen(state, kind)) return { ok: false, problem: 'era' };
   const problem = placeProblem(site, state, kind, x, z);
   if (problem) return { ok: false, problem };
   if (state.money < BUILD_COST[kind]) return { ok: false, problem: 'money' };
@@ -331,6 +365,7 @@ export function build(site: Site, state: SiteState, kind: BuildingKind, x: numbe
   if (kind === 'mine') state.mines.push(at);
   else if (kind === 'warehouse') state.warehouses.push(at);
   else if (kind === 'researchLab') state.labs.push(at);
+  else if (kind === 'groundStation') state.groundStations.push(at);
   else state.factories.push({ kind, ...at, making: partsMadeBy(kind)[0]!, progress: null });
   return check;
 }
@@ -346,6 +381,8 @@ export function buildingAt(
   | { kind: 'warehouse'; building: Warehouse }
   | { kind: 'researchLab'; building: Lab }
   | { kind: 'assemblyHall'; building: AssemblyHall }
+  | { kind: 'hq'; building: HQ }
+  | { kind: 'groundStation'; building: GroundStation }
   | null {
   const found = allBuildings(state).find(({ building }) => covers(building, x, z));
   if (!found) return null;
@@ -354,6 +391,8 @@ export function buildingAt(
   if (kind === 'warehouse') return { kind, building };
   if (kind === 'researchLab') return { kind, building };
   if (kind === 'assemblyHall') return { kind, building };
+  if (kind === 'hq') return { kind, building };
+  if (kind === 'groundStation') return { kind, building };
   return { kind, building: building as Factory, factory: building as Factory };
 }
 
@@ -499,14 +538,36 @@ export function setMaking(state: SiteState, factory: Factory, part: Part): void 
   factory.progress = null;
 }
 
-/** Finish every Upgrade whose day has come. */
+/** Finish every Upgrade whose day has come. A finished HQ Upgrade moves the Company into the next Era. */
 function finishUpgrades(state: SiteState): void {
-  for (const { building } of allBuildings(state)) {
+  for (const { kind, building } of allBuildings(state)) {
     if (building.upgradeDay !== null && state.day >= building.upgradeDay) {
       building.level += 1;
       building.upgradeDay = null;
+      if (kind === 'hq') enterEra(state);
     }
   }
+}
+
+/**
+ * The Company has just reached a new Era (its HQ's level): the Game date jumps to the Era's first day, unless it
+ * is already past it, and every date still to come moves with it (Upgrades, deadlines, a Mission on its way).
+ * A Launch Vehicle that has retired gives way to the first one open.
+ */
+export function enterEra(state: SiteState): void {
+  const shift = Math.max(0, eraStartDay(eraOf(state)) - Math.floor(state.day));
+  if (shift > 0) {
+    state.day += shift;
+    for (const { building } of allBuildings(state)) if (building.upgradeDay !== null) building.upgradeDay += shift;
+    for (const c of state.contracts) c.acceptedDay += shift;
+    const m = state.mission;
+    if (m) {
+      m.startDay += shift;
+      m.shipDay += shift;
+      m.readyDay += shift;
+    }
+  }
+  if (!isVehicleOpen(state, state.vehicle)) state.vehicle = firstOpenVehicle(state);
 }
 
 /**

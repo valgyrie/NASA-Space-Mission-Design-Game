@@ -1,6 +1,7 @@
 import { BUILDING_KINDS, type BuildingKind } from '../economy/part';
 import { BUILD_COST, WAREHOUSE_STORAGE_KG } from '../game/balance';
-import type { PlaceProblem } from '../game/siteState';
+import { buildingEra, isBuildingOpen } from '../game/eras';
+import type { PlaceProblem, SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { formatMoney, formatNumber } from './format';
 
@@ -9,6 +10,8 @@ export interface BuildMenu {
   setPlacing(kind: BuildingKind | null): void;
   /** Explain why a building can't go where the player clicked. */
   showProblem(problem: PlaceProblem): void;
+  /** Lock the buildings of a later Era, and open them once the Company gets there. Cheap enough to call every frame. */
+  update(): void;
 }
 
 function placingText(kind: BuildingKind | null): string {
@@ -16,14 +19,18 @@ function placingText(kind: BuildingKind | null): string {
   return kind === 'mine' ? t('build.placing.mine') : t('build.placing.other', { name: t(`building.${kind}`) });
 }
 
-/** The Build menu at the bottom of the Site view: one button per building, with its cost. */
-export function showBuildMenu(root: HTMLElement, onPick: (kind: BuildingKind) => void): BuildMenu {
+/**
+ * The Build menu at the bottom of the Site view: one button per building, with its cost. A building of a later
+ * Era shows which Era opens it instead.
+ */
+export function showBuildMenu(root: HTMLElement, state: SiteState, onPick: (kind: BuildingKind) => void): BuildMenu {
   const menu = document.createElement('div');
   menu.className = 'panel build-menu';
 
   const row = document.createElement('div');
   row.className = 'build-items';
   const buttons = new Map<BuildingKind, HTMLButtonElement>();
+  const costs = new Map<BuildingKind, HTMLElement>();
   for (const kind of BUILDING_KINDS) {
     const b = document.createElement('button');
     b.type = 'button';
@@ -36,8 +43,11 @@ export function showBuildMenu(root: HTMLElement, onPick: (kind: BuildingKind) =>
     cost.className = 'cost';
     cost.textContent = formatMoney(BUILD_COST[kind]);
     b.append(name, cost);
-    b.addEventListener('click', () => onPick(kind));
+    b.addEventListener('click', () => {
+      if (isBuildingOpen(state, kind)) onPick(kind);
+    });
     buttons.set(kind, b);
+    costs.set(kind, cost);
     row.append(b);
   }
 
@@ -65,6 +75,16 @@ export function showBuildMenu(root: HTMLElement, onPick: (kind: BuildingKind) =>
         hint.classList.remove('problem');
         hint.textContent = placingText(placing);
       }, 2500);
+    },
+    update() {
+      for (const [kind, b] of buttons) {
+        const open = isBuildingOpen(state, kind);
+        if (b.disabled === !open) continue;
+        b.disabled = !open;
+        const era = buildingEra(kind);
+        costs.get(kind)!.textContent = open ? formatMoney(BUILD_COST[kind]) : t('build.lockedEra', { era });
+        b.title = open ? t(`build.hint.${kind}`, { kg: formatNumber(WAREHOUSE_STORAGE_KG) }) : t('build.lockedEraName', { era });
+      }
     },
   };
 }

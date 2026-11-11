@@ -1,4 +1,5 @@
 import { PARTS } from '../economy/part';
+import { isPartOpen } from '../game/eras';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { MARKET_LOT_KG, RECIPES } from '../game/balance';
 import {
@@ -74,7 +75,7 @@ export function showMarketPanel(root: HTMLElement, state: SiteState, onTrade: ()
   const problem = el('p', 'side-problem');
   problem.setAttribute('aria-live', 'polite');
 
-  const rows: { item: MarketItem; stock: HTMLElement; buy: HTMLButtonElement; sell: HTMLButtonElement }[] = [];
+  const rows: { item: MarketItem; row: HTMLElement; stock: HTMLElement; buy: HTMLButtonElement; sell: HTMLButtonElement }[] = [];
   const section = (title: string, items: readonly MarketItem[]) => {
     const list = el('div', 'market-list');
     list.append(el('h3', '', title));
@@ -105,7 +106,7 @@ export function showMarketPanel(root: HTMLElement, state: SiteState, onTrade: ()
       s.addEventListener('click', () => trade(sell));
       row.append(name, stock, b, s);
       list.append(row);
-      rows.push({ item, stock, buy: b, sell: s });
+      rows.push({ item, row, stock, buy: b, sell: s });
     }
     return list;
   };
@@ -124,6 +125,8 @@ export function showMarketPanel(root: HTMLElement, state: SiteState, onTrade: ()
     if (panel.hidden) return;
     setText(storage, storageText(state));
     for (const r of rows) {
+      // Parts of a later Era aren't sold until the Company reaches it.
+      r.row.hidden = isPart(r.item) && !isPartOpen(state, r.item);
       setText(r.stock, isPart(r.item) ? String(state.parts[r.item]) : formatKg(state.stock[r.item]));
       // Buttons stay clickable when a trade can't happen, so a click can explain why.
       r.buy.classList.toggle('blocked', !checkBuy(state, r.item).ok);

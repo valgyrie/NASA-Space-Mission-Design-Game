@@ -16,7 +16,9 @@ import {
   costToBuy,
   isComplete,
   UNLOCKED_BY,
+  isSlotShown,
   isUnlocked,
+  optionEra,
   missionGoal,
   optionsFor,
   statsOf,
@@ -49,8 +51,11 @@ function button(className: string, text: string): HTMLButtonElement {
   return b;
 }
 
+/** The options that need no Part, named in strings.ts as `option.<id>`. */
+type NoPartOption = 'batteriesOnly' | 'spin' | 'noEngine';
+
 export function optionName(o: SpacecraftOption): string {
-  return o.part ? t(`part.${o.part}`) : t(`option.${o.id as 'batteriesOnly' | 'spin'}`);
+  return o.part ? t(`part.${o.part}`) : t(`option.${o.id as NoPartOption}`);
 }
 
 /**
@@ -68,7 +73,7 @@ export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], m
   if (s.dataPerDay) bits.push(t('stat.makes', { kb: formatNumber(s.dataPerDay) }));
   if (s.sendPerDay) bits.push(t('stat.sends', { kb: formatNumber(s.sendPerDay) }));
   if (s.powerUseW) bits.push(t('stat.uses', { w: formatDecimal(s.powerUseW) }));
-  if (!o.part) bits.push(t(`option.${o.id as 'batteriesOnly' | 'spin'}.about`));
+  if (!o.part) bits.push(t(`option.${o.id as NoPartOption}.about`));
   return bits.join(t('stat.join'));
 }
 
@@ -90,6 +95,13 @@ export function gaugeText(resource: Resource, g: Gauge, check: DesignCheck, mone
   if (g.status === 'waiting') return t('gauge.waiting', { slot: t(`slot.${g.waitingFor!}`) });
   switch (resource) {
     case 'mass':
+      if (g.target <= 0) {
+        return t('gauge.massCant', {
+          kg: formatDecimal(g.value),
+          vehicle: t(`launchVehicle.${check.goal.vehicle}`),
+          orbit: t(`orbit.${check.goal.orbit}`),
+        });
+      }
       return t('gauge.mass', {
         kg: formatDecimal(g.value),
         vehicle: t(`launchVehicle.${check.goal.vehicle}`),
@@ -117,11 +129,17 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
       return p.bigger
         ? t('problem.tooHeavyBigger', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`), bigger: t(`launchVehicle.${p.bigger}`) })
         : t('problem.tooHeavy', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`) });
+    case 'cantReach':
+      return p.bigger
+        ? t('problem.cantReachBigger', { vehicle: t(`launchVehicle.${check.goal.vehicle}`), orbit: t(`orbit.${p.orbit}`), bigger: t(`launchVehicle.${p.bigger}`) })
+        : t('problem.cantReach', { vehicle: t(`launchVehicle.${check.goal.vehicle}`), orbit: t(`orbit.${p.orbit}`) });
+    case 'needsEngine':
+      return t('problem.needsEngine');
     case 'hallTooSmall':
       return t('problem.hallTooSmall', { bus: t(`part.${p.bus as BusId}`), need: p.need, level: p.level });
     case 'busFull':
       return t('problem.busFull', {
-        bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`),
+        bus: t(`part.${p.bus as BusId}`),
         max: formatNumber(p.carriesKg),
         kg: formatDecimal(p.partsKg),
       });
@@ -132,7 +150,7 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
     case 'wrongPayload':
       return t('problem.wrongPayload', { payload: t(`payload.${p.payload}`) });
     case 'commsShort':
-      return t('problem.commsShort', { send: formatNumber(p.sendPerDay), make: formatNumber(p.dataPerDay) });
+      return t(p.stations ? 'problem.commsShortStations' : 'problem.commsShort', { send: formatNumber(p.sendPerDay), make: formatNumber(p.dataPerDay) });
     case 'late':
       return t('problem.late', { days: formatNumber(p.needDays), left: formatNumber(p.daysLeft) });
   }
@@ -179,12 +197,13 @@ export function showMissionDesigner(
   // Slots
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
-  const slotRows = new Map<Slot, { options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
+  const slotRows = new Map<Slot, { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
   const optionUi: {
     o: SpacecraftOption;
     b: HTMLButtonElement;
     stats: HTMLElement;
     locked: HTMLElement | null;
+    eraLock: HTMLElement | null;
     hall: HTMLElement | null;
   }[] = [];
   for (const slot of SLOTS) {
@@ -201,10 +220,14 @@ export function showMissionDesigner(
       const card = UNLOCKED_BY[o.id];
       const locked = card ? el('span', 'option-locked', t('designer.locked', { card: t(`history.${card}.title`) })) : null;
       if (locked) b.append(locked);
+      // A Part of a later Era is shown locked, so the player sees what is coming.
+      const era = optionEra(o.id);
+      const eraLock = era > 1 ? el('span', 'option-locked', t('designer.lockedEra', { era })) : null;
+      if (eraLock) b.append(eraLock);
       // A Bus the Assembly Hall can't take yet can still be picked and tested, but not shipped.
       const hall = slot === 'bus' ? el('span', 'option-locked', t('designer.needsHall', { level: hallLevelFor(o.id as BusId) })) : null;
       if (hall) b.append(hall);
-      optionUi.push({ o, b, stats, locked, hall });
+      optionUi.push({ o, b, stats, locked, eraLock, hall });
       b.addEventListener('click', () => {
         if (choose(state.design, o.id, state)) changed();
       });
@@ -214,7 +237,7 @@ export function showMissionDesigner(
     const stock = el('div', 'slot-stock');
     row.append(label, choices, stock);
     slotsBox.append(row);
-    slotRows.set(slot, { options, stock });
+    slotRows.set(slot, { row, options, stock });
   }
 
   // 3D view
@@ -306,15 +329,18 @@ export function showMissionDesigner(
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
 
-    for (const { o, b, stats, locked, hall } of optionUi) {
+    for (const { o, b, stats, locked, eraLock, hall } of optionUi) {
       const open = isUnlocked(state, o.id);
       b.disabled = !open;
-      if (locked) locked.hidden = open;
+      if (locked) locked.hidden = state.history.includes(UNLOCKED_BY[o.id]!);
+      if (eraLock) eraLock.hidden = open;
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);
       stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1);
     }
     for (const slot of SLOTS) {
-      const { options, stock } = slotRows.get(slot)!;
+      const { row, options, stock } = slotRows.get(slot)!;
+      // Propulsion joins in Era 2; until then it holds "none".
+      row.hidden = !isSlotShown(state, slot);
       const picked = state.design[slot];
       for (const [id, b] of options) b.setAttribute('aria-pressed', String(id === picked));
       stock.replaceChildren();

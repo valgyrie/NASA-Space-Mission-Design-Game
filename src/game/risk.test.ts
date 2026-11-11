@@ -39,11 +39,13 @@ describe('Launch Vehicle failures', () => {
     expect(LAUNCH_VEHICLES.juno1.reliability).toBe(ROCKET_RELIABILITY.juno1);
     expect(LAUNCH_VEHICLES.juno1.record).toEqual({ worked: 3, flights: 6 });
     expect(LAUNCH_VEHICLES.thorAble.record).toEqual({ worked: 10, flights: 16 });
-    // The game is kinder than history, but a rocket can still fail.
+    // The game is kinder than history, but a rocket can still fail: even Delta D, which never failed in its 2 flights.
     for (const v of Object.values(LAUNCH_VEHICLES)) {
-      expect(v.reliability).toBeGreaterThan(v.record.worked / v.record.flights);
+      if (v.record.worked < v.record.flights) expect(v.reliability).toBeGreaterThan(v.record.worked / v.record.flights);
       expect(v.reliability).toBeLessThan(1);
     }
+    expect(LAUNCH_VEHICLES.thorDelta.record).toEqual({ worked: 11, flights: 12 });
+    expect(LAUNCH_VEHICLES.deltaD.record).toEqual({ worked: 2, flights: 2 });
   });
 
   it('fails about as often as its reliability says, at any stage', () => {

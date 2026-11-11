@@ -3,7 +3,7 @@ import { PART_SPREAD, TEST_RUNS } from './balance';
 import { CONTRACTS } from './contracts';
 import { LAUNCH_VEHICLES, type LaunchVehicleId, liftFrom } from './launchVehicles';
 import type { Finding, Mission } from './mission';
-import { SLOTS, contractNeeds, dataOf, hasRightPayload, powerOf, spacecraftMass } from './spacecraft';
+import { type Design, SLOTS, contractNeeds, dataOf, hasMainEngine, hasRightPayload, needsMainEngine, powerOf, spacecraftMass } from './spacecraft';
 
 /**
  * The flight, worked out day by day. The real Launch flies it once; a Test Run flies it many times.
@@ -32,9 +32,10 @@ export function drawSpread(rng: Rng, share: Spread = PART_SPREAD): Spread {
 
 /**
  * What flies: the Contract, the design, the Launch Vehicle, and the tech tree Upgrades and Marks its Parts
- * were built with (all Mk 1 when `marks` is left out).
+ * were built with (all Mk 1 when `marks` is left out), and how much the Company's Ground Stations add to its
+ * antenna (1, none, when `ground` is left out).
  */
-export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks' | 'site'>>;
+export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks' | 'site' | 'ground'>>;
 
 /** One flight. The day lists hold the value at the start of each Mission day, 0 to `missionDays`. */
 export interface Flight {
@@ -78,11 +79,13 @@ export function fly(
   const marks = plan.marks ?? {};
   const massKg = spacecraftMass(design, marks);
   const liftKg = liftFrom(plan.vehicle, orbit, plan.site ?? 'capeCanaveral');
-  const power = powerOf(design, plan.tech, marks);
-  const data = dataOf(design, plan.tech);
+  const power = powerOf(design, plan.tech, marks, orbit);
+  const data = dataOf(design, plan.tech, plan.ground ?? 1);
   const rightPayload = hasRightPayload(design, payload);
-  const light = massKg <= liftKg + 1e-9;
+  const light = liftKg > 0 && massKg <= liftKg + 1e-9;
   const rocketFailed = light ? failedStage : null;
+  // A geostationary orbit needs the Spacecraft's own main engine: without one it stays in the transfer orbit.
+  const stuck = light && rocketFailed === null && needsMainEngine(orbit) && !hasMainEngine(design);
 
   const batteryWh = power.batteryWh * spread.batteryWh;
   const powerUseW = power.powerUseW * spread.powerUseW;
@@ -94,7 +97,16 @@ export function fly(
 
   const days = Array.from({ length: missionDays + 1 }, (_, d) => d);
   const findings: Finding[] = [
-    { kind: 'orbit', ok: light && rocketFailed === null, orbit, vehicle: plan.vehicle, massKg, liftKg, failedStage: rocketFailed },
+    {
+      kind: 'orbit',
+      ok: light && rocketFailed === null && !stuck,
+      orbit,
+      vehicle: plan.vehicle,
+      massKg,
+      liftKg,
+      failedStage: rocketFailed,
+      ...(stuck ? { noEngine: true } : {}),
+    },
     { kind: 'payload', ok: rightPayload, payload, carried: design.payload },
     {
       kind: 'power',
@@ -154,6 +166,11 @@ export interface TestRun {
   batteryHighWh: number[];
 }
 
+/** The slots that name a Test Run's runs: Propulsion only when it holds an engine. */
+function keyedSlots(design: Design) {
+  return SLOTS.filter((s) => s !== 'propulsion' || (design.propulsion ?? 'noEngine') !== 'noEngine');
+}
+
 /** Whole percent, kept off 0 and 100 unless it really is all or nothing. */
 export function percent(part: number, whole: number): number {
   if (whole <= 0 || part <= 0) return 0;
@@ -172,9 +189,11 @@ export function testRun(
   deadline: number | null,
   { runs = TEST_RUNS, share = PART_SPREAD, reliability = 1 }: { runs?: number; share?: Spread; reliability?: number } = {},
 ): TestRun {
-  const design = SLOTS.map((s) => plan.design[s] ?? '-').join(',');
+  // A design with no engine keeps the runs it had before the Propulsion slot existed.
+  const slots = keyedSlots(plan.design);
+  const design = slots.map((s) => plan.design[s] ?? '-').join(',');
   // Better Marks change the runs too; an all-Mk 1 design keeps the runs it always had.
-  const marks = SLOTS.some((s) => (plan.marks?.[s] ?? 1) > 1) ? `|${SLOTS.map((s) => plan.marks?.[s] ?? 1).join('')}` : '';
+  const marks = slots.some((s) => (plan.marks?.[s] ?? 1) > 1) ? `|${slots.map((s) => plan.marks?.[s] ?? 1).join('')}` : '';
   const rng = makeRng(hashText(`${seed}|test|${plan.contract}|${plan.vehicle}|${design}|${plan.tech.join(',')}${marks}`));
   const asLabelled = fly(plan, launchDay, deadline);
   const missed: Record<Finding['kind'], number> = { orbit: 0, payload: 0, power: 0, comms: 0, time: 0 };

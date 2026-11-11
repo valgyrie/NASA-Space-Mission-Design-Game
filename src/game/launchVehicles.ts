@@ -1,12 +1,14 @@
-import { RIDESHARE_PER_KG, ROCKET_RELIABILITY, SPIN_LIFT_PER_MS } from './balance';
+import { LAUNCH_PRICE, RIDESHARE_PER_KG, ROCKET_RELIABILITY, SPIN_LIFT_PER_MS } from './balance';
 import type { ContractId, Orbit } from './contracts';
+import { type Era, eraOf } from './eras';
 import type { SiteState } from './siteState';
 
 /**
  * Launch Vehicles the Company can book a Rideshare on, and the Launch Sites it ships to.
- * Era 1 has Juno I, then Thor-Able, from Cape Canaveral. Capacities: docs/research/launch-vehicles.md.
+ * Era 1 has Juno I, then Thor-Able; Era 2 has Thor-Delta and Delta D, all from Cape Canaveral.
+ * Capacities: docs/research/launch-vehicles.md.
  */
-export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble'] as const;
+export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble', 'thorDelta', 'deltaD'] as const;
 export type LaunchVehicleId = (typeof LAUNCH_VEHICLE_IDS)[number];
 
 /** One stage of a Launch Vehicle, from the bottom up. */
@@ -25,10 +27,22 @@ export interface LaunchVehicle {
   stages: Stage[];
   /** Seconds from the first stage running out to the next stage firing (an unpowered climb). */
   coastS: number;
-  /** Most Spacecraft mass it can put into each orbit, in kilograms. */
+  /**
+   * Most Spacecraft mass it can put into each orbit, in kilograms; 0 where it can't go. For a geostationary
+   * orbit, what it can put into the transfer orbit: the Spacecraft's own main engine does the rest.
+   */
   liftKg: Record<Orbit, number>;
   /** Rideshare price for each kilogram of Spacecraft. */
   perKg: number;
+  /** What the whole rocket costs, when the client pays for its own Launch (Telstar 1). */
+  launchPrice?: number;
+  /** Solid boosters strapped round the first stage, burning with it. */
+  strapOns?: number;
+  /** The Era it opens in, and the last Era it flies in (it retired after that). */
+  era: Era;
+  lastEra?: Era;
+  /** The year of its last real flight, shown once it has retired. */
+  lastFlight: number;
   /** The last stage stays on the Spacecraft in orbit, as Juno I's did with Explorer 1. */
   lastStageStays?: boolean;
   /** Bookable only once this Milestone is done; offered from the start when missing. */
@@ -45,7 +59,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // fired one after another at the top of the climb. docs/research/launch-vehicles.md.
   juno1: {
     id: 'juno1',
-    liftKg: { lowEarthOrbit: 14 },
+    liftKg: { lowEarthOrbit: 14, geostationary: 0 },
     perKg: RIDESHARE_PER_KG.juno1,
     heightM: 21.2,
     stages: [
@@ -59,13 +73,16 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     // 6 flights in 1958: Explorer 1, 3 and 4 reached orbit; Explorer 2, Explorer 5 and Beacon 1 didn't.
     reliability: ROCKET_RELIABILITY.juno1,
     record: { worked: 3, flights: 6 },
+    era: 1,
+    lastEra: 1,
+    lastFlight: 1958,
   },
   // Thor-Able: 120 kg to a 640 km orbit; 26.9–27.8 m tall. A Thor first stage (165 s), the Able second stage
   // (AJ10, 115 s) and an Altair solid third stage (38 s). It launched TIROS-1 on 1 April 1960. First flew
   // 24 April 1958, so it opens after Explorer 1. The short coast between the first two stages is a game estimate.
   thorAble: {
     id: 'thorAble',
-    liftKg: { lowEarthOrbit: 120 },
+    liftKg: { lowEarthOrbit: 120, geostationary: 0 },
     perKg: RIDESHARE_PER_KG.thorAble,
     heightM: 27,
     stages: [
@@ -78,13 +95,77 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     // 16 flights, 1958–1960, 6 of them failures (three when the Altair third stage didn't fire).
     reliability: ROCKET_RELIABILITY.thorAble,
     record: { worked: 10, flights: 16 },
+    era: 1,
+    lastEra: 1,
+    lastFlight: 1960,
+  },
+  // Thor-Delta (Delta DM-19): 31 m, a Thor first stage (165 s), the Delta second stage (AJ10-118, 115 s) and an
+  // Altair solid third stage (38 s). 226 kg to Low Earth Orbit (Astronautix; Wikipedia says 270 kg), 45 kg to a
+  // geostationary transfer orbit. 12 flights 1960–1962, 11 worked; it launched Telstar 1 from LC-17B.
+  thorDelta: {
+    id: 'thorDelta',
+    liftKg: { lowEarthOrbit: 226, geostationary: 45 },
+    perKg: RIDESHARE_PER_KG.thorDelta,
+    launchPrice: LAUNCH_PRICE.thorDelta,
+    heightM: 31,
+    stages: [
+      { motors: 1, burnS: 165 },
+      { motors: 1, burnS: 115 },
+      { motors: 1, burnS: 38 },
+    ],
+    coastS: 10,
+    reliability: ROCKET_RELIABILITY.thorDelta,
+    record: { worked: 11, flights: 12 },
+    era: 2,
+    lastFlight: 1962,
+  },
+  // Delta D (Thrust Augmented Delta): 32 m, a Thor (150 s) with three Castor solid boosters strapped on (27 s),
+  // the Delta D second stage (170 s) and an Altair 2 third stage (28 s). 450 kg to Low Earth Orbit, 104 kg to a
+  // geostationary transfer orbit (Astronautix). 2 flights, both worked: Syncom 3 (1964) and Intelsat I (1965).
+  deltaD: {
+    id: 'deltaD',
+    liftKg: { lowEarthOrbit: 450, geostationary: 104 },
+    perKg: RIDESHARE_PER_KG.deltaD,
+    launchPrice: LAUNCH_PRICE.deltaD,
+    strapOns: 3,
+    heightM: 32,
+    stages: [
+      { motors: 1, burnS: 150 },
+      { motors: 1, burnS: 170 },
+      { motors: 1, burnS: 28 },
+    ],
+    coastS: 10,
+    reliability: ROCKET_RELIABILITY.deltaD,
+    record: { worked: 2, flights: 2 },
+    era: 2,
+    lastFlight: 1965,
   },
 };
 
-/** The Company can book this Launch Vehicle: it is out of the factory by now in history. */
-export function isVehicleOpen(state: Pick<SiteState, 'completed'>, id: LaunchVehicleId): boolean {
-  const after = LAUNCH_VEHICLES[id].opensAfter;
-  return !after || state.completed.includes(after);
+/** Whether the Company can book a Launch Vehicle now, and if not, why: too early in history, or retired. */
+export type VehicleStatus =
+  | { open: true }
+  | { open: false; why: 'after'; contract: ContractId }
+  | { open: false; why: 'era'; era: Era }
+  | { open: false; why: 'retired'; year: number };
+
+export function vehicleStatus(state: Pick<SiteState, 'completed' | 'hq'>, id: LaunchVehicleId): VehicleStatus {
+  const v = LAUNCH_VEHICLES[id];
+  const era = eraOf(state);
+  if (era < v.era) return { open: false, why: 'era', era: v.era };
+  if (v.lastEra !== undefined && era > v.lastEra) return { open: false, why: 'retired', year: v.lastFlight };
+  if (v.opensAfter && !state.completed.includes(v.opensAfter)) return { open: false, why: 'after', contract: v.opensAfter };
+  return { open: true };
+}
+
+/** The Company can book this Launch Vehicle: it is out of the factory by now in history, and not retired yet. */
+export function isVehicleOpen(state: Pick<SiteState, 'completed' | 'hq'>, id: LaunchVehicleId): boolean {
+  return vehicleStatus(state, id).open;
+}
+
+/** The first Launch Vehicle the Company can book, for when its pick has retired. */
+export function firstOpenVehicle(state: Pick<SiteState, 'completed' | 'hq'>): LaunchVehicleId {
+  return LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id)) ?? LAUNCH_VEHICLE_IDS[0];
 }
 
 /** Metres a second the ground moves east at a latitude, from Earth's spin: 465 m/s at the equator. */
@@ -106,6 +187,15 @@ export function liftFrom(vehicle: LaunchVehicleId, orbit: Orbit, site: LaunchSit
 /** What a Rideshare costs: the Launch Vehicle's price times the Spacecraft's mass. */
 export function rideshareCost(vehicle: LaunchVehicleId, massKg: number): number {
   return Math.round(LAUNCH_VEHICLES[vehicle].perKg * massKg);
+}
+
+/**
+ * What the Launch costs: a Rideshare by the kilogram, or the whole rocket when the Contract's client pays for its
+ * own Launch (Telstar 1). A rocket with no whole-rocket price falls back to the Rideshare.
+ */
+export function launchCost(vehicle: LaunchVehicleId, massKg: number, wholeLaunch = false): number {
+  const price = LAUNCH_VEHICLES[vehicle].launchPrice;
+  return wholeLaunch && price !== undefined ? price : rideshareCost(vehicle, massKg);
 }
 
 export const LAUNCH_SITE_IDS = ['capeCanaveral', 'wallops'] as const;

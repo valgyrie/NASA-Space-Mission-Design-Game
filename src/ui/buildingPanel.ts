@@ -1,6 +1,8 @@
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { LAB_KB_PER_DAY, MINE_OUTPUT_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { ERA_YEARS, type Era, LAST_ERA, eraMilestones, eraOf, isPartOpen, milestonesDone } from '../game/eras';
+import { groundBoost } from '../game/spacecraft';
 import { missionStage } from '../game/mission';
 import { type BusId, busesAt, checkUpgrade, maxLevel, nextUpgrade, startUpgrade, upgradeDaysLeft } from '../game/upgrades';
 import { TECH_IDS, buyTech, dataWaiting, labRate, nextPointShare, researchPoints } from '../game/research';
@@ -84,7 +86,8 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     bar.append(fill);
     const list = el('div', 'part-choices');
     list.append(el('h3', '', t('panel.makes')));
-    const choices = partsMadeBy(factory.kind).map((part) => {
+    // Parts of a later Era are left out until the Company reaches it.
+    const choices = partsMadeBy(factory.kind).filter((part) => isPartOpen(state, part)).map((part) => {
       const recipe = RECIPES[part];
       const b = el('button', 'part-choice');
       b.type = 'button';
@@ -199,6 +202,33 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     };
   };
 
+  // The HQ: the Company's Era, and what the next one waits for.
+  const hqBody = () => {
+    const about = el('p', 'side-note');
+    const next = el('p', 'side-note');
+    body.append(about, next);
+    refresh = () => {
+      const era = eraOf(state);
+      setText(about, t('panel.hq', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
+      const waiting = eraMilestones(era).filter((id) => !state.completed.includes(id));
+      setText(
+        next,
+        era >= LAST_ERA
+          ? t('panel.hqNewest', { era })
+          : milestonesDone(state, era)
+            ? t('panel.hqReady', { era, next: era + 1, year: ERA_YEARS[(era + 1) as Era].from })
+            : t('panel.hqWaiting', { milestones: waiting.map((id) => t(`contract.${id}.name`)).join(t('stat.list')) }),
+      );
+    };
+  };
+
+  // A Ground Station: how much all of them add to what antennas send.
+  const stationBody = () => {
+    const about = el('p', 'side-note');
+    body.append(about);
+    refresh = () => setText(about, t('panel.groundStation', { boost: formatDecimal(groundBoost(state)) }));
+  };
+
   // Every building: its level, what the next one does, and the Upgrade to get there (or the one under way).
   const levelBody = (kind: SiteBuildingKind, building: Building) => {
     const box = el('div', 'level-box');
@@ -224,15 +254,23 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       if (kind === 'warehouse') return t('level.next.warehouse', { level, kg: formatNumber(WAREHOUSE_STORAGE_KG * levelBoost(level)) });
       if (kind === 'researchLab') return t('level.next.researchLab', { level, kb: formatNumber(LAB_KB_PER_DAY * levelBoost(level)) });
       if (kind === 'assemblyHall') return t('level.next.assemblyHall', { level, bus: t(`part.${busesAt(level).at(-1) as BusId}`) });
+      if (kind === 'hq') return t('level.next.hq', { level, from: ERA_YEARS[level as Era].from, to: ERA_YEARS[level as Era].to });
+      if (kind === 'groundStation') return t('level.next.groundStation', { level });
       return isFactory(kind) ? t('level.next.factory', { level }) : '';
+    };
+    // At the top level for now: the hall's next level comes with the Large Bus in a later Era.
+    const topText = () => {
+      const era = eraOf(state);
+      return kind === 'assemblyHall' && maxLevel(kind, era) < maxLevel(kind, LAST_ERA) ? t('level.topEra', { era: era + 1 }) : t('level.top');
     };
     return {
       box,
       refresh() {
-        setText(label, t('level.label', { level: building.level, max: maxLevel(kind) }));
-        const up = nextUpgrade(kind, building);
+        const era = eraOf(state);
+        setText(label, t('level.label', { level: building.level, max: maxLevel(kind, era) }));
+        const up = nextUpgrade(kind, building, era);
         const left = upgradeDaysLeft(state, building);
-        setText(next, up ? nextText(up.level) : t('level.top'));
+        setText(next, up ? nextText(up.level) : topText());
         bar.hidden = left === null;
         upgrade.hidden = !up || left !== null;
         note.hidden = !up;
@@ -284,6 +322,10 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
         labBody(building.building);
       } else if (building.kind === 'assemblyHall') {
         hallBody(building.building);
+      } else if (building.kind === 'hq') {
+        hqBody();
+      } else if (building.kind === 'groundStation') {
+        stationBody();
       } else {
         factoryBody(building.factory);
       }

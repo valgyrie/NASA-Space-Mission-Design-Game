@@ -1,7 +1,7 @@
 import type { Part } from '../economy/part';
 import { type ContractId, type Orbit, type PayloadKind, CONTRACTS, accepted, completeContract, deadlineDay } from './contracts';
 import { INSURANCE } from './balance';
-import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom, rideshareCost } from './launchVehicles';
+import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, launchCost, liftFrom } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { awardMission } from './history';
@@ -49,6 +49,8 @@ export interface Mission {
   tech: TechId[];
   /** The Mark of each Part it took from the Warehouse. */
   marks: Marks;
+  /** How much the Company's Ground Stations multiplied its antenna when it shipped (1 with none). */
+  ground: number;
   /** Game day it was booked and assembly began. */
   startDay: number;
   /** Game day assembly ends and Shipping begins. */
@@ -72,6 +74,7 @@ export type PlanProblem =
   | { kind: 'vehicleClosed' }
   | { kind: 'emptySlots'; slots: Slot[] }
   | { kind: 'tooHeavy'; overKg: number }
+  | { kind: 'cantReach' }
   | Extract<DesignProblem, { kind: 'busFull' | 'hallTooSmall' }>
   | { kind: 'missingParts'; parts: Part[] }
   | { kind: 'money'; short: number };
@@ -85,7 +88,10 @@ export interface LaunchPlan {
   marks: Marks;
   massKg: number;
   liftKg: number;
+  /** What the Launch costs: a Rideshare by the kilogram, or the whole rocket when `wholeLaunch`. */
   rideshare: number;
+  /** The client pays for the whole Launch Vehicle, as AT&T did for Telstar 1. */
+  wholeLaunch: boolean;
   shipping: number;
   /** Rideshare and Shipping: what the Mission costs. */
   total: number;
@@ -115,7 +121,8 @@ export function planLaunch(
   const marks = marksFor(state, design);
   const massKg = spacecraftMass(design, marks);
   const liftKg = liftFrom(vehicle, goal.orbit, site);
-  const rideshare = rideshareCost(vehicle, massKg);
+  const wholeLaunch = !!goal.contract.wholeLaunch && LAUNCH_VEHICLES[vehicle].launchPrice !== undefined;
+  const rideshare = launchCost(vehicle, massKg, wholeLaunch);
   const route = shippingTo(state.place, site);
   const shipping = route.cost;
   const total = rideshare + shipping;
@@ -130,7 +137,8 @@ export function planLaunch(
   if (!isVehicleOpen(state, vehicle)) problems.push({ kind: 'vehicleClosed' });
   const slots = emptySlots(design);
   if (slots.length > 0) problems.push({ kind: 'emptySlots', slots });
-  if (massKg > liftKg + 1e-9) problems.push({ kind: 'tooHeavy', overKg: massKg - liftKg });
+  if (liftKg <= 0) problems.push({ kind: 'cantReach' });
+  else if (massKg > liftKg + 1e-9) problems.push({ kind: 'tooHeavy', overKg: massKg - liftKg });
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
   const partsKg = carriedMass(design, marks);
@@ -148,6 +156,7 @@ export function planLaunch(
     massKg,
     liftKg,
     rideshare,
+    wholeLaunch,
     shipping,
     total,
     insurance,
@@ -173,7 +182,15 @@ export function testRunFor(
   site: LaunchSiteId = state.launchSite,
 ): TestRun {
   const plan = planLaunch(state, design, vehicle, site);
-  const flightPlan = { contract: plan.goal.contract.id, design, vehicle, site, tech: [...state.research.tech], marks: plan.marks };
+  const flightPlan = {
+    contract: plan.goal.contract.id,
+    design,
+    vehicle,
+    site,
+    tech: [...state.research.tech],
+    marks: plan.marks,
+    ground: plan.goal.ground,
+  };
   return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay, { reliability: rocketReliability(state, vehicle) });
 }
 
@@ -241,6 +258,7 @@ export function shipMission(
     site,
     tech: [...state.research.tech],
     marks: { ...plan.marks },
+    ground: plan.goal.ground,
     startDay,
     shipDay: startDay + plan.assemblyDays,
     readyDay: plan.readyDay,
@@ -307,6 +325,8 @@ export type Finding =
       liftKg: number;
       /** The rocket stage that failed, or null when the rocket worked. Missing in saves from before rocket failures. */
       failedStage?: number | null;
+      /** It reached the transfer orbit but had no main engine to climb to a geostationary one. */
+      noEngine?: boolean;
     }
   | { kind: 'payload'; ok: boolean; payload: PayloadKind | null; carried: OptionId | null }
   | {
