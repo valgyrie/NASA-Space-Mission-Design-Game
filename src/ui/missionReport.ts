@@ -1,3 +1,4 @@
+import type { Company } from '../save/save';
 import type { Finding, MissionReport } from '../game/mission';
 import { type Anomaly, antennaChance } from '../game/anomalies';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
@@ -111,7 +112,7 @@ function anomalyWhy(a: Anomaly): string {
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
 export function showMissionReport(
   root: HTMLElement,
-  companyName: string,
+  company: Company,
   onClose: () => void,
   onSeeOrbit: (report: MissionReport) => void,
 ): MissionReportDialog {
@@ -182,7 +183,7 @@ export function showMissionReport(
       else reward.textContent = t('report.tooLate');
       if (report.insurancePaid > 0) reward.textContent += ` ${t('report.insurance', { money: formatMoney(report.insurancePaid) })}`;
       patchHeading.hidden = patchBox.hidden = !earned;
-      patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, companyName)] : []));
+      patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, company.name, company.logo)] : []));
       patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';
       shown = report;
       seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);

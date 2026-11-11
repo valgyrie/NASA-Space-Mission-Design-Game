@@ -24,7 +24,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 16 🧪 | [Real places and weather](16-real-places-and-weather.md) | 03, 08 | Globe picker (Historic pin, US, anywhere, Random); real NASA POWER climate baked in; Site shaped by it; latitude boost; weather Scrubs; Launch Window advisor. |
 | 17 🧪 | [Risk and failure](17-risk-and-failure.md) | 08 | Launch Insurance; retryable Milestones with real failure stories (Vanguard TV3); startup grant. |
 | 18 🧪 | [Era 2](18-era-2.md) | 14, 15 | HQ Upgrade to Era 2; Telstar 1 and Syncom 3; GEO, main engine, Thor-Delta/Delta D; Ground Stations set Communications. |
-| 19 | [Company logo](19-company-logo.md) | 02 | Logo maker; upload (128×128, ~200 KB); logo on rockets, flag and Mission Patches. |
+| 19 🧪 | [Company logo](19-company-logo.md) | 02 | Logo maker; upload (128×128, ~200 KB); logo on rockets, flag and Mission Patches. |
 | 20 | [Easy and Advanced modes](20-easy-and-advanced.md) | 07 | Two Part sets with different detail. |
 | 21 | [Free Play](21-free-play.md) | 18 | New Company anywhere on Earth in the modern Era, generated Contracts; Campaign continues into Free Play. |
 | 22 | [Online basics](22-online-basics.md) | 21 | Anonymous account (nickname generator, recovery code), cloud save, leaderboards. Needs a Supabase project (team sets it up). |

@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import type { CompanyLogo } from '../company/logo';
+import { logoTexture } from './logoTexture';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
@@ -122,6 +124,7 @@ function isTyping(target: EventTarget | null): boolean {
 
 /** The 3D world: the Site and the land around it, sky, sunlight, and the camera. */
 export class World {
+  private companyTexture: THREE.Texture | null = null;
   readonly renderer: THREE.WebGLRenderer;
   readonly scene = new THREE.Scene();
   readonly camera: THREE.PerspectiveCamera;
@@ -428,6 +431,18 @@ export class World {
     model.userData.working = on;
     const smoke = model.getObjectByName('smoke');
     if (smoke) smoke.visible = on;
+  }
+
+  /** Refresh the HQ's sign and flag together, including after editing the logo. */
+  setCompanyLogo(logo: CompanyLogo): void {
+    this.companyTexture?.dispose();
+    this.companyTexture = logoTexture(logo);
+    this.buildings.traverse((o) => {
+      if (o.name !== 'company-logo' || !(o instanceof THREE.Mesh)) return;
+      const material = o.material as THREE.MeshBasicMaterial;
+      material.map = this.companyTexture;
+      material.needsUpdate = true;
+    });
   }
 
   /**

@@ -25,9 +25,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] All game text in one file (translation-ready)
 
 ### Start and Site
-- [ ] Company name (filtered) and logo maker
-- [ ] Logo upload (128×128, ~200 KB cap, "no photos of people" warning)
-- [ ] Default Company logo: an original preset (not the Space Apps logo)
+- [x] Company name (filtered) and logo maker
+- [x] Logo upload (128×128, ~200 KB cap, "no photos of people" warning)
+- [x] Default Company logo: an original preset (not the Space Apps logo)
 - [x] Globe picker: Historic start pin, US, anywhere; Random; Seeds
 - [x] Real climate and land type per location (NASA POWER 2025, baked in)
 - [x] Site map generated from Seed + real data
@@ -61,7 +61,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
 - [x] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse (tickets 11 and 12; one per flight)
 - [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
-- [x] Mission Patches and patch gallery (ticket 13: drawn in code; the Company logo joins with ticket 19)
+- [x] Mission Patches and patch gallery (tickets 13 and 19: drawn in code with the Company logo)
 
 ### Campaign
 - [ ] Tutorial: Explorer 1, first Launch in under 10 minutes

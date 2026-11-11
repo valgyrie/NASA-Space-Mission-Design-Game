@@ -1,4 +1,5 @@
 import { withContactLost } from '../game/anomalies';
+import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
 import { CONTRACTS } from '../game/contracts';
 import { contractNeeds } from '../game/spacecraft';
@@ -193,7 +194,7 @@ function drawClimb(canvas: HTMLCanvasElement, share: number, stages: number[]): 
   g.shadowBlur = 0;
 }
 
-export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): LaunchShow {
+export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, logo: () => CompanyLogo = () => DEFAULT_LOGO): LaunchShow {
   const screen = el('div', 'launch');
   screen.hidden = true;
   screen.setAttribute('role', 'dialog');
@@ -393,7 +394,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView): L
       }
       note.hidden = !viewFailed;
       try {
-        view?.load(r.design, r.report.vehicle, CONTRACTS[r.report.contract].orbitKm);
+        view?.load(r.design, r.report.vehicle, CONTRACTS[r.report.contract].orbitKm, logo());
       } catch {
         view = null;
         viewFailed = true;

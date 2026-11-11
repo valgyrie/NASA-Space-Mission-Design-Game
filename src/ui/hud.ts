@@ -1,3 +1,5 @@
+import { logoUrl } from '../company/logo';
+import type { Company } from '../save/save';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { availableContracts, daysLeft } from '../game/contracts';
 import { missionStage } from '../game/mission';
@@ -10,6 +12,7 @@ import { cssColour, formatDays, formatNumber } from './format';
 export interface Hud {
   /** Refresh the active Contract line. Cheap enough to call every frame. */
   update(state: SiteState): void;
+  updateLogo(): void;
 }
 
 function setText(e: HTMLElement, text: string): void {
@@ -19,7 +22,7 @@ function setText(e: HTMLElement, text: string): void {
 /** The panel at the top left of the Site view: Company name, menu button, Deposit colours, Market, Contracts, Mission Designer and the active Contract. */
 export function showHud(
   root: HTMLElement,
-  companyName: string,
+  company: Company,
   onMenu: () => void,
   onHome: () => void,
   onMarket: () => void,
@@ -29,13 +32,14 @@ export function showHud(
   onTrack: () => void,
   onSpace: () => void,
   onArchive: () => void,
+  onLogo: () => void,
 ): Hud {
   const bar = document.createElement('div');
   bar.className = 'panel hud';
 
   const name = document.createElement('span');
   name.className = 'hud-company';
-  name.textContent = t('hud.company', { name: companyName });
+  name.textContent = t('hud.company', { name: company.name });
   name.title = name.textContent; // the whole name on hover when it is cut short
 
   const menu = document.createElement('button');
@@ -132,9 +136,20 @@ export function showHud(
   track.hidden = true;
   track.addEventListener('click', onTrack);
 
+  const logo = document.createElement('button');
+  logo.type = 'button';
+  logo.className = 'hud-logo';
+  logo.title = t('logo.edit');
+  logo.setAttribute('aria-label', t('logo.edit'));
+  const logoImage = document.createElement('img');
+  logoImage.alt = '';
+  logoImage.src = logoUrl(company.logo);
+  logo.append(logoImage);
+  logo.addEventListener('click', onLogo);
+
   const top = document.createElement('div');
   top.className = 'row hud-top';
-  top.append(menu, name, home);
+  top.append(menu, logo, name, home);
   bar.append(top, legend, buttons, designer, space, archive, active, mission, track, launch);
   root.append(bar);
 
@@ -144,6 +159,7 @@ export function showHud(
   place();
 
   return {
+    updateLogo() { logoImage.src = logoUrl(company.logo); },
     update(state) {
       // Nudge towards the board while there is work on offer and none taken.
       const nudge = state.contracts.length === 0 && availableContracts(state).length > 0;

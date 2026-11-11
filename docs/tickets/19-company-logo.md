@@ -4,9 +4,19 @@
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** built, waiting for a team test
 
-- [ ] Logo maker with shapes, colours and space icons
-- [ ] Default logo is an original preset
-- [ ] Upload is resized to 128×128 with a ~200 KB cap and a "no photos of people" warning
-- [ ] Logo shows on rockets, the flag and Mission Patches
+- [x] Logo maker with shapes, colours and space icons
+- [x] Default logo is an original preset
+- [x] Upload is resized to 128×128 with a ~200 KB cap and a "no photos of people" warning
+- [x] Logo shows on rockets, the flag and Mission Patches
+
+**As built:** the same small editor at Company setup and from the logo beside the Company name. Three shapes (circle, shield, hexagon), three space icons (star, planet, rocket) and two colours. The original preset is a gold star on a blue hexagon. The Site pauses while editing; Save applies the draft, Cancel or Esc keeps the old logo.
+
+Uploads accept PNG, JPEG and WebP up to 200 KB, fit inside 128×128 without stretching, and keep transparency. Only the flattened PNG is saved, not the source file or its metadata. Bad, oversized and unsupported files leave the current logo in place. The warning says no photos of people or real organisation logos.
+
+The HQ's sign and both sides of its flag, all four Launch Vehicles, and Mission Patches in the report and History Archive use the current logo. Changing it also updates older patches. Save v16 adds `company.logo`; older saves get the preset without losing their Company or Site. Report/hide controls belong with visiting other Companies' Sites, when there are viewers.
+
+**Files:** `src/company/logo.ts` (recipe, drawing, upload and validation), `src/ui/logoEditor.ts` (shared editor and dialog), `src/world/logoTexture.ts` (3D texture). Existing setup, HUD, HQ, rocket, Launch show, patch and save code use these.
+
+**Tested:** 308 unit tests and the production build pass. Only three unit tests were added: v15 migration, custom logo persistence and invalid saved logo data. Chromium at 1280×800 and 1024×768: maker options, colours, PNG/JPEG/WebP resize and transparency, invalid uploads, Save/Cancel/Esc, pause, maker/upload reload, old-save migration, HQ flag/sign, Launch show, Mission Report and patch gallery. All four rocket models use the logo and release its texture. No page errors. Touch and a team member's own drawing remain unchecked.
