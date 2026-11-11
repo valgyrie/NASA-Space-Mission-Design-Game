@@ -1,3 +1,4 @@
+import { DEFAULT_LOGO } from '../company/logo';
 import { describe, expect, it } from 'vitest';
 import { MARKET_LOT_KG } from '../game/balance';
 import { acceptContract } from '../game/contracts';
@@ -23,13 +24,39 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 const LEGACY = { ...JPL, start: 'legacy' as const };
 const state = { ...newSiteState(LEGACY), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
 state.stock.copper = 125;
-const game: SaveData = { version: 15, company: { name: 'Comet Works' }, site: { seed: 'K7QXM2' }, state };
+const game: SaveData = { version: SAVE_VERSION, company: { name: 'Comet Works', logo: { ...DEFAULT_LOGO } }, site: { seed: 'K7QXM2' }, state };
 
 describe('local save', () => {
   it('restores what was saved', () => {
     const storage = memoryStorage();
     expect(saveGame(storage, game)).toBe(true);
     expect(loadGame(storage)).toEqual(game);
+  });
+
+  it('upgrades a version 15 Company with the original logo and keeps its game', () => {
+    const storage = memoryStorage();
+    const old = { ...game, version: 15, company: { name: game.company.name } };
+    storage.data.set(SAVE_KEY, JSON.stringify(old));
+    expect(loadGame(storage)).toEqual(game);
+  });
+
+  it('keeps both a custom maker logo and an uploaded drawing', () => {
+    const storage = memoryStorage();
+    const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a9XcAAAAASUVORK5CYII=';
+    for (const logo of [{ ...DEFAULT_LOGO, background: '#20aa80' }, { kind: 'upload' as const, png }]) {
+      const custom = { ...game, company: { ...game.company, logo } };
+      expect(saveGame(storage, custom)).toBe(true);
+      expect(loadGame(storage)).toEqual(custom);
+    }
+  });
+
+  it('rejects invalid logo data in a current save', () => {
+    const storage = memoryStorage();
+    for (const logo of [null, { ...DEFAULT_LOGO, shape: 'unknown' }, { ...DEFAULT_LOGO, ink: 'red' },
+      { kind: 'upload', png: 'https://example.com/logo.png' }, { kind: 'upload', png: 'data:image/svg+xml;base64,AAAA' }]) {
+      storage.data.set(SAVE_KEY, JSON.stringify({ ...game, company: { ...game.company, logo } }));
+      expect(loadGame(storage)).toBeNull();
+    }
   });
 
   it('has nothing to load on a new game', () => {
@@ -63,7 +90,7 @@ describe('local save', () => {
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 1, company: { name: 'Comet Works' } }));
     expect(loadGame(storage, () => 'BCD234')).toEqual({
       version: SAVE_VERSION,
-      company: { name: 'Comet Works' },
+      company: { name: 'Comet Works', logo: DEFAULT_LOGO },
       site: { seed: 'BCD234' },
       state: newSiteState(LEGACY),
     });

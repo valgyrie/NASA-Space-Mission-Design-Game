@@ -1,3 +1,4 @@
+import { type CompanyLogo, logoUrl } from '../company/logo';
 import type { ContractId } from '../game/contracts';
 import type { Patch } from '../game/history';
 import { t } from '../strings';
@@ -39,7 +40,7 @@ function arcText(svg: SVGSVGElement, text: string, radius: number, top: boolean,
  * A Mission Patch, drawn in code: the Company's name round the top, the Mission's name round the bottom,
  * Earth with the Spacecraft on its orbit, and the year of the Launch. No real logos.
  */
-export function makePatch(patch: Patch, company: string): SVGSVGElement {
+export function makePatch(patch: Patch, company: string, logo: CompanyLogo): SVGSVGElement {
   const c = PATCH_COLOURS[patch.contract];
   const contract = t(`contract.${patch.contract}.name`);
   const year = gameYear(patch.day);
@@ -79,5 +80,6 @@ export function makePatch(patch: Patch, company: string): SVGSVGElement {
   const yearText = node('text', { x: 100, y: 84, 'text-anchor': 'middle', fill: c.trim, 'font-family': 'system-ui, sans-serif', 'font-weight': 700, 'font-size': 13 });
   yearText.textContent = t('patch.year', { year });
   svg.append(yearText);
+  svg.append(node('image', { href: logoUrl(logo), x: 82, y: 87, width: 36, height: 36 }));
   return svg;
 }

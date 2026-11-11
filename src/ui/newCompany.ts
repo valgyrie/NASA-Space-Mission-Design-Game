@@ -1,3 +1,5 @@
+import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
+import { makeLogoEditor } from './logoEditor';
 import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
 import { SEED_MAX, checkSeed, randomSeed } from '../site/seed';
 import { JPL, type Place, START_KINDS, type StartKind, climateAt, isInUs, landAt, placeProblem, randomPlace } from '../game/places';
@@ -7,6 +9,7 @@ import { formatDecimal } from './format';
 
 export interface NewCompanyChoice {
   name: string;
+  logo: CompanyLogo;
   seed: string;
   place: Place;
 }
@@ -94,6 +97,8 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
   const seedRow = document.createElement('div');
   seedRow.className = 'row';
   seedRow.append(seed.input, reroll);
+
+  const logo = makeLogoEditor(DEFAULT_LOGO);
 
   const error = document.createElement('p');
   error.className = 'error';
@@ -193,6 +198,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
 
   form.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (!logo.ready()) return;
     const nameCheck = checkCompanyName(name.input.value);
     if (!nameCheck.ok) {
       error.textContent = t(`newCompany.error.${nameCheck.problem}`, { min: NAME_MIN, max: NAME_MAX });
@@ -209,8 +215,9 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     // A preview still waiting would redraw the Site after the game has put its buildings on it.
     window.clearTimeout(timer);
     globe?.dispose();
+    logo.cancelUpload();
     form.remove();
-    onDone({ name: nameCheck.name, seed: seedCheck.seed, place });
+    onDone({ name: nameCheck.name, logo: logo.value(), seed: seedCheck.seed, place });
   });
 
   const left = document.createElement('div');
@@ -219,6 +226,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     name.label,
     name.input,
     note('company-note', t('newCompany.note')),
+    logo.root,
     seed.label,
     seedRow,
     note('seed-note', t('newCompany.seedNote')),

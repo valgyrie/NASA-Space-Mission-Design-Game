@@ -1,3 +1,4 @@
+import { type CompanyLogo, DEFAULT_LOGO, isCompanyLogo } from '../company/logo';
 import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { ANOMALY_KINDS } from '../game/anomalies';
@@ -13,11 +14,12 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 15;
+export const SAVE_VERSION = 16;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
   name: string;
+  logo: CompanyLogo;
 }
 
 export interface SaveData {
@@ -213,6 +215,7 @@ function isSaveData(value: unknown): value is SaveData {
   return (
     v.version === SAVE_VERSION &&
     typeof v.company?.name === 'string' &&
+    isCompanyLogo(v.company.logo) &&
     typeof v.site?.seed === 'string' &&
     isSiteState(v.state)
   );
@@ -259,6 +262,7 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Version 13 had no Launch Insurance, reopened Contracts or startup grant: none bought, none reopened, grant still to come.
  * Version 14 had no Eras, HQ, Ground Stations, Propulsion slot or Era 2 Parts: Era 1 (the HQ is placed when the
  * Site is shown), no stations, every design without an engine, and none of the new Parts in stock.
+ * Version 15 had no Company logo: use the original maker preset.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -350,6 +354,9 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
       version: 15,
       state: { ...old, design: noEngine(old.design), mission, reports, parts, betterParts, hq: null, groundStations: [], eraSeen: 1 },
     } as typeof v;
+  }
+  if (v?.version === 15) {
+    v = { ...v, version: 16, company: { ...(v.company as object), logo: { ...DEFAULT_LOGO } } };
   }
   return v;
 }

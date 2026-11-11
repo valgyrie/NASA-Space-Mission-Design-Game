@@ -408,9 +408,17 @@ export function buildHQ(): THREE.Group {
   p.add(new THREE.SphereGeometry(0.014, 6, 4), M.bulb, 0.1, 0.93, -0.28);
   // Flagpole and flag.
   p.cyl(0.008, 0.56, M.pipe, 0.32, 0.05, 0.28, 6);
+  const logo = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
   const flag = p.add(box(0.16, 0.1, 0.006), colourMat(0x2f5fa8), 0.4, 0.55, 0.28);
   flag.rotation.y = 0.15;
-  p.add(box(0.05, 0.05, 0.007), M.white, 0.37, 0.56, 0.282);
+  for (const side of [-1, 1]) {
+    const emblem = new THREE.Mesh(new THREE.PlaneGeometry(0.085, 0.085), logo);
+    emblem.name = 'company-logo';
+    emblem.position.z = side * 0.004;
+    flag.add(emblem);
+  }
+  const sign = p.add(new THREE.PlaneGeometry(0.1, 0.1), logo, -0.1, 0.33, 0.146);
+  sign.name = 'company-logo';
   // Car park on the +x side with two cars.
   p.add(box(0.2, 0.008, 0.3), M.asphalt, 0.33, 0.054, -0.06);
   p.add(box(0.07, 0.04, 0.11), colourMat(0xd9583a), 0.29, 0.08, -0.14);

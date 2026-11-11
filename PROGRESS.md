@@ -4,29 +4,29 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–18 (12, 13, 16, 17 and 18 wait for a team test) and 31 done; local launchers merged. This session (branch `claude/ecstatic-davinci-ym221r`, merged into `main`) built ticket 12. The user was away and asked the agent to choose; decisions are in the ticket file.
+**State:** tickets 01–19 (12, 13, 16, 17, 18 and 19 wait for a team test) and 31 built; local launchers merged. This session built ticket 19 on `codex/ticket-19-company-logo`, starting from the latest `origin/main` (`595253e`).
 
-**Just finished: ticket 12, Stuck solar panel and Survive the eclipse.** Rules: GDD §9 (the bullet after "First Anomaly"). Decisions and file map: `docs/tickets/12-anomalies-panel-eclipse.md`.
-- Both only strike Spacecraft with Solar Cells. Still **one Anomaly per flight**: each kind rolls its own chance, a never-played kind wins, then the likeliest; the first flight still always meets Point the antenna. Flights without Solar Cells roll exactly as before.
-- **Stuck solar panel:** chance by the Solar Cells' Mark (35/20/10%). Fire a thruster in time with the swing (resonance) until the panel latches; button mashing never works.
-- **Survive the eclipse:** chance from the Power margin (8–60%) plus 12% for a Small Battery. Switch systems off (keys 1–4) so the battery lasts to sunrise; heaters off 4 s in a row freezes it; Payload time sets the score.
-- `anomalyPanel.ts` is now a shell over per-kind views (`MiniGameView`, `src/ui/miniGame.ts`); the antenna moved to `antennaView.ts`. No save version change (optional Anomaly fields).
-- **Tested** in headless Chromium at 1280×800 with the dev build: panel won (99%), eclipse played to sunrise (61%) and lost to cold, antenna still plays, report explains the eclipse, no console errors. 305 unit tests pass; build passes.
-- Not tested: a person playing them (is the swing timing fair for a 10-year-old? is 12 s of eclipse enough?); touch.
+**Just finished: ticket 19, Company logo.** Rules: GDD §11. File map and decisions: `docs/tickets/19-company-logo.md`.
+- Shared logo editor at setup and from the logo beside the Company name: three shapes, three space icons and two colours. Original default: a gold star on a blue hexagon.
+- PNG/JPEG/WebP drawings up to 200 KB fit inside 128×128 without stretching; only the flattened PNG is saved. A warning says no photos of people or real organisation logos.
+- The HQ sign and flag, all four Launch Vehicles, and Mission Patches in the report and archive use the same current logo. Editing pauses the Site; Cancel or Esc discards the draft.
+- Save v16 adds `company.logo`; older saves get the preset and keep their game. Later shared Sites need report/hide controls for viewers.
+- Tested in Chromium at 1280×800 and 1024×768: maker, uploads and rejection paths, Save/Cancel/Esc, pause, reloads and old-save migration, HQ, rockets, earned patch and gallery; no page errors. 308 unit tests and build pass. Three save tests added; no new dependencies or test framework.
+- Not tested: touch or a team member's own drawing. Launcher checks still wait for the final ticket.
 
 **QA review (2026-11-11):** checked `main` at `e2ba793`; recorded ten open fixes in tickets **01, 04, 05 (two), 08, 13, 14, 16, 17 and 31**, with steps and [screenshots](docs/qa/2026-11-11/README.md). Game code and existing ticket statuses are unchanged. The Scrub-card clock (16) and failed-rocket report (17) were already in the handoff.
 - Completed all four Milestones and played all three Anomalies reached through Launches, including both new TIROS-1 kinds. Also checked Mines, Market trades, storage, Research, Mk 2 Parts, building Upgrades, insurance and reloads. Chromium at 1440×900 and 1024×768; pause-menu and Research-bar issues also occur in the production build. The 305 tests and build passed during the review.
 - A person still needs to time the tutorial and judge the mini-games' difficulty; touch and performance on real laptops remain unchecked. No planned features were counted as bugs.
 
 **Next:**
-1. Team: play TIROS-1 a few times; judge the panel's timing and the eclipse's difficulty (numbers at the top of `src/game/panelGame.ts` and `src/game/eclipseGame.ts`, chances in `balance.ts`).
-2. Open tickets: 19, 20, 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
+1. Team: try the logo maker and an uploaded drawing; play TIROS-1 to judge the panel timing and eclipse difficulty (ticket 12).
+2. Open tickets: 20, 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
 
 **Open:**
 - The panel shows "Push now!" on the intro card while the game waits (it is a still frame); harmless.
 - Mini-games use the mouse and keys; touch works for the panel (tap) and the eclipse (buttons), not tested.
 - From ticket 18: Titanium left out; no Era 2 tech tree items; Thor-Delta/Delta D staging gap _(verify)_; Era 2 prices are game estimates; Syncom picture looks retouched.
-- From before: no NASA photo of Vanguard TV3's explosion; a Spacecraft lost to the rocket lists Power, Comms and Time as met; no Reputation penalty for a missed deadline; insurance price shows twice when ticked; coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; no Company logo on patches (19); orbits never decay; no "New game"; Speed not saved.
+- From before: no NASA photo of Vanguard TV3's explosion; a Spacecraft lost to the rocket lists Power, Comms and Time as met; no Reputation penalty for a missed deadline; insurance price shows twice when ticked; coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; orbits never decay; no "New game"; Speed not saved.
 - Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
@@ -34,6 +34,7 @@
 
 ## Log
 
+- 2026-11-12: Ticket 19 built: Company logo maker and drawing upload, logo on HQ flag/sign, all four rockets and Mission Patches; save v16 migrates older Companies to the original preset. 308 tests and build pass.
 - 2026-11-11: Recorded ten confirmed QA fixes in the existing tickets, with reproduction steps and screenshots; game code unchanged.
 - 2026-11-11: Ticket 12 built: Stuck solar panel (Mark sets the chance, thruster in time with the swing) and Survive the eclipse (Power margin and battery set the chance, switch systems off till sunrise); one Anomaly per flight, new kinds first.
 - 2026-11-11: Ticket 18 built: HQ Upgrade to Era 2 (date jumps to 1962), Telstar 1 (whole Thor-Delta paid, Ground Stations), Syncom 3 (geostationary orbit, Main Engine, Large Bus, Delta D), four NASA-photo cards, save v15.

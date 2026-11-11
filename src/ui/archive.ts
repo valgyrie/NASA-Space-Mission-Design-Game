@@ -1,3 +1,4 @@
+import type { Company } from '../save/save';
 import { HISTORY_CARDS, type HistoryCardId } from '../game/history';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
@@ -25,7 +26,7 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
 export function showArchive(
   root: HTMLElement,
   state: SiteState,
-  companyName: string,
+  company: Company,
   hooks: { onOpen(): void; onClose(): void; onCard(id: HistoryCardId): void },
 ): ArchiveDialog {
   const backdrop = el('div', 'backdrop archive-backdrop');
@@ -53,7 +54,7 @@ export function showArchive(
       ...state.patches.map((p) => {
         const figure = el('figure', 'archive-patch');
         const contract = t(`contract.${p.contract}.name`);
-        figure.append(makePatch(p, companyName), el('figcaption', '', t('archive.patchLine', { contract, date: formatGameDate(p.day) })));
+        figure.append(makePatch(p, company.name, company.logo), el('figcaption', '', t('archive.patchLine', { contract, date: formatGameDate(p.day) })));
         return figure;
       }),
     );

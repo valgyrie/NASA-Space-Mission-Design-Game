@@ -1,4 +1,6 @@
 import * as THREE from 'three';
+import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
+import { logoTexture } from './logoTexture';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
 import { mat } from './buildingParts';
@@ -145,11 +147,19 @@ function spacecraftOnTop(design: Design, height: number): THREE.Group {
 }
 
 /** The Launch Vehicle with the player's Spacecraft on top. */
-export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1'): RocketModel {
-  if (vehicle === 'thorAble') return buildThor(design, THOR, 0);
-  if (vehicle === 'thorDelta') return buildThor(design, THOR_DELTA, 0);
-  if (vehicle === 'deltaD') return buildThor(design, THOR_DELTA, 3);
-  return buildJuno(design);
+export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1', logo: CompanyLogo = DEFAULT_LOGO): RocketModel {
+  const model = vehicle === 'juno1' ? buildJuno(design) : buildThor(design, vehicle === 'thorAble' ? THOR : THOR_DELTA, vehicle === 'deltaD' ? 3 : 0);
+  const radius = vehicle === 'juno1' ? JUNO.radius : THOR.radius;
+  const material = new THREE.MeshBasicMaterial({ map: logoTexture(logo), transparent: true, depthWrite: false });
+  material.name = 'company-logo';
+  // Four curved decals keep the emblem visible as the camera follows the climb.
+  for (let i = 0; i < 4; i++) {
+    const decal = new THREE.Mesh(new THREE.CylinderGeometry(radius * 1.012, radius * 1.012, radius * 1.1, 12, 1, true, i * Math.PI / 2 - 0.55, 1.1), material);
+    decal.name = 'company-logo';
+    decal.position.y = 7;
+    model.stages[0]!.group.add(decal);
+  }
+  return model;
 }
 
 /** The whole Juno I with the player's Spacecraft on top. */
@@ -320,9 +330,17 @@ function buildThor(design: Design, shape: ThorShape, boosters: number): RocketMo
   };
 }
 
-/** Free the geometry the rocket built (materials are shared and kept). */
+/** Free the rocket geometry and its logo; the other materials are shared and kept. */
 export function disposeRocket(model: THREE.Object3D): void {
+  const logos = new Set<THREE.MeshBasicMaterial>();
   model.traverse((o) => {
-    if (o instanceof THREE.Mesh) o.geometry.dispose();
+    if (!(o instanceof THREE.Mesh)) return;
+    o.geometry.dispose();
+    const material = o.material as THREE.MeshBasicMaterial;
+    if (material.name === 'company-logo') logos.add(material);
   });
+  for (const material of logos) {
+    material.map?.dispose();
+    material.dispose();
+  }
 }

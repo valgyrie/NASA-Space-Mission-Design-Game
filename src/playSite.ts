@@ -1,3 +1,4 @@
+import { showLogoDialog } from './ui/logoEditor';
 import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
 import {
@@ -62,6 +63,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // The HQ stands beside it; its level is the Company's Era.
   const hq = placeHQ(site, state);
   world.addBuilding('hq', hq.x, hq.z);
+  world.setCompanyLogo(game.company.logo);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
     if (material) world.addBuilding('mine', mine.x, mine.z, material);
@@ -156,7 +158,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   };
   const report = showMissionReport(
     ui,
-    game.company.name,
+    game.company,
     () => {
       world.keyboardEnabled = true;
       setSpeed(speedBeforeReport);
@@ -189,7 +191,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     },
   });
   // The Launch plays first, then the Mission Report. The result is already settled and saved.
-  const launchShow = showLaunchShow(ui, () => new LaunchView());
+  const launchShow = showLaunchShow(ui, () => new LaunchView(), () => game.company.logo);
   const tracker = showMissionTracker(ui, state, {
     onFollow: () => world.followTruck(),
     onLaunch: () => launchMission(),
@@ -241,7 +243,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // The Market and the Contracts board share the left side, so one closes the other.
   const hud = showHud(
     ui,
-    game.company.name,
+    game.company,
     () => menu.open(),
     () => world.goHome(),
     () => {
@@ -268,9 +270,24 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       tracker.close();
       archive.open();
     },
+    () => {
+      market.close();
+      contracts.close();
+      tracker.close();
+      panel.close();
+      logo.open();
+    },
   );
+  const logo = showLogoDialog(ui, game.company, {
+    ...pauser(),
+    onSave() {
+      world.setCompanyLogo(game.company.logo);
+      hud.updateLogo();
+      saveGame(localStorage, game);
+    },
+  });
   const topBar = showTopBar(ui, setSpeed);
-  const archive = showArchive(ui, state, game.company.name, { ...pauser(), onCard: (id) => history.show(id) });
+  const archive = showArchive(ui, state, game.company, { ...pauser(), onCard: (id) => history.show(id) });
   // Real History cards go above everything else, the History Archive included.
   const history = showHistoryCard(ui, pauser());
   // The one-time startup grant, when money runs low.
@@ -325,13 +342,14 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     world.markTile(tile, checkBuild(site, state, placing, tile.x, tile.z).ok);
   });
   window.addEventListener('keydown', (e) => {
-    if (e.target instanceof HTMLInputElement) return;
+    if (e.key !== 'Escape' && (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) return;
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
       else if (eraCard.isOpen) eraCard.close();
       else if (grant.isOpen) grant.close();
       else if (history.isOpen) history.close();
+      else if (logo.isOpen) logo.close();
       else if (menu.isOpen) menu.close();
       else if (archive.isOpen) archive.close();
       else if (space.isOpen) space.close();
@@ -348,6 +366,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (
       launchShow.isOpen ||
       menu.isOpen ||
+      logo.isOpen ||
       designer.isOpen ||
       report.isOpen ||
       space.isOpen ||
@@ -393,7 +412,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     panel.update();
     buildMenu.update();
     const covered =
-      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen;
+      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
     tutorial.update(state, covered, designer.isOpen);
     // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {

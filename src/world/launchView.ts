@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type ShowMoment, stageTimes } from '../game/ascent';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
@@ -315,21 +316,21 @@ export class LaunchView {
   }
 
   /** Get ready for one Launch: build the rocket with this design on top and draw the orbit. */
-  load(design: Design, vehicle: LaunchVehicleId, orbitKm: { low: number; high: number }): void {
+  load(design: Design, vehicle: LaunchVehicleId, orbitKm: { low: number; high: number }, logo: CompanyLogo = DEFAULT_LOGO): void {
     this.unload();
     this.stages = stageTimes(vehicle);
     const burnEnd = this.stages[0]!.end;
     const coastEnd = this.stages[1]?.start ?? burnEnd;
     this.path = climbPath(burnEnd, coastEnd);
 
-    this.climbing = buildRocket(design, vehicle);
+    this.climbing = buildRocket(design, vehicle, logo);
     this.climbing.root.position.y = 1.8;
     this.flames = this.climbing.stages.map((s, i) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? 9 : 1.2)));
     this.pad.add(this.climbing.root);
 
     // The upper stages again for the space shot, lying along +x (flying east) without the first stage.
     // A taller upper rocket is shown smaller, so it fits the shot like Juno I's.
-    this.upper = buildRocket(design, vehicle);
+    this.upper = buildRocket(design, vehicle, logo);
     this.upper.stages[0]!.group.visible = false;
     const fit = Math.min(1, (JUNO.top - JUNO.coneTop) / this.upper.upperLength);
     this.upper.root.scale.setScalar(fit);
