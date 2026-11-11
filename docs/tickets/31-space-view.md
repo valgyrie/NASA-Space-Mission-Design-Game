@@ -13,3 +13,9 @@
 - [x] Mission Reports keep the design that flew (save v8; older reports show a plain model)
 
 **Later:** the Moon, and Spacecraft orbiting the Moon or other worlds, with their Contracts (Era 3 on; Optional in `CHECKLIST.md`).
+
+**QA (2026-11-11):**
+
+- [ ] Keep the camera outside Earth while following a Spacecraft. Follow TIROS-1, zoom out, then drag around it towards Earth. The camera can cross Earth's surface; the globe disappears, leaving the Spacecraft and stars visible from inside it. **See the whole Earth** recovers the view.
+
+![The camera inside Earth, with the globe no longer visible](../qa/2026-11-11/space-camera-inside-earth.png)

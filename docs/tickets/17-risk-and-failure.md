@@ -16,3 +16,9 @@
 - [x] A one-time startup grant appears when money gets dangerously low
 
 **Built (2026-11-10):** also Launch Vehicle failures (Juno I 80%, Thor-Able 85%, real records shown; the first Launch always works) in the real flight and the Test Run, and the coast effect in the Launch show. Rules: GDD §5 (grant), §6 (retry, failure story), §8 (failures, insurance).
+
+**QA (2026-11-11):** already noted in the handoff; checked again.
+
+- [ ] Make a failed rocket's Mission Report say what happened to the flight. Telstar 1 failed when Thor-Delta's second stage failed, but its report still said Power lasted all 136 days, all Data reached home, and the Mission finished before the deadline. Those are what the design could have done, not what the flight did. The **$2.18M** Launch Insurance payout was correct.
+
+![The failed Launch report still claims all Data reached home](../qa/2026-11-11/rocket-failure-report.png)

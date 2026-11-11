@@ -12,7 +12,11 @@
 - **Survive the eclipse:** chance from the Power margin (8–60%) plus 12% for a Small Battery. Switch systems off (keys 1–4) so the battery lasts to sunrise; heaters off 4 s in a row freezes it; Payload time sets the score.
 - `anomalyPanel.ts` is now a shell over per-kind views (`MiniGameView`, `src/ui/miniGame.ts`); the antenna moved to `antennaView.ts`. No save version change (optional Anomaly fields).
 - **Tested** in headless Chromium at 1280×800 with the dev build: panel won (99%), eclipse played to sunrise (61%) and lost to cold, antenna still plays, report explains the eclipse, no console errors. 305 unit tests pass; build passes.
-- Not tested: a person playing them (is the swing timing fair for a 10-year-old? is 12 s of eclipse enough?); a real TIROS-1 Launch meeting one by chance (covered by unit tests only); touch.
+- Not tested: a person playing them (is the swing timing fair for a 10-year-old? is 12 s of eclipse enough?); touch.
+
+**QA review (2026-11-11):** checked `main` at `e2ba793`; recorded ten open fixes in tickets **01, 04, 05 (two), 08, 13, 14, 16, 17 and 31**, with steps and [screenshots](docs/qa/2026-11-11/README.md). Game code and existing ticket statuses are unchanged. The Scrub-card clock (16) and failed-rocket report (17) were already in the handoff.
+- Completed all four Milestones and played all three Anomalies reached through Launches, including both new TIROS-1 kinds. Also checked Mines, Market trades, storage, Research, Mk 2 Parts, building Upgrades, insurance and reloads. Chromium at 1440×900 and 1024×768; pause-menu and Research-bar issues also occur in the production build. The 305 tests and build passed during the review.
+- A person still needs to time the tutorial and judge the mini-games' difficulty; touch and performance on real laptops remain unchecked. No planned features were counted as bugs.
 
 **Next:**
 1. Team: play TIROS-1 a few times; judge the panel's timing and the eclipse's difficulty (numbers at the top of `src/game/panelGame.ts` and `src/game/eclipseGame.ts`, chances in `balance.ts`).
@@ -30,6 +34,7 @@
 
 ## Log
 
+- 2026-11-11: Recorded ten confirmed QA fixes in the existing tickets, with reproduction steps and screenshots; game code unchanged.
 - 2026-11-11: Ticket 12 built: Stuck solar panel (Mark sets the chance, thruster in time with the swing) and Survive the eclipse (Power margin and battery set the chance, switch systems off till sunrise); one Anomaly per flight, new kinds first.
 - 2026-11-11: Ticket 18 built: HQ Upgrade to Era 2 (date jumps to 1962), Telstar 1 (whole Thor-Delta paid, Ground Stations), Syncom 3 (geostationary orbit, Main Engine, Large Bus, Delta D), four NASA-photo cards, save v15.
 - 2026-11-10: Ticket 17 built: Launch Vehicle failures (first Launch safe), Launch Insurance, missed deadlines reopen Milestones, Vanguard TV3 failure story, one-time startup grant, save v14.

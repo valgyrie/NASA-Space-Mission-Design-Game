@@ -12,3 +12,9 @@
 - [x] Launch sites nearer the equator give more payload capacity
 - [x] Weather over the limits Scrubs the launch with a short explanation
 - [x] Launch Window advisor suggests a day and says why
+
+**QA (2026-11-11):** already noted in the handoff; checked again.
+
+- [ ] Pause the Site while the Scrub card is read, then restore its speed when the card closes. Attempt a Launch in bad weather at **1×** and leave the card open. The Game date advanced more than two days in five seconds. The card still recommended **7 March 1962** when the date had reached **9 March**. Reading it can cost the player the suggested Launch day and Contract days.
+
+![The Scrub card recommends a day that has already passed](../qa/2026-11-11/scrub-date-moved.png)
