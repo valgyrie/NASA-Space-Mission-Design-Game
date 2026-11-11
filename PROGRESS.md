@@ -4,27 +4,25 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–11, 13 (waits for a person to time the first Launch), 14, 15, 16, 17, 18 and 31 done; local launchers merged. This session (branch `claude/confident-pasteur-iz2iwo`) built ticket 18. The user was away and asked the agent to choose; decisions are listed in the ticket file.
+**State:** tickets 01–18 (12, 13, 16, 17 and 18 wait for a team test) and 31 done; local launchers merged. This session (branch `claude/ecstatic-davinci-ym221r`, merged into `main`) built ticket 12. The user was away and asked the agent to choose; decisions are in the ticket file.
 
-**Just finished: ticket 18, Era 2.** Rules: GDD §6 (HQ and Eras, Telstar 1, Syncom 3, Ground Stations), §8 (Era 2 rockets). Facts: `docs/research/milestones.md`, `launch-vehicles.md`, `spacecraft-parts.md`.
-- **HQ** (`src/game/eras.ts`, `enterEra` in `siteState.ts`): every Site starts with one beside the Assembly Hall; its level is the Era. Once Explorer 1 and TIROS-1 are done the Contracts board says so, and the HQ Upgrade ($1.5M, 15 days) moves the Company into Era 2: the date jumps to 1 Jan 1962 (never backwards), dates still to come move with it, a card welcomes the new Era. Juno I and Thor-Able retire; Era 2 Parts, buildings and the Propulsion slot are locked ("Era 2") before.
-- **Telstar 1:** AT&T; Radio Transponder, 136 days; the Company pays the **whole Thor-Delta** ($2.7M, AT&T's real payment) instead of a Rideshare. Needs a Ground Station (the transponder makes 90 kB a day, the Simple Antenna sends 50).
-- **Syncom 3:** NASA; **geostationary orbit**, 66 days (to the end of the Tokyo Olympics). The rocket reaches a transfer orbit; a **Main Engine** (24 kg) does the rest, else "Stuck in the transfer orbit". At 48 kg it needs **Delta D** (Thor-Delta lifts 45 kg there) and the **Large Bus** (Assembly Hall level 3). 99% sunlight up there.
-- **Ground Stations** ($400K, Era 2): each multiplies what antennas send (level 1 doubles it); a Mission keeps the boost it shipped with.
-- **Thor-Delta** and **Delta D** with real lift, stages and records (97% in game), 3D models (Delta D with three boosters). Orbit view and Space view step back to fit the geostationary orbit.
-- Four Real History cards with NASA photos; patches for both. **Save v15.**
-- **Tested** in headless Chromium at 1280×800: Era 1 locks, board hint, HQ panel and Upgrade, year jump and Era card, Telstar card and board, Ground Station build and panel, Telstar design/planner (whole rocket)/ship/Launch, Syncom design (Large Bus, Main Engine)/planner (Thor-Delta too heavy, Delta D fits)/ship/Launch/report/cards/patch. Delta D on the pad and the geostationary orbit rendered directly. No console errors. 280 unit tests pass; build passes.
-- Not tested: a person playing it; the full 3D Launch show (headless Chromium falls back to Simple view); touch.
+**Just finished: ticket 12, Stuck solar panel and Survive the eclipse.** Rules: GDD §9 (the bullet after "First Anomaly"). Decisions and file map: `docs/tickets/12-anomalies-panel-eclipse.md`.
+- Both only strike Spacecraft with Solar Cells. Still **one Anomaly per flight**: each kind rolls its own chance, a never-played kind wins, then the likeliest; the first flight still always meets Point the antenna. Flights without Solar Cells roll exactly as before.
+- **Stuck solar panel:** chance by the Solar Cells' Mark (35/20/10%). Fire a thruster in time with the swing (resonance) until the panel latches; button mashing never works.
+- **Survive the eclipse:** chance from the Power margin (8–60%) plus 12% for a Small Battery. Switch systems off (keys 1–4) so the battery lasts to sunrise; heaters off 4 s in a row freezes it; Payload time sets the score.
+- `anomalyPanel.ts` is now a shell over per-kind views (`MiniGameView`, `src/ui/miniGame.ts`); the antenna moved to `antennaView.ts`. No save version change (optional Anomaly fields).
+- **Tested** in headless Chromium at 1280×800 with the dev build: panel won (99%), eclipse played to sunrise (61%) and lost to cold, antenna still plays, report explains the eclipse, no console errors. 305 unit tests pass; build passes.
+- Not tested: a person playing them (is the swing timing fair for a 10-year-old? is 12 s of eclipse enough?); a real TIROS-1 Launch meeting one by chance (covered by unit tests only); touch.
 
 **Next:**
-1. Team: play Era 1 → Era 2; judge the prices (HQ $1.5M, whole Thor-Delta $2.7M, Ground Station $400K, rewards $8M/$10M) and whether Syncom feels too easy or too hard.
-2. Open tickets: 12 (Stuck solar panel, Survive the eclipse), 19, 20, 21 (now unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
+1. Team: play TIROS-1 a few times; judge the panel's timing and the eclipse's difficulty (numbers at the top of `src/game/panelGame.ts` and `src/game/eclipseGame.ts`, chances in `balance.ts`).
+2. Open tickets: 19, 20, 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
 
 **Open:**
-- Titanium (GDD §5, Era 2) left out: new Deposits would change every Site made from a Seed. No Era 2 tech tree items yet; no Test Run signal graph.
-- Thor-Delta/Delta D 10 s staging gap _(verify)_; Delta D whole-rocket price and Era 2 Rideshare prices are game estimates.
-- The Andover photo comes via Wikimedia Commons (credited NASA); the Syncom picture is NASA's but looks retouched.
-- From before: no NASA photo of Vanguard TV3's explosion; a Spacecraft lost to the rocket lists Power, Comms and Time as met; no Reputation penalty for a missed deadline; insurance price shows twice when ticked; coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; no Company logo on patches (19); one Anomaly per flight; orbits never decay; no "New game"; Speed not saved.
+- The panel shows "Push now!" on the intro card while the game waits (it is a still frame); harmless.
+- Mini-games use the mouse and keys; touch works for the panel (tap) and the eclipse (buttons), not tested.
+- From ticket 18: Titanium left out; no Era 2 tech tree items; Thor-Delta/Delta D staging gap _(verify)_; Era 2 prices are game estimates; Syncom picture looks retouched.
+- From before: no NASA photo of Vanguard TV3's explosion; a Spacecraft lost to the rocket lists Power, Comms and Time as met; no Reputation penalty for a missed deadline; insurance price shows twice when ticked; coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; no Company logo on patches (19); orbits never decay; no "New game"; Speed not saved.
 - Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
@@ -32,8 +30,8 @@
 
 ## Log
 
+- 2026-11-11: Ticket 12 built: Stuck solar panel (Mark sets the chance, thruster in time with the swing) and Survive the eclipse (Power margin and battery set the chance, switch systems off till sunrise); one Anomaly per flight, new kinds first.
 - 2026-11-11: Ticket 18 built: HQ Upgrade to Era 2 (date jumps to 1962), Telstar 1 (whole Thor-Delta paid, Ground Stations), Syncom 3 (geostationary orbit, Main Engine, Large Bus, Delta D), four NASA-photo cards, save v15.
-
 - 2026-11-10: Ticket 17 built: Launch Vehicle failures (first Launch safe), Launch Insurance, missed deadlines reopen Milestones, Vanguard TV3 failure story, one-time startup grant, save v14.
 - 2026-11-10: Ticket 16 built: globe start picker, NASA POWER 2025 climate shapes the Site, Wallops Island as a second Launch Site with less lift, Shipping by distance, real launch weather Scrubs, Launch Window advisor, save v13.
 - 2026-11-10: Buildings now take 3 × 3 tiles (visible from the whole-Site view, Site still 64 × 64, older saves refitted); Earth from space is a smooth globe with rounded coasts.
@@ -47,7 +45,3 @@
 - 2026-11-09: Ticket 31 (new) done: Space view with every Spacecraft in orbit on its real orbit, click to follow; reports keep their design, save v8. Tickets 10 and 31 merged into `main`.
 - 2026-11-09: Ticket 10 done: 3D Launch of Juno I (pad, staging, orbit, Mission days) between Launch and the Mission Report, with speed, skip and a simple view for slow devices.
 - 2026-11-09: Ticket 09 done: free Test Run with orbit view, battery and Data graphs, estimated success from 200 seeded runs; the real Launch flies the same model.
-- 2026-11-09: Watch the Shipping: Spacecraft assembled on a truck at a dock, truck drives off the Site, Follow the truck, Mission tracker with the dates to come.
-- 2026-11-09: Ticket 08 done: Launch planner (Juno I mass check, Rideshare per kg, Shipping to Cape Canaveral), Launch from the HUD, Mission Report with reasons, reward paid, save v7.
-- 2026-11-09: Mission Designer globe now shows the real Earth (Natural Earth map, true apparent size from 13,000 km); merged.
-- 2026-11-09: Ticket 07 done and merged: Mission Designer with six slots, detailed rotating 3D Spacecraft over Earth, six live bars, Radiation Detector Part, save v6.

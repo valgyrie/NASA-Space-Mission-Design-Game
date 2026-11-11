@@ -1,5 +1,5 @@
 import type { Finding, MissionReport } from '../game/mission';
-import { antennaChance } from '../game/anomalies';
+import { type Anomaly, antennaChance } from '../game/anomalies';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { Patch } from '../game/history';
 import { OPTIONS } from '../game/spacecraft';
@@ -82,11 +82,30 @@ export function anomalyLines(report: MissionReport): string[] {
     lost: lostText(a.lostDays),
   });
   const cut = a.cut > 0 ? ` ${t('report.anomaly.cut', { money: formatMoney(a.cut) })}` : '';
-  const numbers = { send: formatNumber(a.sendPerDay), make: formatNumber(a.dataPerDay) };
-  const why = a.first
-    ? t('report.anomaly.antenna.first', { ...numbers, chance: percentText(antennaChance(a.sendPerDay, a.dataPerDay)) })
-    : t('report.anomaly.antenna.why', { ...numbers, chance: percentText(a.chance) });
-  return [what + cut, why];
+  return [what + cut, anomalyWhy(a)];
+}
+
+/** Why the Anomaly happened, from the design numbers behind its chance. */
+function anomalyWhy(a: Anomaly): string {
+  const chance = percentText(a.chance);
+  switch (a.kind) {
+    case 'antenna': {
+      const numbers = { send: formatNumber(a.sendPerDay), make: formatNumber(a.dataPerDay) };
+      return a.first
+        ? t('report.anomaly.antenna.first', { ...numbers, chance: percentText(antennaChance(a.sendPerDay, a.dataPerDay)) })
+        : t('report.anomaly.antenna.why', { ...numbers, chance });
+    }
+    case 'panel':
+      return t('report.anomaly.panel.why', { chance, mark: formatNumber(a.solarMark ?? 1) });
+    case 'eclipse': {
+      const battery = t(`part.${a.battery ?? 'largeBattery'}`);
+      const margin =
+        a.lastsDays === null || a.lastsDays === undefined
+          ? t('report.anomaly.eclipse.sun', { battery })
+          : t('report.anomaly.eclipse.lasts', { battery, lasts: formatNumber(Math.floor(a.lastsDays)), days: formatNumber(a.missionDays) });
+      return t('report.anomaly.eclipse.why', { chance, margin });
+    }
+  }
 }
 
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */

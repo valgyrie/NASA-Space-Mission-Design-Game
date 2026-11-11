@@ -1,5 +1,5 @@
 import { hashText, makeRng, randInt } from '../site/random';
-import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE } from './balance';
+import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, PANEL_CHANCE } from './balance';
 import type { Flight, FlightPlan } from './flight';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
@@ -12,7 +12,7 @@ import { dataOf } from './spacecraft';
  * The first of each kind must be played; after that the player may skip it and take their best past score.
  */
 
-export const ANOMALY_KINDS = ['antenna'] as const;
+export const ANOMALY_KINDS = ['antenna', 'panel', 'eclipse'] as const;
 export type AnomalyKind = (typeof ANOMALY_KINDS)[number];
 
 /** How it was answered: played, skipped (best past score), or left when the game closed mid-flight. */
@@ -29,6 +29,14 @@ export interface Anomaly {
   /** The design numbers behind the chance: what the antenna sends and what the Payload makes, kB a day. */
   sendPerDay: number;
   dataPerDay: number;
+  /** Stuck solar panel: the Solar Cells' Mark (1–3). Missing for the other kinds. */
+  solarMark?: number;
+  /**
+   * Survive the eclipse: the battery it flew with, and the days it would last (null when sunlight alone covers
+   * what the Spacecraft uses). Missing for the other kinds.
+   */
+  battery?: 'smallBattery' | 'largeBattery';
+  lastsDays?: number | null;
   /** Days of the Mission and the last day the Spacecraft had Power, so lost days never run past either. */
   missionDays: number;
   untilDay: number;
@@ -49,14 +57,43 @@ export function antennaChance(sendPerDay: number, dataPerDay: number): number {
   return ANTENNA_CHANCE.low + (ANTENNA_CHANCE.high - ANTENNA_CHANCE.low) * thin;
 }
 
+/** Stuck solar panel's chance: cheap Mk 1 Solar Cells stick most often. */
+export function panelChance(mark: number): number {
+  const m = Math.min(3, Math.max(1, Math.round(mark))) as 1 | 2 | 3;
+  return PANEL_CHANCE[m];
+}
+
+/**
+ * Survive the eclipse's chance: high when the battery would last no longer than the Mission, low with plenty
+ * to spare or when sunlight alone covers the Spacecraft's use. A Small Battery makes it more likely.
+ */
+export function eclipseChance(lastsDays: number | null, missionDays: number, battery: Anomaly['battery']): number {
+  const spare = lastsDays === null || missionDays <= 0 ? Infinity : Math.max(0, lastsDays / missionDays - 1);
+  const thin = Math.max(0, 1 - spare / ECLIPSE_CHANCE.safeSpare);
+  const small = battery === 'smallBattery' ? ECLIPSE_CHANCE.smallBattery : 0;
+  return ECLIPSE_CHANCE.low + (ECLIPSE_CHANCE.high - ECLIPSE_CHANCE.low) * thin + small;
+}
+
 /** The Company has never played this kind, so it can't be skipped. */
 export function isMandatory(state: SiteState, kind: AnomalyKind): boolean {
   return state.anomalyBest[kind] === undefined;
 }
 
+/** One kind's roll: its chance, whether it struck, and the day it would strike. */
+interface Roll {
+  kind: AnomalyKind;
+  chance: number;
+  struck: boolean;
+  day: number;
+  extra: Partial<Pick<Anomaly, 'solarMark' | 'battery' | 'lastsDays'>>;
+}
+
 /**
- * Does an Anomaly strike this flight, and on which day? Only a Spacecraft in orbit with Power can have one.
- * The Company's first flight always meets Point the antenna; later flights meet it by chance.
+ * Does an Anomaly strike this flight, and on which day? Only a Spacecraft in orbit with Power can have one, and
+ * at most one strikes a flight. The Company's first flight always meets Point the antenna. After that each kind
+ * the design can meet rolls its own chance: Point the antenna always, Stuck solar panel and Survive the eclipse
+ * only with Solar Cells. If more than one strikes, a kind the Company has never played comes first (so each new
+ * one gets met), then the likeliest: the design's weakest spot.
  * Same Seed, Contract and Launch day give the same answer.
  */
 export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, flight: Flight, launchDay: number): Anomaly | null {
@@ -67,17 +104,42 @@ export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, fl
   // The link as it flew (Parts are a little off their labels), the same numbers the Mission Report shows.
   const comms = flight.findings.find((f) => f.kind === 'comms');
   const { sendPerDay, dataPerDay } = comms ?? dataOf(plan.design, plan.tech);
-  const chance = antennaChance(sendPerDay, dataPerDay);
-  const first = isMandatory(state, 'antenna');
-  const happens = rng() < chance;
-  if (!first && !happens) return null;
+
+  // Point the antenna keeps its own draws, so flights without Solar Cells meet what they always did.
+  const antenna = antennaChance(sendPerDay, dataPerDay);
+  const forced = isMandatory(state, 'antenna');
+  const rolls: Roll[] = [{ kind: 'antenna', chance: antenna, struck: rng() < antenna || forced, day: randInt(rng, 1, untilDay - 1), extra: {} }];
+
+  if (plan.design.power === 'solarCells') {
+    const roll = (kind: AnomalyKind, chance: number, extra: Roll['extra']) => {
+      const own = makeRng(hashText(`${seed}|anomaly|${kind}|${plan.contract}|${launchDay}`));
+      rolls.push({ kind, chance, struck: own() < chance, day: randInt(own, 1, untilDay - 1), extra });
+    };
+    const solarMark = plan.marks?.power ?? 1;
+    roll('panel', panelChance(solarMark), { solarMark });
+    const power = flight.findings.find((f) => f.kind === 'power');
+    const battery = plan.design.battery === 'smallBattery' ? 'smallBattery' : 'largeBattery';
+    const lastsDays = power?.kind === 'power' ? power.lastsDays : null;
+    roll('eclipse', eclipseChance(lastsDays, flight.missionDays, battery), { battery, lastsDays });
+  }
+
+  const struck = rolls.filter((r) => r.struck);
+  if (struck.length === 0) return null;
+  const pick = forced
+    ? rolls[0]!
+    : struck.reduce((best, r) => {
+        const fresh = (x: Roll) => (isMandatory(state, x.kind) ? 1 : 0);
+        if (fresh(r) !== fresh(best)) return fresh(r) > fresh(best) ? r : best;
+        return r.chance > best.chance ? r : best;
+      });
   return {
-    kind: 'antenna',
-    day: randInt(rng, 1, untilDay - 1),
-    chance,
-    first,
+    kind: pick.kind,
+    day: pick.day,
+    chance: pick.chance,
+    first: isMandatory(state, pick.kind),
     sendPerDay,
     dataPerDay,
+    ...pick.extra,
     missionDays: flight.missionDays,
     untilDay,
     score: null,

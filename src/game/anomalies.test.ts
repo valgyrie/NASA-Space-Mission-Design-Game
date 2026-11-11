@@ -1,9 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE } from './balance';
+import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, PANEL_CHANCE } from './balance';
 import {
   type Anomaly,
   antennaChance,
+  eclipseChance,
   isMandatory,
+  panelChance,
   lostDaysFor,
   rollAnomaly,
   settleAnomaly,
@@ -171,5 +173,96 @@ describe('Point the antenna: first time, skipping and the best score', () => {
     expect(report.anomaly).toMatchObject({ score: ANOMALY_UNANSWERED_SCORE, answer: 'unanswered' });
     expect(state.money).toBe(money + report.reward);
     expect(isMandatory(state, 'antenna')).toBe(true);
+  });
+});
+
+const TIROS: OptionId[] = ['mediumBus', 'solarCells', 'largeBattery', 'simpleAntenna', 'spin', 'tvCamera'];
+const tirosPlan = (ids: OptionId[] = TIROS, power = 1) => ({
+  contract: 'tiros1' as const,
+  design: design(ids),
+  vehicle: 'thorAble' as const,
+  tech: [],
+  marks: { power },
+});
+const played = () => ({ ...newSiteState(), anomalyBest: { antenna: 0.7, panel: 0.7, eclipse: 0.7 } });
+/** Every Anomaly met over many Launch days, by kind. */
+function kindsOver(state: SiteState, p: ReturnType<typeof tirosPlan>, days = 600) {
+  const flight = fly(p, 40, null);
+  const met = Array.from({ length: days }, (_, d) => rollAnomaly(state, 'K7QXM2', p, flight, d));
+  const share = (kind: string) => met.filter((a) => a?.kind === kind).length / days;
+  return { met, share };
+}
+
+describe('Stuck solar panel and Survive the eclipse: when they happen', () => {
+  it('Stuck solar panel is likelier with cheap Mk 1 Solar Cells', () => {
+    expect(panelChance(1)).toBe(PANEL_CHANCE[1]);
+    expect(panelChance(1)).toBeGreaterThan(panelChance(2));
+    expect(panelChance(2)).toBeGreaterThan(panelChance(3));
+  });
+
+  it('Survive the eclipse is likelier with a thin Power margin and a Small Battery', () => {
+    expect(eclipseChance(78, 78, 'largeBattery')).toBeCloseTo(ECLIPSE_CHANCE.high);
+    expect(eclipseChance(120, 78, 'largeBattery')).toBeGreaterThan(eclipseChance(150, 78, 'largeBattery'));
+    expect(eclipseChance(null, 78, 'largeBattery')).toBeCloseTo(ECLIPSE_CHANCE.low);
+    expect(eclipseChance(1000, 78, 'largeBattery')).toBeCloseTo(ECLIPSE_CHANCE.low);
+    expect(eclipseChance(null, 78, 'smallBattery')).toBeCloseTo(ECLIPSE_CHANCE.low + ECLIPSE_CHANCE.smallBattery);
+  });
+
+  it('only a Spacecraft with Solar Cells meets them', () => {
+    const p = plan();
+    const flight = fly(p, 40, 365);
+    const kinds = Array.from({ length: 300 }, (_, d) => rollAnomaly(played(), 'K7QXM2', p, flight, d)?.kind);
+    expect(kinds.every((k) => k === undefined || k === 'antenna')).toBe(true);
+    const { met } = kindsOver(played(), tirosPlan());
+    expect(met.some((a) => a?.kind === 'panel')).toBe(true);
+    expect(met.some((a) => a?.kind === 'eclipse')).toBe(true);
+  });
+
+  it('meets Stuck solar panel more often with Mk 1 cells than Mk 3', () => {
+    expect(kindsOver(played(), tirosPlan(TIROS, 1)).share('panel')).toBeGreaterThan(kindsOver(played(), tirosPlan(TIROS, 3)).share('panel'));
+  });
+
+  it('meets at most one per flight, a kind never played first', () => {
+    // The antenna is likelier for TIROS-1, but a new kind that struck comes before it.
+    const fresh = kindsOver({ ...newSiteState(), anomalyBest: { antenna: 0.7 } }, tirosPlan());
+    const old = kindsOver(played(), tirosPlan());
+    expect(fresh.share('panel')).toBeGreaterThan(old.share('panel'));
+    expect(fresh.share('antenna')).toBeLessThan(old.share('antenna'));
+    expect(fresh.met.every((a) => !a || a.kind === 'antenna' || a.first)).toBe(true);
+    expect(old.met.every((a) => !a || !a.first)).toBe(true);
+  });
+
+  it("keeps Point the antenna as the Company's first Anomaly, and the same days it always had", () => {
+    const state = newSiteState();
+    const p = tirosPlan();
+    const flight = fly(p, 40, null);
+    for (let d = 0; d < 30; d++) expect(rollAnomaly(state, 'K7QXM2', p, flight, d)).toMatchObject({ kind: 'antenna', first: true });
+    // A design without Solar Cells rolls exactly as before ticket 12.
+    const e = plan();
+    const ef = fly(e, 40, 365);
+    const withPlayed = rollAnomaly({ ...newSiteState(), anomalyBest: { antenna: 0.5 } }, 'K7QXM2', e, ef, 3);
+    const withAll = rollAnomaly(played(), 'K7QXM2', e, ef, 3);
+    expect(withAll?.day).toBe(withPlayed?.day);
+  });
+
+  it('keeps the design numbers the Mission Report explains it with', () => {
+    const { met } = kindsOver(played(), tirosPlan(['mediumBus', 'solarCells', 'smallBattery', 'simpleAntenna', 'spin', 'tvCamera'], 2));
+    const panel = met.find((a) => a?.kind === 'panel')!;
+    expect(panel.solarMark).toBe(2);
+    expect(panel.chance).toBe(PANEL_CHANCE[2]);
+    const eclipse = met.find((a) => a?.kind === 'eclipse')!;
+    expect(eclipse.battery).toBe('smallBattery');
+    expect(eclipse.chance).toBeCloseTo(eclipseChance(eclipse.lastsDays ?? null, eclipse.missionDays, 'smallBattery'));
+  });
+
+  it('follows the same skip rules: the first of each kind must be played', () => {
+    const state: SiteState = { ...newSiteState(), anomalyBest: { antenna: 0.7 } };
+    expect(isMandatory(state, 'panel')).toBe(true);
+    expect(isMandatory(state, 'eclipse')).toBe(true);
+    const report = { ...launched().report, anomaly: { ...launched().report.anomaly!, kind: 'panel' as const, first: true, score: null, answer: null } };
+    expect(skipAnomaly(state, report)).toBe(false);
+    settleAnomaly(state, report, 0.6, 'played');
+    expect(state.anomalyBest.panel).toBe(0.6);
+    expect(isMandatory(state, 'panel')).toBe(false);
   });
 });

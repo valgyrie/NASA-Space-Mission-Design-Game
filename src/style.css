@@ -1913,6 +1913,68 @@ button.report-close {
   background: var(--accent);
 }
 
+.anomaly-line {
+  margin: -2px 0 8px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.anomaly-line.warn {
+  color: var(--warn);
+}
+
+.anomaly-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+button.anomaly-push,
+button.anomaly-system {
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+  background: #1f2c40;
+  color: var(--text);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+button.anomaly-push {
+  flex: 1;
+  padding: 10px 16px;
+  font-size: 15px;
+  border-color: var(--accent);
+}
+
+button.anomaly-push:active {
+  background: #2b4568;
+}
+
+button.anomaly-system {
+  flex: 1 1 calc(50% - 8px);
+  text-align: left;
+}
+
+button.anomaly-system[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: #1d3554;
+}
+
+button.anomaly-system[aria-pressed='false'] {
+  color: var(--muted);
+  background: transparent;
+}
+
+button.anomaly-system:disabled {
+  cursor: default;
+  opacity: 0.75;
+}
+
 .anomaly-buttons {
   display: flex;
   justify-content: flex-end;

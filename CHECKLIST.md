@@ -59,7 +59,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Test Run (2D) with estimated success %
 - [x] 3D Launch and flight
 - [x] Space view: every Spacecraft in orbit, click one to follow it (ticket 31)
-- [ ] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse (Point the antenna and the framework done, ticket 11)
+- [x] Anomalies: Point the antenna, Stuck solar panel, Survive the eclipse (tickets 11 and 12; one per flight)
 - [x] Mission Report explaining why (first version: outcome, one reason per requirement, reward)
 - [x] Mission Patches and patch gallery (ticket 13: drawn in code; the Company logo joins with ticket 19)
 

@@ -111,6 +111,9 @@ function isAnomaly(value: unknown): boolean {
     isOneOf(a.kind, ANOMALY_KINDS) &&
     ['day', 'chance', 'sendPerDay', 'dataPerDay', 'missionDays', 'untilDay', 'lostDays', 'cut'].every((k) => isNumber(a[k])) &&
     typeof a.first === 'boolean' &&
+    (a.solarMark === undefined || isNumber(a.solarMark)) &&
+    (a.battery === undefined || isOneOf(a.battery, ['smallBattery', 'largeBattery'])) &&
+    (a.lastsDays === undefined || a.lastsDays === null || isNumber(a.lastsDays)) &&
     (a.score === null || isNumber(a.score)) &&
     (a.answer === null || isOneOf(a.answer, ['played', 'skipped', 'unanswered']))
   );
