@@ -42,6 +42,7 @@ export function findingText(f: Finding): string {
           flights: formatNumber(record.flights),
         });
       }
+      if (!f.ok && f.noEngine) return t('finding.orbit.noEngine', { orbit: t(`orbit.${f.orbit}`), vehicle: t(`launchVehicle.${f.vehicle}`) });
       return t(`finding.orbit.${state}`, {
         orbit: t(`orbit.${f.orbit}`),
         kg: formatDecimal(f.massKg),

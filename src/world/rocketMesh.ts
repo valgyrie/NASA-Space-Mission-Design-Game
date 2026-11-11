@@ -146,7 +146,10 @@ function spacecraftOnTop(design: Design, height: number): THREE.Group {
 
 /** The Launch Vehicle with the player's Spacecraft on top. */
 export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1'): RocketModel {
-  return vehicle === 'thorAble' ? buildThorAble(design) : buildJuno(design);
+  if (vehicle === 'thorAble') return buildThor(design, THOR, 0);
+  if (vehicle === 'thorDelta') return buildThor(design, THOR_DELTA, 0);
+  if (vehicle === 'deltaD') return buildThor(design, THOR_DELTA, 3);
+  return buildJuno(design);
 }
 
 /** The whole Juno I with the player's Spacecraft on top. */
@@ -204,7 +207,44 @@ export const THOR = {
   top: 27,
 };
 
-function thorStage(): StageModel {
+/** Heights along a Thor-family rocket, in metres: the Thor, its second stage, the Altair and the Spacecraft. */
+type ThorShape = typeof THOR;
+
+/**
+ * Thor-Delta and Delta D (docs/research/launch-vehicles.md): the same Thor with a longer Delta second stage
+ * (31–32 m in all; the model leaves out the nose fairing, so the Spacecraft shows). Delta D adds three Castor
+ * solid boosters round the Thor's base. Proportions are approximate.
+ */
+export const THOR_DELTA: ThorShape = {
+  ...THOR,
+  ableTop: 25.5,
+  altairTop: 27.3,
+  top: 29.1,
+};
+
+/** Castor solid boosters strapped round the Thor: they burn with the first stage and drop with it. */
+function strapOns(g: THREE.Group, nozzles: THREE.Vector3[], count: number): void {
+  const r = 0.4;
+  const length = 6;
+  const out = THOR.radius + r - 0.05;
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2 + Math.PI / 6;
+    const x = Math.sin(a) * out;
+    const z = Math.cos(a) * out;
+    const booster = new THREE.Group();
+    booster.position.set(x, 0, z);
+    booster.add(cyl(r, r, length, R.white, 0.4));
+    booster.add(cyl(r * 1.01, r * 1.01, 0.2, R.black, length * 0.7));
+    const nose = new THREE.Mesh(new THREE.ConeGeometry(r, 1.1, SIDES), R.white);
+    nose.position.y = 0.4 + length + 0.55;
+    booster.add(nose);
+    booster.add(cyl(r * 0.55, r * 0.8, 0.5, R.nozzle, -0.1));
+    g.add(booster);
+    nozzles.push(new THREE.Vector3(x, -0.1, z));
+  }
+}
+
+function thorStage(boosters = 0): StageModel {
   const g = new THREE.Group();
   const r = THOR.radius;
   g.add(cyl(r, r, THOR.taperFrom - 0.8, R.white, 0.8));
@@ -229,39 +269,43 @@ function thorStage(): StageModel {
     vernier.position.x = sx * (r + 0.05);
     g.add(vernier);
   }
-  return { group: g, nozzles: [new THREE.Vector3(0, -0.55, 0)], nozzleRadius: r * 0.45 };
+  const nozzles = [new THREE.Vector3(0, -0.55, 0)];
+  if (boosters > 0) strapOns(g, nozzles, boosters);
+  return { group: g, nozzles, nozzleRadius: r * 0.45 };
 }
 
-function ableStage(): StageModel {
+/** The second stage: Able on Thor-Able, Delta (longer) on the Thor-Deltas. */
+function ableStage(shape: ThorShape = THOR): StageModel {
   const g = new THREE.Group();
-  const r = THOR.ableRadius;
-  const base = THOR.thorTop + 0.6;
-  g.add(cyl(r, r, THOR.ableTop - base, R.white, base));
+  const r = shape.ableRadius;
+  const base = shape.thorTop + 0.6;
+  g.add(cyl(r, r, shape.ableTop - base, R.white, base));
   g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, base + 1.2));
-  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, THOR.ableTop - 0.5));
-  g.add(cyl(0.12, r * 0.5, 0.35, R.steel, THOR.ableTop));
+  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, shape.ableTop - 0.5));
+  g.add(cyl(0.12, r * 0.5, 0.35, R.steel, shape.ableTop));
   g.add(cyl(r * 0.35, r * 0.5, 0.4, R.nozzle, base - 0.4));
   return { group: g, nozzles: [new THREE.Vector3(0, base - 0.4, 0)], nozzleRadius: r * 0.35 };
 }
 
-function buildThorAble(design: Design): RocketModel {
+/** A Thor-family rocket with the player's Spacecraft on top: Thor-Able, or a Thor-Delta with `boosters` strapped on. */
+function buildThor(design: Design, shape: ThorShape, boosters: number): RocketModel {
   const root = new THREE.Group();
   root.name = 'rocket';
-  const first = thorStage();
-  const second = ableStage();
+  const first = thorStage(boosters);
+  const second = ableStage(shape);
   root.add(first.group, second.group);
 
-  // The Altair and the Spacecraft turn on a spin table on top of the Able.
+  // The Altair and the Spacecraft turn on a spin table on top of the second stage.
   const spinner = new THREE.Group();
-  spinner.position.y = THOR.ableTop + 0.35;
+  spinner.position.y = shape.ableTop + 0.35;
   root.add(spinner);
   const third = new THREE.Group();
-  const altairLength = THOR.altairTop - spinner.position.y;
+  const altairLength = shape.altairTop - spinner.position.y;
   third.add(cyl(0.24, 0.24, altairLength - 0.2, R.motor, 0.2));
   third.add(cyl(0.25, 0.25, 0.06, R.dark, altairLength - 0.4));
   third.add(cyl(0.1, 0.16, 0.2, R.nozzle, 0));
   spinner.add(third);
-  const spacecraft = spacecraftOnTop(design, THOR.top - THOR.altairTop);
+  const spacecraft = spacecraftOnTop(design, shape.top - shape.altairTop);
   spacecraft.position.y = altairLength;
   spinner.add(spacecraft);
 
@@ -272,7 +316,7 @@ function buildThorAble(design: Design): RocketModel {
     spinner,
     spacecraft,
     upperBase,
-    upperLength: THOR.top - upperBase,
+    upperLength: shape.top - upperBase,
   };
 }
 

@@ -323,6 +323,7 @@ export const STRINGS = {
   'option.spin.about': 'Like Explorer 1: it spins to stay steady.',
   'option.noEngine': 'None',
   'option.noEngine.about': 'No engine: it stays where the rocket leaves it.',
+  'option.mainEngine.about': 'fires once to climb from a transfer orbit to geostationary orbit',
   'stat.mark': 'Mk {mark}',
   'stat.mass': '{kg} kg',
   'stat.carries': 'carries {kg} kg',

@@ -1,3 +1,4 @@
+import type { BusId } from '../game/upgrades';
 import { type MissionStage, missionStage, missionTimeline } from '../game/mission';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
@@ -141,7 +142,7 @@ export function showMissionTracker(
     const days = formatDays(stage.daysLeft);
     setText(now, t(`tracker.now.${stage.stage}`, { days, site }));
 
-    const bus = m.design.bus === 'mediumBus' ? t('part.mediumBus') : t('part.smallBus');
+    const bus = t(`part.${(m.design.bus ?? 'smallBus') as BusId}`);
     const range = (a: number, b: number) => t('tracker.range', { from: formatGameDate(a), to: formatGameDate(b) });
     const texts: Record<StageName, [string, string]> = {
       assembling: [t('tracker.stage.assembling', { bus }), range(dates.startDay, dates.shipDay)],

@@ -74,6 +74,7 @@ export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], m
   if (s.sendPerDay) bits.push(t('stat.sends', { kb: formatNumber(s.sendPerDay) }));
   if (s.powerUseW) bits.push(t('stat.uses', { w: formatDecimal(s.powerUseW) }));
   if (!o.part) bits.push(t(`option.${o.id as NoPartOption}.about`));
+  if (o.id === 'mainEngine') bits.push(t('option.mainEngine.about'));
   return bits.join(t('stat.join'));
 }
 

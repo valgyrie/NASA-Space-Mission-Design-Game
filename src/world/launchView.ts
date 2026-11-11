@@ -347,6 +347,8 @@ export class LaunchView {
     this.orbitShape = { a, b, e };
     // Stand far enough back to see the whole orbit: a geostationary one is over six times Earth's size.
     this.orbitDistance = Math.max(112, a * 2.7);
+    // The Spacecraft's dot grows with the distance, so it stays as easy to see.
+    this.craft.scale.setScalar(this.orbitDistance / 112);
     const points: THREE.Vector3[] = [];
     for (let i = 0; i <= 180; i++) {
       const E = (i / 180) * Math.PI * 2;

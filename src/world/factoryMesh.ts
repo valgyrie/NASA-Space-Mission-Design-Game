@@ -372,3 +372,97 @@ export function buildAssemblyHall(): THREE.Group {
   p.lamp(0.42, 0.42);
   return g;
 }
+
+/**
+ * HQ: the Company's offices. A two-storey white block with a blue band and a glass front, a taller tower with a
+ * rooftop mast, a flagpole with the Company's flag (plain until the logo maker, ticket 19), a lawn with trees, and
+ * a car park. Its level sign shows the Company's Era.
+ */
+export function buildHQ(): THREE.Group {
+  const g = buildingGroup('hq');
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  // Lawn on the +z side, with two round trees.
+  p.add(box(0.5, 0.012, 0.26), colourMat(0x5f9e4a), -0.12, 0.056, 0.3);
+  for (const x of [-0.3, 0.02]) {
+    p.cyl(0.012, 0.06, M.wood, x, 0.06, 0.32, 5);
+    p.add(new THREE.IcosahedronGeometry(0.06, 0), colourMat(0x3f7f3a), x, 0.16, 0.32);
+  }
+  // Office block: x −0.4…0.2, z −0.38…0.14, two storeys with a blue band between them.
+  p.add(box(0.6, 0.36, 0.52), M.white, -0.1, 0.23, -0.12);
+  p.add(box(0.605, 0.04, 0.525), colourMat(0x2f5fa8), -0.1, 0.24, -0.12);
+  p.add(box(0.62, 0.03, 0.54), M.darkRoof, -0.1, 0.425, -0.12);
+  windowsZ(p, [-0.34, -0.22, 0.02, 0.14], 0.33, 0.142, 0.08, 0.07);
+  windowsZ(p, [-0.34, -0.22, 0.02, 0.14], 0.15, 0.142, 0.08, 0.07);
+  windowsX(p, [-0.3, -0.18, -0.06, 0.06], 0.33, 0.202, 0.08, 0.07);
+  windowsX(p, [-0.3, -0.18, -0.06, 0.06], 0.15, 0.202, 0.08, 0.07);
+  // Glass entrance with a canopy, in the middle of the +z face.
+  p.add(box(0.14, 0.16, 0.015), M.glass, -0.1, 0.13, 0.143);
+  p.add(box(0.2, 0.015, 0.09), M.steel, -0.1, 0.22, 0.18);
+  for (const x of [-0.18, -0.02]) p.cyl(0.006, 0.17, M.steel, x, 0.05, 0.22, 5);
+  // A taller tower at the back corner with a lit top floor and a radio mast.
+  p.add(box(0.2, 0.62, 0.2), M.wall, 0.1, 0.36, -0.28);
+  p.add(box(0.205, 0.08, 0.205), M.glass, 0.1, 0.6, -0.28);
+  p.add(box(0.22, 0.025, 0.22), M.darkRoof, 0.1, 0.68, -0.28);
+  p.bar(v(0.1, 0.69, -0.28), v(0.1, 0.92, -0.28), 0.01, M.steel);
+  p.add(new THREE.SphereGeometry(0.014, 6, 4), M.bulb, 0.1, 0.93, -0.28);
+  // Flagpole and flag.
+  p.cyl(0.008, 0.56, M.pipe, 0.32, 0.05, 0.28, 6);
+  const flag = p.add(box(0.16, 0.1, 0.006), colourMat(0x2f5fa8), 0.4, 0.55, 0.28);
+  flag.rotation.y = 0.15;
+  p.add(box(0.05, 0.05, 0.007), M.white, 0.37, 0.56, 0.282);
+  // Car park on the +x side with two cars.
+  p.add(box(0.2, 0.008, 0.3), M.asphalt, 0.33, 0.054, -0.06);
+  p.add(box(0.07, 0.04, 0.11), colourMat(0xd9583a), 0.29, 0.08, -0.14);
+  p.add(box(0.07, 0.04, 0.11), colourMat(0x3b6fb6), 0.38, 0.08, 0.02);
+  p.lamp(-0.42, 0.42);
+  return g;
+}
+
+/**
+ * Ground Station: a big white dish on a turning mount, tilted up at the sky, with its feed horn on struts; a
+ * control hut with a small whip antenna; a fence. The dish turns slowly to follow a Spacecraft across the sky.
+ */
+export function buildGroundStation(): THREE.Group {
+  const g = buildingGroup('groundStation');
+  const p = parts(g);
+  p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
+  // Pedestal: a concrete drum and a steel yoke that turns.
+  p.cyl(0.13, 0.12, M.concrete, -0.06, 0.05, -0.06, 12);
+  const mount = p.mover('spinY', -0.06, 0.17, -0.06);
+  mount.userData.speed = 0.25;
+  p.add(box(0.2, 0.06, 0.12), M.steel, 0, 0.03, 0, mount);
+  for (const x of [-0.09, 0.09]) p.add(box(0.025, 0.2, 0.06), M.steel, x, 0.15, 0, mount);
+  // The dish, tilted 40° up from facing sideways, on an axle between the yoke arms.
+  const tilt = new THREE.Group();
+  tilt.position.set(0, 0.24, 0);
+  tilt.rotation.x = -0.7;
+  mount.add(tilt);
+  // A cap of a sphere, its hollow facing +z (towards the feed horn).
+  const dish = p.add(new THREE.SphereGeometry(0.32, 18, 6, 0, Math.PI * 2, 0, 0.9), M.dish, 0, 0, 0.27, tilt);
+  dish.rotation.x = -Math.PI / 2;
+  p.add(new THREE.TorusGeometry(0.25, 0.008, 4, 24), M.steel, 0, 0, 0.07, tilt);
+  // Feed horn on four struts at the dish's focus.
+  p.add(new THREE.ConeGeometry(0.025, 0.07, 8), M.steel, 0, 0, 0.13, tilt).rotation.x = -Math.PI / 2;
+  for (const [x, y] of [
+    [0.2, 0],
+    [-0.2, 0],
+    [0, 0.2],
+    [0, -0.2],
+  ] as const) {
+    p.bar(v(x, y, 0.07), v(0, 0, 0.11), 0.008, M.steel, tilt);
+  }
+  // Control hut with a whip antenna and a lit window.
+  p.add(box(0.2, 0.16, 0.16), M.wall, 0.3, 0.13, 0.3);
+  p.add(box(0.22, 0.02, 0.18), M.darkRoof, 0.3, 0.22, 0.3);
+  p.add(box(0.06, 0.05, 0.015), M.bulb, 0.3, 0.15, 0.382);
+  p.add(box(0.05, 0.1, 0.015), M.door, 0.24, 0.1, 0.382);
+  p.bar(v(0.36, 0.23, 0.26), v(0.36, 0.45, 0.26), 0.006, M.steel);
+  // A low fence round the dish.
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    p.cyl(0.006, 0.07, M.steel, -0.06 + Math.cos(a) * 0.36, 0.05, -0.06 + Math.sin(a) * 0.36, 4);
+  }
+  p.lamp(-0.42, 0.42);
+  return g;
+}

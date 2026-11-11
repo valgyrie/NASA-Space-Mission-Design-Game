@@ -70,3 +70,16 @@ describe('Mission Report: the Anomaly', () => {
     expect(lostText(9)).toBe('9 days of Data were lost.');
   });
 });
+
+describe('a Spacecraft with no Main Engine', () => {
+  it('says it stayed in the transfer orbit', async () => {
+    const { findingText } = await import('./missionReport');
+    const design: Design = emptyDesign();
+    for (const id of ['largeBus', 'solarCells', 'smallBattery', 'simpleAntenna', 'spin', 'transponder'] as OptionId[]) choose(design, id);
+    const flight = fly({ contract: 'syncom3', design, vehicle: 'deltaD', tech: [] }, 0, null);
+    const orbit = flight.findings.find((f) => f.kind === 'orbit')!;
+    expect(findingText(orbit)).toBe(
+      "Didn't reach geostationary orbit: Delta D left it in the transfer orbit, and with no Main Engine it couldn't climb the rest of the way.",
+    );
+  });
+});

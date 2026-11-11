@@ -413,5 +413,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts } });
 }
