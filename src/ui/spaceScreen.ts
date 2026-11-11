@@ -51,7 +51,11 @@ export function satelliteFacts(sat: Satellite): string[] {
       vehicle: t(`launchVehicle.${sat.report.vehicle}`),
       site: t(`launchSite.${sat.report.site}.short`),
     }),
-    t('space.orbit', { low: formatNumber(sat.orbitKm.low), high: formatNumber(sat.orbitKm.high), tilt: formatDecimal(sat.inclinationDeg) }),
+    t(sat.orbitKm.low === sat.orbitKm.high ? 'space.orbitCircle' : 'space.orbit', {
+      low: formatNumber(sat.orbitKm.low),
+      high: formatNumber(sat.orbitKm.high),
+      tilt: formatDecimal(sat.inclinationDeg),
+    }),
     t('space.lap', { minutes: formatNumber(Math.round(minutes)), speedup: formatNumber(SPEEDUP) }),
   ];
 }

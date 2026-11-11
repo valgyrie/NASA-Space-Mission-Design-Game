@@ -4,36 +4,35 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–11, 13 (waits for a person to time the first Launch), 14, 15, 16, 17 and 31 done; local launchers merged. This session (branch `claude/magical-davinci-6i2awc`) built ticket 17.
+**State:** tickets 01–11, 13 (waits for a person to time the first Launch), 14, 15, 16, 17, 18 and 31 done; local launchers merged. This session (branch `claude/confident-pasteur-iz2iwo`) built ticket 18. The user was away and asked the agent to choose; decisions are listed in the ticket file.
 
-**Just finished: ticket 17, risk and failure.** Rules: GDD §5 (grant), §6 (retry, failure story), §8 (failures, insurance). Facts: `docs/research/launch-vehicles.md` (records), `docs/research/milestones.md` (Vanguard TV3).
-- **Launch Vehicle failures** (`drawRocket`, `realFlight`, `testRun` in `src/game/flight.ts`; `rocketReliability` in `mission.ts`): Juno I works 80%, Thor-Able 85% (real records 3 of 6 and 10 of 16, cut to 40% of the real failure share; game estimates in `balance.ts`). The Company's first Launch always works. Any stage can fail; the orbit finding gets `failedStage`.
-- **Test Run:** estimated success = design runs × reliability (exact, no luck), with a line giving both.
-- **Launch show** (`ascent.ts`, `launchView.ts`): stops half-way through the failed stage, the rocket tips and falls with no flame; "Stage n failed: the pieces fell into the Atlantic, far from people. That is why launch sites are on the coast." (the coast effect).
-- **Launch Insurance** (`insuranceQuote`, `shipMission(..., { insure, seed })`): tick box in the planner's Costs card. Pays back 80% of Rideshare + Shipping on any failure; price = payout × fail chance × 1.3, min 3%, none under 50% estimated success. Paid back in `launch()`; the report says how much.
-- **Retry:** `expireContracts` (in `advanceDays`) puts a Contract back on the board when its deadline passes and no Mission for it is on its way; the board says so (`state.reopened`). The report says "your design was fine" when only the rocket failed.
-- **Failure story:** the Company's first failed Mission unlocks the `vanguardTV3` card (new `when: 'failure'`), shown after the report and kept in the History Archive.
-- **Startup grant** (`src/game/grant.ts`, `src/ui/grantCard.ts`): under $300K with no Mission on its way, $1M once, as a card when nothing else is on screen.
-- **Save v14:** `mission.insurance`, `report.insurancePaid`, `state.reopened`, `state.grantDay`.
-- **Tested** in headless Chromium at 1280×800: planner (reliability lines, insurance on/off and price), Test Run line, ship with insurance, a stage-4 and a stage-1 failure in the show, report with payout and "design was fine", Vanguard TV3 card once, grant card, missed deadline back on the board. No console errors. 262 unit tests pass; build passes.
-- Not tested: a person playing it; the Simple view's failure; touch.
+**Just finished: ticket 18, Era 2.** Rules: GDD §6 (HQ and Eras, Telstar 1, Syncom 3, Ground Stations), §8 (Era 2 rockets). Facts: `docs/research/milestones.md`, `launch-vehicles.md`, `spacecraft-parts.md`.
+- **HQ** (`src/game/eras.ts`, `enterEra` in `siteState.ts`): every Site starts with one beside the Assembly Hall; its level is the Era. Once Explorer 1 and TIROS-1 are done the Contracts board says so, and the HQ Upgrade ($1.5M, 15 days) moves the Company into Era 2: the date jumps to 1 Jan 1962 (never backwards), dates still to come move with it, a card welcomes the new Era. Juno I and Thor-Able retire; Era 2 Parts, buildings and the Propulsion slot are locked ("Era 2") before.
+- **Telstar 1:** AT&T; Radio Transponder, 136 days; the Company pays the **whole Thor-Delta** ($2.7M, AT&T's real payment) instead of a Rideshare. Needs a Ground Station (the transponder makes 90 kB a day, the Simple Antenna sends 50).
+- **Syncom 3:** NASA; **geostationary orbit**, 66 days (to the end of the Tokyo Olympics). The rocket reaches a transfer orbit; a **Main Engine** (24 kg) does the rest, else "Stuck in the transfer orbit". At 48 kg it needs **Delta D** (Thor-Delta lifts 45 kg there) and the **Large Bus** (Assembly Hall level 3). 99% sunlight up there.
+- **Ground Stations** ($400K, Era 2): each multiplies what antennas send (level 1 doubles it); a Mission keeps the boost it shipped with.
+- **Thor-Delta** and **Delta D** with real lift, stages and records (97% in game), 3D models (Delta D with three boosters). Orbit view and Space view step back to fit the geostationary orbit.
+- Four Real History cards with NASA photos; patches for both. **Save v15.**
+- **Tested** in headless Chromium at 1280×800: Era 1 locks, board hint, HQ panel and Upgrade, year jump and Era card, Telstar card and board, Ground Station build and panel, Telstar design/planner (whole rocket)/ship/Launch, Syncom design (Large Bus, Main Engine)/planner (Thor-Delta too heavy, Delta D fits)/ship/Launch/report/cards/patch. Delta D on the pad and the geostationary orbit rendered directly. No console errors. 280 unit tests pass; build passes.
+- Not tested: a person playing it; the full 3D Launch show (headless Chromium falls back to Simple view); touch.
 
 **Next:**
-1. Team: judge the rocket odds (80%/85% feel fair?), the insurance prices and the grant amount; try a failed Launch and a missed deadline.
-2. Open tickets: 12 (Stuck solar panel, Survive the eclipse), 18, 19, 20, 25, 30. Ticket 27 is unblocked (adapt to the official Resources, Nov 13).
+1. Team: play Era 1 → Era 2; judge the prices (HQ $1.5M, whole Thor-Delta $2.7M, Ground Station $400K, rewards $8M/$10M) and whether Syncom feels too easy or too hard.
+2. Open tickets: 12 (Stuck solar panel, Survive the eclipse), 19, 20, 21 (now unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
 
 **Open:**
-- No NASA photo of the Vanguard TV3 explosion was found; the card shows a Vanguard rocket on its pad (1958). Swap in a better one if found.
-- A Spacecraft lost to the rocket still lists Power, Comms and Time as met in the report (same as a too-heavy one).
-- No Reputation penalty for a missed deadline yet. Insurance covers design failures too (the price includes them).
-- Insurance price shows twice in the Costs card (the tick box and the row) when ticked.
-- From before: coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; 2° place data; straight-line Shipping; no place names on the globe; fewer Mines per Deposit since 3 × 3 buildings; tall foundations on steep slopes; Market shows only totals per Part; no Upgrade-done toast; no Computer slot; Thor-Able staging gaps _(verify)_; Lab lists every tech item; TIROS-1 Parts are scaled-down estimates; guide "Step 1" after the name; glow under dialogs; no Company logo on patches (19); Anomaly chance fixed until Ground Stations (18); one Anomaly per flight; Explorer 1's coast timing _(verify)_; orbits never decay; no "New game"; Speed not saved.
+- Titanium (GDD §5, Era 2) left out: new Deposits would change every Site made from a Seed. No Era 2 tech tree items yet; no Test Run signal graph.
+- Thor-Delta/Delta D 10 s staging gap _(verify)_; Delta D whole-rocket price and Era 2 Rideshare prices are game estimates.
+- The Andover photo comes via Wikimedia Commons (credited NASA); the Syncom picture is NASA's but looks retouched.
+- From before: no NASA photo of Vanguard TV3's explosion; a Spacecraft lost to the rocket lists Power, Comms and Time as met; no Reputation penalty for a missed deadline; insurance price shows twice when ticked; coordinates of JPL, LC-26 and Wallops _(verify)_; 12 m/s wind limit _(verify)_; the game keeps running while the Scrub card is open; no Company logo on patches (19); one Anomaly per flight; orbits never decay; no "New game"; Speed not saved.
 - Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `handoff`; `grill-with-docs` before ticket 18's design.
+**Suggested skills:** `handoff`; `grill-with-docs` before ticket 21 (Free Play).
 
 ## Log
+
+- 2026-11-11: Ticket 18 built: HQ Upgrade to Era 2 (date jumps to 1962), Telstar 1 (whole Thor-Delta paid, Ground Stations), Syncom 3 (geostationary orbit, Main Engine, Large Bus, Delta D), four NASA-photo cards, save v15.
 
 - 2026-11-10: Ticket 17 built: Launch Vehicle failures (first Launch safe), Launch Insurance, missed deadlines reopen Milestones, Vanguard TV3 failure story, one-time startup grant, save v14.
 - 2026-11-10: Ticket 16 built: globe start picker, NASA POWER 2025 climate shapes the Site, Wallops Island as a second Launch Site with less lift, Shipping by distance, real launch weather Scrubs, Launch Window advisor, save v13.

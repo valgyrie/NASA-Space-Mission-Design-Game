@@ -22,7 +22,7 @@ import {
   hazeFor,
   polarFromElevation,
 } from './camera';
-import { buildAssemblyHall, buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
+import { buildAssemblyHall, buildGroundStation, buildHQ, buildFactory, buildResearchLab, buildWarehouse } from './factoryMesh';
 import { FOOTPRINT, covers, footprint, foundationLevel } from '../game/siteState';
 import { buildCrane, buildLevelSign } from './buildingParts';
 import { buildMine } from './mineMesh';
@@ -407,7 +407,11 @@ export class World {
             ? buildResearchLab()
             : kind === 'assemblyHall'
               ? buildAssemblyHall()
-              : buildWarehouse();
+              : kind === 'hq'
+                ? buildHQ()
+                : kind === 'groundStation'
+                  ? buildGroundStation()
+                  : buildWarehouse();
     const c = tileCentre(this.site, x, z);
     model.position.set(c.x, foundationLevel(this.site, x, z) * STEP, c.z);
     model.userData.tile = { x, z };

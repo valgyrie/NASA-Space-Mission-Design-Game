@@ -34,6 +34,7 @@ export const BUILD_COST: Record<BuildingKind, number> = {
   batteryPlant: 150_000,
   warehouse: 80_000,
   researchLab: 250_000,
+  groundStation: 400_000,
 };
 
 // ---- Building levels and Upgrades ----
@@ -41,8 +42,20 @@ export const BUILD_COST: Record<BuildingKind, number> = {
 /** The Assembly Hall every Site starts with. Not built by the player; its Upgrades are priced from this. */
 export const ASSEMBLY_HALL_COST = 300_000;
 
-/** Highest level each building reaches in Era 1. The Assembly Hall's next level comes with a bigger Bus (Era 2). */
-export const MAX_LEVEL = { assemblyHall: 2, other: 3 } as const;
+/**
+ * Highest level each building reaches. The Assembly Hall's level 3 takes the Large Bus, which opens in Era 2;
+ * the HQ's level is the Company's Era (Era 2 is the last one built so far).
+ */
+export const MAX_LEVEL = { assemblyHall: 3, hq: 2, other: 3 } as const;
+
+/** The Assembly Hall's top level in each Era: its level 3 waits for the Large Bus (Era 2). */
+export const HALL_LEVEL_BY_ERA = { 1: 2, 2: 3 } as const;
+
+/**
+ * The HQ every Site starts with. Its Upgrades are priced from this, like every building's: moving to Era 2
+ * costs this much and takes UPGRADE[2].days. Game estimate.
+ */
+export const HQ_COST = 1_500_000;
 
 /**
  * What an Upgrade to each level costs, as a share of the building's price, and the game days it takes.
@@ -57,7 +70,7 @@ export const UPGRADE = {
 export const LEVEL_OUTPUT_STEP = 0.5;
 
 /** The Assembly Hall level each Bus needs: a bigger Bus needs a bigger hall. */
-export const BUS_HALL_LEVEL = { smallBus: 1, mediumBus: 2 } as const;
+export const BUS_HALL_LEVEL = { smallBus: 1, mediumBus: 2, largeBus: 3 } as const;
 
 /**
  * A Factory makes Parts of its own level, their Mark: each Mark above Mk 1 makes a Part this much lighter,
@@ -89,7 +102,7 @@ export interface Recipe {
   work: number;
 }
 
-/** How each Part is made. Game estimates for Era 1, not real figures. */
+/** How each Part is made. Game estimates, not real figures. The Large Bus, Radio Transponder and Main Engine are Era 2's. */
 export const RECIPES: Record<Part, Recipe> = {
   smallBus: { factory: 'metalWorks', inputs: { aluminium: 40 }, days: 4, massKg: 3, work: 4_000 },
   mediumBus: { factory: 'metalWorks', inputs: { aluminium: 100 }, days: 8, massKg: 8, work: 10_000 },
@@ -100,6 +113,11 @@ export const RECIPES: Record<Part, Recipe> = {
   largeBattery: { factory: 'batteryPlant', inputs: { copper: 35 }, days: 5, massKg: 6, work: 5_000 },
   radiationDetector: { factory: 'electronicsLab', inputs: { silicon: 4, copper: 3 }, days: 3, massKg: 1.5, work: 6_000 },
   tvCamera: { factory: 'electronicsLab', inputs: { silicon: 10, copper: 6 }, days: 5, massKg: 4, work: 15_000 },
+  largeBus: { factory: 'metalWorks', inputs: { aluminium: 180 }, days: 12, massKg: 15, work: 18_000 },
+  transponder: { factory: 'electronicsLab', inputs: { silicon: 8, copper: 8 }, days: 5, massKg: 3, work: 20_000 },
+  // A solid apogee motor with its propellant. Syncom's fuelled 68 kg became 39 kg once its motor had burned
+  // (docs/research/milestones.md): the motor is the heaviest Part, as it is here.
+  mainEngine: { factory: 'metalWorks', inputs: { aluminium: 60, copper: 20 }, days: 8, massKg: 24, work: 20_000 },
 };
 
 /** The Market sells to you at this many times the making cost... */
@@ -113,12 +131,17 @@ export const MARKET_LOT_KG = 10;
 export const CONTRACT_REWARD = {
   explorer1: 3_000_000,
   tiros1: 5_000_000,
+  // Telstar 1 pays for its whole Launch (about $2.7M), so it pays more.
+  telstar1: 8_000_000,
+  syncom3: 10_000_000,
 } as const;
 
 /** Game days from accepting a Contract to its deadline. A year keeps the tutorial relaxed (about 12 minutes at 1×). */
 export const CONTRACT_DEADLINE_DAYS = {
   explorer1: 365,
   tiros1: 365,
+  telstar1: 365,
+  syncom3: 365,
 } as const;
 
 /**
@@ -146,6 +169,7 @@ export interface OptionStats {
 export const OPTION_STATS = {
   smallBus: { carriesKg: 9, assemblyDays: 30 },
   mediumBus: { carriesKg: 25, assemblyDays: 45 },
+  largeBus: { carriesKg: 45, assemblyDays: 60 },
   batteriesOnly: {},
   solarCells: { solarW: 3 },
   smallBattery: { batteryWh: 360 },
@@ -156,10 +180,25 @@ export const OPTION_STATS = {
   // TIROS-1-like: with the Simple Antenna it uses 2 W, a little more than Solar Cells give on average (1.8 W),
   // so a Large Battery covers the gap for 78 days and a Small Battery lasts only about 75.
   tvCamera: { powerUseW: 1.4, dataPerDay: 40 },
+  // Telstar- and Syncom-like: a relay for TV and phone calls. It makes far more Data than the Simple Antenna can
+  // send alone (50 kB a day), so it needs a Ground Station. With Solar Cells it runs on sunlight alone.
+  transponder: { powerUseW: 1, dataPerDay: 90 },
+  noEngine: {},
+  mainEngine: {},
 } as const satisfies Record<string, OptionStats>;
 
-/** Share of each orbit a Low Earth Orbit Spacecraft spends in sunlight (the rest is in Earth's shadow). Game estimate. */
-export const SUNLIT_SHARE = 0.6;
+/**
+ * Share of each orbit a Spacecraft spends in sunlight (the rest is in Earth's shadow). Low Earth Orbit: game
+ * estimate. Geostationary: NASA says Syncom 3 was in sunlight 99% of the time (docs/research/milestones.md).
+ */
+export const SUNLIT_SHARE = { lowEarthOrbit: 0.6, geostationary: 0.99 } as const;
+
+/**
+ * Ground Stations (Era 2): the Company's own antennas on its Site. Each one adds this much to what every
+ * Spacecraft's antenna can send home, times its level's boost (`levelBoost`): one level 1 station doubles it.
+ * Without one, Spacecraft use the stations they borrow (×1). Game estimate.
+ */
+export const GROUND_STATION_STEP = 1;
 
 /**
  * Rideshare price per kilogram of Spacecraft, by Launch Vehicle. Game estimate: no per-kg price was ever
@@ -170,6 +209,18 @@ export const RIDESHARE_PER_KG = {
   juno1: 40_000,
   // A bigger rocket: cheaper per kilogram. Game estimate.
   thorAble: 25_000,
+  thorDelta: 20_000,
+  // Delta D mostly flew to geostationary orbit, which costs more per kilogram. Game estimate.
+  deltaD: 30_000,
+} as const;
+
+/**
+ * What the whole rocket costs, for a Contract whose client pays for its own Launch (Telstar 1). AT&T paid NASA
+ * $2,680,982 in advance for Telstar 1's Thor-Delta (docs/research/milestones.md). Delta D's is a game estimate.
+ */
+export const LAUNCH_PRICE = {
+  thorDelta: 2_700_000,
+  deltaD: 3_500_000,
 } as const;
 
 /**
@@ -269,6 +320,10 @@ export const TECH_TREE = {
 export const ROCKET_RELIABILITY = {
   juno1: 0.8,
   thorAble: 0.85,
+  // Thor-Delta: 11 of 12 worked (1960–1962). Delta D: 2 of 2 (1964–1965); the game gives it Thor-Delta's odds,
+  // since two flights can't show a rocket never fails.
+  thorDelta: 0.97,
+  deltaD: 0.97,
 } as const;
 
 /**

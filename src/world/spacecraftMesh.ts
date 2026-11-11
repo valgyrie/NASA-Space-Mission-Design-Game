@@ -90,9 +90,10 @@ interface BusShape {
   sides: number;
 }
 
-const BUS_SHAPE: Record<'smallBus' | 'mediumBus', BusShape> = {
+const BUS_SHAPE: Record<'smallBus' | 'mediumBus' | 'largeBus', BusShape> = {
   smallBus: { radius: 0.32, height: 1.0, sides: ROUND },
   mediumBus: { radius: 0.62, height: 1.1, sides: SIDES },
+  largeBus: { radius: 0.85, height: 1.25, sides: ROUND },
 };
 
 /** Explorer-style slim cylinder: alternating bands (they kept the temperature even), seams, flanges and a hatch. */
@@ -166,12 +167,42 @@ function addMediumBus(g: THREE.Group, b: BusShape): void {
   }
 }
 
+/**
+ * A wide drum like Syncom's and the early communications satellites': white thermal skin with dark bands, a
+ * gold-foil top deck, strong ring frames top and bottom and a row of access panels round the middle.
+ */
+function addLargeBus(g: THREE.Group, b: BusShape): void {
+  const r = b.radius;
+  g.add(mesh(cylinder(r, r, b.height, ROUND), S.radiator));
+  for (const y of [-b.height * 0.3, b.height * 0.3]) g.add(ring(r + 0.004, y, S.hullDark, 0.08));
+  for (const y of [-b.height / 2, b.height / 2]) {
+    g.add(ring(r + 0.02, y, S.steel, 0.05));
+    bolts(g, r + 0.025, y, 24, 0.012);
+  }
+  // Access panels with handles round the middle.
+  const panel = new THREE.BoxGeometry(0.2, 0.22, 0.012);
+  const handle = new THREE.BoxGeometry(0.08, 0.012, 0.02);
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+    g.add(onSide(panel, S.steel, r + 0.006, a, 0));
+    g.add(onSide(handle, S.hullDark, r + 0.016, a, 0.06));
+  }
+  // Gold top deck with a cable bundle.
+  const top = b.height / 2 + 0.03;
+  g.add(mesh(cylinder(r * 0.94, r * 0.94, 0.02, ROUND), S.gold, top));
+  for (const [x, z] of [[0.4, 0.2], [-0.35, 0.3], [0.1, -0.5]] as const) {
+    g.add(at(new THREE.BoxGeometry(0.12, 0.05, 0.08), S.hullDark, x, top + 0.03, z));
+  }
+  g.add(rod(new THREE.Vector3(0.4, top + 0.05, 0.2), new THREE.Vector3(-0.35, top + 0.05, 0.3), 0.014, S.cableBlack));
+}
+
 /** The Bus. Centred on y = 0. With no Bus, a faint outline shows where it goes. */
-function addBus(g: THREE.Group, id: 'smallBus' | 'mediumBus' | null): BusShape {
+function addBus(g: THREE.Group, id: keyof typeof BUS_SHAPE | null): BusShape {
   const shape = BUS_SHAPE[id ?? 'smallBus'];
   if (!id) g.add(mesh(cylinder(shape.radius, shape.radius, shape.height), S.ghost));
   else if (id === 'smallBus') addSmallBus(g, shape);
-  else addMediumBus(g, shape);
+  else if (id === 'mediumBus') addMediumBus(g, shape);
+  else addLargeBus(g, shape);
   return shape;
 }
 
@@ -337,6 +368,58 @@ function addTvCamera(g: THREE.Group, bus: BusShape): void {
   g.add(rod(new THREE.Vector3(r * 0.38, base + 0.08, r * 0.15), new THREE.Vector3(0, base + 0.1, -r * 0.2), 0.008, S.cableBlack));
 }
 
+/**
+ * A Radio Transponder in the nose, like Telstar's and Syncom's: a box of receivers and amplifiers on a deck, and a
+ * mast with a belt of small microwave antennas round it (one ring to listen, one to send), topped by a slotted
+ * antenna for commands.
+ */
+function addTransponder(g: THREE.Group, bus: BusShape): void {
+  const base = bus.height / 2;
+  const r = Math.min(bus.radius, 0.5) * 0.75;
+  g.add(mesh(cylinder(r, r, 0.04, ROUND), S.deck, base + 0.02));
+  g.add(ring(r + 0.01, base + 0.045, S.steel, 0.012));
+  // Receivers and amplifier tubes: two boxes with gold covers.
+  for (const [x, z] of [[-r * 0.45, -r * 0.3], [r * 0.45, -r * 0.3]] as const) {
+    g.add(at(new THREE.BoxGeometry(r * 0.5, 0.12, r * 0.4), S.payload, x, base + 0.1, z));
+    g.add(at(new THREE.BoxGeometry(r * 0.52, 0.015, r * 0.42), S.gold, x, base + 0.165, z));
+  }
+  // The mast with two belts of microwave antennas.
+  const mastR = 0.09;
+  g.add(mesh(cylinder(mastR, mastR, 0.5, 12), S.hull, base + 0.04 + 0.25));
+  const cavity = new THREE.BoxGeometry(0.05, 0.05, 0.03);
+  for (const y of [base + 0.2, base + 0.32]) {
+    g.add(ring(mastR + 0.012, y - 0.04, S.steel, 0.012, 12));
+    for (let i = 0; i < 12; i++) g.add(onSide(cavity, i % 2 ? S.hullDark : S.gold, mastR + 0.015, (i / 12) * Math.PI * 2, y));
+  }
+  // Slotted command antenna on top, and cables down to the boxes.
+  g.add(mesh(cylinder(0.025, 0.025, 0.3, 8), S.antenna, base + 0.54 + 0.15));
+  for (let k = 0; k < 4; k++) g.add(at(new THREE.BoxGeometry(0.052, 0.04, 0.01), S.slot, 0, base + 0.6 + k * 0.06, 0.026));
+  g.add(mesh(new THREE.SphereGeometry(0.03, 8, 6), S.antenna, base + 0.86));
+  g.add(rod(new THREE.Vector3(-r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.12, -mastR), 0.008, S.cable));
+  g.add(rod(new THREE.Vector3(r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.1, -mastR), 0.008, S.cableBlack));
+}
+
+/**
+ * A Main Engine under the Spacecraft, like Syncom's solid apogee motor: a round motor case tucked under the Bus
+ * and a big bell nozzle pointing down through the launch adapter. Returns how far it reaches below.
+ */
+function addMainEngine(g: THREE.Group, bus: BusShape, below: number): void {
+  const y = -bus.height / 2 - below;
+  const caseR = Math.min(bus.radius * 0.5, 0.32);
+  g.add(at(new THREE.SphereGeometry(caseR, 14, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), S.hullDark, 0, y, 0));
+  g.add(ring(caseR * 0.55, y - caseR * 0.92, S.steel, 0.04, 14));
+  const bellTop = y - caseR * 0.95;
+  g.add(mesh(new THREE.CylinderGeometry(caseR * 0.3, caseR * 0.75, 0.4, 16, 1, true), S.nozzle, bellTop - 0.2));
+  g.add(ring(caseR * 0.76, bellTop - 0.4, S.steel, 0.02, 16));
+  // Two small jets for pointing and steering, on arms.
+  for (const a of [0, Math.PI]) {
+    const x = Math.sin(a) * (caseR + 0.12);
+    const z = Math.cos(a) * (caseR + 0.12);
+    g.add(rod(new THREE.Vector3(0, y - 0.05, 0), new THREE.Vector3(x, y - 0.05, z), 0.01, S.steel));
+    g.add(at(new THREE.ConeGeometry(0.025, 0.06, 8, 1, true), S.nozzle, x, y - 0.08, z));
+  }
+}
+
 /** The ring that holds the Spacecraft to the Launch Vehicle. */
 function addAdapter(g: THREE.Group, bus: BusShape, below: number): void {
   const y = -bus.height / 2 - below - 0.05;
@@ -353,11 +436,13 @@ export function buildSpacecraft(design: Design): THREE.Group {
   const bus = addBus(g, design.bus as keyof typeof BUS_SHAPE | null);
   const below = addBattery(g, bus, design.battery);
   if (design.bus) addAdapter(g, bus, below);
+  if (design.propulsion === 'mainEngine') addMainEngine(g, bus, below);
   if (design.power === 'solarCells') addSolarCells(g, bus);
   if (design.comms === 'simpleAntenna') addSimpleAntenna(g, bus, below);
   if (design.pointing === 'spin') addSpin(g, bus);
   if (design.payload === 'radiationDetector') addRadiationDetector(g, bus);
   if (design.payload === 'tvCamera') addTvCamera(g, bus);
+  if (design.payload === 'transponder') addTransponder(g, bus);
   // Stand the whole stack around its middle so it turns in place.
   const box = new THREE.Box3().setFromObject(g);
   g.position.y = -(box.min.y + box.max.y) / 2;

@@ -91,7 +91,7 @@ A building that turns the Data Spacecraft send home into Research Points.
 _Avoid_: lab (alone, it could mean the Electronics Lab)
 
 **HQ**:
-The Company's main building; upgrading it moves the Company into the next Era once that Era's Milestones are done.
+The Company's main building; its level is the Company's Era. Upgrading it moves the Company into the next Era once that Era's Milestones are done.
 _Avoid_: town hall, headquarters building
 
 ### Missions
@@ -111,6 +111,10 @@ _Avoid_: story mission, chapter
 **Spacecraft**:
 What the player designs and sends to space: a satellite, probe, lander or crew capsule.
 _Avoid_: rocket, ship, satellite (as the general term)
+
+**Geostationary orbit**:
+A circle 35,786 km above the equator where one lap takes a day, so a Spacecraft seems to hang still over one spot. The Launch Vehicle leaves the Spacecraft in a transfer orbit; its own main engine does the rest.
+_Avoid_: GEO (in player text), geosynchronous (that also covers tilted orbits)
 
 **Launch Vehicle**:
 The rocket that carries a Spacecraft to space.
@@ -180,6 +184,10 @@ _Avoid_: results screen, summary
 **Space view**:
 A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
 _Avoid_: map, radar, tracker (that is the Mission tracker)
+
+**Whole Launch**:
+Paying for an entire Launch Vehicle instead of a Rideshare, as AT&T did for Telstar 1; the price does not change with mass.
+_Avoid_: charter, dedicated launch
 
 **Launch Insurance**:
 A payment before Launch that returns most of the Mission's cost if it fails.

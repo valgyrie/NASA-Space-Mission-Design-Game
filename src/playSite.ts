@@ -1,6 +1,19 @@
 import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
-import { advanceDays, allBuildings, build, checkBuild, daysFor, fitBuildings, mineMaterial, placeAssemblyHall, storageFree } from './game/siteState';
+import {
+  advanceDays,
+  allBuildings,
+  build,
+  checkBuild,
+  daysFor,
+  fitBuildings,
+  mineMaterial,
+  placeAssemblyHall,
+  placeHQ,
+  storageFree,
+} from './game/siteState';
+import { eraOf } from './game/eras';
+import { showEraCard } from './ui/eraCard';
 import { type SaveData, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
@@ -46,6 +59,9 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // A save from when buildings took one tile: move apart the ones that now overlap.
   if (fitBuildings(site, state)) saveGame(localStorage, game);
   world.addBuilding('assemblyHall', hall.x, hall.z);
+  // The HQ stands beside it; its level is the Company's Era.
+  const hq = placeHQ(site, state);
+  world.addBuilding('hq', hq.x, hq.z);
   for (const mine of state.mines) {
     const material = mineMaterial(site, mine);
     if (material) world.addBuilding('mine', mine.x, mine.z, material);
@@ -53,6 +69,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   for (const f of state.factories) world.addBuilding(f.kind, f.x, f.z);
   for (const w of state.warehouses) world.addBuilding('warehouse', w.x, w.z);
   for (const l of state.labs) world.addBuilding('researchLab', l.x, l.z);
+  for (const g of state.groundStations) world.addBuilding('groundStation', g.x, g.z);
 
   let speed: Speed = 1;
   let lastSpeed: Speed = 1;
@@ -258,6 +275,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const history = showHistoryCard(ui, pauser());
   // The one-time startup grant, when money runs low.
   const grant = showGrantCard(ui, pauser());
+  // The welcome to a new Era, once the HQ Upgrade is done.
+  const eraCard = showEraCard(ui, pauser());
   // The tutorial guide sits above the Mission Designer, so it can lead the player through it.
   const tutorial = showTutorialGuide(ui, () => {
     state.tutorial.skipped = true;
@@ -273,7 +292,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (kind) panel.close();
   };
   // Picking the building you are already placing stops placing.
-  const buildMenu = showBuildMenu(ui, (kind) => setPlacing(placing === kind ? null : kind));
+  const buildMenu = showBuildMenu(ui, state, (kind) => setPlacing(placing === kind ? null : kind));
 
   // Placing: hover shows green or red, a click (not a drag) builds. Otherwise a click opens a building's panel.
   const canvas = world.renderer.domElement;
@@ -310,6 +329,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
+      else if (eraCard.isOpen) eraCard.close();
       else if (grant.isOpen) grant.close();
       else if (history.isOpen) history.close();
       else if (menu.isOpen) menu.close();
@@ -325,7 +345,18 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       else menu.open();
       return;
     }
-    if (launchShow.isOpen || menu.isOpen || designer.isOpen || report.isOpen || space.isOpen || history.isOpen || archive.isOpen || grant.isOpen) return;
+    if (
+      launchShow.isOpen ||
+      menu.isOpen ||
+      designer.isOpen ||
+      report.isOpen ||
+      space.isOpen ||
+      history.isOpen ||
+      archive.isOpen ||
+      grant.isOpen ||
+      eraCard.isOpen
+    )
+      return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -360,10 +391,18 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     tracker.update();
     hud.update(state);
     panel.update();
-    const covered = launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen;
+    buildMenu.update();
+    const covered =
+      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen;
     tutorial.update(state, covered, designer.isOpen);
+    // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
+    if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {
+      state.eraSeen = eraOf(state);
+      saveGame(localStorage, game);
+      eraCard.show(eraOf(state));
+    }
     // The startup grant waits until nothing else is on screen (a failed Mission's report and cards first).
-    if (!covered && !designer.isOpen) {
+    if (!covered && !designer.isOpen && !eraCard.isOpen) {
       const paid = payGrant(state);
       if (paid > 0) {
         saveGame(localStorage, game);
@@ -374,5 +413,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   startAutosave(localStorage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts } });
 }

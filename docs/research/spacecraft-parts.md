@@ -75,6 +75,16 @@ All other Era 1 option numbers (Wh, W, kB a day, assembly days, Bus capacity) ar
 
 Sources: [Wikipedia: TIROS-1](https://en.wikipedia.org/wiki/TIROS-1) · [NASA Science: TIROS](https://science.nasa.gov/mission/tiros/).
 
+## Era 2 Parts (ticket 18)
+
+| Item | Real value | Game |
+|---|---|---|
+| Telstar 1 | 77 kg sphere, 3,600 solar cells, one transponder relaying one TV channel | Radio Transponder: 3 kg, 1 W, 90 kB of Data a day (game estimates); runs on Solar Cells alone |
+| Syncom 3 | 68 kg fuelled, 39 kg after its solid apogee motor burned; 29 W from 3,840 solar cells, in sunlight 99% of the time; two 2 W transponders | Main Engine: 24 kg, the heaviest Part (game estimate, scaled like the other Parts); 99% sunlight in geostationary orbit |
+| Large Bus | Syncom and Early Bird were drums 71 cm across | Large Bus: 15 kg, carries 45 kg, 60 days to assemble, Assembly Hall level 3 (game estimates) |
+
+Sources: [Wikipedia: Telstar 1](https://en.wikipedia.org/wiki/Telstar_1) · [NSSDCA: Syncom 3](https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1964-047A). Ground Stations (×2 per level 1 station) are game estimates.
+
 ## How the game uses this
 
 - **Easy mode:** 2–3 options per slot with rounded numbers inside these ranges.

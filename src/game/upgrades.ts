@@ -1,5 +1,6 @@
 import type { SiteBuildingKind } from '../economy/part';
-import { ASSEMBLY_HALL_COST, BUILD_COST, BUS_HALL_LEVEL, MAX_LEVEL, UPGRADE } from './balance';
+import { ASSEMBLY_HALL_COST, BUILD_COST, BUS_HALL_LEVEL, HALL_LEVEL_BY_ERA, HQ_COST, MAX_LEVEL, UPGRADE } from './balance';
+import { type Era, eraOf, milestonesDone } from './eras';
 import type { Building, SiteState } from './siteState';
 
 /**
@@ -7,29 +8,44 @@ import type { Building, SiteState } from './siteState';
  * halls in base-builders. The building keeps working meanwhile; the new level counts from the day it is done.
  * What a level does: Mines dig more, Warehouses store more, Research Labs research faster (`levelBoost`),
  * Factories make better Parts (their Mark, siteState.ts) and the Assembly Hall takes a bigger Bus.
+ * The HQ's level is the Company's Era: its Upgrade opens once the Era's Milestones are done (eras.ts).
  */
 
-/** The highest level a kind of building reaches now. */
-export function maxLevel(kind: SiteBuildingKind): number {
-  return kind === 'assemblyHall' ? MAX_LEVEL.assemblyHall : MAX_LEVEL.other;
+/** The highest level a kind of building reaches in an Era. The Assembly Hall's level 3 waits for the Large Bus (Era 2). */
+export function maxLevel(kind: SiteBuildingKind, era: Era = 1): number {
+  if (kind === 'assemblyHall') return HALL_LEVEL_BY_ERA[era];
+  if (kind === 'hq') return MAX_LEVEL.hq;
+  return MAX_LEVEL.other;
+}
+
+/** What a building's Upgrades are priced from: what it cost to build, or for the hall and HQ, their set price. */
+function priceOf(kind: SiteBuildingKind): number {
+  if (kind === 'assemblyHall') return ASSEMBLY_HALL_COST;
+  if (kind === 'hq') return HQ_COST;
+  return BUILD_COST[kind];
 }
 
 /** The next level's Upgrade: what it costs and how many game days it takes. Null at the top level. */
-export function nextUpgrade(kind: SiteBuildingKind, building: Building): { level: number; cost: number; days: number } | null {
+export function nextUpgrade(
+  kind: SiteBuildingKind,
+  building: Building,
+  era: Era = 1,
+): { level: number; cost: number; days: number } | null {
   const level = building.level + 1;
-  if (level > maxLevel(kind)) return null;
+  if (level > maxLevel(kind, era)) return null;
   const step = UPGRADE[level as keyof typeof UPGRADE];
-  const price = kind === 'assemblyHall' ? ASSEMBLY_HALL_COST : BUILD_COST[kind];
-  return { level, cost: Math.round(price * step.costShare), days: step.days };
+  return { level, cost: Math.round(priceOf(kind) * step.costShare), days: step.days };
 }
 
-export type UpgradeProblem = 'topLevel' | 'underway' | 'money';
+export type UpgradeProblem = 'topLevel' | 'underway' | 'money' | 'milestones';
 export type UpgradeCheck = { ok: true } | { ok: false; problem: UpgradeProblem };
 
 export function checkUpgrade(state: SiteState, kind: SiteBuildingKind, building: Building): UpgradeCheck {
   if (building.upgradeDay !== null) return { ok: false, problem: 'underway' };
-  const next = nextUpgrade(kind, building);
+  const next = nextUpgrade(kind, building, eraOf(state));
   if (!next) return { ok: false, problem: 'topLevel' };
+  // The HQ moves the Company into the next Era only once this Era's Milestones are done.
+  if (kind === 'hq' && !milestonesDone(state, eraOf(state))) return { ok: false, problem: 'milestones' };
   if (state.money < next.cost) return { ok: false, problem: 'money' };
   return { ok: true };
 }
@@ -38,7 +54,7 @@ export function checkUpgrade(state: SiteState, kind: SiteBuildingKind, building:
 export function startUpgrade(state: SiteState, kind: SiteBuildingKind, building: Building): UpgradeCheck {
   const check = checkUpgrade(state, kind, building);
   if (!check.ok) return check;
-  const next = nextUpgrade(kind, building)!;
+  const next = nextUpgrade(kind, building, eraOf(state))!;
   state.money -= next.cost;
   building.upgradeDay = state.day + next.days;
   return check;

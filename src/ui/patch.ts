@@ -9,6 +9,8 @@ const SVG = 'http://www.w3.org/2000/svg';
 const PATCH_COLOURS: Record<ContractId, { ring: string; sky: string; earth: string; trim: string }> = {
   explorer1: { ring: '#1d3b6e', sky: '#0f1b33', earth: '#3f8fd0', trim: '#f2c14e' },
   tiros1: { ring: '#1f5f63', sky: '#0d2629', earth: '#5bb3c9', trim: '#e9eef2' },
+  telstar1: { ring: '#6b2a2a', sky: '#1d0f14', earth: '#4a9be0', trim: '#f4d58d' },
+  syncom3: { ring: '#3d2a6b', sky: '#120d24', earth: '#3f8fd0', trim: '#f2a65a' },
 };
 
 let uid = 0;

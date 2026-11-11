@@ -10,9 +10,11 @@ import {
   daysLeft,
   deadlineDay,
 } from '../game/contracts';
+import { LAST_ERA, eraOf, milestonesDone } from '../game/eras';
 import type { SiteState } from '../game/siteState';
+import { upgradeDaysLeft } from '../game/upgrades';
 import { t } from '../strings';
-import { formatGameDate, formatMoney, formatNumber } from './format';
+import { formatDays, formatGameDate, formatMoney, formatNumber } from './format';
 
 export interface ContractsPanel {
   toggle(): void;
@@ -102,6 +104,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       field(t('contracts.reward'), formatMoney(contract.reward)),
       field(t('contracts.deadline'), deadline),
     );
+    if (contract.wholeLaunch) box.append(el('p', 'side-note', t('contracts.wholeLaunch')));
     // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
     if (!taken && state.reopened.includes(contract.id)) box.append(el('p', 'side-note', t('contracts.reopened')));
     if (!taken) {
@@ -120,7 +123,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
   };
 
   const render = () => {
-    shownTaken = state.contracts.map((c) => c.id).join();
+    shownTaken = `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).length}`;
     dueLines = [];
     body.replaceChildren();
     if (state.contracts.length > 0) {
@@ -129,7 +132,8 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     }
     body.append(el('h3', '', t('contracts.available')));
     const open = availableContracts(state);
-    if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
+    if (open.length === 0 && state.contracts.length === 0) body.append(eraLine);
+    else if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
     for (const c of open) body.append(card(c));
     if (state.completed.length > 0) {
       body.append(el('h3', '', t('contracts.completed')));
@@ -140,11 +144,23 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     update();
   };
 
-  // Redraw when a Contract changes column on its own (a missed deadline puts it back on the board).
+  // With nothing on the board, the line says what comes next: the HQ Upgrade to the next Era, or its progress.
+  const eraLine = el('p', 'side-note');
+  const eraText = () => {
+    const era = eraOf(state);
+    const hq = state.hq;
+    const left = hq ? upgradeDaysLeft(state, hq) : null;
+    if (left !== null && era < LAST_ERA) return t('contracts.hqUnderway', { era: era + 1, days: formatDays(left) });
+    if (era < LAST_ERA && milestonesDone(state, era)) return t('contracts.hqHint', { era, next: era + 1 });
+    return era >= LAST_ERA && milestonesDone(state, era) ? t('contracts.allDone') : t('contracts.none');
+  };
+
+  // Redraw when a Contract changes column on its own (a missed deadline puts it back on the board), or a new Era opens.
   let shownTaken = '';
   const update = () => {
     if (panel.hidden) return;
-    const taken = state.contracts.map((c) => c.id).join();
+    setText(eraLine, eraText());
+    const taken = `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).length}`;
     if (taken !== shownTaken) {
       shownTaken = taken;
       render();

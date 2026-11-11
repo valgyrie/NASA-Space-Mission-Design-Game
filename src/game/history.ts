@@ -10,7 +10,18 @@ import type { SiteState } from './siteState';
  * Card text and photo credits live in strings.ts under `history.<id>.*`; facts in docs/research/milestones.md.
  */
 
-export const HISTORY_CARD_IDS = ['explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After', 'vanguardTV3'] as const;
+export const HISTORY_CARD_IDS = [
+  'explorer1Before',
+  'explorer1After',
+  'vanguard1',
+  'tiros1Before',
+  'tiros1After',
+  'vanguardTV3',
+  'telstar1Before',
+  'telstar1After',
+  'syncom3Before',
+  'syncom3After',
+] as const;
 export type HistoryCardId = (typeof HISTORY_CARD_IDS)[number];
 
 export interface HistoryCard {
@@ -85,6 +96,42 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
     year: 1957,
     image: 'history/vanguard-rocket.jpg',
     learnMore: 'https://www.nasa.gov/history/60-years-ago-explorer-1-becomes-americas-first-satellite/',
+  },
+  // Photo: NASA, "Telstar Opened Era of Global Satellite Television" (Thor/Delta 316 launching Telstar 1, LC-17B).
+  telstar1Before: {
+    id: 'telstar1Before',
+    contract: 'telstar1',
+    when: 'before',
+    year: 1962,
+    image: 'history/telstar-launch.jpg',
+    learnMore: 'https://www.nasa.gov/history/telstar-opened-era-of-global-satellite-television/',
+  },
+  // Photo: NASA (via Wikimedia Commons, PD-USGov-NASA), the horn antenna of AT&T's Andover Earth Station.
+  telstar1After: {
+    id: 'telstar1After',
+    contract: 'telstar1',
+    when: 'after',
+    year: 1962,
+    image: 'history/andover-horn.jpg',
+    learnMore: 'https://www.nasa.gov/history/telstar-opened-era-of-global-satellite-television/',
+  },
+  // Photo: NASA image article "The First Geosynchronous Satellite": a Syncom firing its apogee motor.
+  syncom3Before: {
+    id: 'syncom3Before',
+    contract: 'syncom3',
+    when: 'before',
+    year: 1964,
+    image: 'history/syncom.jpg',
+    learnMore: 'https://www.nasa.gov/image-article/first-geosynchronous-satellite/',
+  },
+  // Photo: NASA Image and Video Library 9139573 (NASA/MSFC), a Thor-Delta launching Intelsat III on 21 May 1969.
+  syncom3After: {
+    id: 'syncom3After',
+    contract: 'syncom3',
+    when: 'after',
+    year: 1964,
+    image: 'history/delta-intelsat3.jpg',
+    learnMore: 'https://www.nasa.gov/history/communications-satellites/',
   },
 };
 

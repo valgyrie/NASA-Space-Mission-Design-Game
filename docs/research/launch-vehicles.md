@@ -7,9 +7,9 @@ Payload to **low Earth orbit (LEO)** unless noted. Sources often disagree becaus
 | Juno I | 1 | **~14 kg** (enough for Explorer 1, 13.97 kg) _(verify: no direct capacity figure found)_ | | [Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1) |
 | Vanguard | 1 | _(not researched; used only in the failure story)_ | | |
 | Thor-Able | 1 | **120 kg** (to 640 km at 48°) | Launched TIROS-1 (1 Apr 1960, its last flight) | [Astronautix: Thor Able](http://www.astronautix.com/t/thorable.html) · [Wikipedia: Thor-Able](https://en.wikipedia.org/wiki/Thor-Able) |
-| Thor-Delta | 2 | **226 kg** (Astronautix) / 270 kg (Wikipedia) | | [Wikipedia](https://en.wikipedia.org/wiki/Thor-Delta) · [Astronautix](http://www.astronautix.com/t/thordelta.html) |
+| Thor-Delta | 2 | **226 kg** (Astronautix) / 270 kg (Wikipedia) | GTO: **45 kg** | [Wikipedia](https://en.wikipedia.org/wiki/Thor-Delta) · [Astronautix](http://www.astronautix.com/t/thordelta.html) |
 | Delta A | 2 | **250 kg** | | [Astronautix: Thor Delta A](http://astronautix.com/t/thordeltaa.html) |
-| Delta D | 2 | _(verify)_ | Launched Syncom 3 to GEO | [Wikipedia: Syncom](https://en.wikipedia.org/wiki/Syncom) |
+| Delta D | 2 | **450 kg** | GTO: **104 kg**. Launched Syncom 3 to GEO | [Astronautix: Thor Delta D](http://www.astronautix.com/t/thordeltad.html) · [Wikipedia: Delta D](https://en.wikipedia.org/wiki/Delta_D) |
 | Saturn V | 3 | **~140,000 kg** (incl. Moon-departure fuel); other sources 118,000–120,000 kg | | [Wikipedia: heavy-lift launch vehicle](https://en.wikipedia.org/wiki/Heavy-lift_launch_vehicle) |
 | Delta 900 | 3 | _(verify)_ | Launched Landsat 1 | [Wikipedia: Landsat 1](https://en.wikipedia.org/wiki/Landsat_1) |
 | Space Shuttle | 4 | **27,500 kg** | Crewed; deployed Hubble | [Wikipedia: heavy-lift launch vehicle](https://en.wikipedia.org/wiki/Heavy-lift_launch_vehicle) |
@@ -75,3 +75,23 @@ Researched 2026-11-10.
 - The Company's first Launch always works (Explorer 1 did), so the tutorial can't be lost to luck.
 - Which stage fails is drawn evenly among the stages (game choice; real failures happened at every stage).
 - Both Launch Sites launch east over the Atlantic, so a failed rocket falls into the sea: the Launch show says so (the GDD's "coast effect").
+
+## Thor-Delta and Delta D: Era 2 (ticket 18)
+
+Researched 2026-11-11.
+
+| Fact | Thor-Delta | Delta D | Source |
+|---|---|---|---|
+| Height | 31 m | 32 m | Astronautix (both) |
+| Stage 1 | Thor DM-19, burns **165 s** | Thor (Thrust Augmented), **150 s**, with **3 Castor** solid boosters (**27 s**) | [Wikipedia: PGM-17 Thor](https://en.wikipedia.org/wiki/PGM-17_Thor) · [Astronautix: Thor Delta D](http://www.astronautix.com/t/thordeltad.html) |
+| Stage 2 | Delta (AJ10-118), **115 s** | Delta D, **170 s** | [Astronautix: AJ10-118](http://www.astronautix.com/a/aj10-118.html) · Astronautix: Thor Delta D |
+| Stage 3 | Altair (X-248), **38 s** | Altair 2, **28 s** | Thor-Able table above · Astronautix: Thor Delta D |
+| Payload | LEO 226 kg, GTO 45 kg | LEO 450 kg, GTO 104 kg | Astronautix |
+| Record | **12 flights, 11 worked** (13 May 1960 – 18 Sep 1962); the first (Echo 1) failed | **2 flights, both worked**: Syncom 3 (19 Aug 1964), Intelsat I / Early Bird (6 Apr 1965) | [Wikipedia: Thor-Delta](https://en.wikipedia.org/wiki/Thor-Delta) · [Wikipedia: Delta D](https://en.wikipedia.org/wiki/Delta_D) |
+| Launch price | AT&T paid NASA **$2,680,982** in advance for Telstar 1's launch | not found | [Wikipedia: Telstar 1](https://en.wikipedia.org/wiki/Telstar_1) (Congressional Record, 17 Aug 1962) |
+
+**Game notes**
+- Reliability: Thor-Delta's failure share (1/12) cut to 40% gives 97%; Delta D never failed, but two flights can't show that, so it gets the same 97% (game choice).
+- Rideshare $20,000/kg (Thor-Delta) and $30,000/kg (Delta D), Delta D's whole-rocket $3.5M: game estimates. Thor-Delta's whole rocket, $2.7M, is AT&T's real payment, rounded.
+- Juno I and Thor-Able retire in Era 2 (last flights 1958 and 1960).
+- 10 s between stage 1 and stage 2 is a game estimate, as for Thor-Able _(verify)_. The 3D models leave out the nose fairing and are drawn shorter than 31–32 m, so the Spacecraft shows.

@@ -98,6 +98,7 @@ export class SpaceView {
     }
     this.shown = sats.map((sat, i) => this.add(sat, i));
     this.following = null;
+    this.overview();
   }
 
   /** Follow one Spacecraft close up, or null to see the whole Earth. */
@@ -231,10 +232,13 @@ export class SpaceView {
   }
 
   private overview(): void {
-    this.camera.position.set(70, 45, 95);
+    // Far enough back to see the highest orbit: a geostationary one is over six times Earth's size.
+    const highest = Math.max(0, ...this.shown.map((s) => (EARTH_KM + s.sat.orbitKm.high) * KM));
+    const k = Math.max(1, (highest * 2.6) / 126);
+    this.camera.position.set(70 * k, 45 * k, 95 * k);
     this.controls.target.set(0, 0, 0);
     this.controls.minDistance = 45;
-    this.controls.maxDistance = 400;
+    this.controls.maxDistance = Math.max(400, 190 * k);
     this.controls.update();
   }
 
@@ -279,6 +283,7 @@ const FALLBACK_DESIGN = {
   battery: 'largeBattery',
   comms: 'simpleAntenna',
   pointing: 'spin',
+  propulsion: 'noEngine',
   payload: null,
 } as const;
 

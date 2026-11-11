@@ -3,17 +3,17 @@ export const FACTORY_KINDS = ['metalWorks', 'electronicsLab', 'solarFab', 'batte
 export type FactoryKind = (typeof FACTORY_KINDS)[number];
 
 /** Every building the player can place on a Site. */
-export const BUILDING_KINDS = ['mine', ...FACTORY_KINDS, 'warehouse', 'researchLab'] as const;
+export const BUILDING_KINDS = ['mine', ...FACTORY_KINDS, 'warehouse', 'researchLab', 'groundStation'] as const;
 export type BuildingKind = (typeof BUILDING_KINDS)[number];
 
-/** Every building on a Site: the ones the player places, and the Assembly Hall every Site starts with. */
-export type SiteBuildingKind = BuildingKind | 'assemblyHall';
+/** Every building on a Site: the ones the player places, and the Assembly Hall and HQ every Site starts with. */
+export type SiteBuildingKind = BuildingKind | 'assemblyHall' | 'hq';
 
 export function isFactory(kind: SiteBuildingKind): kind is FactoryKind {
   return (FACTORY_KINDS as readonly string[]).includes(kind);
 }
 
-/** Era 1 Parts a Factory can make (Payloads too). Their recipes are in `src/game/balance.ts`. */
+/** Parts a Factory can make (Payloads too). Their recipes are in `src/game/balance.ts`; `PART_ERA` (eras.ts) opens the later ones. */
 export const PARTS = [
   'smallBus',
   'mediumBus',
@@ -24,5 +24,8 @@ export const PARTS = [
   'largeBattery',
   'radiationDetector',
   'tvCamera',
+  'largeBus',
+  'transponder',
+  'mainEngine',
 ] as const;
 export type Part = (typeof PARTS)[number];

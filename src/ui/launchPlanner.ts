@@ -4,11 +4,14 @@ import {
   LAUNCH_VEHICLE_IDS,
   LAUNCH_VEHICLES,
   type LaunchVehicleId,
+  type VehicleStatus,
   isVehicleOpen,
   liftFactor,
   liftFrom,
   spinSpeed,
+  vehicleStatus,
 } from '../game/launchVehicles';
+import type { BusId } from '../game/upgrades';
 import { type LaunchPlan, type PlanProblem, insuranceQuote, planLaunch, shipMission } from '../game/mission';
 import { adviseLaunch, shippingTo } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
@@ -43,6 +46,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
       return t('planner.problem.underway');
     case 'vehicleClosed':
       return t('planner.problem.vehicleClosed');
+    case 'cantReach':
+      return t('planner.problem.cantReach', { vehicle: t(`launchVehicle.${plan.vehicle}`), orbit: t(`orbit.${plan.goal.orbit}`) });
     case 'emptySlots':
       return t('planner.problem.emptySlots', { slots: p.slots.map((s) => t(`slot.${s}`)).join(t('planner.list')) });
     case 'tooHeavy':
@@ -53,10 +58,10 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
         orbit: t(`orbit.${plan.goal.orbit}`),
       });
     case 'hallTooSmall':
-      return t('planner.problem.hallTooSmall', { bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`), need: p.need, level: p.level });
+      return t('planner.problem.hallTooSmall', { bus: t(`part.${p.bus as BusId}`), need: p.need, level: p.level });
     case 'busFull':
       return t('planner.problem.busFull', {
-        bus: t(`part.${p.bus as 'smallBus' | 'mediumBus'}`),
+        bus: t(`part.${p.bus as BusId}`),
         max: formatNumber(p.carriesKg),
         kg: formatDecimal(p.partsKg),
       });
@@ -65,6 +70,14 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
     case 'money':
       return t('planner.problem.money', { short: formatMoney(p.short) });
   }
+}
+
+/** Why a Launch Vehicle can't be booked yet: too early in history, or retired. */
+function closedText(status: VehicleStatus): string {
+  if (status.open) return '';
+  if (status.why === 'after') return t('planner.opensAfter', { contract: t(`contract.${status.contract}.name`) });
+  if (status.why === 'era') return t('planner.opensInEra', { era: status.era });
+  return t('planner.retired', { year: status.year });
 }
 
 /**
@@ -88,19 +101,22 @@ export function makeLaunchPlanner(
   const choices = el('section', 'planner-card');
   const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
   choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
-  const vehicleButtons = new Map<LaunchVehicleId, { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement }>();
+  const vehicleButtons = new Map<
+    LaunchVehicleId,
+    { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement; price: HTMLElement }
+  >();
   for (const id of LAUNCH_VEHICLE_IDS) {
     const v = LAUNCH_VEHICLES[id];
     const b = button('option planner-vehicle', '');
     const fit = el('span', 'planner-fit');
-    const opensAfter = v.opensAfter;
-    const locked = el('span', 'option-locked', opensAfter ? t('planner.opensAfter', { contract: t(`contract.${opensAfter}.name`) }) : '');
+    const locked = el('span', 'option-locked');
     b.dataset.vehicle = id;
     const lifts = el('span', 'option-stats');
+    const price = el('span', 'option-stats');
     b.append(
       el('span', 'option-name', t(`launchVehicle.${id}`)),
       lifts,
-      el('span', 'option-stats', t('planner.perKg', { price: formatMoney(v.perKg) })),
+      price,
       el('span', 'option-stats', t('planner.reliability', {
         pct: formatNumber(Math.round(v.reliability * 100)),
         worked: formatNumber(v.record.worked),
@@ -116,8 +132,11 @@ export function makeLaunchPlanner(
       render();
     });
     choices.append(b);
-    vehicleButtons.set(id, { button: b, fit, locked, lifts });
+    vehicleButtons.set(id, { button: b, fit, locked, lifts, price });
   }
+  // How a geostationary orbit is reached, shown when the Contract asks for one.
+  const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
+  choices.append(geoNote);
   choices.append(el('h3', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
   const siteButtons = new Map<string, HTMLButtonElement>();
   for (const id of LAUNCH_SITE_IDS) {
@@ -166,7 +185,9 @@ export function makeLaunchPlanner(
   const insureLabel = el('label', 'planner-insure');
   insureLabel.append(insureBox, el('span', '', t('planner.insurance')), insurePrice);
   const insureLine = el('p', 'planner-hint');
-  costs.append(el('h3', '', t('planner.costs')), costRows, insureLabel, insureLine, el('p', 'planner-hint', t('planner.lighter')));
+  const lighter = el('p', 'planner-hint', t('planner.lighter'));
+  const wholeNote = el('p', 'planner-hint', t('planner.wholeLaunchNote'));
+  costs.append(el('h3', '', t('planner.costs')), costRows, insureLabel, insureLine, lighter, wholeNote);
   const timeline = el('section', 'planner-card');
   const timeRows = el('dl', 'planner-rows');
   timeline.append(el('h3', '', t('planner.timeline')), timeRows);
@@ -211,21 +232,44 @@ export function makeLaunchPlanner(
     const plan = planLaunch(state, state.design, vehicle, site, insured ? quote.price : 0);
     firstLaunch.hidden = state.reports.length > 0;
     for (const [id, b] of siteButtons) b.setAttribute('aria-pressed', String(id === site));
+    const orbit = plan.goal.orbit;
+    const whole = !!plan.goal.contract.wholeLaunch;
+    geoNote.hidden = orbit !== 'geostationary';
     for (const [id, ui] of vehicleButtons) {
-      const open = isVehicleOpen(state, id);
+      const status = vehicleStatus(state, id);
+      const open = status.open;
       ui.button.disabled = !open;
       ui.locked.hidden = open;
-      ui.fit.hidden = !open;
+      ui.locked.textContent = closedText(status);
       ui.button.setAttribute('aria-pressed', String(id === vehicle));
-      const lift = liftFrom(id, plan.goal.orbit, site);
-      ui.lifts.textContent = t('planner.lifts', { kg: formatDecimal(lift), orbit: t(`orbit.${plan.goal.orbit}`) });
+      const lift = liftFrom(id, orbit, site);
+      ui.lifts.textContent =
+        lift <= 0
+          ? t('planner.cantReach', { orbit: t(`orbit.${orbit}`) })
+          : orbit === 'geostationary'
+            ? t('planner.liftsTransfer', { kg: formatDecimal(lift) })
+            : t('planner.lifts', { kg: formatDecimal(lift), orbit: t(`orbit.${orbit}`) });
+      const v = LAUNCH_VEHICLES[id];
+      ui.price.textContent =
+        whole && v.launchPrice !== undefined
+          ? t('planner.wholePrice', { price: formatMoney(v.launchPrice) })
+          : t('planner.perKg', { price: formatMoney(v.perKg) });
+      ui.fit.hidden = !open || lift <= 0;
       const fits = plan.massKg <= lift + 1e-9;
       ui.fit.textContent = t(fits ? 'planner.fits' : 'planner.tooHeavyShort', { kg: formatDecimal(plan.massKg) });
       ui.fit.classList.toggle('warn', !fits);
     }
 
     costRows.replaceChildren();
-    row(costRows, t('planner.rideshare', { kg: formatDecimal(plan.massKg), perKg: formatMoney(LAUNCH_VEHICLES[vehicle].perKg) }), formatMoney(plan.rideshare));
+    row(
+      costRows,
+      plan.wholeLaunch
+        ? t('planner.wholeLaunch', { vehicle: t(`launchVehicle.${vehicle}`) })
+        : t('planner.rideshare', { kg: formatDecimal(plan.massKg), perKg: formatMoney(LAUNCH_VEHICLES[vehicle].perKg) }),
+      formatMoney(plan.rideshare),
+    );
+    lighter.hidden = plan.wholeLaunch;
+    wholeNote.hidden = !plan.wholeLaunch;
     row(costRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), formatMoney(plan.shipping));
     if (insured) row(costRows, t('planner.insurance'), formatMoney(plan.insurance));
     const total = plan.total + plan.insurance;
@@ -241,7 +285,7 @@ export function makeLaunchPlanner(
 
     timeRows.replaceChildren();
     const bus = state.design.bus;
-    if (bus) row(timeRows, t('planner.assembly', { bus: t(`part.${bus as 'smallBus' | 'mediumBus'}`) }), t('planner.days', { days: formatNumber(plan.assemblyDays) }));
+    if (bus) row(timeRows, t('planner.assembly', { bus: t(`part.${bus as BusId}`) }), t('planner.days', { days: formatNumber(plan.assemblyDays) }));
     row(timeRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), t('planner.days', { days: formatNumber(plan.shippingDays) }));
     row(timeRows, t('planner.arrives', { site: t(`launchSite.${site}.short`) }), formatGameDate(plan.readyDay));
     row(timeRows, t('planner.ends', { days: formatNumber(plan.goal.missionDays) }), formatGameDate(plan.endDay));

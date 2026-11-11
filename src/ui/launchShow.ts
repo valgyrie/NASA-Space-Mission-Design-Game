@@ -1,6 +1,7 @@
 import { withContactLost } from '../game/anomalies';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
 import { CONTRACTS } from '../game/contracts';
+import { contractNeeds } from '../game/spacecraft';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { LaunchResult } from '../game/mission';
 import { t } from '../strings';
@@ -88,10 +89,13 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
       return { title: t(`launch.coast.${report.vehicle}`), detail: t(`launch.coastDetail.${report.vehicle}`, { s: formatNumber(lv.coastS) }) };
     case 'orbit': {
       const km = CONTRACTS[report.contract].orbitKm;
-      return { title: t('launch.orbit'), detail: t('launch.orbitDetail', { contract, low: formatNumber(km.low), high: formatNumber(km.high) }) };
+      const geo = contractNeeds(CONTRACTS[report.contract]).orbit === 'geostationary';
+      const values = { contract, low: formatNumber(km.low), high: formatNumber(km.high) };
+      return { title: t('launch.orbit'), detail: t(geo ? 'launch.orbitDetailGeo' : 'launch.orbitDetail', values) };
     }
     case 'lost':
       if (seg.stage !== undefined) return { title: t('launch.rocketFailed', { n: formatNumber(seg.stage) }), detail: t('launch.rocketFailedDetail') };
+      if (seg.stuck) return { title: t('launch.stuck'), detail: t('launch.stuckDetail') };
       return { title: t('launch.lost'), detail: t('launch.lostDetail', { vehicle }) };
     case 'mission': {
       const a = report.anomaly;
