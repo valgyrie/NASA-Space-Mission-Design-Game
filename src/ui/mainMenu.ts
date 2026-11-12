@@ -1,4 +1,5 @@
 import { makeAudioControls } from './audioControls';
+import { makeDataCredits } from './dataCredits';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
 import { ERA_YEARS } from '../game/eras';
 import { t } from '../strings';
@@ -73,7 +74,7 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
     panel.remove();
   }
   window.addEventListener('keydown', onKey);
-  panel.append(heading, actions, picker, makeAudioControls());
+  panel.append(heading, actions, picker, makeAudioControls(), makeDataCredits());
   root.append(panel);
   play.focus();
 }

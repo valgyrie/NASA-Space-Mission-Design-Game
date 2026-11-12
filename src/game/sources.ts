@@ -24,6 +24,20 @@ export const SOURCES = {
   jpl: 'https://en.wikipedia.org/wiki/Jet_Propulsion_Laboratory',
 };
 
+/**
+ * Every real dataset in the game, in the order the Real data list shows them. Each has a name, what it
+ * does in LEAP and its credit in strings.ts (`data.<id>.*`). Add the official challenge Resources here.
+ */
+export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages'] as const;
+export type DatasetId = (typeof DATASET_IDS)[number];
+export const DATASETS: Record<DatasetId, string> = {
+  power: 'https://power.larc.nasa.gov/',
+  blueMarble: 'https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/',
+  gibs: 'https://nasa-gibs.github.io/gibs-api-docs/',
+  naturalEarth: 'https://www.naturalearthdata.com/',
+  nasaImages: 'https://images.nasa.gov/',
+};
+
 /** Generated Contracts describe the player's own Mission, so have no historical counterpart. */
 export function missionSource(id: ContractId): string | null {
   const card = historyCardFor(id, 'before');

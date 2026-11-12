@@ -95,7 +95,7 @@ export function showSpaceScreen(
   const whole = button('small', t('space.whole'));
   detail.append(name, status, facts, sources, whole);
   const note = el('p', 'space-hint warn', t('space.no3d'));
-  card.append(head, hint, list, empty, detail, learnMore(SOURCES.earth, t('sources.earth')), note);
+  card.append(head, hint, list, empty, detail, learnMore(SOURCES.earth, t('sources.earth')), el('p', 'space-hint', t('data.globe')), note);
   screen.append(tags, card);
   root.append(screen);
 

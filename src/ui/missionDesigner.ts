@@ -267,7 +267,7 @@ export function showMissionDesigner(
   const viewBox = el('section', 'designer-view');
   const view = new SpacecraftView();
   const viewEmpty = el('p', 'designer-view-empty', t('designer.emptyView'));
-  viewBox.append(view.canvas, viewEmpty, el('p', 'designer-view-hint', t('designer.dragHint')));
+  viewBox.append(view.canvas, viewEmpty, el('p', 'designer-view-hint designer-view-credit', t('data.globe')), el('p', 'designer-view-hint', t('designer.dragHint')));
 
   // Resources
   const resBox = el('section', 'designer-resources');

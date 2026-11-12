@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { cloudPixels, earthPixels, pixelLatLon, surfaceAt } from './earthTexture';
+import { BLUE_MARBLE_PALETTE } from './blueMarble';
+import { cloudPixels, earthPixels, landColour, pixelLatLon, surfaceAt } from './earthTexture';
 
 const W = 720;
 const H = 360;
@@ -46,9 +47,18 @@ describe('Earth picture', () => {
     const sand = pixelAt(earth, 23, 10);
     expect(sand[0]).toBeGreaterThan(sand[2]! + 40);
     const [ar, ag, ab] = pixelAt(earth, -3, -60) as [number, number, number];
-    expect(ag).toBeGreaterThan(Math.max(ar, ab) + 30);
+    expect(ag).toBeGreaterThan(Math.max(ar, ab) + 5);
     const ice = pixelAt(earth, -85, 0);
     expect(Math.min(ice[0]!, ice[1]!, ice[2]!)).toBeGreaterThan(220);
+  });
+
+  it('takes land colours from NASA Blue Marble on every land cell', () => {
+    for (let row = 0; row < 180; row++) {
+      for (let col = 0; col < 360; col++) {
+        if (surfaceAt(89.5 - row, col - 179.5) === '.') continue;
+        expect(BLUE_MARBLE_PALETTE, `${row}, ${col}`).toContain(landColour(row, col));
+      }
+    }
   });
 });
 

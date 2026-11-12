@@ -30,6 +30,12 @@ Earth's mean radius is 6,371 km. From altitude *h*, Earth's disc has an angular 
 
 Explorer 1 orbit: "a perigee of 358 km (222 mi) and an apogee of 2,550 km (1,580 mi) having a period of 114.80 minutes, and an inclination of 33.24°" ([Wikipedia: Explorer 1](https://en.wikipedia.org/wiki/Explorer_1), checked 2026-11-09).
 
-## Not used (yet)
+## Land colours: NASA Blue Marble (2026-11-12, ticket 27)
 
-NASA's Blue Marble imagery ([Visible Earth](https://visibleearth.nasa.gov/collection/1484/blue-marble)) would give true colours, but its server refused connections from the build container. Ticket 27 could swap it in and credit NASA.
+The land is coloured with **NASA Blue Marble: Next Generation** (MODIS, 2004 monthly composites at 500 m), "produced by Reto Stöckli, NASA Earth Observatory (NASA Goddard Space Flight Center)". Credit requested: "Anyone using or republishing Blue Marble: Next Generation please credit 'NASA Earth Observatory.'" ([NASA Science: Blue Marble Next Generation](https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/), checked 2026-11-12).
+
+- **How it was fetched:** Visible Earth's image server (eoimages.gsfc.nasa.gov) still resets connections from the build container, so the picture comes from **NASA GIBS** instead, layer `BlueMarble_NextGeneration`, WMTS tile matrix set `500m`, level 2: 5 × 3 tiles of 512 px at 0.140625° a pixel, so 2,560 px span exactly 360°. No key needed. (GIBS's WMS endpoint timed out with HTTP 504 for a whole-world request.)
+- **GIBS acknowledgement** asked of clients: "We acknowledge the use of imagery provided by services from NASA's Global Imagery Browse Services (GIBS), part of NASA's Earth Science Data and Information System (ESDIS)." ([GIBS API docs](https://nasa-gibs.github.io/gibs-api-docs/), checked 2026-11-12). Shown in the game's Real data list.
+- **Processing:** `scripts/build_blue_marble.py` averages every pixel inside each 1° cell, keeps only cells that are land on the Natural Earth map, and reduces them to one 52-colour palette (median cut) so each cell is one letter: `src/world/blueMarble.ts`, about 23 KB. The globe blends cells as before, so coasts stay rounded. Natural Earth still decides land, sea and the land type of Sites; Blue Marble only sets colours.
+- **What it looks like:** true colours are darker than the old game palette (the Amazon is a deep olive, not bright green); deserts, ice and the green belts read clearly in the Mission Designer.
+- The old surface colours (`LAND_COLOUR` in `earthTexture.ts`) stay as a fallback for any land cell without a Blue Marble colour (none today).
