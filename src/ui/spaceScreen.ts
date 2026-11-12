@@ -4,6 +4,8 @@ import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { SPEEDUP, type SpaceView } from '../world/spaceView';
 import { contractText, formatDecimal, formatGameDate, formatNumber } from './format';
+import { learnMore, missionLinks } from './learnMore';
+import { SOURCES } from '../game/sources';
 
 /**
  * The Space view: Earth with every Spacecraft the Company has in orbit. A list on the left and a name tag
@@ -89,10 +91,11 @@ export function showSpaceScreen(
   const name = el('h3', '');
   const status = el('p', 'space-status');
   const facts = el('ul', 'space-facts');
+  const sources = el('div', '');
   const whole = button('small', t('space.whole'));
-  detail.append(name, status, facts, whole);
+  detail.append(name, status, facts, sources, whole);
   const note = el('p', 'space-hint warn', t('space.no3d'));
-  card.append(head, hint, list, empty, detail, note);
+  card.append(head, hint, list, empty, detail, learnMore(SOURCES.earth, t('sources.earth')), note);
   screen.append(tags, card);
   root.append(screen);
 
@@ -117,6 +120,7 @@ export function showSpaceScreen(
     status.textContent = statusText(sat.status);
     status.dataset.kind = sat.status.kind;
     facts.replaceChildren(...satelliteFacts(sat).map((line) => el('li', '', line)));
+    sources.replaceChildren(missionLinks(sat.contract, sat.report.vehicle));
   };
 
   const moveTags = () => {

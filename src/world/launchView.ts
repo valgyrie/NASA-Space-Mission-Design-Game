@@ -154,23 +154,29 @@ function buildGround(): THREE.Group {
   const g = new THREE.Group();
   const radius = 400_000;
   const coast = 350;
+  // A local patch of Earth's sphere, tangent to the pad. Subdivide radially too: a single flat fan
+  // would leave a straight floor under the chase camera. Shared world coordinates keep the coast joined.
+  const curved = (geometry: THREE.BufferGeometry, x: number) => {
+    geometry.rotateX(-Math.PI / 2);
+    geometry.translate(x, 0, 0);
+    const positions = geometry.getAttribute('position');
+    const earthM = EARTH_KM * 1_000;
+    for (let i = 0; i < positions.count; i++) {
+      const distanceSq = positions.getX(i) ** 2 + positions.getZ(i) ** 2;
+      positions.setY(i, Math.sqrt(earthM ** 2 - distanceSq) - earthM);
+    }
+    geometry.computeVertexNormals();
+    return geometry;
+  };
   const half = (from: number, colour: number, x: number) => {
-    const shape = new THREE.Shape();
-    shape.moveTo(0, -radius);
-    shape.absarc(0, 0, radius, from, from + Math.PI, false);
-    shape.lineTo(0, -radius);
-    const m = new THREE.Mesh(new THREE.ShapeGeometry(shape, 48), new THREE.MeshLambertMaterial({ color: colour }));
-    m.rotation.x = -Math.PI / 2;
-    m.position.x = x;
+    const geometry = curved(new THREE.RingGeometry(0, radius, 96, 64, from, Math.PI), x);
+    const m = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: colour }));
     return m;
   };
-  // Land to the west, a beach, the Atlantic to the east: one big round floor, so the far edge reads as a
-  // horizon. The pieces don't overlap, so they never flicker.
+  // Land to the west, a beach, the Atlantic to the east. The pieces meet without overlapping.
   const land = half(Math.PI / 2, 0x7d8f5a, coast);
   const sea = half(-Math.PI / 2, 0x235f96, coast + 60);
-  const beach = new THREE.Mesh(new THREE.PlaneGeometry(60, radius * 2), new THREE.MeshLambertMaterial({ color: 0xe2d3a4 }));
-  beach.rotation.x = -Math.PI / 2;
-  beach.position.x = coast + 30;
+  const beach = new THREE.Mesh(curved(new THREE.PlaneGeometry(60, radius * 2, 1, 128), coast + 30), new THREE.MeshLambertMaterial({ color: 0xe2d3a4 }));
   g.add(land, beach, sea);
 
   const concrete = new THREE.MeshLambertMaterial({ color: 0xb3ada2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });

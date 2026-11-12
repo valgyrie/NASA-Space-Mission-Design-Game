@@ -1,3 +1,4 @@
+import { missionLinks } from './learnMore';
 import { contractById, type ContractId } from '../game/contracts';
 import type { Flight, TestRun } from '../game/flight';
 import { t } from '../strings';
@@ -225,12 +226,13 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
   // Orbit
   const orbitCard = el('section', 'planner-card testrun-orbit');
   const orbitHint = el('p', 'planner-hint');
+  const sources = el('div', '');
   const canvas = el('canvas', 'testrun-canvas');
   const day = el('p', 'testrun-day');
   day.setAttribute('aria-live', 'off');
   const replay = el('button', 'small testrun-replay', t('testRun.replay'));
   replay.type = 'button';
-  orbitCard.append(el('h3', '', t('testRun.orbit')), orbitHint, canvas, day, replay);
+  orbitCard.append(el('h3', '', t('testRun.orbit')), orbitHint, sources, canvas, day, replay);
 
   // Graphs
   const batteryCard = el('section', 'planner-card');
@@ -302,6 +304,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
       const f = run.asLabelled;
       flight = f;
       orbitKm = contractById(contract).orbitKm;
+      sources.replaceChildren(missionLinks(contract));
       orbitHint.textContent = t(contractById(contract).kind === 'generated' ? 'testRun.orbitGoal' : 'testRun.orbitHint', { contract: contractText(contract) });
 
       const labelledWh = f.batteryWh[0] ?? 0;

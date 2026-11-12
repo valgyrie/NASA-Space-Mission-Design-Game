@@ -25,6 +25,6 @@
 
 **QA (2026-11-11):**
 
-- [ ] Keep the Research display clear of the Company panel at **1024×768** as Data waiting grows. With four or five digits of Data waiting, the top bar covers the Whole Site button and part of the Deposit legend. Clicking the button's centre hits the Money panel instead. **H** still works. Also checked in the production build.
+- [x] Keep the Research display clear of the Company panel at **1024×768** as Data waiting grows. With four or five digits of Data waiting, the top bar covers the Whole Site button and part of the Deposit legend. Clicking the button's centre hits the Money panel instead. **H** still works. Also checked in the production build. **Fixed in ticket 26:** the top bar is bounded beside the Company panel and wraps; tested with 13,600 kB waiting at 1024×768 and 1280×800, including the production build at 1024×768.
 
 ![The Research display pushes the top bar over the Whole Site button](../qa/2026-11-11/research-overlaps-home.png)

@@ -1,3 +1,4 @@
+import { missionLinks } from './learnMore';
 import { audio } from '../audio/sound';
 import { withContactLost } from '../game/anomalies';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
@@ -209,6 +210,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
   title.id = 'launch-title';
   title.setAttribute('aria-live', 'polite');
   const detail = el('p', 'launch-detail');
+  const sources = el('div', '');
   const clock = el('p', 'launch-clock');
   const bars = el('div', 'launch-bars');
   const barRow = (label: string) => {
@@ -223,7 +225,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
   };
   const battery = barRow(t('testRun.battery'));
   const data = barRow(t('testRun.data'));
-  card.append(title, detail, clock, bars);
+  card.append(title, detail, sources, clock, bars);
 
   const note = el('p', 'launch-note', t('launch.slow'));
   note.hidden = true;
@@ -395,6 +397,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
       done = onDone;
       anomalyHooks = anomaly ?? null;
       segments = flightShow(r.report.vehicle, r.flight);
+      sources.replaceChildren(missionLinks(r.report.contract, r.report.vehicle));
       const times = stageTimes(r.report.vehicle);
       ascentEnd = times.at(-1)!.end;
       stageShares = times.map((s) => s.start / ascentEnd);

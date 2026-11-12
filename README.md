@@ -37,6 +37,8 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 
 ### Play
 
+**Title:** choose **Let’s go** to open the main menu over a live Site. **Learn more →** links beside real missions, rockets and science open their sources in a new tab.
+
 **Main menu:** Continue your Company, or start one if you have no save. **Demo Mode** offers Era 1 (Explorer 1) and Era 2 (Telstar 1), with working buildings, Parts and a prepared design. Open the Mission Designer to try a Test Run or ship. Your own Company is kept; selecting an Era starts the demo afresh. Use **Main menu** in the pause menu to return.
 
 **Camera:** left-drag (or W A S D / arrows) to move, right-drag to turn and tilt (or Q E to turn, R F to tilt down to the horizon), mouse wheel (or + −) to zoom. **H** goes back to the view of your whole Site.
