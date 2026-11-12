@@ -20,3 +20,5 @@
 - **README:** short How to play steps, a Credits section and a pointer to the in-game screen.
 - **Not done:** the official Space Apps logo (waiting for organisers); hosting. Supabase only runs the online backend and cannot serve the game; the build (`npm run build` → `dist/`) is a static site for GitHub Pages, Netlify or Vercel. GitHub Pages on a private repo needs a paid plan, so it works once the repo is public.
 - **Checked:** type checks and 345 tests pass; Chromium at 1280×800 and 700×600: open, read, scroll, Esc and Back, Demo picker still returns focus, no horizontal scroll, no page errors.
+
+**Rechecked (2026-11-12):** Credits opens and Back/Esc returns to the menu. Hosting and the other team tasks remain open. [QA report](../qa/2026-11-12/README.md).

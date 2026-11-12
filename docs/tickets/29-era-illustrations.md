@@ -18,3 +18,5 @@
 - **Image slot:** the Era card (`src/ui/eraCard.ts`) loads `public/eras/era-<N>.webp` when it opens and shows it with the caption "Illustration (AI-generated)". A missing file leaves the card as text only, so the game works before the images exist. Credits has an Illustrations line.
 - **Compression:** `scripts/prepare-era-art.py` crops to 16:9 and writes 1280 × 720 WebP (needs Pillow).
 - **Checked:** 347 tests (two added), type checks and build pass. Chromium: new Campaign shows the Era 1 card with and without an image, not again after reload; Era 2 and Free Play cards with stand-in images at 1280 × 800 and 700 × 600 (caption stays visible); no page errors. Real images not yet seen in game.
+
+**Rechecked (2026-11-12):** Era 2’s text-only card works while its real illustration is absent. No stand-in images were added; generating and checking the real art remains open. [QA report](../qa/2026-11-12/README.md).

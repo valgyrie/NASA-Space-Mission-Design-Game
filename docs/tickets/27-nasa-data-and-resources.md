@@ -22,3 +22,5 @@ The Resources tab is due Nov 13. On Nov 12 the build container could not reach s
 - **Notes in place:** "Land colours: NASA Blue Marble" on the Mission Designer's globe and in the Space view. The climate and weather lines already named NASA POWER.
 
 **To finish (Nov 13):** capture the Resources tab into `docs/challenge.md`; for each official dataset decide a visible use (or record why not) in GDD §14; add each one used to `DATASETS` and strings `data.<id>.*`; then tick the first two items.
+
+**Rechecked (2026-11-12):** The Real data list opens and displays the existing dataset uses and credits. The official Resources work remains pending. [QA report](../qa/2026-11-12/README.md).

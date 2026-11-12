@@ -19,10 +19,12 @@
 
 - [ ] Keep storage within capacity when a Factory finishes a Part or returns its inputs. With no Warehouse, start a Small Bus with 40 kg Aluminium, pause, then fill storage with 500 kg Copper. Letting the Bus finish gives **503 / 500 kg**. Switching to Medium Bus before it finishes returns the Aluminium and gives **540 / 500 kg**.
 
-![A finished Small Bus takes storage over capacity](../qa/2026-11-11/storage-finished-part.png)
+![A finished Small Bus takes storage over capacity](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/storage-finished-part.png)
 
-![Changing the Part returns inputs above capacity](../qa/2026-11-11/storage-returned-inputs.png)
+![Changing the Part returns inputs above capacity](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/storage-returned-inputs.png)
 
 - [ ] Explain why a Factory with enough inputs is waiting while the Site is paused. Pause, put 40 kg Aluminium in stock, and open a Metal Works set to Small Bus. Its status says only **"Waiting for"**, with nothing after it. Production starts when the Site resumes.
 
-![The Metal Works has its inputs but shows an empty warning](../qa/2026-11-11/factory-waiting-blank.png)
+![The Metal Works has its inputs but shows an empty warning](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/factory-waiting-blank.png)
+
+**Rechecked (2026-11-12):** still reproduces on `4661008`. Current screenshots: [1](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-05-finished-part-overfills-storage.png), [2](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-05-returned-inputs-overfill-storage.png), [3](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-05-paused-factory-waiting-blank.png).
