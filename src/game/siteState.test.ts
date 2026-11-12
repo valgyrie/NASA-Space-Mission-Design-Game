@@ -1,4 +1,6 @@
 import { describe, expect, it } from 'vitest';
+import { t } from '../strings';
+import { ERAS, MODERN_ERA } from './eras';
 import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { generateSite, tileAt } from '../site/site';
@@ -294,5 +296,16 @@ describe('time', () => {
 
   it('does not jump ahead after a long pause in frames', () => {
     expect(daysFor(30, 1)).toBe(daysFor(1, 1));
+  });
+});
+
+describe('Era cards', () => {
+  it('opens a new Campaign with Era 1’s card, but not a new Free Play Company', () => {
+    expect(newSiteState().eraSeen).toBe(0);
+    expect(newSiteState(undefined, 'easy', 'freePlay').eraSeen).toBe(MODERN_ERA);
+  });
+
+  it('gives every Era an illustration description', () => {
+    for (const era of [...ERAS, MODERN_ERA] as const) expect(t(`era.${era}.alt`)).toMatch(/^Illustration: /);
   });
 });

@@ -38,6 +38,19 @@ export const DATASETS: Record<DatasetId, string> = {
   nasaImages: 'https://images.nasa.gov/',
 };
 
+/** The challenge LEAP was made for. */
+export const CHALLENGE = 'https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/';
+
+/** Open-source code the game ships with or is built with; each name and licence is in strings.ts (`credits.software.<id>`). */
+export const SOFTWARE_IDS = ['three', 'vite', 'obscenity', 'supabase'] as const;
+export type SoftwareId = (typeof SOFTWARE_IDS)[number];
+export const SOFTWARE: Record<SoftwareId, string> = {
+  three: 'https://threejs.org/',
+  vite: 'https://vite.dev/',
+  obscenity: 'https://github.com/jo3-l/obscenity',
+  supabase: 'https://supabase.com/',
+};
+
 /** Generated Contracts describe the player's own Mission, so have no historical counterpart. */
 export function missionSource(id: ContractId): string | null {
   const card = historyCardFor(id, 'before');

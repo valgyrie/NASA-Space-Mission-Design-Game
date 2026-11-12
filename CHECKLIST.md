@@ -89,15 +89,15 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Learn more → links on real things
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
-- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources)
+- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). Guide, prompts and the card's image slot done; images still to generate
 
 ### Judges and submission
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
 - [x] Demo Mode: one save per finished Era (ticket 24: Eras 1 and 2, separate from the player Company)
 - [x] NASA data used visibly in the game (see GDD §14)
-- [ ] Credits screen (data, audio, sources)
+- [x] Credits screen (data, audio, sources; team names still a placeholder)
 - [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits
-- [ ] README: how to play and run
+- [x] README: how to play and run
 - [ ] Hosted playable link
 - [ ] Submission video
 - [ ] Project page on spaceappschallenge.org

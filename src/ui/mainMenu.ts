@@ -1,4 +1,5 @@
 import { makeAudioControls } from './audioControls';
+import { makeCredits } from './credits';
 import { makeDataCredits } from './dataCredits';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
 import { ERA_YEARS } from '../game/eras';
@@ -30,7 +31,10 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
   shared.type = 'button';
   shared.textContent = t('seed.newCompany');
   shared.addEventListener('click', () => { leave(); options.onSharedSeed(); });
-  actions.append(play, demo, online, shared);
+  const creditsButton = document.createElement('button');
+  creditsButton.type = 'button';
+  creditsButton.textContent = t('credits.heading');
+  actions.append(play, demo, online, shared, creditsButton);
 
   const picker = document.createElement('div');
   picker.className = 'main-menu-actions';
@@ -53,28 +57,53 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
     button.addEventListener('click', () => { leave(); options.onDemo(era); });
     picker.append(button, goal);
   }
-  const back = document.createElement('button');
-  back.type = 'button';
-  back.textContent = t('mainMenu.back');
+  picker.append(backButton());
+
+  const credits = document.createElement('div');
+  credits.className = 'main-menu-actions credits-view';
+  credits.hidden = true;
+  const creditsHeading = document.createElement('h2');
+  creditsHeading.textContent = t('credits.heading');
+  credits.append(creditsHeading, makeCredits(), backButton());
+
+  // Credits already lists audio and data credits, so the settings boxes below hide while it is open.
+  const extras = [makeAudioControls(), makeDataCredits()];
+
+  // Demo picker and Credits replace the main actions; Back or Esc returns to the button that opened them.
+  let opener: HTMLButtonElement | null = null;
+  const open = (view: HTMLElement, from: HTMLButtonElement) => {
+    opener = from;
+    actions.hidden = true;
+    view.hidden = false;
+    for (const extra of extras) extra.hidden = view === credits;
+    (view.querySelector('button, a') as HTMLElement).focus();
+  };
   const goBack = () => {
     picker.hidden = true;
+    credits.hidden = true;
     actions.hidden = false;
-    demo.focus();
+    for (const extra of extras) extra.hidden = false;
+    opener?.focus();
   };
-  back.addEventListener('click', goBack);
-  picker.append(back);
-  demo.addEventListener('click', () => {
-    actions.hidden = true;
-    picker.hidden = false;
-    picker.querySelector('button')!.focus();
+  function backButton(): HTMLButtonElement {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.textContent = t('mainMenu.back');
+    button.addEventListener('click', () => goBack());
+    return button;
+  }
+  demo.addEventListener('click', () => open(picker, demo));
+  creditsButton.addEventListener('click', () => {
+    open(credits, creditsButton);
+    panel.scrollTop = 0;
   });
-  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && !picker.hidden) goBack(); };
+  const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && actions.hidden) goBack(); };
   function leave() {
     window.removeEventListener('keydown', onKey);
     panel.remove();
   }
   window.addEventListener('keydown', onKey);
-  panel.append(heading, actions, picker, makeAudioControls(), makeDataCredits());
+  panel.append(heading, actions, picker, credits, ...extras);
   root.append(panel);
   play.focus();
 }

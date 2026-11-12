@@ -22,7 +22,9 @@ const EXPLORER: OptionId[] = ['smallBus', 'batteriesOnly', 'largeBattery', 'simp
 
 /** Where saves from before real places (version 12 and older) start: JPL, with their old made-up Site. */
 const LEGACY = { ...JPL, start: 'legacy' as const };
-const state = { ...newSiteState(LEGACY), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
+/** A Campaign already under way: older saves predate Era 1's card, so upgrading them marks it as seen. */
+const startedState = () => ({ ...newSiteState(LEGACY), eraSeen: 1 });
+const state = { ...startedState(), money: 1_850_000, day: 12.5, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] };
 state.stock.copper = 125;
 const game: SaveData = { version: SAVE_VERSION, company: { name: 'Comet Works', logo: { ...DEFAULT_LOGO } }, site: { seed: 'K7QXM2' }, state };
 
@@ -129,7 +131,7 @@ describe('local save', () => {
       version: SAVE_VERSION,
       company: { name: 'Comet Works', logo: DEFAULT_LOGO },
       site: { seed: 'BCD234' },
-      state: newSiteState(LEGACY),
+      state: startedState(),
     });
   });
 
@@ -137,7 +139,7 @@ describe('local save', () => {
     const storage = memoryStorage();
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 2, company: { name: 'A B' }, site: { seed: 'K7QXM2' } }));
     expect(loadGame(storage)?.site.seed).toBe('K7QXM2');
-    expect(loadGame(storage)?.state).toEqual(newSiteState(LEGACY));
+    expect(loadGame(storage)?.state).toEqual(startedState());
   });
 
   it('upgrades a version 3 save: keeps Mines and stock, adds Factories, Warehouses and Parts', () => {
@@ -146,12 +148,12 @@ describe('local save', () => {
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 3, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v3State }));
     const loaded = loadGame(storage);
     expect(loaded?.version).toBe(SAVE_VERSION);
-    expect(loaded?.state).toEqual({ ...newSiteState(LEGACY), ...v3State, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] });
+    expect(loaded?.state).toEqual({ ...startedState(), ...v3State, mines: [{ x: 3, z: 4, level: 1, upgradeDay: null }] });
   });
 
   it('upgrades a version 4 save: keeps everything, no Contracts yet', () => {
     const storage = memoryStorage();
-    const { contracts: _, ...v4State } = { ...newSiteState(LEGACY), money: 900_000, day: 80, mines: [{ x: 3, z: 4 }] };
+    const { contracts: _, ...v4State } = { ...startedState(), money: 900_000, day: 80, mines: [{ x: 3, z: 4 }] };
     v4State.parts.smallBus = 2;
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 4, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v4State }));
     const loaded = loadGame(storage);
@@ -161,7 +163,7 @@ describe('local save', () => {
 
   it('upgrades a version 5 save: keeps everything, adds an empty design and the Radiation Detector Part', () => {
     const storage = memoryStorage();
-    const { design: _, completed: _c, mission: _m, reports: _r, ...v5State } = structuredClone({ ...newSiteState(LEGACY), money: 700_000, day: 90 });
+    const { design: _, completed: _c, mission: _m, reports: _r, ...v5State } = structuredClone({ ...startedState(), money: 700_000, day: 90 });
     const { radiationDetector: __, ...v5Parts } = { ...v5State.parts, smallBus: 1 };
     const v5 = { ...v5State, parts: v5Parts, contracts: [{ id: 'explorer1', acceptedDay: 3 }] };
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 5, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v5 }));
@@ -180,7 +182,7 @@ describe('local save', () => {
 
   it('upgrades a version 6 save: keeps everything, nothing shipped or done yet', () => {
     const storage = memoryStorage();
-    const { completed: _c, mission: _m, reports: _r, ...v6State } = structuredClone({ ...newSiteState(LEGACY), money: 600_000 });
+    const { completed: _c, mission: _m, reports: _r, ...v6State } = structuredClone({ ...startedState(), money: 600_000 });
     storage.data.set(SAVE_KEY, JSON.stringify({ version: 6, company: { name: 'A B' }, site: { seed: 'K7QXM2' }, state: v6State }));
     const loaded = loadGame(storage);
     expect(loaded?.version).toBe(SAVE_VERSION);

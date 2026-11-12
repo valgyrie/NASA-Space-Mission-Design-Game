@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { CONTRACT_IDS } from './contracts';
 import { t } from '../strings';
-import { DATASET_IDS, DATASETS, missionSource } from './sources';
+import { CHALLENGE, DATASET_IDS, DATASETS, missionSource, SOFTWARE, SOFTWARE_IDS } from './sources';
 
 describe('Mission reading links', () => {
   it('gives every historical Milestone an official NASA reading source', () => {
@@ -25,6 +25,17 @@ describe('Real data list', () => {
     for (const id of DATASET_IDS) {
       for (const part of ['name', 'use', 'credit'] as const) expect(t(`data.${id}.${part}`)).not.toContain('data.');
       expect(new URL(DATASETS[id]).protocol).toBe('https:');
+    }
+  });
+});
+
+describe('Credits', () => {
+  it('names the team and the challenge, and credits every piece of software with a link', () => {
+    expect(t('credits.team')).not.toBe('');
+    expect(new URL(CHALLENGE).hostname).toBe('www.spaceappschallenge.org');
+    for (const id of SOFTWARE_IDS) {
+      expect(t(`credits.software.${id}`)).not.toContain('credits.');
+      expect(new URL(SOFTWARE[id]).protocol).toBe('https:');
     }
   });
 });
