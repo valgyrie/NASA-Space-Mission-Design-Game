@@ -4,14 +4,11 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26, 30 and 31 built; 27 partly built (PR #27); 28's and 29's agent parts on `main` (PR #28). Ticket 30 built on `claude/tender-archimedes-nmbgly` (from `main` at `ea36d53`, PR #28 the latest merged; no PR opened yet). 12, 13, 16–23, 25, 26 and 30 still await team playtests/listening/visual review.
+**State:** tickets 01–26, 30 and 31 built; 27 partly built (PR #27); 28's and 29's agent parts on `main`. Ticket 30 merged (PR #29). Ticket 31's QA fix built on `claude/tender-archimedes-nmbgly` (from `main` at `aa6e109`). 12, 13, 16–23, 25, 26 and 30 still await team playtests/listening/visual review.
 
-**Just finished: ticket 30 (Optional), buy the land next door.** Details and as-built notes: `docs/tickets/30-buy-neighbouring-plots.md`, GDD §4.
-- Land around the Site comes in Site-sized Plots; the Home Site is Plot (0, 0) and keeps its tile coordinates. Each Plot's Deposits use their own random numbers, so the Home Site never changes.
-- Hover the land next door: the Plot is tinted and fenced (green = can buy), its Deposits show faintly. Click: card with Deposits, water, land, price and Buy. Only Plots touching owned land (corners count).
-- A bought Plot is part of the Site: build on it (also across the old edge), border, rocks, shadows, camera bounds and the Shipping road all follow. Save v19 stores `plots` and `freePlots`.
-- Free Play: every 4th generated Contract also gives a free Plot (Contracts board and Mission Report say so).
-- Tested: 354 tests, type checks, build; Chromium at 1280×800 and 700×600 (hover, card, buy, Warehouse on the new Plot, reload). Launcher checks not run (final ticket only).
+**Just finished: ticket 31 QA fix, Space view camera inside Earth.** The camera is pushed back out whenever a turn or zoom would take it closer than 1.05 Earth radii to the centre (`src/world/spaceCamera.ts`, called from `SpaceView`). Reproduced the QA steps in Chromium before and after. 356 tests, type checks, build pass.
+
+**Earlier this session: ticket 30 (Optional), buy the land next door** (PR #29). Plots next door with their own Deposits, hover highlight and Plot card, buying grows the Site, Free Play land Contracts, save v19. Details: `docs/tickets/30-buy-neighbouring-plots.md`.
 
 **Next:**
 1. Nov 13: finish ticket 27 (capture the official Resources, map datasets, add to `DATASETS`). Then re-check the Era prompts against the Resources.
@@ -21,13 +18,14 @@
 **Open:**
 - Team: playtest ticket 30. Prices are first guesses (`PLOT_PRICE` in `src/game/balance.ts`). Decide if a Survey fee should come before seeing a Plot (default: free).
 - On a 700 px wide screen the Plot card and the building panel sit under the wrapped top bar.
-- QA fixes in `docs/qa/2026-11-11/README.md` (nine open) and the issues listed in tickets 12–23. Unchanged.
+- QA fixes in `docs/qa/2026-11-11/README.md` (eight open; ticket 14's and 31's fixed) and the issues listed in tickets 12–23.
 - Stray screenshots in the repo root (`active-*.png`, `board-*.png`, `market-*.png`, `top-*.png`) predate this session; ask the team before removing.
 
 **Suggested skills:** `research` for the official Resources; `handoff`.
 
 ## Log
 
+- 2026-11-12: Ticket 31 QA fix: the Space view camera can no longer go inside Earth. 356 tests, build and before/after browser checks pass.
 - 2026-11-12: Ticket 30 built from freshly pulled main: Plots next door with their own Deposits, hover highlight and Plot card, buying grows the Site (building, border, camera, shadows, Shipping road), Free Play land Contracts, save v19. 354 tests, build and browser checks pass.
 - 2026-11-12: Ticket 29 (agent part): art guide and Era prompts, Era 1 card for new Campaigns, Era card image slot with AI-illustration caption, compression script. 347 tests, build and browser checks pass.
 - 2026-11-12: Ticket 28 (agent part): main-menu Credits screen (placeholder team Artemis-IV), README How to play and Credits. 345 tests, build and browser checks pass.

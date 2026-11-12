@@ -17,4 +17,4 @@ The ten findings are in the existing tickets. Ticket 26 fixed the Research/Home 
 | [14](../../tickets/14-era-1-complete.md) | Research pushes the top bar over the Whole Site button (**fixed in ticket 26**) | [View](research-overlaps-home.png) |
 | [16](../../tickets/16-real-places-and-weather.md) | Game date advances behind the Scrub card | [View](scrub-date-moved.png) |
 | [17](../../tickets/17-risk-and-failure.md) | Failed-rocket report claims the Spacecraft completed its work | [View](rocket-failure-report.png) |
-| [31](../../tickets/31-space-view.md) | Following camera can go inside Earth | [View](space-camera-inside-earth.png) |
+| [31](../../tickets/31-space-view.md) | Following camera can go inside Earth (**fixed 2026-11-12**) | [View](space-camera-inside-earth.png) |

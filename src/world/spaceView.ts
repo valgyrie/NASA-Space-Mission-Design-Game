@@ -4,6 +4,7 @@ import { EARTH_KM, type Satellite, orbitMinutes, orbitPosition } from '../game/s
 import { buildEarth } from './earthMesh';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
 import { makeStars } from './spacecraftView';
+import { outsideSphere } from './spaceCamera';
 
 /**
  * The Space view in 3D: Earth with every Spacecraft the Company has in orbit, each on its real orbit
@@ -17,6 +18,8 @@ export const SPEEDUP = 300;
 const SIDEREAL_DAY_MIN = 1_436;
 const EARTH_RADIUS = 30;
 const KM = EARTH_RADIUS / EARTH_KM;
+/** The camera stays this far from Earth's centre: just above the atmosphere's glow, below every orbit the game flies. */
+const CAMERA_FLOOR = EARTH_RADIUS * 1.05;
 /** Height of a Spacecraft model, in view units (much larger than life, or it couldn't be seen). */
 const MODEL_SIZE = 0.6;
 /** How close a click must be: an invisible ball this size round each Spacecraft. */
@@ -121,6 +124,7 @@ export class SpaceView {
     this.controls.minDistance = 0.8;
     this.controls.maxDistance = 40;
     this.controls.update();
+    this.keepOutsideEarth();
   }
 
   /** Screen positions of each Spacecraft, for name tags; hidden when behind Earth or off screen. */
@@ -158,6 +162,7 @@ export class SpaceView {
         this.lastFrame.copy(frame);
       }
       this.controls.update(seconds);
+      this.keepOutsideEarth();
       this.fit();
       this.renderer.render(this.scene, this.camera);
       this.onFrame();
@@ -254,6 +259,14 @@ export class SpaceView {
       if (s && s !== this.following) return s;
     }
     return null;
+  }
+
+  /** Turning or zooming round a Spacecraft low over Earth can't take the camera inside the globe (QA 2026-11-11). */
+  private keepOutsideEarth(): void {
+    const p = outsideSphere(this.camera.position, CAMERA_FLOOR);
+    if (p.x === this.camera.position.x && p.y === this.camera.position.y && p.z === this.camera.position.z) return;
+    this.camera.position.set(p.x, p.y, p.z);
+    this.camera.lookAt(this.controls.target);
   }
 
   private behindEarth(at: THREE.Vector3): boolean {
