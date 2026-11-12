@@ -49,7 +49,7 @@ export const ASSEMBLY_HALL_COST = 300_000;
 export const MAX_LEVEL = { assemblyHall: 3, hq: 2, other: 3 } as const;
 
 /** The Assembly Hall's top level in each Era: its level 3 waits for the Large Bus (Era 2). */
-export const HALL_LEVEL_BY_ERA = { 1: 2, 2: 3 } as const;
+export const HALL_LEVEL_BY_ERA = { 1: 2, 2: 3, 5: 3 } as const;
 
 /**
  * The HQ every Site starts with. Its Upgrades are priced from this, like every building's: moving to Era 2

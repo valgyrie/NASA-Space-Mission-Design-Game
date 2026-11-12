@@ -1,7 +1,7 @@
-import { CONTRACTS, type ContractId } from '../game/contracts';
+import { contractById, type ContractId } from '../game/contracts';
 import type { Flight, TestRun } from '../game/flight';
 import { t } from '../strings';
-import { formatNumber } from './format';
+import { contractText, formatNumber } from './format';
 import { findingText } from './missionReport';
 
 /**
@@ -301,8 +301,8 @@ export function makeTestRunScreen(hooks: { onBack(): void }): TestRunScreen {
     show(run, contract) {
       const f = run.asLabelled;
       flight = f;
-      orbitKm = CONTRACTS[contract].orbitKm;
-      orbitHint.textContent = t('testRun.orbitHint', { contract: t(`contract.${contract}.name`) });
+      orbitKm = contractById(contract).orbitKm;
+      orbitHint.textContent = t(contractById(contract).kind === 'generated' ? 'testRun.orbitGoal' : 'testRun.orbitHint', { contract: contractText(contract) });
 
       const labelledWh = f.batteryWh[0] ?? 0;
       const battery = lineGraph({

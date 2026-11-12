@@ -2,7 +2,7 @@ import { type Satellite, type SatelliteStatus, orbitMinutes, satellitesInOrbit }
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { SPEEDUP, type SpaceView } from '../world/spaceView';
-import { formatDecimal, formatGameDate, formatNumber } from './format';
+import { contractText, formatDecimal, formatGameDate, formatNumber } from './format';
 
 /**
  * The Space view: Earth with every Spacecraft the Company has in orbit. A list on the left and a name tag
@@ -102,7 +102,7 @@ export function showSpaceScreen(
   const tagButtons = new Map<number, HTMLButtonElement>();
   const listButtons = new Map<number, HTMLButtonElement>();
 
-  const label = (sat: Satellite) => t(`contract.${sat.contract}.name`);
+  const label = (sat: Satellite) => contractText(sat.contract);
 
   const select = (id: number | null) => {
     followed = id;

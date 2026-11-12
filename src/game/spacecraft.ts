@@ -2,7 +2,7 @@ import type { Part } from '../economy/part';
 import { GROUND_STATION_STEP, MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
 import { type Era, eraOf, isBuildingOpen, isPartOpen, partEra } from './eras';
 import { type Difficulty, partInMode } from './modes';
-import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
+import { type Contract, type Orbit, type PayloadKind, contractById, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
 import type { HistoryCardId } from './history';
 import { type Boosted, type TechId, boost } from './research';
 import { LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom } from './launchVehicles';
@@ -97,10 +97,10 @@ export function optionEra(id: OptionId): Era {
   return part ? partEra(part) : 1;
 }
 
-export function isUnlocked(state: Pick<SiteState, 'history' | 'hq'> & Partial<Pick<SiteState, 'difficulty'>>, id: OptionId): boolean {
+export function isUnlocked(state: Pick<SiteState, 'history' | 'hq'> & Partial<Pick<SiteState, 'difficulty' | 'playMode'>>, id: OptionId): boolean {
   const card = UNLOCKED_BY[id];
   const part = OPTIONS[id].part;
-  return (!card || state.history.includes(card)) && (!part || isPartOpen(state, part));
+  return (state.playMode === 'freePlay' || !card || state.history.includes(card)) && (!part || isPartOpen(state, part));
 }
 
 /** Does the Mission Designer show this slot yet? */
@@ -262,7 +262,7 @@ export function contractNeeds(contract: Contract): { orbit: Orbit; payload: Payl
 export function missionGoal(state: SiteState): MissionGoal {
   const taken = state.contracts[0];
   const offered = availableContracts(state)[0];
-  const contract = taken ? CONTRACTS[taken.id] : (offered ?? CONTRACTS[state.completed.at(-1) ?? CONTRACT_IDS[0]]);
+  const contract = taken ? contractById(taken.id) : (offered ?? contractById(state.completed.at(-1) ?? CONTRACT_IDS[0]));
   const status = taken ? 'accepted' : offered ? 'offered' : 'done';
   const { orbit, payload, missionDays } = contractNeeds(contract);
   const vehicle: LaunchVehicleId = state.vehicle;

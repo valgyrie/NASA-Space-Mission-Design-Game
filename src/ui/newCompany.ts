@@ -4,7 +4,7 @@ import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
 import { SEED_MAX, checkSeed, randomSeed } from '../site/seed';
 import { JPL, type Place, START_KINDS, type StartKind, climateAt, isInUs, landAt, placeProblem, randomPlace } from '../game/places';
 import { t } from '../strings';
-import { DIFFICULTIES, type Difficulty } from '../game/modes';
+import { DIFFICULTIES, PLAY_MODES, type Difficulty, type PlayMode } from '../game/modes';
 import { GlobePicker } from '../world/globePicker';
 import { formatDecimal } from './format';
 
@@ -14,6 +14,7 @@ export interface NewCompanyChoice {
   seed: string;
   place: Place;
   difficulty: Difficulty;
+  playMode: PlayMode;
 }
 
 interface Options {
@@ -102,6 +103,33 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
 
   const logo = makeLogoEditor(DEFAULT_LOGO);
 
+  let playMode: PlayMode = 'campaign';
+  const play = document.createElement('fieldset');
+  play.className = 'mode-picker';
+  const playLegend = document.createElement('legend');
+  playLegend.textContent = t('playMode.heading');
+  const playButtons = document.createElement('div');
+  playButtons.className = 'row start-kinds';
+  const playNote = note('play-mode-note', t('playMode.campaign.note'));
+  playNote.setAttribute('aria-live', 'polite');
+  for (const value of PLAY_MODES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.playMode = value;
+    b.textContent = t(`playMode.${value}`);
+    b.setAttribute('aria-pressed', String(value === playMode));
+    b.addEventListener('click', () => {
+      playMode = value;
+      for (const button of playButtons.querySelectorAll('button')) button.setAttribute('aria-pressed', String(button === b));
+      playNote.textContent = t(`playMode.${value}.note`);
+      for (const [kind, button] of kindButtons) button.hidden = value === 'freePlay' && kind !== 'anywhere';
+      kindButtons.get('anywhere')!.title = t(value === 'freePlay' ? 'freePlay.anywhere' : 'newCompany.start.anywhere.name');
+      setPlace(value === 'freePlay' ? { ...place, start: 'anywhere' } : place, false);
+    });
+    playButtons.append(b);
+  }
+  play.append(playLegend, playButtons, playNote);
+
   let difficulty: Difficulty = 'easy';
   const mode = document.createElement('fieldset');
   mode.className = 'mode-picker';
@@ -189,7 +217,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     place = next;
     for (const [kind, b] of kindButtons) b.setAttribute('aria-pressed', String(kind === place.start));
     globe?.setPin(place.lat, place.lon, turn);
-    placeKind.textContent = t(`newCompany.start.${place.start as 'historic'}.note`);
+    placeKind.textContent = playMode === 'freePlay' ? t('freePlay.anywhere') : t(`newCompany.start.${place.start as 'historic'}.note`);
     placeNote.textContent = placeText(place);
     error.textContent = '';
     previewSeed();
@@ -197,7 +225,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
   if (globe) {
     globe.onPick = (lat, lon) => {
       // A spot in the US is a US start; anywhere else is alternate history.
-      const start: StartKind = isInUs(lat, lon) ? 'us' : 'anywhere';
+      const start: StartKind = playMode === 'freePlay' ? 'anywhere' : isInUs(lat, lon) ? 'us' : 'anywhere';
       const problem = placeProblem(lat, lon, start);
       if (problem) {
         placeNote.textContent = t(`newCompany.error.${problem}`);
@@ -245,7 +273,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     globe?.dispose();
     logo.cancelUpload();
     form.remove();
-    onDone({ name: nameCheck.name, logo: logo.value(), seed: seedCheck.seed, place, difficulty });
+    onDone({ name: nameCheck.name, logo: logo.value(), seed: seedCheck.seed, place, difficulty, playMode });
   });
 
   const left = document.createElement('div');
@@ -254,6 +282,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     name.label,
     name.input,
     note('company-note', t('newCompany.note')),
+    play,
     mode,
     logo.root,
     seed.label,

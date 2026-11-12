@@ -8,7 +8,7 @@ export interface EraCard {
 }
 
 /** Text for each new Era's card. Era 1 has none: the Company starts there. */
-const ERA_TEXT = { 2: 'era.2.text' } as const;
+const ERA_TEXT = { 2: 'era.2.text', 5: 'freePlay.welcome' } as const;
 
 /** The card shown when the HQ Upgrade moves the Company into a new Era. Pauses the Site while it is open. */
 export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(): void }): EraCard {
@@ -31,7 +31,7 @@ export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(
   const api: EraCard = {
     show(era) {
       if (era === 1) return;
-      title.textContent = t('era.heading', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to });
+      title.textContent = era === 5 ? t('freePlay.heading') : t('era.heading', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to });
       text.textContent = t(ERA_TEXT[era]);
       backdrop.hidden = false;
       hooks.onOpen();

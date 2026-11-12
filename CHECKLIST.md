@@ -73,7 +73,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Failure stories, retryable Milestones (ticket 17: Vanguard TV3 card; a missed deadline puts the Milestone back on the board)
 
 ### Free Play and online
-- [ ] Free Play mode with generated Contracts
+- [x] Free Play mode with generated Contracts
 - [ ] Anonymous accounts (nickname generator, recovery code)
 - [ ] Leaderboards
 - [ ] Weekly Challenge with fixed budget and scoring

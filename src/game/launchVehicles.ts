@@ -8,7 +8,7 @@ import type { SiteState } from './siteState';
  * Era 1 has Juno I, then Thor-Able; Era 2 has Thor-Delta and Delta D, all from Cape Canaveral.
  * Capacities: docs/research/launch-vehicles.md.
  */
-export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble', 'thorDelta', 'deltaD'] as const;
+export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble', 'thorDelta', 'deltaD', 'falcon9'] as const;
 export type LaunchVehicleId = (typeof LAUNCH_VEHICLE_IDS)[number];
 
 /** One stage of a Launch Vehicle, from the bottom up. */
@@ -50,7 +50,7 @@ export interface LaunchVehicle {
   /** Share of Launches it gets a light enough Spacecraft to orbit, in the game. */
   reliability: number;
   /** Its real record: flights that worked out of all it made. */
-  record: { worked: number; flights: number };
+  record?: { worked: number; flights: number };
 }
 
 export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
@@ -117,6 +117,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     reliability: ROCKET_RELIABILITY.thorDelta,
     record: { worked: 11, flights: 12 },
     era: 2,
+    lastEra: 2,
     lastFlight: 1962,
   },
   // Delta D (Thrust Augmented Delta): 32 m, a Thor (150 s) with three Castor solid boosters strapped on (27 s),
@@ -138,7 +139,21 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
     reliability: ROCKET_RELIABILITY.deltaD,
     record: { worked: 2, flights: 2 },
     era: 2,
+    lastEra: 2,
     lastFlight: 1965,
+  },
+  // Full Thrust, expendable capacity. No landing sequence in this ticket. Sources and game estimates:
+  // docs/research/launch-vehicles.md. Its real flight record changes, so no fixed record is claimed.
+  falcon9: {
+    id: 'falcon9',
+    liftKg: { lowEarthOrbit: 22_800, geostationary: 8_300 },
+    perKg: 7_000,
+    heightM: 70,
+    stages: [{ motors: 9, burnS: 162 }, { motors: 1, burnS: 397 }],
+    coastS: 3,
+    reliability: 0.98,
+    era: 5,
+    lastFlight: 2026,
   },
 };
 

@@ -6,15 +6,15 @@ import {
   acceptContract,
   accepted,
   availableContracts,
-  CONTRACTS,
+  contractById,
   daysLeft,
   deadlineDay,
 } from '../game/contracts';
 import { LAST_ERA, eraOf, milestonesDone } from '../game/eras';
-import type { SiteState } from '../game/siteState';
+import { type SiteState, canContinueFreePlay, continueFreePlay } from '../game/siteState';
 import { upgradeDaysLeft } from '../game/upgrades';
 import { t } from '../strings';
-import { formatDays, formatGameDate, formatMoney, formatNumber } from './format';
+import { contractText, formatDays, formatGameDate, formatMoney, formatNumber } from './format';
 
 export interface ContractsPanel {
   toggle(): void;
@@ -55,7 +55,7 @@ export function deadlineText(state: SiteState, c: AcceptedContract): string {
 }
 
 /** The Contracts board: Contracts on offer and the ones the Company has accepted. `onAccept` runs after accepting. */
-export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept: (id: ContractId) => void): ContractsPanel {
+export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept: (id: ContractId) => void, onContinue: () => void): ContractsPanel {
   const panel = el('div', 'panel side-panel contracts');
   panel.hidden = true;
   panel.setAttribute('role', 'dialog');
@@ -89,7 +89,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     const taken = accepted(state, contract.id);
     const box = el('article', 'contract-card');
     const title = el('div', 'contract-title');
-    title.append(el('h4', '', t(`contract.${contract.id}.name`)));
+    title.append(el('h4', '', contractText(contract.id)));
     if (contract.kind === 'milestone') title.append(el('span', 'tag', t('contracts.milestone')));
     const requirements = el('ul', 'contract-requirements');
     for (const r of contract.requirements) requirements.append(el('li', '', requirementText(r)));
@@ -98,8 +98,8 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     else deadline.textContent = t('contracts.deadlineAfter', { days: formatNumber(contract.deadlineDays) });
     box.append(
       title,
-      field(t('contracts.client'), t(`contract.${contract.id}.client`)),
-      field(t('contracts.objective'), t(`contract.${contract.id}.objective`)),
+      field(t('contracts.client'), contractText(contract.id, 'client')),
+      field(t('contracts.objective'), contractText(contract.id, 'objective')),
       field(t('contracts.requirements'), requirements),
       field(t('contracts.reward'), formatMoney(contract.reward)),
       field(t('contracts.deadline'), deadline),
@@ -128,17 +128,30 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     body.replaceChildren();
     if (state.contracts.length > 0) {
       body.append(el('h3', '', t('contracts.active')));
-      for (const c of state.contracts) body.append(card(CONTRACTS[c.id]));
+      for (const c of state.contracts) body.append(card(contractById(c.id)));
     }
     body.append(el('h3', '', t('contracts.available')));
+    if (state.playMode === 'freePlay') body.append(el('p', 'side-note', t('freePlay.boardNote')));
     const open = availableContracts(state);
     if (open.length === 0 && state.contracts.length === 0) body.append(eraLine);
     else if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
     for (const c of open) body.append(card(c));
+    if (canContinueFreePlay(state)) {
+      body.append(el('p', 'side-note', t('freePlay.continueNote')));
+      const next = el('button', 'small', t('freePlay.continue'));
+      next.type = 'button';
+      next.addEventListener('click', () => {
+        if (continueFreePlay(state)) {
+          onContinue();
+          render();
+        }
+      });
+      body.append(next);
+    }
     if (state.completed.length > 0) {
       body.append(el('h3', '', t('contracts.completed')));
       const done = el('ul', 'contract-done');
-      for (const id of state.completed) done.append(el('li', '', t('contracts.completedLine', { name: t(`contract.${id}.name`) })));
+      for (const id of state.completed) done.append(el('li', '', t('contracts.completedLine', { name: contractText(id) })));
       body.append(done);
     }
     update();

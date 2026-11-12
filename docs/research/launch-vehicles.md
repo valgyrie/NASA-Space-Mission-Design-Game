@@ -95,3 +95,12 @@ Researched 2026-11-11.
 - Rideshare $20,000/kg (Thor-Delta) and $30,000/kg (Delta D), Delta D's whole-rocket $3.5M: game estimates. Thor-Delta's whole rocket, $2.7M, is AT&T's real payment, rounded.
 - Juno I and Thor-Able retire in Era 2 (last flights 1958 and 1960).
 - 10 s between stage 1 and stage 2 is a game estimate, as for Thor-Able _(verify)_. The 3D models leave out the nose fairing and are drawn shorter than 31–32 m, so the Spacecraft shows.
+
+## Falcon 9: modern Free Play (ticket 21)
+
+Checked 2026-11-12 against [Wikipedia: Falcon 9](https://en.wikipedia.org/wiki/Falcon_9) (Full Thrust figures, citing SpaceX's specifications and 2015 press kit). The SpaceX vehicle page returned an access error in this environment.
+
+- **70 m** tall (69.8 m, rounded); two stages, **nine Merlin engines** on the first and **one vacuum Merlin** on the second. First-stage burn **162 s**, second **397 s**; real Mission profiles vary.
+- Maximum **expendable** capacity: **22,800 kg** to Low Earth Orbit and **8,300 kg** to geostationary transfer orbit. These are not booster-recovery capacities. A Spacecraft still needs its Main Engine to reach geostationary orbit.
+- The catalogue uses those expendable limits. Booster landing, fairing separation and mission-specific burns are left out. The low-poly model is shortened to fit the existing pad shot, like the Thor models, with the fairing omitted to show the player's Spacecraft. No real logos.
+- **Game estimates:** $7,000/kg for either supported orbit (the existing rideshare research above gives its scale, not a quote for this service), 98% rocket reliability, 3 s staging gap. No fixed real flight record is displayed for a rocket still flying. This ticket does not add a landing mini-game or an owned rocket.

@@ -1,13 +1,13 @@
 import { type CompanyLogo, logoUrl } from '../company/logo';
-import type { ContractId } from '../game/contracts';
+import { type MilestoneId } from '../game/contracts';
 import type { Patch } from '../game/history';
 import { t } from '../strings';
-import { gameYear } from './format';
+import { contractText, gameYear } from './format';
 
 const SVG = 'http://www.w3.org/2000/svg';
 
 /** Colours of each Milestone's patch: ring, sky and Earth. */
-const PATCH_COLOURS: Record<ContractId, { ring: string; sky: string; earth: string; trim: string }> = {
+const PATCH_COLOURS: Record<MilestoneId, { ring: string; sky: string; earth: string; trim: string }> = {
   explorer1: { ring: '#1d3b6e', sky: '#0f1b33', earth: '#3f8fd0', trim: '#f2c14e' },
   tiros1: { ring: '#1f5f63', sky: '#0d2629', earth: '#5bb3c9', trim: '#e9eef2' },
   telstar1: { ring: '#6b2a2a', sky: '#1d0f14', earth: '#4a9be0', trim: '#f4d58d' },
@@ -41,8 +41,8 @@ function arcText(svg: SVGSVGElement, text: string, radius: number, top: boolean,
  * Earth with the Spacecraft on its orbit, and the year of the Launch. No real logos.
  */
 export function makePatch(patch: Patch, company: string, logo: CompanyLogo): SVGSVGElement {
-  const c = PATCH_COLOURS[patch.contract];
-  const contract = t(`contract.${patch.contract}.name`);
+  const c = PATCH_COLOURS[patch.contract as MilestoneId] ?? PATCH_COLOURS.tiros1;
+  const contract = contractText(patch.contract);
   const year = gameYear(patch.day);
   const svg = node('svg', { viewBox: '0 0 200 200', class: 'patch', role: 'img' });
   svg.setAttribute('aria-label', t('patch.name', { contract, company, year }));

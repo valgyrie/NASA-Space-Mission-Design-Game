@@ -2,7 +2,7 @@ import type { BusId } from '../game/upgrades';
 import { type MissionStage, missionStage, missionTimeline } from '../game/mission';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
-import { formatDays, formatGameDate, formatNumber } from './format';
+import { contractText, formatDays, formatGameDate, formatNumber } from './format';
 import { adviseLaunch } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
 
@@ -130,7 +130,7 @@ export function showMissionTracker(
     body.hidden = !m;
     if (!m || !stage || !dates) return;
 
-    const contract = t(`contract.${m.contract}.name`);
+    const contract = contractText(m.contract);
     const site = t(`launchSite.${m.site}.short`);
     setText(subtitle, t('tracker.subtitle', { contract, vehicle: t(`launchVehicle.${m.vehicle}`), site: t(`launchSite.${m.site}`) }));
     setText(to, site);

@@ -148,8 +148,8 @@ function spacecraftOnTop(design: Design, height: number): THREE.Group {
 
 /** The Launch Vehicle with the player's Spacecraft on top. */
 export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1', logo: CompanyLogo = DEFAULT_LOGO): RocketModel {
-  const model = vehicle === 'juno1' ? buildJuno(design) : buildThor(design, vehicle === 'thorAble' ? THOR : THOR_DELTA, vehicle === 'deltaD' ? 3 : 0);
-  const radius = vehicle === 'juno1' ? JUNO.radius : THOR.radius;
+  const model = vehicle === 'falcon9' ? buildFalcon(design) : vehicle === 'juno1' ? buildJuno(design) : buildThor(design, vehicle === 'thorAble' ? THOR : THOR_DELTA, vehicle === 'deltaD' ? 3 : 0);
+  const radius = vehicle === 'falcon9' ? 0.74 : vehicle === 'juno1' ? JUNO.radius : THOR.radius;
   const material = new THREE.MeshBasicMaterial({ map: logoTexture(logo), transparent: true, depthWrite: false });
   material.name = 'company-logo';
   // Four curved decals keep the emblem visible as the camera follows the climb.
@@ -160,6 +160,44 @@ export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1', 
     model.stages[0]!.group.add(decal);
   }
   return model;
+}
+
+/** Falcon 9: two stages, nine engines below and one above. Compressed to fit the existing pad shot,
+ * like the Thor models; the fairing is left off so the player's Spacecraft shows. No real logos. */
+function buildFalcon(design: Design): RocketModel {
+  const root = new THREE.Group();
+  root.name = 'rocket';
+  const first = new THREE.Group();
+  first.add(cyl(0.74, 0.74, 16, R.white, 0.6));
+  first.add(cyl(0.74, 0.74, 1.6, R.black, 16.6));
+  first.add(cyl(0.74, 0.74, 0.6, R.dark, 0));
+  const nozzles: THREE.Vector3[] = [];
+  for (let i = 0; i < 9; i++) {
+    const angle = i * Math.PI / 4;
+    const x = i === 8 ? 0 : Math.cos(angle) * 0.47;
+    const z = i === 8 ? 0 : Math.sin(angle) * 0.47;
+    const nozzle = cyl(0.1, 0.18, 0.45, R.nozzle, -0.25, 8);
+    nozzle.position.set(x, nozzle.position.y, z);
+    first.add(nozzle);
+    nozzles.push(new THREE.Vector3(x, -0.25, z));
+  }
+  const second = new THREE.Group();
+  second.add(cyl(0.74, 0.74, 6, R.white, 18.2));
+  second.add(cyl(0.28, 0.56, 0.8, R.nozzle, 17.4));
+  second.add(cyl(0.5, 0.74, 1.4, R.steel, 24.2));
+  const spinner = new THREE.Group();
+  spinner.position.y = 25.6;
+  const spacecraft = spacecraftOnTop(design, 2.4);
+  spinner.add(spacecraft);
+  root.add(first, second, spinner);
+  return {
+    root,
+    stages: [
+      { group: first, nozzles, nozzleRadius: 0.1 },
+      { group: second, nozzles: [new THREE.Vector3(0, 17.4, 0)], nozzleRadius: 0.28 },
+    ],
+    spinner, spacecraft, upperBase: 17.4, upperLength: 10.6,
+  };
 }
 
 /** The whole Juno I with the player's Spacecraft on top. */

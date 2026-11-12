@@ -7,7 +7,7 @@ import { satellitesInOrbit } from '../game/space';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
-import { cssColour, formatDays, formatNumber } from './format';
+import { contractText, cssColour, formatDays, formatNumber } from './format';
 
 export interface Hud {
   /** Refresh the active Contract line. Cheap enough to call every frame. */
@@ -167,7 +167,7 @@ export function showHud(
       const stage = missionStage(state);
       if (stage && state.mission) {
         const values = {
-          contract: t(`contract.${state.mission.contract}.name`),
+          contract: contractText(state.mission.contract),
           site: t(`launchSite.${state.mission.site}.short`),
           days: formatDays(stage.daysLeft),
         };
@@ -181,7 +181,7 @@ export function showHud(
       if (archive.hidden === kept) archive.hidden = !kept;
       const first = state.contracts[0];
       if (!first) return setText(active, '');
-      const name = t(`contract.${first.id}.name`);
+      const name = contractText(first.id);
       const left = daysLeft(state, first);
       setText(active, left > 0 ? t('contracts.hudActive', { name, days: formatNumber(left) }) : t('contracts.hudOverdue', { name }));
       active.classList.toggle('warn', left === 0);

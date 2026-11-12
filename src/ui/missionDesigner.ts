@@ -31,7 +31,7 @@ import { testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
-import { formatDecimal, formatMoney, formatNumber } from './format';
+import { contractText, formatDecimal, formatMoney, formatNumber } from './format';
 
 export interface MissionDesigner {
   open(): void;
@@ -333,14 +333,14 @@ export function showMissionDesigner(
 
   const render = () => {
     const check = checkDesign(state, state.design);
-    const contract = t(`contract.${check.goal.contract.id}.name`);
+    const contract = contractText(check.goal.contract.id);
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
 
     for (const { o, b, stats, locked, eraLock, hall } of optionUi) {
       const open = isUnlocked(state, o.id);
       b.disabled = !open;
-      if (locked) locked.hidden = state.history.includes(UNLOCKED_BY[o.id]!);
+      if (locked) locked.hidden = open;
       if (eraLock) eraLock.hidden = open;
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);
       stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);

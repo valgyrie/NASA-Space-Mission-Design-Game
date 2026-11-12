@@ -26,6 +26,12 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 | **Demo Mode** | One fixed demo Site, one ready save per Era. | ✅ |
 | **Sandbox** | No limits, everything unlocked. | Later |
 
+**As built (ticket 21):** choose Campaign or Free Play independently of Easy/Advanced. Free Play starts on 1 January 2026, anywhere on Earth's land, with HQ level 5 and a level 1 Assembly Hall. It uses the Parts built so far and the same economy, Marks, Research, six bars, Test Run, Shipping and flight rules; Solar Cells do not need the Vanguard 1 card here. Buildings and better Marks still need money and days. Falcon 9 Rideshares replace the retired historical rockets; see §8 and `docs/research/launch-vehicles.md`.
+
+Three generated offers stay on the board: radiation surveys, weather photography and geostationary communications relays for fictional clients. Their duration (30–90 days), orbit and reward vary; deadlines allow 240 days beyond the requested Data period. All figures are game estimates. Taking work replenishes the board; successful Contracts stay completed, missed ones can be accepted again. IDs reproduce the same terms after reload, including on old Mission Reports and Patches.
+
+After all **currently built** Campaign Milestones (through Syncom 3), the board offers **Continue in Free Play**. The same Company keeps its name, logo, place, Seed, buildings, stock, Marks, money, Research, reports, Patches and History Archive. The date jumps forward to 2026 (never backwards); pending Upgrade time is preserved. This interim endpoint moves when later Campaign Milestones are built; the planned story still ends after Artemis IV. Save v18 preserves earlier games as Campaign Companies. Online features wait for tickets 22–23.
+
 ## 4. Starting the game
 
 - **Name your Company** and make a **logo** (see §11).

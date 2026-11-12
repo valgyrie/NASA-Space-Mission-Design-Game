@@ -1,4 +1,4 @@
-import { CONTRACTS, type ContractId } from './contracts';
+import { contractById, type ContractId } from './contracts';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
 
@@ -137,7 +137,7 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
 
 /** The Real History card a Contract shows before or after, if it has one (Milestones do). */
 export function historyCardFor(contract: ContractId, when: 'before' | 'after'): HistoryCardId | null {
-  if (CONTRACTS[contract].kind !== 'milestone') return null;
+  if (contractById(contract).kind !== 'milestone') return null;
   return HISTORY_CARD_IDS.find((id) => HISTORY_CARDS[id].contract === contract && HISTORY_CARDS[id].when === when) ?? null;
 }
 

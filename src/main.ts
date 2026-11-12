@@ -21,7 +21,7 @@ if (saved) {
 } else {
   showNewCompany(ui, {
     onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
-    onDone: ({ name, logo, seed, place, difficulty }) =>
-      playSite(world, ui, { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty) }),
+    onDone: ({ name, logo, seed, place, difficulty, playMode }) =>
+      playSite(world, ui, { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) }),
   });
 }

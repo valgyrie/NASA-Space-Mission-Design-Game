@@ -1,14 +1,14 @@
 import { withContactLost } from '../game/anomalies';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
-import { CONTRACTS } from '../game/contracts';
+import { contractById } from '../game/contracts';
 import { contractNeeds } from '../game/spacecraft';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { LaunchResult } from '../game/mission';
 import { t } from '../strings';
 import type { LaunchView } from '../world/launchView';
 import { type AnomalyHooks, showAnomalyPanel } from './anomalyPanel';
-import { formatDecimal, formatNumber } from './format';
+import { contractText, formatDecimal, formatNumber } from './format';
 import { at, drawOrbit } from './testRun';
 
 /**
@@ -63,7 +63,7 @@ export function clockText(seconds: number): string {
 export function showText(m: ShowMoment, result: LaunchResult, powered: boolean): { title: string; detail: string } {
   const { report, flight } = result;
   const lv = LAUNCH_VEHICLES[report.vehicle];
-  const contract = t(`contract.${report.contract}.name`);
+  const contract = contractText(report.contract);
   const vehicle = t(`launchVehicle.${report.vehicle}`);
   const seg = m.segment;
   switch (seg.phase) {
@@ -89,8 +89,8 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
     case 'coast':
       return { title: t(`launch.coast.${report.vehicle}`), detail: t(`launch.coastDetail.${report.vehicle}`, { s: formatNumber(lv.coastS) }) };
     case 'orbit': {
-      const km = CONTRACTS[report.contract].orbitKm;
-      const geo = contractNeeds(CONTRACTS[report.contract]).orbit === 'geostationary';
+      const km = contractById(report.contract).orbitKm;
+      const geo = contractNeeds(contractById(report.contract)).orbit === 'geostationary';
       const values = { contract, low: formatNumber(km.low), high: formatNumber(km.high) };
       return { title: t('launch.orbit'), detail: t(geo ? 'launch.orbitDetailGeo' : 'launch.orbitDetail', values) };
     }
@@ -321,7 +321,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
 
     if (simple || !view) {
       if (phase === 'orbit' || phase === 'mission' || phase === 'end') {
-        drawOrbit(simpleCanvas, CONTRACTS[result.report.contract].orbitKm, showSeconds / LAP_SECONDS, powered);
+        drawOrbit(simpleCanvas, contractById(result.report.contract).orbitKm, showSeconds / LAP_SECONDS, powered);
       } else {
         // A failed stage stops the climb where it failed; too heavy, it falls back from the top.
         const tPlus = phase === 'lost' ? (m.segment.stage !== undefined ? m.segment.from : ascentEnd) : Math.max(0, m.value);
@@ -394,7 +394,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
       }
       note.hidden = !viewFailed;
       try {
-        view?.load(r.design, r.report.vehicle, CONTRACTS[r.report.contract].orbitKm, logo());
+        view?.load(r.design, r.report.vehicle, contractById(r.report.contract).orbitKm, logo());
       } catch {
         view = null;
         viewFailed = true;

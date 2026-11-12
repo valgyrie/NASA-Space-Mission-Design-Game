@@ -23,7 +23,7 @@ import {
 } from '../game/siteState';
 import type { Site } from '../site/site';
 import { t } from '../strings';
-import { formatDays, formatDecimal, formatMoney, formatNumber } from './format';
+import { contractText, formatDays, formatDecimal, formatMoney, formatNumber } from './format';
 import { itemColour, storageText } from './marketPanel';
 import { stockText } from './missionDesigner';
 
@@ -196,7 +196,7 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       setText(
         work,
         state.mission && stage?.stage === 'assembling'
-          ? t('panel.assembling', { contract: t(`contract.${state.mission.contract}.name`), days: formatDays(stage.daysLeft) })
+          ? t('panel.assembling', { contract: contractText(state.mission.contract), days: formatDays(stage.daysLeft) })
           : '',
       );
     };
@@ -209,15 +209,15 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     body.append(about, next);
     refresh = () => {
       const era = eraOf(state);
-      setText(about, t('panel.hq', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
+      setText(about, era === 5 ? t('freePlay.hq') : t('panel.hq', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
       const waiting = eraMilestones(era).filter((id) => !state.completed.includes(id));
       setText(
         next,
-        era >= LAST_ERA
+        era === 5 ? t('freePlay.boardHint') : era >= LAST_ERA
           ? t('panel.hqNewest', { era })
           : milestonesDone(state, era)
             ? t('panel.hqReady', { era, next: era + 1, year: ERA_YEARS[(era + 1) as Era].from })
-            : t('panel.hqWaiting', { milestones: waiting.map((id) => t(`contract.${id}.name`)).join(t('stat.list')) }),
+            : t('panel.hqWaiting', { milestones: waiting.map((id) => contractText(id)).join(t('stat.list')) }),
       );
     };
   };

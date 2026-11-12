@@ -2,7 +2,7 @@ import type { Company } from '../save/save';
 import { HISTORY_CARDS, type HistoryCardId } from '../game/history';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
-import { formatGameDate } from './format';
+import { contractText, formatGameDate } from './format';
 import { imageUrl } from './historyCard';
 import { makePatch } from './patch';
 
@@ -53,7 +53,7 @@ export function showArchive(
     patches.replaceChildren(
       ...state.patches.map((p) => {
         const figure = el('figure', 'archive-patch');
-        const contract = t(`contract.${p.contract}.name`);
+        const contract = contractText(p.contract);
         figure.append(makePatch(p, company.name, company.logo), el('figcaption', '', t('archive.patchLine', { contract, date: formatGameDate(p.day) })));
         return figure;
       }),

@@ -1,5 +1,13 @@
 import { START_DATE_UTC } from '../game/balance';
 import { t } from '../strings';
+import { contractById, type ContractId, type MilestoneId } from '../game/contracts';
+
+/** One translated name throughout the board, designer, tracker, report, patches and Space view. */
+export function contractText(id: ContractId, field: 'name' | 'client' | 'objective' = 'name'): string {
+  const contract = contractById(id);
+  const key = contract.template ?? id as MilestoneId;
+  return t(`contract.${key}.${field}`, { n: Number(id.slice(5)) + 1 });
+}
 
 const locale = t('format.locale');
 const moneyFormat = new Intl.NumberFormat(t('format.moneyLocale'), { notation: 'compact', maximumFractionDigits: 2 });
