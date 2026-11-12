@@ -1,6 +1,6 @@
 # Screenshots
 
-- [Development, before the official NASA Resources](development-No_NASA_resources-/features%20and%20game/README.md): feature checks and earlier runs.
+- [Development feature guide, before the official NASA Resources](development-No_NASA_resources-/features%20and%20game/README.md): the built features across tickets 01–31, what each screenshot shows, how to open it, fixtures, tests and remaining limits.
 - [Bugs and errors](development-No_NASA_resources-/bugs%20and%20errors/README.md): visible problems, with steps and ticket links.
 - [Game screenshots](game%20screenshots/README.md): reserved for the final demo.
 
