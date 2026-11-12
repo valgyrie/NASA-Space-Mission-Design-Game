@@ -11,7 +11,7 @@ export interface Menu {
  * The pause menu (Esc): Seed, settings and controls.
  * `onOpen` and `onClose` let the game pause and resume.
  */
-export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void, onOnline?: () => void): Menu {
   const difficulty = state.difficulty;
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
@@ -88,6 +88,11 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
   mainMenu.textContent = t('mainMenu.heading');
   mainMenu.addEventListener('click', onMainMenu);
   panel.append(mainMenu);
+  const online = document.createElement('button');
+  online.type = 'button';
+  online.textContent = t('online.heading');
+  online.addEventListener('click', () => { menu.close(); onOnline?.(); });
+  panel.append(online);
   backdrop.append(panel);
   root.append(backdrop);
 
@@ -98,6 +103,7 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
     open() {
       if (menu.isOpen) return;
       playMode.textContent = t('menu.playMode', { mode: t(`playMode.${state.playMode}`) });
+      online.hidden = !onOnline || state.playMode !== 'freePlay';
       backdrop.hidden = false;
       onOpen();
       resume.focus();

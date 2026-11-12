@@ -7,7 +7,8 @@
     "dev": "vite --open",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --noEmit -p supabase/tsconfig.json",
+    "build:online": "vite build --config supabase/build.config.ts",
     "test": "vitest run",
     "check": "npm run typecheck && npm run test",
     "prepare": "husky"

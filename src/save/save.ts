@@ -12,7 +12,7 @@ import { DIFFICULTIES, PLAY_MODES } from '../game/modes';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
-/** Local save in the browser. Demo Mode uses a separate storage adapter; cloud saves come with online play. */
+/** Local save in the browser. Demo Mode uses a separate storage adapter; Online reuses this format and validator. */
 
 export const SAVE_KEY = 'leap.save';
 export const SAVE_VERSION = 18;

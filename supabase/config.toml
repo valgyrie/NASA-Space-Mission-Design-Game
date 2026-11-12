@@ -1,0 +1,4 @@
+[functions.leap-online]
+entrypoint = '../work/online-edge/index.js'
+# The function authenticates private requests with the hashed recovery code itself.
+verify_jwt = false

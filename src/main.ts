@@ -8,6 +8,7 @@ import { createDemo, DEMO_SEED, demoStorage } from './game/demo';
 import { showMainMenu } from './ui/mainMenu';
 import { showNewCompany } from './ui/newCompany';
 import { World } from './world/world';
+import { showOnline } from './ui/online';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world');
 const ui = document.querySelector<HTMLElement>('#ui');
@@ -19,14 +20,17 @@ const world = new World(canvas);
 world.start();
 
 const saved = loadGame(localStorage);
+const online = showOnline(root, () => loadGame(localStorage), { onOpen() {}, onClose() {} });
 function mainMenu(): void {
   world.keyboardEnabled = false;
   world.controls.enabled = false;
   world.showSite(generateSite(saved?.site.seed ?? DEMO_SEED, siteClimateFor(saved?.state.place ?? JPL)));
   showMainMenu(root, {
     companyName: saved?.company.name,
+    onOnline: () => online.open(),
     onPlay() {
       if (saved) {
+        online.destroy();
         world.controls.enabled = true;
         world.keyboardEnabled = true;
         playSite(world, root, saved);
@@ -35,6 +39,7 @@ function mainMenu(): void {
           onBack: mainMenu,
           onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
           onDone: ({ name, logo, seed, place, difficulty, playMode }) => {
+            online.destroy();
             world.controls.enabled = true;
             world.keyboardEnabled = true;
             playSite(world, root, { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) });
@@ -43,6 +48,7 @@ function mainMenu(): void {
       }
     },
     onDemo(era) {
+      online.destroy();
       world.controls.enabled = true;
       world.keyboardEnabled = true;
       playSite(world, root, createDemo(era), { storage: demoStorage(localStorage), demoEra: era });

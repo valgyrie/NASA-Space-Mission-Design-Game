@@ -210,6 +210,12 @@ _Avoid_: badge (Weekly Challenge badges are different), achievement
 
 ### Progress
 
+**Nickname**:
+The made-up name on a player's anonymous online account and leaderboard entries. Separate from the Company's name.
+
+**Recovery code**:
+A secret code that restores the player's online account on another computer. Anyone with it can open that account's cloud Company.
+
 **Reputation**:
 How much clients trust the Company; higher Reputation unlocks better Contracts.
 
