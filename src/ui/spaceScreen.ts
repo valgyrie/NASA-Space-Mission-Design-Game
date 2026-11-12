@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import { type Satellite, type SatelliteStatus, orbitMinutes, satellitesInOrbit } from '../game/space';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
@@ -175,6 +176,7 @@ export function showSpaceScreen(
       hint.hidden = sats.length === 0 || viewFailed;
       hooks.onOpen();
       screen.hidden = false;
+      audio.setScene('space', 'orbit');
       view?.start();
       select(sats.some((s) => s.id === followId) ? followId : null);
       close.focus();
@@ -182,6 +184,7 @@ export function showSpaceScreen(
     close() {
       if (screen.hidden) return;
       screen.hidden = true;
+      audio.setScene('space', null);
       view?.stop();
       hooks.onClose();
     },

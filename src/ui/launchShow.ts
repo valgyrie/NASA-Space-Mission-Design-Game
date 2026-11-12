@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import { withContactLost } from '../game/anomalies';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
@@ -261,6 +262,8 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
   let frames = 0;
   let stageShares: number[] = [];
   let ascentEnd = 1;
+  let soundPhase = '';
+  let countdown: number | null = null;
 
   const setSpeed = (s: number) => {
     speed = s;
@@ -292,6 +295,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     cancelAnimationFrame(frame);
     frame = 0;
     screen.hidden = true;
+    audio.setScene('launch', null);
     view?.unload();
     result = null;
     done();
@@ -316,6 +320,17 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     }
     const { flight } = result;
     const phase = m.segment.phase;
+    audio.setScene('launch', anomalyPanel.isOpen ? 'anomaly' : ['orbit', 'mission', 'end'].includes(phase) ? 'orbit' : 'launch');
+    const cue = phase + String(m.segment.stage ?? '');
+    if (cue !== soundPhase) {
+      if (phase === 'burn' && m.segment.stage === 1) audio.effect('launch');
+      if (phase === 'lost') audio.effect('alarm');
+      soundPhase = cue;
+    }
+    if (phase === 'countdown' && Math.ceil(m.value) !== countdown) {
+      countdown = Math.ceil(m.value);
+      audio.effect('countdown');
+    }
     const day = phase === 'mission' ? m.value : phase === 'end' ? flight.missionDays : 0;
     const powered = flight.powerOutDay === null || day < flight.powerOutDay;
 
@@ -403,6 +418,9 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
       setSimple(false);
       setSpeed(1);
       showSeconds = 0;
+      soundPhase = '';
+      countdown = null;
+      audio.setScene('launch', 'launch');
       frames = 0;
       timed = [];
       shot = '';

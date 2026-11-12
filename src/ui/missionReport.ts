@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import type { Company } from '../save/save';
 import type { Finding, MissionReport } from '../game/mission';
 import { type Anomaly, antennaChance } from '../game/anomalies';
@@ -189,11 +190,14 @@ export function showMissionReport(
       shown = report;
       seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);
       backdrop.hidden = false;
+      audio.setScene('report', report.success ? 'success' : 'failure');
+      audio.effect(report.success ? 'reward' : 'alarm');
       close.focus();
     },
     close() {
       if (backdrop.hidden) return;
       backdrop.hidden = true;
+      audio.setScene('report', null);
       onClose();
     },
     get isOpen() {

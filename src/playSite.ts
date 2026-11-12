@@ -1,3 +1,4 @@
+import { audio } from './audio/sound';
 import { showLogoDialog } from './ui/logoEditor';
 import { t } from './strings';
 import type { DemoEra } from './game/demo';
@@ -53,6 +54,7 @@ const CLICK_SLOP = 6;
 
 /** Run the Site view for a game: the map, the clock, buildings, the Market and the UI around them. */
 export function playSite(world: World, ui: HTMLElement, game: SaveData, { storage = localStorage, demoEra }: { storage?: SaveStorage; demoEra?: DemoEra } = {}): void {
+  audio.setScene('screen', 'site');
   const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
   const state = game.state;
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
@@ -226,6 +228,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     // Weather over the limits Scrubs the Launch: say why and when the next good day is.
     const weather = launchWeather(state);
     if (weather?.scrub && state.mission) {
+      audio.effect('alarm');
       scrub.show(state.mission.site, weather, adviseLaunch(state.mission.site, state.day + 1));
       return;
     }
@@ -356,6 +359,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     if (!tile) return;
     const result = build(site, state, placing, tile.x, tile.z);
     if (result.ok) {
+      audio.effect('build');
       const material = placing === 'mine' ? (mineMaterial(site, { x: tile.x, z: tile.z }) ?? undefined) : undefined;
       world.addBuilding(placing, tile.x, tile.z, material);
       saveGame(storage, game);
@@ -449,6 +453,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       const paid = payGrant(state);
       if (paid > 0) {
         saveGame(storage, game);
+        audio.effect('reward');
         grant.show(paid);
       }
     }

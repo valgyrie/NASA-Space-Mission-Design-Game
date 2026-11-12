@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import { ERA_YEARS, type Era } from '../game/eras';
 import { t } from '../strings';
 
@@ -34,12 +35,14 @@ export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(
       title.textContent = era === 5 ? t('freePlay.heading') : t('era.heading', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to });
       text.textContent = t(ERA_TEXT[era]);
       backdrop.hidden = false;
+      audio.setScene('era', 'history');
       hooks.onOpen();
       ok.focus();
     },
     close() {
       if (backdrop.hidden) return;
       backdrop.hidden = true;
+      audio.setScene('era', null);
       hooks.onClose();
     },
     get isOpen() {

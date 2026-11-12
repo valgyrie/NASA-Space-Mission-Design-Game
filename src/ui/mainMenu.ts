@@ -1,3 +1,4 @@
+import { makeAudioControls } from './audioControls';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
 import { ERA_YEARS } from '../game/eras';
 import { t } from '../strings';
@@ -77,7 +78,7 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
     panel.remove();
   }
   window.addEventListener('keydown', onKey);
-  panel.append(heading, subtitle, acronym, actions, picker);
+  panel.append(heading, subtitle, acronym, actions, picker, makeAudioControls());
   root.append(panel);
   play.focus();
 }

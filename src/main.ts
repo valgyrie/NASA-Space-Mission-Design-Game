@@ -1,3 +1,4 @@
+import { audio } from './audio/sound';
 import { newSiteState } from './game/siteState';
 import { SAVE_VERSION, loadGame } from './save/save';
 import { playSite } from './playSite';
@@ -15,6 +16,8 @@ const ui = document.querySelector<HTMLElement>('#ui');
 if (!canvas || !ui) throw new Error('Missing #world or #ui in index.html');
 const root = ui;
 
+audio.init();
+audio.setScene('screen', 'menu');
 document.title = t('game.title');
 const world = new World(canvas);
 world.start();
