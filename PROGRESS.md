@@ -4,23 +4,24 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–20 (12, 13, 16, 17, 18, 19 and 20 wait for a team test) and 31 built; local launchers merged. This session built ticket 20 on `codex/ticket-20-easy-and-advanced`, starting from freshly pulled `main` (`f65450b`, including ticket 19).
+**State:** tickets 01–21 (12, 13, 16, 17, 18, 19, 20 and 21 wait for a team test) and 31 built; local launchers merged. This session built ticket 21 on `codex/ticket-21-free-play`, starting from freshly pulled `main` (`1cf2f11`, including ticket 20).
 
-**Just finished: ticket 20, Easy and Advanced modes.** Rules: GDD §7. File map and decisions: `docs/tickets/20-easy-and-advanced.md`.
-- Choose Easy (default) or Advanced at Company setup; the pause menu's Settings shows the fixed choice. Easy keeps the original Part set and balance.
-- Advanced adds a Medium Battery (4.2 kg, 420 Wh) and Low-power Antenna (0.8 kg, 0.14 W, 24 kB/day). The designer shows finer Part labels and battery Wh/kg. Research separates the historical basis from game estimates; no modern technology moved into 1958.
-- The same recipes, Marks, tech tree and flight rules handle both sets. Factories and the Market use the mode filter. Fixed Market rows displaying despite their hidden flag. The new Parts have 3D models; the Medium Battery also works with the eclipse Anomaly.
-- Save v17 adds `state.difficulty` and the new stock keys. Earlier Companies become Easy and keep their existing game, including Missions already shipping.
-- Tested: 314 unit tests and build pass; six focused tests added. Chromium at 1280×800 and 1024×768: setup, Settings, both Part sets, labels and bars, buying, Test Run, Shipping, reload, Factory choices, Market visibility and v16 migration. A production-build Launch with the new Parts reached a successful Mission Report (Shipping fast-forwarded to calm weather in a saved fixture). No page errors. Tutorial skipped for its known overlay issue.
-- Not tested: touch or team playtesting. No new dependencies or test framework. Launcher checks still wait for the final ticket.
+**Just finished: ticket 21, Free Play.** Rules: GDD §3. File map and decisions: `docs/tickets/21-free-play.md`.
+- Choose Campaign (default) or Free Play independently of Easy/Advanced. Free Play starts anywhere on Earth in 2026, with the existing Parts, unlocked Solar Cells, HQ level 5 and a level 1 Assembly Hall. Settings shows the current play mode.
+- Three generated offers cover radiation surveys, weather photography and geostationary relays, with varied durations, orbits and rewards. Stable IDs keep their terms the same in saves, Test Runs, flights, reports, Research, Patches and Space view. Accepting replenishes the board; completed work stays done; missed work can be retried.
+- Modern Launches use Falcon 9 Rideshares and a two-stage low-poly model with the Company logo. Historical rockets retire. Sourced expendable capacities; prices, staging gap and game reliability are labelled game estimates. No booster landing or owned rocket in this ticket.
+- After the four currently built Campaign Milestones (through Syncom 3), **Continue in Free Play** keeps the same Company and Site, stock, money, Marks, Research, reports, Patches and History Archive. It jumps the date forward to 2026, preserving pending Upgrade time. Later Campaign Milestones move this interim endpoint; the planned finale stays Artemis IV.
+- Save v18 adds `state.playMode`. Earlier games stay in Campaign, including Missions already shipping. Generated Contracts are resolved from their IDs rather than duplicated in the save.
+- Tested: 321 unit tests and build pass; seven focused tests added. Chromium at 1280×800 and 1024×768: setup, worldwide controls, both difficulties, generated board, accepting, Part choices/buying, Test Run, Shipping and reload, modern rocket catalogue, Settings and completed-Campaign continuation. A production-build Falcon 9 flight earned a successful Mission Report and Patch; completed work survived reload. Shipping time/calm weather and previous Anomaly scores used a saved fixture for that flight; continuation used a completed Campaign fixture. No application page errors in the completed checks.
+- Not tested: touch or team playtesting. No new dependencies or test framework. Launcher checks still wait for the final ticket. Online play needs ticket 22 and a team-provided Supabase project.
 
 **QA review (2026-11-11):** checked `main` at `e2ba793`; recorded ten open fixes in tickets **01, 04, 05 (two), 08, 13, 14, 16, 17 and 31**, with steps and [screenshots](docs/qa/2026-11-11/README.md). Game code and existing ticket statuses are unchanged. The Scrub-card clock (16) and failed-rocket report (17) were already in the handoff.
 - Completed all four Milestones and played all three Anomalies reached through Launches, including both new TIROS-1 kinds. Also checked Mines, Market trades, storage, Research, Mk 2 Parts, building Upgrades, insurance and reloads. Chromium at 1440×900 and 1024×768; pause-menu and Research-bar issues also occur in the production build. The 305 tests and build passed during the review.
 - A person still needs to time the tutorial and judge the mini-games' difficulty; touch and performance on real laptops remain unchecked. No planned features were counted as bugs.
 
 **Next:**
-1. Team: compare Easy and Advanced, try the logo maker and an uploaded drawing, and play TIROS-1 to judge the panel timing and eclipse difficulty (ticket 12).
-2. Open tickets: 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
+1. Team: try a new Free Play Company, finish different generated objectives and continue a Campaign. Compare Easy and Advanced; judge the Anomaly difficulty (ticket 12).
+2. Open tickets: 22 (needs a Supabase project from the team), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
 
 **Open:**
 - The panel shows "Push now!" on the intro card while the game waits (it is a still frame); harmless.
@@ -30,10 +31,11 @@
 - Launcher checks wait for the final ticket (see AGENTS.md).
 - Team: save the organisers' early-start permission in writing; capture the official Resources (Nov 13).
 
-**Suggested skills:** `handoff`; `grill-with-docs` before ticket 21 (Free Play).
+**Suggested skills:** `handoff`.
 
 ## Log
 
+- 2026-11-12: Ticket 21 built from freshly pulled main: modern Free Play, generated Contracts, Falcon 9 Rideshares, same-Company continuation, save v18. 321 tests, build and browser checks pass.
 - 2026-11-12: Ticket 20 built from freshly pulled main: Easy and Advanced at setup and in Settings, two extra Advanced Parts with finer labels, shared Factory/Market and flight rules, save v17. 314 tests, build and browser checks pass.
 - 2026-11-12: Ticket 19 built: Company logo maker and drawing upload, logo on HQ flag/sign, all four rockets and Mission Patches; save v16 migrates older Companies to the original preset. 308 tests and build pass.
 - 2026-11-11: Recorded ten confirmed QA fixes in the existing tickets, with reproduction steps and screenshots; game code unchanged.

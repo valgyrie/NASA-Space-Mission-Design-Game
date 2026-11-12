@@ -1,6 +1,7 @@
 import { CONTRACT_DEADLINE_DAYS, CONTRACT_REWARD } from './balance';
 import { eraOf } from './eras';
 import type { SiteState } from './siteState';
+import { hashText, makeRng, randInt } from '../site/random';
 
 /**
  * Contracts: a client's request with an objective, requirements, a reward and a deadline.
@@ -8,10 +9,11 @@ import type { SiteState } from './siteState';
  */
 
 export const CONTRACT_IDS = ['explorer1', 'tiros1', 'telstar1', 'syncom3'] as const;
-export type ContractId = (typeof CONTRACT_IDS)[number];
+export type MilestoneId = (typeof CONTRACT_IDS)[number];
+export type ContractId = MilestoneId | `free-${number}`;
 
-/** A Milestone is a Campaign Contract based on a real event; side Contracts come later. */
-export type ContractKind = 'milestone';
+/** A Milestone follows real history; Free Play generates work for fictional clients. */
+export type ContractKind = 'milestone' | 'generated';
 
 /**
  * Where the Spacecraft must go. A geostationary orbit circles the equator once a day, 35,786 km up: the rocket
@@ -38,14 +40,16 @@ export interface Contract {
   reward: number;
   /** Game days from accepting to the deadline. */
   deadlineDays: number;
-  /** The real Mission's orbit, kilometres above the ground at its lowest and highest. Drawn in the Test Run. */
+  /** The target orbit, kilometres above the ground at its lowest and highest. Historical for Milestones. */
   orbitKm: { low: number; high: number };
-  /** The real orbit's tilt to the equator, in degrees. Drawn in the Space view. */
+  /** The orbit's tilt to the equator, in degrees. Drawn in the Space view. */
   inclinationDeg: number;
   /** A Milestone that must be done before this one is offered: the Campaign follows history in order. */
   after?: ContractId;
   /** The Era it belongs to: it is offered only once the Company has reached it (its HQ's level). */
-  era: 1 | 2;
+  era: 1 | 2 | 5;
+  /** Generated Contracts reuse a translated objective, with a unique number in their name. */
+  template?: 'survey' | 'weather' | 'relay';
   /** The client pays for the whole Launch Vehicle instead of a Rideshare, as AT&T did for Telstar 1. */
   wholeLaunch?: boolean;
 }
@@ -56,7 +60,7 @@ export interface Contract {
  * Data for 30 days matches its high-power transmitter (31 days on mercury batteries).
  * Orbit: perigee 358 km, apogee 2,550 km (docs/research/earth-map.md).
  */
-export const CONTRACTS: Record<ContractId, Contract> = {
+export const CONTRACTS: Record<MilestoneId, Contract> = {
   explorer1: {
     id: 'explorer1',
     kind: 'milestone',
@@ -129,6 +133,36 @@ export const CONTRACTS: Record<ContractId, Contract> = {
   },
 };
 
+/** Stable IDs keep requirements and rewards identical in the board, flight, reports and saves. */
+export function isContractId(id: unknown): id is ContractId {
+  return typeof id === 'string' && ((CONTRACT_IDS as readonly string[]).includes(id) ||
+    (/^free-(0|[1-9]\d{0,8})$/.test(id)));
+}
+
+/** Game estimates, not real historical Missions. Successive IDs cycle through all three Payloads. */
+export function contractById(id: ContractId): Contract {
+  if (!id.startsWith('free-')) return CONTRACTS[id as MilestoneId];
+  const n = Number(id.slice(5));
+  const rng = makeRng(hashText(id));
+  const template = (['survey', 'weather', 'relay'] as const)[n % 3]!;
+  const payload = ({ survey: 'radiationDetector', weather: 'tvCamera', relay: 'transponder' } as const)[template];
+  const geo = template === 'relay';
+  const days = randInt(rng, 2, 6) * 15;
+  const height = randInt(rng, 4, 9) * 100;
+  return {
+    id, kind: 'generated', template, era: 5,
+    requirements: [
+      { kind: 'orbit', orbit: geo ? 'geostationary' : 'lowEarthOrbit' },
+      { kind: 'payload', payload },
+      { kind: 'dataDays', days },
+    ],
+    reward: (geo ? 2_000_000 : template === 'weather' ? 1_200_000 : 700_000) + days * 10_000,
+    deadlineDays: days + 240,
+    orbitKm: geo ? { low: 35_786, high: 35_786 } : { low: height, high: height },
+    inclinationDeg: geo ? 0 : randInt(rng, 30, 55),
+  };
+}
+
 /** A Contract the Company has taken on. */
 export interface AcceptedContract {
   id: ContractId;
@@ -142,13 +176,23 @@ export function accepted(state: SiteState, id: ContractId): AcceptedContract | u
 
 /** Contracts on the board that the Company hasn't taken or finished yet. */
 export function availableContracts(state: SiteState): Contract[] {
+  if (state.playMode === 'freePlay') {
+    const used = new Set<ContractId>([...state.completed, ...state.contracts.map((c) => c.id)]);
+    const offers: Contract[] = [];
+    for (let n = 0; offers.length < 3; n++) {
+      const id: ContractId = `free-${n}`;
+      if (!used.has(id)) offers.push(contractById(id));
+    }
+    return offers;
+  }
   return CONTRACT_IDS.filter((id) => !accepted(state, id) && !state.completed.includes(id) && isOffered(state, id)).map((id) => CONTRACTS[id]);
 }
 
 /** A Contract is offered once the Company has reached its Era and the Milestone before it is done. */
-export function isOffered(state: Pick<SiteState, 'completed' | 'hq'>, id: ContractId): boolean {
-  const before = CONTRACTS[id].after;
-  return eraOf(state) >= CONTRACTS[id].era && (!before || state.completed.includes(before));
+export function isOffered(state: SiteState, id: ContractId): boolean {
+  if (state.playMode === 'freePlay') return availableContracts(state).some((c) => c.id === id);
+  const contract = contractById(id);
+  return contract.kind === 'milestone' && eraOf(state) >= contract.era && (!contract.after || state.completed.includes(contract.after));
 }
 
 export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' | 'done' | 'notYet' };
@@ -179,7 +223,7 @@ export function expireContracts(state: SiteState): ContractId[] {
 
 /** The Game day an accepted Contract is due: whole days from the date it was accepted. */
 export function deadlineDay(contract: AcceptedContract): number {
-  return Math.floor(contract.acceptedDay) + CONTRACTS[contract.id].deadlineDays;
+  return Math.floor(contract.acceptedDay) + contractById(contract.id).deadlineDays;
 }
 
 /** Whole game days left before the deadline, counted by date; 0 once it has passed. */
@@ -194,6 +238,6 @@ export function daysLeft(state: SiteState, contract: AcceptedContract): number {
 export function completeContract(state: SiteState, id: ContractId, pay = true): number {
   state.contracts = state.contracts.filter((c) => c.id !== id);
   if (!state.completed.includes(id)) state.completed.push(id);
-  if (pay) state.money += CONTRACTS[id].reward;
-  return CONTRACTS[id].reward;
+  if (pay) state.money += contractById(id).reward;
+  return contractById(id).reward;
 }

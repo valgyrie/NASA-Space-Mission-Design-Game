@@ -2,20 +2,20 @@ import { type CompanyLogo, DEFAULT_LOGO, isCompanyLogo } from '../company/logo';
 import { FACTORY_KINDS, PARTS } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { ANOMALY_KINDS } from '../game/anomalies';
-import { CONTRACT_IDS, type ContractId } from '../game/contracts';
+import { CONTRACT_IDS, type ContractId, isContractId } from '../game/contracts';
 import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCardFor } from '../game/history';
 import { TECH_IDS, newResearch } from '../game/research';
 import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { JPL, START_KINDS } from '../game/places';
-import { DIFFICULTIES } from '../game/modes';
+import { DIFFICULTIES, PLAY_MODES } from '../game/modes';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 17;
+export const SAVE_VERSION = 18;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -74,7 +74,7 @@ function isFactory(value: unknown): boolean {
 
 function isAcceptedContract(value: unknown): boolean {
   const c = value as Partial<SiteState['contracts'][number]> | null;
-  return !!c && (CONTRACT_IDS as readonly unknown[]).includes(c.id) && isNumber(c.acceptedDay);
+  return !!c && isContractId(c.id) && isNumber(c.acceptedDay);
 }
 
 function isDesign(value: unknown): boolean {
@@ -90,7 +90,7 @@ function isMission(value: unknown): boolean {
   const m = value as Partial<NonNullable<SiteState['mission']>>;
   return (
     typeof m === 'object' &&
-    isOneOf(m.contract, CONTRACT_IDS) &&
+    isContractId(m.contract) &&
     isDesign(m.design) &&
     isComplete(m.design!) &&
     isOneOf(m.vehicle, LAUNCH_VEHICLE_IDS) &&
@@ -130,7 +130,7 @@ function isReport(value: unknown): boolean {
   const r = value as Partial<SiteState['reports'][number]> | null;
   return (
     !!r &&
-    isOneOf(r.contract, CONTRACT_IDS) &&
+    isContractId(r.contract) &&
     isOneOf(r.vehicle, LAUNCH_VEHICLE_IDS) &&
     isOneOf(r.site, LAUNCH_SITE_IDS) &&
     isNumber(r.launchDay) &&
@@ -146,7 +146,7 @@ function isReport(value: unknown): boolean {
 
 const isPatch = (v: unknown): boolean => {
   const p = v as Partial<Patch> | null;
-  return !!p && isOneOf(p.contract, CONTRACT_IDS) && isNumber(p.day);
+  return !!p && isContractId(p.contract) && isNumber(p.day);
 };
 
 const isResearch = (v: unknown): boolean => {
@@ -164,6 +164,7 @@ function isSiteState(value: unknown): value is SiteState {
   return (
     !!v &&
     isOneOf(v.difficulty, DIFFICULTIES) &&
+    isOneOf(v.playMode, PLAY_MODES) &&
     isNumber(v.money) &&
     isNumber(v.day) &&
     Array.isArray(v.mines) &&
@@ -185,9 +186,9 @@ function isSiteState(value: unknown): value is SiteState {
     Array.isArray(v.contracts) &&
     v.contracts.every(isAcceptedContract) &&
     Array.isArray(v.completed) &&
-    v.completed.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    v.completed.every(isContractId) &&
     Array.isArray(v.reopened) &&
-    v.reopened.every((id) => isOneOf(id, CONTRACT_IDS)) &&
+    v.reopened.every(isContractId) &&
     (v.grantDay === null || isNumber(v.grantDay)) &&
     isDesign(v.design) &&
     isMission(v.mission) &&
@@ -266,6 +267,7 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Site is shown), no stations, every design without an engine, and none of the new Parts in stock.
  * Version 15 had no Company logo: use the original maker preset.
  * Version 16 had one Part set: keep it as Easy, with no Advanced Parts in stock.
+ * Version 17 had no play mode: its Companies stay in Campaign.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -367,6 +369,9 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     const betterParts = old.betterParts && typeof old.betterParts === 'object'
       ? { ...old.betterParts, mediumBattery: [], lowPowerAntenna: [] } : old.betterParts;
     v = { ...v, version: 17, state: { ...old, difficulty: 'easy', parts, betterParts } } as typeof v;
+  }
+  if (v?.version === 17) {
+    v = { ...v, version: 18, state: { ...(v as { state?: object }).state, playMode: 'campaign' } } as typeof v;
   }
   return v;
 }

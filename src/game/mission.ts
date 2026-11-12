@@ -1,5 +1,5 @@
 import type { Part } from '../economy/part';
-import { type ContractId, type Orbit, type PayloadKind, CONTRACTS, accepted, completeContract, deadlineDay } from './contracts';
+import { type ContractId, type Orbit, type PayloadKind, contractById, accepted, completeContract, deadlineDay } from './contracts';
 import { INSURANCE } from './balance';
 import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, launchCost, liftFrom } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
@@ -307,7 +307,7 @@ export function missionTimeline(state: SiteState): MissionTimeline | null {
     shipDay: m.shipDay,
     readyDay: m.readyDay,
     launchDay,
-    endDay: launchDay + contractNeeds(CONTRACTS[m.contract]).missionDays,
+    endDay: launchDay + contractNeeds(contractById(m.contract)).missionDays,
     deadlineDay: taken ? deadlineDay(taken) : null,
   };
 }

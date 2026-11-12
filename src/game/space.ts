@@ -1,4 +1,4 @@
-import { CONTRACTS, type ContractId } from './contracts';
+import { contractById, type ContractId } from './contracts';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
 import { contractNeeds } from './spacecraft';
@@ -53,7 +53,7 @@ export interface Satellite {
 }
 
 export function satelliteStatus(report: MissionReport, today: number): SatelliteStatus {
-  const days = contractNeeds(CONTRACTS[report.contract]).missionDays;
+  const days = contractNeeds(contractById(report.contract)).missionDays;
   const day = Math.max(0, Math.floor(today) - report.launchDay);
   const power = report.findings.find((f) => f.kind === 'power');
   const lasts = power?.kind === 'power' ? power.lastsDays : null;
@@ -67,7 +67,7 @@ export function satellitesInOrbit(state: SiteState): Satellite[] {
   return state.reports.flatMap((report, id) => {
     const orbit = report.findings.find((f) => f.kind === 'orbit');
     if (!orbit?.ok) return [];
-    const contract = CONTRACTS[report.contract];
+    const contract = contractById(report.contract);
     return [
       {
         id,

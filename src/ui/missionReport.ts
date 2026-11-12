@@ -6,7 +6,7 @@ import type { Patch } from '../game/history';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
 import { lostText, percentText } from './anomalyPanel';
-import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
+import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 import { makePatch } from './patch';
 
 /** The Mission Patch a report earned, and whether it is the Company's first. */
@@ -35,6 +35,7 @@ export function findingText(f: Finding): string {
     case 'orbit':
       if (!f.ok && f.failedStage != null) {
         const { record } = LAUNCH_VEHICLES[f.vehicle];
+        if (!record) return t('finding.orbit.rocketModern', { orbit: t(`orbit.${f.orbit}`), vehicle: t(`launchVehicle.${f.vehicle}`), n: formatNumber(f.failedStage) });
         return t('finding.orbit.rocket', {
           orbit: t(`orbit.${f.orbit}`),
           vehicle: t(`launchVehicle.${f.vehicle}`),
@@ -151,7 +152,7 @@ export function showMissionReport(
 
   const api: MissionReportDialog = {
     show(report, deadlineDay, today, earned = null) {
-      const contract = t(`contract.${report.contract}.name`);
+      const contract = contractText(report.contract);
       subtitle.textContent = t('report.subtitle', {
         contract,
         vehicle: t(`launchVehicle.${report.vehicle}`),

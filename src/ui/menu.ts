@@ -1,5 +1,5 @@
 import { t } from '../strings';
-import type { Difficulty } from '../game/modes';
+import type { SiteState } from '../game/siteState';
 
 export interface Menu {
   open(): void;
@@ -11,7 +11,8 @@ export interface Menu {
  * The pause menu (Esc): Seed, settings and controls.
  * `onOpen` and `onClose` let the game pause and resume.
  */
-export function makeMenu(root: HTMLElement, seed: string, difficulty: Difficulty, onOpen: () => void, onClose: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void): Menu {
+  const difficulty = state.difficulty;
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
   backdrop.hidden = true;
@@ -61,6 +62,8 @@ export function makeMenu(root: HTMLElement, seed: string, difficulty: Difficulty
   const mode = document.createElement('p');
   mode.className = 'menu-mode';
   mode.textContent = t('menu.mode', { mode: t(`mode.${difficulty}`) });
+  const playMode = document.createElement('p');
+  playMode.className = 'menu-mode';
   const modeNote = document.createElement('p');
   modeNote.className = 'note';
   modeNote.textContent = t(`mode.${difficulty}.note`);
@@ -79,7 +82,7 @@ export function makeMenu(root: HTMLElement, seed: string, difficulty: Difficulty
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, settings, mode, modeNote, fixedMode, controlsLabel, controls, resume);
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, controlsLabel, controls, resume);
   backdrop.append(panel);
   root.append(backdrop);
 
@@ -89,6 +92,7 @@ export function makeMenu(root: HTMLElement, seed: string, difficulty: Difficulty
     },
     open() {
       if (menu.isOpen) return;
+      playMode.textContent = t('menu.playMode', { mode: t(`playMode.${state.playMode}`) });
       backdrop.hidden = false;
       onOpen();
       resume.focus();

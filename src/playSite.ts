@@ -85,7 +85,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const menu = makeMenu(
     ui,
     game.site.seed,
-    state.difficulty,
+    state,
     () => {
       world.keyboardEnabled = false;
       speedBeforeMenu = speed;
@@ -121,7 +121,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     const card = historyCardFor(id, 'before');
     if (card && unlockCard(state, card)) history.show(card);
     saveGame(localStorage, game);
-  });
+  }, () => saveGame(localStorage, game));
   const panel = showBuildingPanel(ui, site, state, () => saveGame(localStorage, game));
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;

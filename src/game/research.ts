@@ -1,5 +1,5 @@
 import { KB_PER_RESEARCH_POINT, LAB_KB_PER_DAY, TECH_TREE } from './balance';
-import { CONTRACTS } from './contracts';
+import { contractById } from './contracts';
 import type { MissionReport } from './mission';
 import { type SiteState, levelBoost } from './siteState';
 
@@ -39,7 +39,7 @@ export function dataFromReport(report: MissionReport, day: number): number {
   if (!find('orbit')?.ok) return 0;
   const comms = find('comms');
   if (!comms) return 0;
-  const missionDays = CONTRACTS[report.contract].requirements.find((r) => r.kind === 'dataDays');
+  const missionDays = contractById(report.contract).requirements.find((r) => r.kind === 'dataDays');
   const workDays = Math.min(missionDays?.kind === 'dataDays' ? missionDays.days : 0, find('power')?.lastsDays ?? Infinity);
   const elapsed = Math.min(Math.max(0, day - report.launchDay), workDays);
   const a = report.anomaly;

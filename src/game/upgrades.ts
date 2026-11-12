@@ -14,7 +14,7 @@ import type { Building, SiteState } from './siteState';
 /** The highest level a kind of building reaches in an Era. The Assembly Hall's level 3 waits for the Large Bus (Era 2). */
 export function maxLevel(kind: SiteBuildingKind, era: Era = 1): number {
   if (kind === 'assemblyHall') return HALL_LEVEL_BY_ERA[era];
-  if (kind === 'hq') return MAX_LEVEL.hq;
+  if (kind === 'hq') return era === 5 ? 5 : MAX_LEVEL.hq;
   return MAX_LEVEL.other;
 }
 

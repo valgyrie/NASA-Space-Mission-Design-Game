@@ -17,7 +17,7 @@ import { adviseLaunch, shippingTo } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
-import { formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
+import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -41,7 +41,7 @@ function button(className: string, text: string): HTMLButtonElement {
 export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
   switch (p.kind) {
     case 'noContract':
-      return t('planner.problem.noContract', { contract: t(`contract.${plan.goal.contract.id}.name`) });
+      return t('planner.problem.noContract', { contract: contractText(plan.goal.contract.id) });
     case 'underway':
       return t('planner.problem.underway');
     case 'vehicleClosed':
@@ -75,8 +75,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
 /** Why a Launch Vehicle can't be booked yet: too early in history, or retired. */
 function closedText(status: VehicleStatus): string {
   if (status.open) return '';
-  if (status.why === 'after') return t('planner.opensAfter', { contract: t(`contract.${status.contract}.name`) });
-  if (status.why === 'era') return t('planner.opensInEra', { era: status.era });
+  if (status.why === 'after') return t('planner.opensAfter', { contract: contractText(status.contract) });
+  if (status.why === 'era') return status.era === 5 ? t('planner.freePlayOnly') : t('planner.opensInEra', { era: status.era });
   return t('planner.retired', { year: status.year });
 }
 
@@ -117,11 +117,11 @@ export function makeLaunchPlanner(
       el('span', 'option-name', t(`launchVehicle.${id}`)),
       lifts,
       price,
-      el('span', 'option-stats', t('planner.reliability', {
+      el('span', 'option-stats', v.record ? t('planner.reliability', {
         pct: formatNumber(Math.round(v.reliability * 100)),
         worked: formatNumber(v.record.worked),
         flights: formatNumber(v.record.flights),
-      })),
+      }) : t('planner.reliabilityEstimate', { pct: formatNumber(Math.round(v.reliability * 100)) })),
       fit,
       locked,
     );

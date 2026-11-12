@@ -1,6 +1,6 @@
 import { type Rng, hashText, makeRng } from '../site/random';
 import { PART_SPREAD, TEST_RUNS } from './balance';
-import { CONTRACTS } from './contracts';
+import { contractById } from './contracts';
 import { LAUNCH_VEHICLES, type LaunchVehicleId, liftFrom } from './launchVehicles';
 import type { Finding, Mission } from './mission';
 import { type Design, SLOTS, contractNeeds, dataOf, hasMainEngine, hasRightPayload, needsMainEngine, powerOf, spacecraftMass } from './spacecraft';
@@ -74,7 +74,7 @@ export function fly(
   spread: Spread = AS_LABELLED,
   failedStage: number | null = null,
 ): Flight {
-  const { orbit, payload, missionDays } = contractNeeds(CONTRACTS[plan.contract]);
+  const { orbit, payload, missionDays } = contractNeeds(contractById(plan.contract));
   const design = plan.design;
   const marks = plan.marks ?? {};
   const massKg = spacecraftMass(design, marks);

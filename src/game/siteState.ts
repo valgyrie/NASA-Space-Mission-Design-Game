@@ -2,12 +2,12 @@ import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildin
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
-import { type AcceptedContract, type ContractId, expireContracts } from './contracts';
+import { CONTRACT_IDS, type AcceptedContract, type ContractId, expireContracts } from './contracts';
 import type { HistoryCardId, Patch } from './history';
 import { type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen } from './launchVehicles';
-import { eraOf, eraStartDay, isBuildingOpen } from './eras';
+import { MODERN_ERA, eraOf, eraStartDay, isBuildingOpen } from './eras';
 import { JPL, type Place } from './places';
-import type { Difficulty } from './modes';
+import type { Difficulty, PlayMode } from './modes';
 import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
@@ -83,6 +83,7 @@ export type Building = Mine | Factory | Warehouse | Lab | AssemblyHall | HQ | Gr
 
 /** Everything about the running Site that changes over time and is saved. */
 export interface SiteState {
+  playMode: PlayMode;
   difficulty: Difficulty;
   money: number;
   /** Game days since the start date. Fractions count. */
@@ -145,11 +146,12 @@ export function noBetterParts(): Record<Part, number[]> {
   return Object.fromEntries(PARTS.map((p) => [p, []])) as unknown as Record<Part, number[]>;
 }
 
-export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'): SiteState {
+export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy', playMode: PlayMode = 'campaign'): SiteState {
   return {
+    playMode,
     difficulty,
     money: START_MONEY,
-    day: 0,
+    day: playMode === 'freePlay' ? eraStartDay(MODERN_ERA) : 0,
     mines: [],
     factories: [],
     warehouses: [],
@@ -157,7 +159,7 @@ export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'
     assemblyHall: null,
     hq: null,
     groundStations: [],
-    eraSeen: 1,
+    eraSeen: playMode === 'freePlay' ? MODERN_ERA : 1,
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
     betterParts: noBetterParts(),
@@ -171,9 +173,9 @@ export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'
     anomalyBest: {},
     history: [],
     patches: [],
-    tutorial: { skipped: false, testRun: false },
+    tutorial: { skipped: playMode === 'freePlay', testRun: false },
     research: newResearch(),
-    vehicle: 'juno1',
+    vehicle: playMode === 'freePlay' ? 'falcon9' : 'juno1',
     place: { ...place },
     launchSite: 'capeCanaveral',
   };
@@ -254,7 +256,7 @@ export function placeAssemblyHall(site: Site, state: SiteState): AssemblyHall {
 /** Put the HQ beside the Assembly Hall in the same way, if the Site has none yet (a new game, or an older save). */
 export function placeHQ(site: Site, state: SiteState): HQ {
   if (state.hq) return state.hq;
-  return (state.hq = { ...nearMiddle(site, state, 'hq'), level: 1, upgradeDay: null });
+  return (state.hq = { ...nearMiddle(site, state, 'hq'), level: state.playMode === 'freePlay' ? MODERN_ERA : 1, upgradeDay: null });
 }
 
 /** The free spot for a building nearest the middle of the Site, preferring flat, open, low land. */
@@ -571,6 +573,22 @@ export function enterEra(state: SiteState): void {
     }
   }
   if (!isVehicleOpen(state, state.vehicle)) state.vehicle = firstOpenVehicle(state);
+}
+
+/** Until later Campaign Eras are built, its four playable Milestones are the endpoint. */
+export function canContinueFreePlay(state: SiteState): boolean {
+  return state.playMode === 'campaign' && state.mission === null &&
+    CONTRACT_IDS.every((id) => state.completed.includes(id));
+}
+
+/** Keep the Company and its history; move dates still to come with the jump to modern play. */
+export function continueFreePlay(state: SiteState): boolean {
+  if (!canContinueFreePlay(state)) return false;
+  state.playMode = 'freePlay';
+  if (state.hq) state.hq.level = MODERN_ERA;
+  state.tutorial.skipped = true;
+  enterEra(state);
+  return true;
 }
 
 /**
