@@ -132,7 +132,7 @@ A strong solution might include a functional interactive game or simulation with
 
 *For data and resources related to this challenge, refer to the Resources tab at the top of the page. More resources may be added before the hackathon begins.*
 
-> (Team note: the **Resources** tab has not been captured in this file yet. Check it on the official page and add it here once it is available.)
+> (Team note: the **Resources** tab has not been captured in this file yet. Check it on the official page and add it here once it is available. On 2026-11-12 the agents' build container could not open spaceappschallenge.org, so a team member may need to paste it in.)
 
 ---
 

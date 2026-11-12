@@ -1,3 +1,4 @@
+import { BLUE_MARBLE_PALETTE, BLUE_MARBLE_ROWS } from './blueMarble';
 import { EARTH_MAP_ROWS } from './earthMap';
 
 /**
@@ -12,10 +13,14 @@ import { EARTH_MAP_ROWS } from './earthMap';
 export const SURFACES = ['.', 'f', 'r', 'b', 't', 's', 'm', 'd', 'i'] as const;
 export type Surface = (typeof SURFACES)[number];
 
+/** A run-length coded row unpacked: 360 cells from 180°W eastwards. */
+const unpack = (row: string, letters: RegExp) =>
+  [...row.matchAll(letters)].map(([, c, n]) => c!.repeat(n ? Number(n) : 1)).join('');
 /** The map unpacked: 180 rows (90°N to 90°S) of 360 cells (180°W eastwards). */
-const GRID: string[] = EARTH_MAP_ROWS.map((row) =>
-  [...row.matchAll(/([a-z.])(\d*)/g)].map(([, c, n]) => c!.repeat(n ? Number(n) : 1)).join(''),
-);
+const GRID: string[] = EARTH_MAP_ROWS.map((row) => unpack(row, /([a-z.])(\d*)/g));
+/** NASA Blue Marble colours on the same grid: a letter per land cell, "." for sea. */
+const BLUE_MARBLE: string[] = BLUE_MARBLE_ROWS.map((row) => unpack(row, /([A-Za-z.])(\d*)/g));
+const PALETTE_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz';
 const ROWS = 180;
 const COLS = 360;
 
@@ -26,7 +31,10 @@ export function surfaceAt(lat: number, lon: number): Surface {
   return GRID[row]![col] as Surface;
 }
 
-/** Land colours. The sea is coloured by the globe's shader (`SEA`). */
+/**
+ * Land colours by surface. The globe shows NASA Blue Marble colours instead (`landColour`); these stay
+ * for any land cell Blue Marble has no colour for. The sea is coloured by the globe's shader (`SEA`).
+ */
 export const LAND_COLOUR: Record<Exclude<Surface, '.'>, number> = {
   f: 0x4c8a42, // temperate forest and farmland
   r: 0x2c7236, // rainforest
@@ -38,6 +46,13 @@ export const LAND_COLOUR: Record<Exclude<Surface, '.'>, number> = {
   i: 0xf1f5fa, // ice
 };
 export const SEA = { deep: 0x1a4c96, shallow: 0x2f7fc8 };
+
+/** The colour of a land cell of the map: NASA Blue Marble's, averaged over the 1° cell. */
+export function landColour(row: number, col: number): number {
+  const letter = BLUE_MARBLE[row]![col]!;
+  const index = PALETTE_LETTERS.indexOf(letter);
+  return index >= 0 ? BLUE_MARBLE_PALETTE[index]! : LAND_COLOUR[GRID[row]![col] as Exclude<Surface, '.'>];
+}
 
 /**
  * Where a pixel of an Earth picture is on the globe. Pictures wrap a Three.js sphere whose seam is at
@@ -72,7 +87,7 @@ export function earthPixels(width: number, height: number): Uint8Array {
       const surface = GRID[r]![c] as Surface;
       if (surface === '.') continue;
       const i = r * COLS + c;
-      const colour = LAND_COLOUR[surface];
+      const colour = landColour(r, c);
       land[i] = 1;
       red[i] = colour >> 16;
       green[i] = (colour >> 8) & 255;
