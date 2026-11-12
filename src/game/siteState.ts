@@ -159,7 +159,8 @@ export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'
     assemblyHall: null,
     hq: null,
     groundStations: [],
-    eraSeen: playMode === 'freePlay' ? MODERN_ERA : 1,
+    // A new Campaign has not seen Era 1's card yet; a new Free Play Company starts in the modern Era without one.
+    eraSeen: playMode === 'freePlay' ? MODERN_ERA : 0,
     stock: zeroes(RAW_MATERIALS),
     parts: zeroes(PARTS),
     betterParts: noBetterParts(),

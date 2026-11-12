@@ -4,7 +4,7 @@ import { CHALLENGE, SITE_SOURCES, SOFTWARE, SOFTWARE_IDS, SOURCES, VEHICLE_SOURC
 import { t, type StringKey } from '../strings';
 import { makeDatasetList } from './dataCredits';
 
-/** The Credits screen in the main menu: team, real data, photos, reading sources, audio and software. */
+/** The Credits screen in the main menu: team, real data, photos, illustrations, reading sources, audio and software. */
 export function makeCredits(): HTMLElement {
   const credits = document.createElement('div');
   credits.className = 'credits';
@@ -43,13 +43,16 @@ export function makeCredits(): HTMLElement {
     paragraph(t('sources.estimates'), 'note'),
   );
 
+  const art = section('credits.art.heading');
+  art.append(paragraph(t('credits.art')));
+
   const audio = section('credits.audio.heading');
   audio.append(paragraph(t('audio.musicCredit')), paragraph(t('audio.effectsCredit')));
 
   const software = section('credits.software.heading');
   software.append(list(SOFTWARE_IDS.map((id) => listItem(link(SOFTWARE[id], t(`credits.software.${id}`))))));
 
-  credits.append(team, data, photos, reading, audio, software);
+  credits.append(team, data, photos, art, reading, audio, software);
   return credits;
 }
 
