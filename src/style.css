@@ -2925,7 +2925,19 @@ button.upgrade {
 }
 .data-credits legend, .data-credits summary { font-size: 14px; color: var(--muted); }
 .data-credits summary { cursor: pointer; }
-.data-credits ul { list-style: none; margin: 8px 0 0; padding: 0; }
-.data-credits li { margin: 0 0 10px; }
-.data-credits li p { margin: 2px 0; font-size: 13px; }
-.data-credits a { color: var(--text); font-weight: 600; }
+.dataset-list { list-style: none; margin: 8px 0 0; padding: 0; }
+.dataset-list li { margin: 0 0 10px; }
+.dataset-list li p { margin: 2px 0; font-size: 13px; }
+.dataset-list a { color: var(--text); font-weight: 600; }
+
+/* Credits (ticket 28): a scrolling view inside the main menu. */
+.credits-view[hidden], .main-menu fieldset[hidden] { display: none; }
+.credits { display: flex; flex-direction: column; gap: 16px; }
+.credits section { border-top: 1px solid var(--panel-edge); padding-top: 10px; }
+.credits h3 { margin: 0 0 6px; font-size: 15px; }
+.credits p { margin: 4px 0; font-size: 13px; }
+.credits .credits-team { font-size: 18px; font-weight: 700; }
+.credits ul:not(.dataset-list) { margin: 4px 0; padding-left: 18px; font-size: 13px; }
+.credits li { margin: 2px 0; }
+.credits a { color: #8fc6ff; text-underline-offset: 3px; overflow-wrap: anywhere; }
+.credits a:hover { color: var(--text); }

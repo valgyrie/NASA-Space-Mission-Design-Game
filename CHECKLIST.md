@@ -95,9 +95,9 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
 - [x] Demo Mode: one save per finished Era (ticket 24: Eras 1 and 2, separate from the player Company)
 - [x] NASA data used visibly in the game (see GDD §14)
-- [ ] Credits screen (data, audio, sources)
+- [x] Credits screen (data, audio, sources; team names still a placeholder)
 - [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits
-- [ ] README: how to play and run
+- [x] README: how to play and run
 - [ ] Hosted playable link
 - [ ] Submission video
 - [ ] Project page on spaceappschallenge.org

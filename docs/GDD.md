@@ -307,6 +307,8 @@ The challenge expects the provided data to be used visibly. Planned slots, to be
 
 Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Raw Materials, date, speed) · Build menu · Contracts board · Mission Designer · Launch planner (vehicle, site, weather, window, insurance) · Test Run · Flight · Mission Report · Space view · Research · History Archive · Patch gallery · Leaderboards and Weekly Challenge · Pause menu (Esc: Seed, Settings) · Credits
 
+**Credits (ticket 28):** a main-menu view, closed with Back or Esc. It shows the team (for now the placeholder "Team Artemis-IV"; the team adds its names before submission), that code and art were written with AI coding agents and reviewed by the team, the challenge link and a not-made-or-endorsed-by-NASA line. Then every real dataset (the same list as Real data), each Real History photo credit, every reading source (missions, rockets, Launch Sites, science), music and sound, and the software with its licence. No official logo until organisers confirm (§11).
+
 ## 16. Tutorial (first 10 minutes, Explorer 1)
 
 1. Name the Company and pick the Historic start.
