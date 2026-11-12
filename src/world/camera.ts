@@ -70,6 +70,15 @@ export function easeInOut(t: number): number {
   return c * c * (3 - 2 * c);
 }
 
+/** Keep the look-at point inside a box of world x/z (the Site and a margin), so the player can't wander off. */
+export function clampToBox(
+  x: number,
+  z: number,
+  box: { minX: number; maxX: number; minZ: number; maxZ: number },
+): { x: number; z: number } {
+  return { x: Math.min(box.maxX, Math.max(box.minX, x)), z: Math.min(box.maxZ, Math.max(box.minZ, z)) };
+}
+
 /** Keep the look-at point over the Site or near it, so the player can't wander off. */
 export function clampToGround(x: number, z: number, halfSize: number): { x: number; z: number } {
   const c = (v: number) => Math.min(halfSize, Math.max(-halfSize, v));

@@ -4,15 +4,14 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 31 built; 27 partly built (PR #27); 28's and 29's agent parts built on `claude/gracious-maxwell-l1cxre` (from `main` at `71c533a`, PR #27 the latest merged; no PR opened for this branch yet). 12, 13, 16–23, 25 and 26 still await team playtests/listening/visual review.
+**State:** tickets 01–26, 30 and 31 built; 27 partly built (PR #27); 28's and 29's agent parts on `main` (PR #28). Ticket 30 built on `claude/tender-archimedes-nmbgly` (from `main` at `ea36d53`, PR #28 the latest merged; no PR opened yet). 12, 13, 16–23, 25, 26 and 30 still await team playtests/listening/visual review.
 
-**Just finished: ticket 29 (agent part), Era illustrations.** Details: `docs/tickets/29-era-illustrations.md`, `docs/art/README.md`, GDD §13.
-- `docs/art/README.md`: style guide, one prompt each for Era 1, Era 2 and Free Play, steps to add the images and a credits table.
-- The team chose a new **Era 1 card** for new Campaigns (before the tutorial; older saves skip it via save upgrade `eraSeen: 1`).
-- The Era card shows `public/eras/era-<N>.webp` with "Illustration (AI-generated)"; text only until the files exist. `scripts/prepare-era-art.py` compresses the team's picks. Credits has an Illustrations line.
-- Tested: 347 tests, type checks, build; Chromium with stand-in images at 1280×800 and 700×600. No real images yet.
-
-**Earlier this session: ticket 28 (agent part).** Main-menu Credits screen (team placeholder "Team Artemis-IV" in `credits.team`), README How to play and Credits. See `docs/tickets/28-submission.md`.
+**Just finished: ticket 30 (Optional), buy the land next door.** Details and as-built notes: `docs/tickets/30-buy-neighbouring-plots.md`, GDD §4.
+- Land around the Site comes in Site-sized Plots; the Home Site is Plot (0, 0) and keeps its tile coordinates. Each Plot's Deposits use their own random numbers, so the Home Site never changes.
+- Hover the land next door: the Plot is tinted and fenced (green = can buy), its Deposits show faintly. Click: card with Deposits, water, land, price and Buy. Only Plots touching owned land (corners count).
+- A bought Plot is part of the Site: build on it (also across the old edge), border, rocks, shadows, camera bounds and the Shipping road all follow. Save v19 stores `plots` and `freePlots`.
+- Free Play: every 4th generated Contract also gives a free Plot (Contracts board and Mission Report say so).
+- Tested: 354 tests, type checks, build; Chromium at 1280×800 and 700×600 (hover, card, buy, Warehouse on the new Plot, reload). Launcher checks not run (final ticket only).
 
 **Next:**
 1. Nov 13: finish ticket 27 (capture the official Resources, map datasets, add to `DATASETS`). Then re-check the Era prompts against the Resources.
@@ -20,6 +19,8 @@
 3. Ticket 28 hosting: team picks GitHub Pages (repo must be public), Netlify or Vercel. Supabase only runs the backend. Then real names in `credits.team`, video, project page, repo public, organisers' logo answer, final launcher checks.
 
 **Open:**
+- Team: playtest ticket 30. Prices are first guesses (`PLOT_PRICE` in `src/game/balance.ts`). Decide if a Survey fee should come before seeing a Plot (default: free).
+- On a 700 px wide screen the Plot card and the building panel sit under the wrapped top bar.
 - QA fixes in `docs/qa/2026-11-11/README.md` (nine open) and the issues listed in tickets 12–23. Unchanged.
 - Stray screenshots in the repo root (`active-*.png`, `board-*.png`, `market-*.png`, `top-*.png`) predate this session; ask the team before removing.
 
@@ -27,6 +28,7 @@
 
 ## Log
 
+- 2026-11-12: Ticket 30 built from freshly pulled main: Plots next door with their own Deposits, hover highlight and Plot card, buying grows the Site (building, border, camera, shadows, Shipping road), Free Play land Contracts, save v19. 354 tests, build and browser checks pass.
 - 2026-11-12: Ticket 29 (agent part): art guide and Era prompts, Era 1 card for new Campaigns, Era card image slot with AI-illustration caption, compression script. 347 tests, build and browser checks pass.
 - 2026-11-12: Ticket 28 (agent part): main-menu Credits screen (placeholder team Artemis-IV), README How to play and Credits. 345 tests, build and browser checks pass.
 - 2026-11-12: Ticket 27 (part) on `main` via PR #27: Blue Marble globe colours from NASA GIBS and the Real data list in the menus; official Resources still to capture.

@@ -138,6 +138,10 @@ export interface SiteState {
   place: Place;
   /** The Launch Site picked in the Launch planner. */
   launchSite: LaunchSiteId;
+  /** Plots of land bought next to the Home Site, as [px, pz], oldest first (ticket 30). The Home Site is not listed. */
+  plots: [number, number][];
+  /** Plots won from Contracts and not yet chosen: the next Plot bought is free. */
+  freePlots: number;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -179,6 +183,8 @@ export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'
     vehicle: playMode === 'freePlay' ? 'falcon9' : 'juno1',
     place: { ...place },
     launchSite: 'capeCanaveral',
+    plots: [],
+    freePlots: 0,
   };
 }
 

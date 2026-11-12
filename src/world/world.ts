@@ -4,7 +4,7 @@ import { logoTexture } from './logoTexture';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
-import { type Land, SITE_SIZE, type Site, landOf, tileAt } from '../site/site';
+import { type Land, type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotOf, tileAt } from '../site/site';
 import {
   FOV_DEGREES,
   MAX_DISTANCE,
@@ -18,7 +18,7 @@ import {
   KEY_SPEED,
   PAN_BEYOND_SITE,
   cameraOffset,
-  clampToGround,
+  clampToBox,
   easeInOut,
   nearestIsoAzimuth,
   hazeFor,
@@ -45,7 +45,7 @@ export interface ShippingState {
   stage: 'assembling' | 'shipping' | 'ready';
   fraction: number;
 }
-import { STEP, buildSiteMesh, clearRocks, tileCentre } from './siteMesh';
+import { STEP, buildPlotMarker, buildSiteMesh, clearRocks, siteBounds, tileCentre } from './siteMesh';
 
 const COLOURS = {
   /** Pale haze at the horizon; distant land fades into it. */
@@ -136,6 +136,9 @@ export class World {
   /** Building models by the key "x,z" of their middle tile. */
   private readonly buildingAt = new Map<string, THREE.Group>();
   private readonly marker: THREE.Mesh;
+  private readonly sun = new THREE.DirectionalLight(COLOURS.sun, 2.6);
+  /** The Plot next door under the pointer, highlighted (ticket 30). */
+  private plotMarker: { key: string; group: THREE.Group } | null = null;
   private readonly sky = makeSky();
   private readonly fog = new THREE.Fog(COLOURS.horizon, 100, 300);
   private readonly frameCallbacks: ((seconds: number) => void)[] = [];
@@ -199,10 +202,22 @@ export class World {
   }
 
   private setPose(p: CameraPose): void {
-    const { x, z } = clampToGround(p.target.x, p.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
+    const { x, z } = this.clampTarget(p.target.x, p.target.z);
     this.controls.target.set(x, p.target.y, z);
     const offset = new THREE.Vector3().setFromSpherical(new THREE.Spherical(p.distance, p.polar, p.azimuth));
     this.camera.position.copy(this.controls.target).add(offset);
+  }
+
+  /** Keep the camera's look-at point over the Site (every Plot of it) or near it. */
+  private clampTarget(x: number, z: number): { x: number; z: number } {
+    const b = this.site ? siteBounds(this.site) : { minX: 0, maxX: SITE_SIZE, minZ: 0, maxZ: SITE_SIZE };
+    const o = -SITE_SIZE / 2;
+    return clampToBox(x, z, {
+      minX: b.minX + o - PAN_BEYOND_SITE,
+      maxX: b.maxX + o + PAN_BEYOND_SITE,
+      minZ: b.minZ + o - PAN_BEYOND_SITE,
+      maxZ: b.maxZ + o + PAN_BEYOND_SITE,
+    });
   }
 
   /** Glide back to the isometric view of the whole Site, keeping the nearest corner you were looking from. */
@@ -291,7 +306,7 @@ export class World {
     c.rotateSpeed = 0.6;
     c.zoomSpeed = 1.2;
     c.addEventListener('change', () => {
-      const { x, z } = clampToGround(c.target.x, c.target.z, SITE_SIZE / 2 + PAN_BEYOND_SITE);
+      const { x, z } = this.clampTarget(c.target.x, c.target.z);
       const dx = x - c.target.x;
       const dz = z - c.target.z;
       if (dx !== 0 || dz !== 0) {
@@ -311,7 +326,7 @@ export class World {
   private addLights(): void {
     this.scene.add(new THREE.HemisphereLight(COLOURS.skyLight, COLOURS.groundLight, 1.15));
 
-    const sun = new THREE.DirectionalLight(COLOURS.sun, 2.6);
+    const sun = this.sun;
     sun.position.copy(SUN_DIRECTION).multiplyScalar(120);
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
@@ -330,24 +345,59 @@ export class World {
 
   /** Show a Site, replacing the one on screen. */
   showSite(site: Site): void {
-    if (this.siteGroup) {
-      this.scene.remove(this.siteGroup);
-      this.siteGroup.traverse((o) => {
-        if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
-          o.geometry.dispose();
-          (o.material as THREE.Material).dispose();
-        }
-      });
-    }
-    this.siteGroup = buildSiteMesh(site, COLOURS.horizon);
-    this.scene.add(this.siteGroup);
     this.site = site;
     this.land = landOf(site);
+    this.redrawLand();
     this.buildings.clear();
     this.buildingAt.clear();
     this.shipping.reset();
     this.route = null;
     this.following = false;
+  }
+
+  /** Draw the Site's land again, after a Plot joins it (ticket 30). Buildings stay; rocks under them stay cleared. */
+  redrawLand(): void {
+    if (!this.site) return;
+    if (this.siteGroup) {
+      this.scene.remove(this.siteGroup);
+      disposeAll(this.siteGroup);
+    }
+    this.siteGroup = buildSiteMesh(this.site, COLOURS.horizon);
+    this.scene.add(this.siteGroup);
+    for (const model of this.buildingAt.values()) {
+      const { x, z } = model.userData.tile as { x: number; z: number };
+      for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
+    }
+    this.markPlot(null);
+  }
+
+  /** The Plot under a point on the screen, on the Site or in the full-detail land around it; null over the far haze. */
+  plotAtScreen(clientX: number, clientY: number): PlotRef | null {
+    const group = this.siteGroup;
+    if (!group || !this.site) return null;
+    const land = ['terrain', 'scenery-near'].map((n) => group.getObjectByName(n)).filter((o) => !!o);
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const ndc = new THREE.Vector2(((clientX - rect.left) / rect.width) * 2 - 1, -((clientY - rect.top) / rect.height) * 2 + 1);
+    this.raycaster.setFromCamera(ndc, this.camera);
+    const hit = this.raycaster.intersectObjects(land, false)[0];
+    if (!hit?.face) return null;
+    const p = hit.point.clone().addScaledVector(hit.face.normal, -0.01);
+    return plotOf(Math.floor(p.x + this.site.size / 2), Math.floor(p.z + this.site.size / 2));
+  }
+
+  /** Highlight a Plot next door, green if it can be bought. Null, or a Plot of the Site, hides the highlight. */
+  markPlot(plot: PlotRef | null, buyable = false): void {
+    const key = plot && this.site && !ownsPlot(this.site, plot.px, plot.pz) ? `${plot.px},${plot.pz},${buyable}` : null;
+    if (this.plotMarker?.key === key) return;
+    if (this.plotMarker) {
+      this.scene.remove(this.plotMarker.group);
+      disposeAll(this.plotMarker.group);
+      this.plotMarker = null;
+    }
+    if (!key || !plot || !this.land) return;
+    const group = buildPlotMarker(this.land, plot, buyable);
+    this.scene.add(group);
+    this.plotMarker = { key, group };
   }
 
   /**
@@ -421,7 +471,7 @@ export class World {
     this.buildings.add(model);
     this.buildingAt.set(`${x},${z}`, model);
     this.setWorking(x, z, true);
-    if (this.siteGroup) for (const t of footprint(x, z)) clearRocks(this.siteGroup, this.site, t.x, t.z);
+    if (this.siteGroup) for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
   }
 
   /** Start or stop the moving parts of the building on tile (x, z). Factories move only while they make something. */
@@ -559,6 +609,17 @@ export class World {
     this.camera.updateProjectionMatrix();
   }
 
+  /** Keep the sun's shadows over the Plot the camera looks at, so buildings on every Plot cast them. */
+  private followSun(): void {
+    if (!this.site) return;
+    const half = this.site.size / 2;
+    const { px, pz } = plotOf(Math.floor(this.controls.target.x + half), Math.floor(this.controls.target.z + half));
+    const at = ownsPlot(this.site, px, pz) ? { x: px * SITE_SIZE, z: pz * SITE_SIZE } : { x: 0, z: 0 };
+    if (this.sun.target.position.x === at.x && this.sun.target.position.z === at.z) return;
+    this.sun.target.position.set(at.x, 0, at.z);
+    this.sun.position.copy(SUN_DIRECTION).multiplyScalar(120).add(this.sun.target.position);
+  }
+
   start(): void {
     let last = performance.now();
     this.renderer.setAnimationLoop((now: number) => {
@@ -568,6 +629,7 @@ export class World {
       this.moveCamera(seconds);
       this.followGround(seconds);
       this.controls.update();
+      this.followSun();
       const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
       this.fog.near = near;
       this.fog.far = far;
@@ -575,4 +637,14 @@ export class World {
       if (!this.hidden) this.renderer.render(this.scene, this.camera);
     });
   }
+}
+
+/** Free the GPU memory of every mesh and line in a group. */
+function disposeAll(group: THREE.Object3D): void {
+  group.traverse((o) => {
+    if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
+      o.geometry.dispose();
+      (o.material as THREE.Material).dispose();
+    }
+  });
 }

@@ -5,6 +5,7 @@ import type { Finding, MissionReport } from '../game/mission';
 import { type Anomaly, antennaChance } from '../game/anomalies';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { Patch } from '../game/history';
+import { contractById } from '../game/contracts';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
 import { lostText, percentText } from './anomalyPanel';
@@ -179,7 +180,10 @@ export function showMissionReport(
       const lines = anomalyLines(report);
       anomaly.replaceChildren(...lines.map((line, i) => el('p', i === 0 ? '' : 'report-anomaly-why', line)));
       anomalyHeading.hidden = anomaly.hidden = lines.length === 0;
-      if (report.success) reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
+      if (report.success) {
+        reward.textContent = t('report.reward', { money: formatMoney(report.reward) });
+        if (contractById(report.contract).plot) reward.textContent += ` ${t('report.rewardPlot')}`;
+      }
       else if (deadlineDay !== null && today < deadlineDay) {
         // Only the rocket let it down: the design was fine, so the same one can fly again.
         const rocketOnly = report.findings.every((f) => f.ok || (f.kind === 'orbit' && f.failedStage != null));

@@ -105,7 +105,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ## Optional (later)
 
-- [ ] Buy neighbouring Plots to grow the Site (ticket 30)
+- [x] Buy neighbouring Plots to grow the Site (ticket 30)
 - [ ] Era 3: Apollo 11 support, Landsat 1
 - [ ] Crew Module, Launch Escape System, ≥95% rule (crewed Milestones start in Era 3)
 - [ ] Era 4: Hubble, Lunar Reconnaissance Orbiter, own rockets and Spaceport Site

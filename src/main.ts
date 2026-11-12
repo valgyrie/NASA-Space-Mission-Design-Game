@@ -10,6 +10,7 @@ import { showNewCompany } from './ui/newCompany';
 import { World } from './world/world';
 import { showOnline } from './ui/online';
 import { showTitleScreen } from './ui/titleScreen';
+import { addOwnedPlots } from './game/plots';
 import { showLoading } from './ui/loading';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world');
@@ -33,6 +34,7 @@ world.controls.enabled = false;
 function previewCompany(): void {
   const game = saved ? structuredClone(saved) : createDemo(2);
   const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
+  addOwnedPlots(site, game.state);
   placeAssemblyHall(site, game.state);
   placeHQ(site, game.state);
   fitBuildings(site, game.state);

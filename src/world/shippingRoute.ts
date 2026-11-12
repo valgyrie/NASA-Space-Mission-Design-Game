@@ -74,8 +74,9 @@ export function shippingRoute(site: Site, start: { x: number; z: number }, occup
   }
   const { dir, dock } = best!;
   const from = { x: dock.x - half + 0.5, z: dock.z - half + 0.5 };
-  // Distance from the dock to the Site's edge along the road, then on past it.
-  const toEdge = dir.x > 0 ? site.size - dock.x : dir.x < 0 ? dock.x + 1 : dir.z > 0 ? site.size - dock.z : dock.z + 1;
+  // Distance from the dock to the Site's edge along the road (bought Plots included), then on past it.
+  let toEdge = 0;
+  while (tileAt(site, dock.x + dir.x * toEdge, dock.z + dir.z * toEdge)) toEdge++;
   const length = toEdge - 0.5 + DRIVE_BEYOND_SITE;
   return { dock, dir, from, to: { x: from.x + dir.x * length, z: from.z + dir.z * length } };
 }

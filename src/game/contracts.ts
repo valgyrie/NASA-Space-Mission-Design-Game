@@ -1,4 +1,4 @@
-import { CONTRACT_DEADLINE_DAYS, CONTRACT_REWARD } from './balance';
+import { CONTRACT_DEADLINE_DAYS, CONTRACT_REWARD, LAND_CONTRACT_EVERY } from './balance';
 import { eraOf } from './eras';
 import type { SiteState } from './siteState';
 import { hashText, makeRng, randInt } from '../site/random';
@@ -52,6 +52,8 @@ export interface Contract {
   template?: 'survey' | 'weather' | 'relay';
   /** The client pays for the whole Launch Vehicle instead of a Rideshare, as AT&T did for Telstar 1. */
   wholeLaunch?: boolean;
+  /** Success also gives a Plot of land next to the Site, free to choose (ticket 30). */
+  plot?: boolean;
 }
 
 /**
@@ -160,6 +162,7 @@ export function contractById(id: ContractId): Contract {
     deadlineDays: days + 240,
     orbitKm: geo ? { low: 35_786, high: 35_786 } : { low: height, high: height },
     inclinationDeg: geo ? 0 : randInt(rng, 30, 55),
+    ...(n % LAND_CONTRACT_EVERY === LAND_CONTRACT_EVERY - 1 ? { plot: true } : {}),
   };
 }
 
@@ -239,5 +242,7 @@ export function completeContract(state: SiteState, id: ContractId, pay = true): 
   state.contracts = state.contracts.filter((c) => c.id !== id);
   if (!state.completed.includes(id)) state.completed.push(id);
   if (pay) state.money += contractById(id).reward;
+  // Land is not cut by an Anomaly, so it comes at once.
+  if (contractById(id).plot) state.freePlots += 1;
   return contractById(id).reward;
 }

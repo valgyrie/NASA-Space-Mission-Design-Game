@@ -102,7 +102,10 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       field(t('contracts.client'), contractText(contract.id, 'client')),
       field(t('contracts.objective'), contractText(contract.id, 'objective')),
       field(t('contracts.requirements'), requirements),
-      field(t('contracts.reward'), formatMoney(contract.reward)),
+      field(
+        t('contracts.reward'),
+        contract.plot ? t('contracts.rewardPlot', { money: formatMoney(contract.reward) }) : formatMoney(contract.reward),
+      ),
       field(t('contracts.deadline'), deadline),
     );
     box.append(missionLinks(contract.id));
