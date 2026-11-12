@@ -21,4 +21,6 @@
 
 - [ ] Make a failed rocket's Mission Report say what happened to the flight. Telstar 1 failed when Thor-Delta's second stage failed, but its report still said Power lasted all 136 days, all Data reached home, and the Mission finished before the deadline. Those are what the design could have done, not what the flight did. The **$2.18M** Launch Insurance payout was correct.
 
-![The failed Launch report still claims all Data reached home](../qa/2026-11-11/rocket-failure-report.png)
+![The failed Launch report still claims all Data reached home](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/rocket-failure-report.png)
+
+**Rechecked (2026-11-12):** still reproduces on `4661008`. Current screenshots: [1](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-17-failed-rocket-report-claims-flight-worked.png).

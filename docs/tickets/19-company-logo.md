@@ -20,3 +20,11 @@ The HQ's sign and both sides of its flag, all four Launch Vehicles, and Mission 
 **Files:** `src/company/logo.ts` (recipe, drawing, upload and validation), `src/ui/logoEditor.ts` (shared editor and dialog), `src/world/logoTexture.ts` (3D texture). Existing setup, HUD, HQ, rocket, Launch show, patch and save code use these.
 
 **Tested:** 308 unit tests and the production build pass. Only three unit tests were added: v15 migration, custom logo persistence and invalid saved logo data. Chromium at 1280×800 and 1024×768: maker options, colours, PNG/JPEG/WebP resize and transparency, invalid uploads, Save/Cancel/Esc, pause, maker/upload reload, old-save migration, HQ flag/sign, Launch show, Mission Report and patch gallery. All four rocket models use the logo and release its texture. No page errors. Touch and a team member's own drawing remain unchecked.
+
+**QA (2026-11-12):**
+
+- [ ] Keep the Site paused while the logo editor is open, including keyboard input. Click the Company logo, Tab past the editor's controls to **1×** or **4×** in the top bar, then Enter. The Game date and Contract deadline keep moving behind the editor. The pause menu has the same existing issue (ticket 04); the editor added in this ticket also needs to contain focus.
+
+![The logo editor open while the Site runs](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-logo-editor-keyboard-runs-clock.png)
+
+Also reproduced in the production build, without development hooks: **4×** runs behind the editor. [Before](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-production-logo-clock-before.png), [after](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-production-logo-clock-after.png).

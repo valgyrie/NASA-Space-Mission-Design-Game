@@ -26,4 +26,6 @@
 
 - [ ] Keep buildings off the occupied Shipping dock. While a Spacecraft is being assembled on the truck, place a Warehouse on the loading dock. The marker is green, money is spent, and the Warehouse appears through the truck and crane. After reload the Warehouse stays and the dock moves elsewhere. Checked on Seed **K7QXM2**, Historic start.
 
-![A Warehouse overlaps the Shipping truck and crane](../qa/2026-11-11/warehouse-on-shipping-dock.png)
+![A Warehouse overlaps the Shipping truck and crane](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/warehouse-on-shipping-dock.png)
+
+**Rechecked (2026-11-12):** still reproduces on `4661008`. Current screenshots: [1](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-08-occupied-shipping-dock-green-marker.png), [2](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-08-warehouse-on-shipping-dock.png).

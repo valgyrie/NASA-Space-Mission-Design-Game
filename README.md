@@ -91,3 +91,4 @@ The in-game Credits screen has the full list with links.
 - [Glossary](GLOSSARY.md): the game's terms
 - [Challenge brief](docs/challenge.md)
 - [Decisions](docs/adr/)
+- [Screenshots and QA evidence](screenshots/README.md)

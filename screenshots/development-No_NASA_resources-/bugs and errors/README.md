@@ -1,0 +1,27 @@
+# Bugs and errors
+
+Current captures: **12 November 2026**, `main` at **4661008**. Chromium, normally **1440×900**; the narrow side-panel captures are **700×600**. Full results and test limits: [QA report](../../../docs/qa/2026-11-12/README.md).
+
+Each row names a visible problem and the action that causes it. The ticket holds the full reproduction steps. These are open findings; this pass records them without changing game code.
+
+| Ticket | What happens | How it occurs | Screenshot |
+|---|---|---|---|
+| [01](../../../docs/tickets/01-project-skeleton.md) | Site camera enters a hillside | Zoom close beside a hill, tilt down with F. | [View](ticket-01-site-camera-under-hill.png) |
+| [04](../../../docs/tickets/04-mines-and-time.md) | Pause menu lets the Site run | Open the menu; Tab to background 1×, then Enter. | [View](ticket-04-pause-menu-keyboard-runs-clock.png) |
+| [05](../../../docs/tickets/05-factories-and-market.md) | Storage goes above capacity | Fill storage after a Factory takes its inputs; finish or change its Part. | [View](ticket-05-finished-part-overfills-storage.png) |
+| [05](../../../docs/tickets/05-factories-and-market.md) | Factory says only “Waiting for” | Pause with enough Aluminium for a Small Bus; open Metal Works. | [View](ticket-05-paused-factory-waiting-blank.png) |
+| [08](../../../docs/tickets/08-first-full-mission-loop.md) | Warehouse overlaps the Shipping dock | During assembly, place a Warehouse on the truck’s dock. | [View](ticket-08-warehouse-on-shipping-dock.png) |
+| [13](../../../docs/tickets/13-tutorial-and-history.md) | Tutorial blocks Shipping | Reach step 6; scroll the Launch planner to Shipping. | [View](ticket-13-tutorial-covers-shipping.png) |
+| [16](../../../docs/tickets/16-real-places-and-weather.md) | Scrub card leaves the clock running | Launch in bad weather at 1×; leave the card open. | [View](ticket-16-scrub-clock-after.png) |
+| [17](../../../docs/tickets/17-risk-and-failure.md) | Failed-rocket report claims the Mission worked | Read the report after Thor-Delta’s stage 2 fails. | [View](ticket-17-failed-rocket-report-claims-flight-worked.png) |
+| [19](../../../docs/tickets/19-company-logo.md) | Logo editor lets the Site run | Open the editor; Tab to background 1×/4×, then Enter. | [View](ticket-19-production-logo-clock-after.png) |
+| [22](../../../docs/tickets/22-online-basics.md) | Current cloud saves are rejected | Free Play → Online → Save to cloud; v19 gets invalidSave. | [View](ticket-22-production-cloud-save-rejected.png) |
+| [26](../../../docs/tickets/26-look-and-feel.md) / [30](../../../docs/tickets/30-buy-neighbouring-plots.md) | Top bar covers side-panel controls | At 700×600, open the Assembly Hall or a Plot card. | [View](ticket-30-plot-card-under-top-bar.png) |
+| [30](../../../docs/tickets/30-buy-neighbouring-plots.md) | Shipping truck vanishes inside bought land | Book a Mission; buy its exit-side Plot during assembly. | [View](ticket-30-truck-disappeared-on-owned-land.png) |
+| [30](../../../docs/tickets/30-buy-neighbouring-plots.md) | Whole Site view crops owned Plots | Buy two Plots east of Home Site; press H. | [View](ticket-30-whole-site-view-crops-owned-plots.png) |
+
+Storage has a second capture for [returned inputs](ticket-05-returned-inputs-overfill-storage.png). The dock also has a [green placement marker](ticket-08-occupied-shipping-dock-green-marker.png). The Scrub clock has [before](ticket-16-scrub-clock-before.png) and [after](ticket-16-scrub-clock-after.png) captures. The production logo check has [before](ticket-19-production-logo-clock-before.png) and [after](ticket-19-production-logo-clock-after.png). The truck has [before](ticket-30-truck-before-disappearing-on-owned-land.png) and [after](ticket-30-truck-disappeared-on-owned-land.png) captures from the same camera.
+
+Two background failures have no useful screenshot: [silent local-save failures](../../../docs/tickets/02-company-and-saving.md) and [building-model WebGL buffer growth](../../../docs/tickets/26-look-and-feel.md). Their measured evidence is in those tickets.
+
+`2026-11-11/` keeps the previous QA captures, including the Research and Space camera findings fixed since then. They are historical evidence. Pink masks hide the temporary test account’s recovery code in Online screenshots.

@@ -18,6 +18,8 @@
 
 - [x] Keep the camera outside Earth while following a Spacecraft. Follow TIROS-1, zoom out, then drag around it towards Earth. The camera can cross Earth's surface; the globe disappears, leaving the Spacecraft and stars visible from inside it. **See the whole Earth** recovers the view.
 
-![The camera inside Earth, with the globe no longer visible](../qa/2026-11-11/space-camera-inside-earth.png)
+![The camera inside Earth, with the globe no longer visible](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/space-camera-inside-earth.png)
 
 **Fixed (2026-11-12):** after every camera move the Space view pushes the camera straight back out if it is closer to Earth's centre than 1.05 Earth radii (just above the atmosphere's glow, below Explorer 1's 358 km perigee, the lowest orbit). `src/world/spaceCamera.ts`. Checked in Chromium with the steps above: before the fix the globe vanished; after it, the camera skims the clouds.
+
+**Rechecked (2026-11-12):** Following an Explorer 1 fixture, then dragging and zooming, left the camera 42.95 units from Earth’s centre (floor 31.5). The earlier inside-Earth finding remains fixed. [QA report](../qa/2026-11-12/README.md).

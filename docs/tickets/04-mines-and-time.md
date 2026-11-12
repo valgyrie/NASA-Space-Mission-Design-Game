@@ -16,4 +16,6 @@
 
 - [ ] Keep the Site paused while the pause menu is open, including when using the keyboard. Open the menu, press Tab until **1×** behind it gets focus, then Enter. The Site runs but the menu still says **Paused**. The Game date advanced about 2.4 days in five seconds; Contract days keep counting down. Also checked in the production build.
 
-![The pause menu open while the Site runs at 1×](../qa/2026-11-11/pause-menu-running.png)
+![The pause menu open while the Site runs at 1×](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/pause-menu-running.png)
+
+**Rechecked (2026-11-12):** still reproduces on `4661008`. Current screenshots: [1](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-04-pause-menu-keyboard-runs-clock.png).
