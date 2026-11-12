@@ -8,6 +8,8 @@ import { t } from '../strings';
 import { DIFFICULTIES, PLAY_MODES, type Difficulty, type PlayMode } from '../game/modes';
 import { GlobePicker } from '../world/globePicker';
 import { formatDecimal } from './format';
+import { learnMore } from './learnMore';
+import { SOURCES } from '../game/sources';
 
 export interface NewCompanyChoice {
   name: string;
@@ -202,7 +204,10 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }:
   const placeNote = note('place-note', '');
   placeNote.setAttribute('aria-live', 'polite');
   const placeKind = note('place-kind', '');
-  where.append(legend, kinds, canvas, placeKind, placeNote);
+  const sources = document.createElement('div');
+  sources.className = 'source-links';
+  sources.append(learnMore(SOURCES.climate, t('sources.climate')), learnMore(SOURCES.map, t('sources.map')), learnMore(SOURCES.jpl, t('sources.jpl')));
+  where.append(legend, kinds, canvas, placeKind, placeNote, sources);
 
   let globe: GlobePicker | null = null;
   try {

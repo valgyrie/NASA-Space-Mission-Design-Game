@@ -10,17 +10,12 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
   panel.setAttribute('aria-labelledby', 'main-menu-heading');
   const heading = document.createElement('h1');
   heading.id = 'main-menu-heading';
-  heading.textContent = t('game.title');
-  const subtitle = document.createElement('p');
-  subtitle.className = 'note';
-  subtitle.textContent = t('mainMenu.subtitle');
-  const acronym = document.createElement('p');
-  acronym.className = 'note';
-  acronym.textContent = t('mainMenu.acronym');
+  heading.textContent = t('mainMenu.heading');
   const actions = document.createElement('div');
   actions.className = 'main-menu-actions';
   const play = document.createElement('button');
   play.type = 'button';
+  play.className = 'primary';
   play.textContent = options.companyName ? t('mainMenu.continue', { name: options.companyName }) : t('newCompany.heading');
   play.addEventListener('click', () => { leave(); options.onPlay(); });
   const demo = document.createElement('button');
@@ -78,7 +73,7 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
     panel.remove();
   }
   window.addEventListener('keydown', onKey);
-  panel.append(heading, subtitle, acronym, actions, picker, makeAudioControls());
+  panel.append(heading, actions, picker, makeAudioControls());
   root.append(panel);
   play.focus();
 }

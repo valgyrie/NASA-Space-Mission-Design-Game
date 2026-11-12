@@ -1,3 +1,4 @@
+import { missionLinks } from './learnMore';
 import { audio } from '../audio/sound';
 import type { Company } from '../save/save';
 import type { Finding, MissionReport } from '../game/mission';
@@ -127,6 +128,7 @@ export function showMissionReport(
   const heading = el('h2', '', t('report.heading'));
   heading.id = 'report-heading';
   const subtitle = el('p', 'report-subtitle');
+  const sources = el('div', '');
   const outcome = el('p', 'report-outcome');
   const why = el('h3', '', t('report.why'));
   const findings = el('ul', 'report-findings');
@@ -146,7 +148,7 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, outcome, why, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
+  panel.append(heading, subtitle, sources, outcome, why, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
@@ -154,6 +156,7 @@ export function showMissionReport(
   const api: MissionReportDialog = {
     show(report, deadlineDay, today, earned = null) {
       const contract = contractText(report.contract);
+      sources.replaceChildren(missionLinks(report.contract, report.vehicle));
       subtitle.textContent = t('report.subtitle', {
         contract,
         vehicle: t(`launchVehicle.${report.vehicle}`),

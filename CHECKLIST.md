@@ -81,13 +81,13 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Cloud saves for Free Play (ticket 22)
 
 ### Look and sound
-- [ ] Cozy low-poly art, clean NASA-style UI
+- [x] Cozy low-poly art, clean NASA-style UI
 - [x] Buildings big enough to see from the whole-Site view (3 × 3 tiles each; the Site stays 64 × 64)
 - [x] Smooth Earth from space: rounded coasts and soft clouds, far and close up
 - [x] Sound effects (ticket 25: generated in code)
 - [x] Music (licensed or generated, credited; ticket 25)
-- [ ] Learn more → links on real things
-- [ ] Title screen → main menu with live 3D background; loading screens with sourced tips
+- [x] Learn more → links on real things
+- [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
 - [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources)
 

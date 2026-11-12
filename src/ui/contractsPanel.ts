@@ -15,6 +15,7 @@ import { type SiteState, canContinueFreePlay, continueFreePlay } from '../game/s
 import { upgradeDaysLeft } from '../game/upgrades';
 import { t } from '../strings';
 import { contractText, formatDays, formatGameDate, formatMoney, formatNumber } from './format';
+import { missionLinks } from './learnMore';
 
 export interface ContractsPanel {
   toggle(): void;
@@ -104,6 +105,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       field(t('contracts.reward'), formatMoney(contract.reward)),
       field(t('contracts.deadline'), deadline),
     );
+    box.append(missionLinks(contract.id));
     if (contract.wholeLaunch) box.append(el('p', 'side-note', t('contracts.wholeLaunch')));
     // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
     if (!taken && state.reopened.includes(contract.id)) box.append(el('p', 'side-note', t('contracts.reopened')));
@@ -151,7 +153,11 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     if (state.completed.length > 0) {
       body.append(el('h3', '', t('contracts.completed')));
       const done = el('ul', 'contract-done');
-      for (const id of state.completed) done.append(el('li', '', t('contracts.completedLine', { name: contractText(id) })));
+      for (const id of state.completed) {
+        const item = el('li', '', t('contracts.completedLine', { name: contractText(id) }));
+        item.append(missionLinks(id));
+        done.append(item);
+      }
       body.append(done);
     }
     update();

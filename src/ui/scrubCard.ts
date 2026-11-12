@@ -2,6 +2,8 @@ import type { LaunchSiteId } from '../game/launchVehicles';
 import type { LaunchAdvice, Weather } from '../game/places';
 import { t } from '../strings';
 import { adviceText, scrubText } from './weatherText';
+import { learnMore } from './learnMore';
+import { SOURCES } from '../game/sources';
 
 export interface ScrubCard {
   show(site: LaunchSiteId, weather: Weather, advice: LaunchAdvice | null): void;
@@ -25,7 +27,7 @@ export function showScrubCard(root: HTMLElement): ScrubCard {
   const ok = document.createElement('button');
   ok.type = 'button';
   ok.textContent = t('scrub.ok');
-  panel.append(title, why, advice, ok);
+  panel.append(title, why, advice, learnMore(SOURCES.climate, t('sources.climate')), ok);
   backdrop.append(panel);
   root.append(backdrop);
   const close = () => (backdrop.hidden = true);

@@ -18,6 +18,8 @@ import { adviceText, weatherText } from './weatherText';
 import type { SiteState } from '../game/siteState';
 import { t } from '../strings';
 import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
+import { learnMore } from './learnMore';
+import { SITE_SOURCES, SOURCES, VEHICLE_SOURCES } from '../game/sources';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -131,12 +133,12 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b);
+    choices.append(b, learnMore(VEHICLE_SOURCES[id], t(`launchVehicle.${id}`)));
     vehicleButtons.set(id, { button: b, fit, locked, lifts, price });
   }
   // How a geostationary orbit is reached, shown when the Contract asks for one.
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
-  choices.append(geoNote);
+  choices.append(geoNote, learnMore(SOURCES.orbits, t('sources.orbits')));
   choices.append(el('h3', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
   const siteButtons = new Map<string, HTMLButtonElement>();
   for (const id of LAUNCH_SITE_IDS) {
@@ -160,7 +162,7 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b);
+    choices.append(b, learnMore(SITE_SOURCES[id], t(`launchSite.${id}.short`)));
     siteButtons.set(id, b);
   }
 
@@ -168,7 +170,7 @@ export function makeLaunchPlanner(
   const weather = el('section', 'planner-card');
   const weatherLine = el('p', 'planner-weather');
   const adviceLine = el('p', 'planner-advice');
-  weather.append(el('h3', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')));
+  weather.append(el('h3', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')), learnMore(SOURCES.climate, t('sources.climate')), el('p', 'planner-hint', t('sources.estimates')));
 
   // Costs and timeline
   const costs = el('section', 'planner-card');

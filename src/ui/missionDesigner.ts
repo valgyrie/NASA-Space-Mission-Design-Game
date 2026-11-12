@@ -33,6 +33,7 @@ import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
+import { missionLinks } from './learnMore';
 import { contractText, formatDecimal, formatMoney, formatNumber } from './format';
 
 export interface MissionDesigner {
@@ -270,6 +271,7 @@ export function showMissionDesigner(
 
   // Resources
   const resBox = el('section', 'designer-resources');
+  const sources = el('div', '');
   resBox.append(el('h3', '', t('designer.resources')));
   const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; text: HTMLElement }>();
   for (const r of RESOURCES) {
@@ -299,7 +301,7 @@ export function showMissionDesigner(
   });
   next.title = t(hooks.challenge ? 'weekly.submit' : 'designer.nextName');
   next.dataset.tutorial = 'designer-next';
-  resBox.append(warnings, status, buyAll, problem, challengeTest, next);
+  resBox.append(warnings, status, buyAll, problem, challengeTest, next, sources);
 
   const body = el('div', 'designer-body');
   body.append(slotsBox, viewBox, resBox);
@@ -359,6 +361,7 @@ export function showMissionDesigner(
     const contract = contractText(check.goal.contract.id);
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
+    sources.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
 
     for (const { o, b, stats, locked, eraLock, hall } of optionUi) {
       const open = isUnlocked(state, o.id);
