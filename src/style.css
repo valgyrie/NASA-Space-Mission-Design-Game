@@ -2728,3 +2728,37 @@ button.upgrade {
   width: 28px;
   height: 28px;
 }
+
+/* Main menu and Demo Mode use the same panels as the rest of the game. */
+.main-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.main-menu-actions[hidden] {
+  display: none;
+}
+.main-menu {
+  width: min(440px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  gap: 14px;
+}
+.main-menu h2 {
+  margin: 0;
+  font-size: 18px;
+}
+.main-menu button {
+  overflow-wrap: anywhere;
+}
+.demo-playing {
+  position: absolute;
+  right: 12px;
+  top: 92px;
+  margin: 0;
+  max-width: min(320px, calc(100vw - 48px));
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--muted);
+  pointer-events: none;
+}

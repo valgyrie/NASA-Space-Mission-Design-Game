@@ -4,6 +4,17 @@
  */
 export const STRINGS = {
   'game.title': 'LEAP',
+  'mainMenu.heading': 'Main menu',
+  'mainMenu.subtitle': 'A Space Mission Design Game',
+  'mainMenu.acronym': 'Launch · Engineer · Advance · Pioneer',
+  'mainMenu.continue': 'Continue {name}',
+  'mainMenu.back': 'Back',
+  'demo.heading': 'Demo Mode',
+  'demo.company': 'LEAP Demo',
+  'demo.note': 'Try a ready Company on one fixed Site. Your own Company is kept. Choosing an Era starts that demo afresh.',
+  'demo.1.goal': 'Explorer 1: batteries, radiation and a first Launch. The design and Parts are ready in the Mission Designer.',
+  'demo.2.goal': 'Telstar 1: solar Power, a TV relay and Ground Stations. The design and Parts are ready in the Mission Designer.',
+  'demo.playing': 'Demo Mode · Era {era}. Return to the main menu to try another Era.',
   'playMode.heading': 'Play',
   'playMode.campaign': 'Campaign',
   'playMode.freePlay': 'Free Play',

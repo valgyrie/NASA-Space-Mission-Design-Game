@@ -1,4 +1,6 @@
 import { showLogoDialog } from './ui/logoEditor';
+import { t } from './strings';
+import type { DemoEra } from './game/demo';
 import type { BuildingKind } from './economy/part';
 import { type Speed } from './game/balance';
 import {
@@ -15,7 +17,7 @@ import {
 } from './game/siteState';
 import { eraOf } from './game/eras';
 import { showEraCard } from './ui/eraCard';
-import { type SaveData, saveGame, startAutosave } from './save/save';
+import { type SaveData, type SaveStorage, saveGame, startAutosave } from './save/save';
 import { generateSite } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
 import { showBuildingPanel } from './ui/buildingPanel';
@@ -49,7 +51,7 @@ import type { World } from './world/world';
 const CLICK_SLOP = 6;
 
 /** Run the Site view for a game: the map, the clock, buildings, the Market and the UI around them. */
-export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
+export function playSite(world: World, ui: HTMLElement, game: SaveData, { storage = localStorage, demoEra }: { storage?: SaveStorage; demoEra?: DemoEra } = {}): void {
   const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
   const state = game.state;
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
@@ -58,7 +60,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // Every Site starts with an Assembly Hall near its middle; a new game (or an older save) gets it now.
   const hall = placeAssemblyHall(site, state);
   // A save from when buildings took one tile: move apart the ones that now overlap.
-  if (fitBuildings(site, state)) saveGame(localStorage, game);
+  if (fitBuildings(site, state)) saveGame(storage, game);
   world.addBuilding('assemblyHall', hall.x, hall.z);
   // The HQ stands beside it; its level is the Company's Era.
   const hq = placeHQ(site, state);
@@ -96,8 +98,19 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       world.keyboardEnabled = true;
       setSpeed(speedBeforeMenu);
     },
+    () => {
+      saveGame(storage, game);
+      // Reload releases this session's frame callbacks, WebGL views and input listeners together.
+      window.location.reload();
+    },
   );
-  const market = showMarketPanel(ui, state, () => saveGame(localStorage, game));
+  if (demoEra !== undefined) {
+    const note = document.createElement('p');
+    note.className = 'panel demo-playing';
+    note.textContent = t('demo.playing', { era: demoEra });
+    ui.append(note);
+  }
+  const market = showMarketPanel(ui, state, () => saveGame(storage, game));
   // Pause the Site while a dialog is up, and put the speed back afterwards (Real History cards, the History Archive).
   const pauser = () => {
     let before: Speed = 1;
@@ -120,9 +133,9 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const contracts = showContractsPanel(ui, state, (id) => {
     const card = historyCardFor(id, 'before');
     if (card && unlockCard(state, card)) history.show(card);
-    saveGame(localStorage, game);
-  }, () => saveGame(localStorage, game));
-  const panel = showBuildingPanel(ui, site, state, () => saveGame(localStorage, game));
+    saveGame(storage, game);
+  }, () => saveGame(storage, game));
+  const panel = showBuildingPanel(ui, site, state, () => saveGame(storage, game));
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
   const designer = showMissionDesigner(ui, state, game.site.seed, {
@@ -142,11 +155,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       world.hidden = false;
       setSpeed(speedBeforeDesigner);
     },
-    onChange: () => saveGame(localStorage, game),
+    onChange: () => saveGame(storage, game),
     onTestRun() {
       if (state.tutorial.testRun) return;
       state.tutorial.testRun = true;
-      saveGame(localStorage, game);
+      saveGame(storage, game);
     },
   });
   // The Mission Report pauses the Site while it is read.
@@ -210,7 +223,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     const cardsBefore = state.history.length;
     const result = launch(state, game.site.seed);
     if (!result || !contract) return;
-    saveGame(localStorage, game);
+    saveGame(storage, game);
     world.keyboardEnabled = false;
     speedBeforeReport = speed;
     setSpeed(0);
@@ -229,7 +242,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
       best: isMandatory(state, kind) ? null : state.anomalyBest[kind]!,
       onAnswer: (score: number, answer: 'played' | 'skipped') => {
         settleAnomaly(state, result.report, score, answer);
-        saveGame(localStorage, game);
+        saveGame(storage, game);
       },
     };
     launchShow.play(
@@ -284,7 +297,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     onSave() {
       world.setCompanyLogo(game.company.logo);
       hud.updateLogo();
-      saveGame(localStorage, game);
+      saveGame(storage, game);
     },
   });
   const topBar = showTopBar(ui, setSpeed);
@@ -298,7 +311,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   // The tutorial guide sits above the Mission Designer, so it can lead the player through it.
   const tutorial = showTutorialGuide(ui, () => {
     state.tutorial.skipped = true;
-    saveGame(localStorage, game);
+    saveGame(storage, game);
   });
 
   let placing: BuildingKind | null = null;
@@ -336,7 +349,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     if (result.ok) {
       const material = placing === 'mine' ? (mineMaterial(site, { x: tile.x, z: tile.z }) ?? undefined) : undefined;
       world.addBuilding(placing, tile.x, tile.z, material);
-      saveGame(localStorage, game);
+      saveGame(storage, game);
     } else {
       buildMenu.showProblem(result.problem);
     }
@@ -418,19 +431,19 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
     // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {
       state.eraSeen = eraOf(state);
-      saveGame(localStorage, game);
+      saveGame(storage, game);
       eraCard.show(eraOf(state));
     }
     // The startup grant waits until nothing else is on screen (a failed Mission's report and cards first).
     if (!covered && !designer.isOpen && !eraCard.isOpen) {
       const paid = payGrant(state);
       if (paid > 0) {
-        saveGame(localStorage, game);
+        saveGame(storage, game);
         grant.show(paid);
       }
     }
   });
-  startAutosave(localStorage, () => game);
+  startAutosave(storage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
   if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts } });

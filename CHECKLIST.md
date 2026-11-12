@@ -92,7 +92,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Judges and submission
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
-- [ ] Demo Mode: one save per finished Era
+- [x] Demo Mode: one save per finished Era (ticket 24: Eras 1 and 2, separate from the player Company)
 - [ ] NASA data used visibly in the game (see GDD §14)
 - [ ] Credits screen (data, audio, sources)
 - [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits

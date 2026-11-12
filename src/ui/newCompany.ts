@@ -18,6 +18,7 @@ export interface NewCompanyChoice {
 }
 
 interface Options {
+  onBack?: () => void;
   /** Called whenever the Seed field holds a usable Seed or the place changes, so the Site can be previewed. */
   onPreview: (seed: string, place: Place) => void;
   /** Called once, with the Company's accepted setup choices. */
@@ -71,7 +72,7 @@ function note(id: string, text: string): HTMLParagraphElement {
 }
 
 /** Show the "Start your Company" dialog. */
-export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options): void {
+export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }: Options): void {
   const form = document.createElement('form');
   form.className = 'panel dialog new-company';
   form.noValidate = true;
@@ -295,6 +296,19 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
   columns.className = 'new-company-columns';
   columns.append(left, where);
   form.append(heading, columns);
+  if (onBack) {
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.textContent = t('mainMenu.back');
+    back.addEventListener('click', () => {
+      window.clearTimeout(timer);
+      globe?.dispose();
+      logo.cancelUpload();
+      form.remove();
+      onBack();
+    });
+    form.append(back);
+  }
   root.append(form);
   setPlace(place, true);
   globe?.start();
