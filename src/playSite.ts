@@ -46,6 +46,9 @@ import { showTopBar } from './ui/topBar';
 import { LaunchView } from './world/launchView';
 import { SpaceView } from './world/spaceView';
 import type { World } from './world/world';
+import { music } from './audio/music';
+import { sceneFor } from './audio/scene';
+import { playEffect } from './audio/sfx';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
 const CLICK_SLOP = 6;
@@ -164,6 +167,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   });
   // The Mission Report pauses the Site while it is read.
   let speedBeforeReport: Speed = 1;
+  // The last Mission's result, for the Mission Report's music.
+  let reportSuccess = false;
   // Real History cards unlocked by the last Mission, shown once its report is closed.
   let cardsAfterReport: ReturnType<typeof historyCardFor>[] = [];
   const showCardsAfterReport = () => {
@@ -223,6 +228,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     const cardsBefore = state.history.length;
     const result = launch(state, game.site.seed);
     if (!result || !contract) return;
+    reportSuccess = result.report.success;
     saveGame(storage, game);
     world.keyboardEnabled = false;
     speedBeforeReport = speed;
@@ -349,8 +355,10 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     if (result.ok) {
       const material = placing === 'mine' ? (mineMaterial(site, { x: tile.x, z: tile.z }) ?? undefined) : undefined;
       world.addBuilding(placing, tile.x, tile.z, material);
+      playEffect('build');
       saveGame(storage, game);
     } else {
+      playEffect('denied');
       buildMenu.showProblem(result.problem);
     }
     world.markTile(tile, checkBuild(site, state, placing, tile.x, tile.z).ok);
@@ -428,6 +436,15 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     const covered =
       launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
     tutorial.update(state, covered, designer.isOpen);
+    music.play(
+      sceneFor({
+        launch: launchShow.scene,
+        report: report.isOpen ? (reportSuccess ? 'success' : 'failure') : null,
+        history: history.isOpen || eraCard.isOpen,
+        designer: designer.isOpen,
+        space: space.isOpen,
+      }),
+    );
     // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {
       state.eraSeen = eraOf(state);
@@ -439,6 +456,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       const paid = payGrant(state);
       if (paid > 0) {
         saveGame(storage, game);
+        playEffect('reward');
         grant.show(paid);
       }
     }

@@ -2762,3 +2762,33 @@ button.upgrade {
   color: var(--muted);
   pointer-events: none;
 }
+
+/* Music and sound effects volume (pause menu and main menu). */
+.volume-controls {
+  display: grid;
+  gap: 6px;
+}
+
+.volume-row {
+  display: grid;
+  grid-template-columns: 7.5em minmax(0, 1fr) 3em;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.dialog .volume-row input[type='range'] {
+  width: 100%;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+.volume-value {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}

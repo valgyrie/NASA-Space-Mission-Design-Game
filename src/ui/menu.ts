@@ -1,4 +1,5 @@
 import { t } from '../strings';
+import { volumeControls } from './volumeControls';
 import type { SiteState } from '../game/siteState';
 
 export interface Menu {
@@ -82,7 +83,7 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, controlsLabel, controls, resume);
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, volumeControls(), playMode, mode, modeNote, fixedMode, controlsLabel, controls, resume);
   const mainMenu = document.createElement('button');
   mainMenu.type = 'button';
   mainMenu.textContent = t('mainMenu.heading');

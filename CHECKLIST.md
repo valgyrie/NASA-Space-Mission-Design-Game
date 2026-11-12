@@ -83,8 +83,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Cozy low-poly art, clean NASA-style UI
 - [x] Buildings big enough to see from the whole-Site view (3 × 3 tiles each; the Site stays 64 × 64)
 - [x] Smooth Earth from space: rounded coasts and soft clouds, far and close up
-- [ ] Sound effects
-- [ ] Music (licensed or generated, credited)
+- [x] Sound effects (ticket 25: made in code)
+- [x] Music (licensed or generated, credited) (ticket 25: per screen, looping crossfades, volume sliders)
 - [ ] Learn more → links on real things
 - [ ] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards

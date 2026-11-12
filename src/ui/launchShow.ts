@@ -1,3 +1,4 @@
+import { playEffect } from '../audio/sfx';
 import { withContactLost } from '../game/anomalies';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
@@ -28,6 +29,8 @@ export interface LaunchShow {
    */
   skip(): void;
   readonly isOpen: boolean;
+  /** What the show is on, for its music: the countdown and climb, the flight, or an Anomaly; null when closed. */
+  readonly scene: 'ascent' | 'flight' | 'anomaly' | null;
 }
 
 const SPEEDS = [1, 2, 4] as const;
@@ -261,6 +264,10 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
   let frames = 0;
   let stageShares: number[] = [];
   let ascentEnd = 1;
+  // For the sound effects: the moment last heard, and the last countdown second beeped.
+  let heard = '';
+  let lastBeep = Infinity;
+  let ascent = true;
 
   const setSpeed = (s: number) => {
     speed = s;
@@ -316,6 +323,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     }
     const { flight } = result;
     const phase = m.segment.phase;
+    sounds(m);
     const day = phase === 'mission' ? m.value : phase === 'end' ? flight.missionDays : 0;
     const powered = flight.powerOutDay === null || day < flight.powerOutDay;
 
@@ -374,6 +382,23 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     else frame = requestAnimationFrame(tick);
   };
 
+  /** A beep for each of the last seconds of the countdown, the roar at liftoff, a thump at each stage, an alarm when it's lost. */
+  const sounds = (m: ShowMoment) => {
+    const seg = m.segment;
+    // The climb's music carries on through a rocket lost on the way up.
+    ascent = seg.phase === 'countdown' || seg.phase === 'burn' || seg.phase === 'coast' || seg.phase === 'lost';
+    if (seg.phase === 'countdown') {
+      const left = Math.ceil(-m.value);
+      if (left >= 1 && left <= 5 && left < lastBeep) playEffect('tick');
+      lastBeep = Math.min(lastBeep, left);
+    }
+    const key = `${seg.phase}${seg.stage ?? ''}`;
+    if (key === heard) return;
+    heard = key;
+    if (seg.phase === 'burn') playEffect(seg.stage === 1 ? 'liftoff' : 'stage');
+    if (seg.phase === 'lost') playEffect('alarm');
+  };
+
   const api: LaunchShow = {
     play(r, onDone, anomaly) {
       result = r;
@@ -403,6 +428,9 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
       setSimple(false);
       setSpeed(1);
       showSeconds = 0;
+      heard = '';
+      lastBeep = Infinity;
+      ascent = true;
       frames = 0;
       timed = [];
       shot = '';
@@ -427,6 +455,11 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     },
     get isOpen() {
       return !screen.hidden;
+    },
+    get scene() {
+      if (screen.hidden) return null;
+      if (anomalyPanel.isOpen) return 'anomaly';
+      return ascent ? 'ascent' : 'flight';
     },
   };
   return api;

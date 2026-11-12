@@ -1,3 +1,4 @@
+import { playEffect } from '../audio/sfx';
 import { type Anomaly, type AnomalyAnswer, type AnomalyKind, lostDaysFor } from '../game/anomalies';
 import { t } from '../strings';
 import { antennaView } from './antennaView';
@@ -116,6 +117,7 @@ export function showAnomalyPanel(root: HTMLElement): AnomalyPanel {
     const head = game.result();
     result.textContent = `${head.text} ${t('anomaly.score', { score: percentText(score), lost: lostText(lostDaysFor(anomaly, score)) })}`;
     result.classList.toggle('warn', !head.won);
+    playEffect(head.won ? 'reward' : 'denied');
     hooks.onAnswer(score, 'played');
     setPhase('result');
     carryOn.focus();
@@ -184,6 +186,7 @@ export function showAnomalyPanel(root: HTMLElement): AnomalyPanel {
       if (h.best !== null) skip.textContent = t('anomaly.skip', { score: percentText(h.best) });
       setPhase('intro');
       backdrop.hidden = false;
+      playEffect('alarm');
       start.focus();
       last = performance.now();
       frame = requestAnimationFrame(tick);

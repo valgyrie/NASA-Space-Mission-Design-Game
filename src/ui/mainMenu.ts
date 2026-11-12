@@ -1,6 +1,7 @@
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
 import { ERA_YEARS } from '../game/eras';
 import { t } from '../strings';
+import { volumeControls } from './volumeControls';
 
 /** A small main menu over the live Site. Starting play removes it before the game installs its controls. */
 export function showMainMenu(root: HTMLElement, options: { companyName?: string; onPlay(): void; onDemo(era: DemoEra): void }): void {
@@ -69,7 +70,7 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
     panel.remove();
   }
   window.addEventListener('keydown', onKey);
-  panel.append(heading, subtitle, acronym, actions, picker);
+  panel.append(heading, subtitle, acronym, actions, picker, volumeControls());
   root.append(panel);
   play.focus();
 }

@@ -8,6 +8,9 @@ import { createDemo, DEMO_SEED, demoStorage } from './game/demo';
 import { showMainMenu } from './ui/mainMenu';
 import { showNewCompany } from './ui/newCompany';
 import { World } from './world/world';
+import { installAudioUnlock } from './audio/engine';
+import { music } from './audio/music';
+import { installClickSounds } from './audio/sfx';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world');
 const ui = document.querySelector<HTMLElement>('#ui');
@@ -15,11 +18,14 @@ if (!canvas || !ui) throw new Error('Missing #world or #ui in index.html');
 const root = ui;
 
 document.title = t('game.title');
+installAudioUnlock();
+installClickSounds();
 const world = new World(canvas);
 world.start();
 
 const saved = loadGame(localStorage);
 function mainMenu(): void {
+  music.play('menu');
   world.keyboardEnabled = false;
   world.controls.enabled = false;
   world.showSite(generateSite(saved?.site.seed ?? DEMO_SEED, siteClimateFor(saved?.state.place ?? JPL)));
