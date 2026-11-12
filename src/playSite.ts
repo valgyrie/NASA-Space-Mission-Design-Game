@@ -85,6 +85,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData): void {
   const menu = makeMenu(
     ui,
     game.site.seed,
+    state.difficulty,
     () => {
       world.keyboardEnabled = false;
       speedBeforeMenu = speed;

@@ -49,7 +49,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Missions
 - [x] Contracts board
 - [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
-- [ ] Easy and Advanced Part sets
+- [x] Easy and Advanced Part sets
 - [ ] Launch Vehicle catalogue with mass check (Juno I, Thor-Able, Thor-Delta, Delta D and the mass check done; more vehicles come with their Eras)
 - [x] Rideshare priced per kg
 - [x] Launch site choice, latitude and coast effects (ticket 16; ticket 17: a failed rocket falls into the Atlantic, which is why launch sites are on the coast)

@@ -461,6 +461,10 @@ button.small {
   color: var(--warn);
 }
 
+.market-row[hidden] {
+  display: none;
+}
+
 .market-row {
   display: grid;
   grid-template-columns: 1fr auto auto auto;
@@ -2554,6 +2558,30 @@ button.upgrade {
   color: var(--muted);
   padding: 0;
   margin-bottom: 8px;
+}
+
+.mode-picker {
+  margin: 4px 0;
+  padding: 10px;
+  border: 1px solid var(--panel-edge);
+  border-radius: 8px;
+}
+
+.mode-picker legend {
+  font-size: 14px;
+}
+
+.mode-picker .note {
+  margin: 8px 0 0;
+}
+
+.menu-mode {
+  margin: 0;
+}
+
+.dialog.menu {
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
 }
 
 .dialog .start-kinds button {

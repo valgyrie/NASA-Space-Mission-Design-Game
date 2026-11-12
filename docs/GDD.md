@@ -156,12 +156,14 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **The 3D Spacecraft** sits against stars with the real Earth below: true continents, deserts, forests and ice from Natural Earth on a smooth globe with rounded coastlines, soft clouds, a glint of sunlight on the sea and a glowing atmosphere (the same Earth in the 3D Launch and the Space view; it stays smooth close up), turning slowly west to east. It starts over the Americas (Explorer 1 launched from Cape Canaveral) and is drawn at its true apparent size from 13,000 km up, so whole continents fit (from Explorer 1's own height it would fill half the sky). It stays in the lower part of the view however the camera turns. Details: [`docs/research/earth-map.md`](research/earth-map.md). Every Part has visible detail so choices read at a glance: the Small Bus is a slim striped cylinder with seams, flanges and a hatch; the Medium Bus is an octagon in gold foil with a finned white radiator and corner rails; batteries are rows of cells in a strut cage; solar cells are framed panels with a cell grid; the Simple Antenna is four hinged whips plus slot antennas; Spin adds balance weights and spin-up nozzles, and the model really spins; the radiation detector has vents and a window onto its Geiger tube under the nose cone. A launch adapter ring sits at the bottom.
 - **Easy mode:** fewer, simpler Parts, and placement is automatic. **Advanced mode:** more Parts and more realistic numbers. **Manual placement** (panels facing the Sun, camera facing Earth) is **Later**, in Advanced only.
 
+**Modes (ticket 20):** choose Easy (default) or Advanced when starting the Company; the pause menu's Settings keeps the choice visible. It stays fixed for that Company. Easy keeps the original Part set and rounded labels. Advanced adds a Medium Battery (4.2 kg, 420 Wh) and Low-power Antenna (0.8 kg, 0.14 W, 24 kB/day), shows up to two decimals and battery Wh/kg, and uses the same six resources and flight rules. The extra choices trade mass and Power against Communications. Their historical basis and game estimates are separated in `docs/research/spacecraft-parts.md`. Earlier saves become Easy and keep their game. Factories and the Market follow the same Part set as the Mission Designer.
+
 | Slot | Options (by Era) |
 |---|---|
 | **Bus** | Small, Medium, Large |
 | **Power** | Batteries only · body-mounted solar cells · fold-out solar panels · RTG (Later, deep space) |
-| **Battery** | Small · Large · Lithium (Era 4) |
-| **Comms** | Simple antenna (wide, slow) · Dish antenna (fast, must point at Earth) · Relay radio |
+| **Battery** | Small · Medium (Advanced) · Large · Lithium (Era 4) |
+| **Comms** | Simple antenna (wide, slow) · Low-power Antenna (Advanced) · Dish antenna (fast, must point at Earth) · Relay radio |
 | **Computer** | Basic · Advanced |
 | **Attitude control** (pointing) | Spin (like Explorer 1) · Magnetic torquers · Reaction wheels |
 | **Propulsion** | None · Small thrusters · Main engine (needed for GEO and the Moon). Built (ticket 18): None and Main Engine; the slot shows from Era 2 |

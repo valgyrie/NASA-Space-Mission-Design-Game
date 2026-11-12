@@ -111,6 +111,11 @@ export const RECIPES: Record<Part, Recipe> = {
   solarCells: { factory: 'solarFab', inputs: { silicon: 12 }, days: 3, massKg: 2, work: 5_000 },
   smallBattery: { factory: 'batteryPlant', inputs: { copper: 15 }, days: 3, massKg: 3, work: 2_500 },
   largeBattery: { factory: 'batteryPlant', inputs: { copper: 35 }, days: 5, massKg: 6, work: 5_000 },
+  // Advanced's middle choice: 100 Wh/kg, within early mercury batteries' ~66–110 Wh/kg range.
+  // Chemistry isn't simulated; this is a game estimate, not an Explorer 1 measurement (docs/research/spacecraft-parts.md).
+  mediumBattery: { factory: 'batteryPlant', inputs: { copper: 22 }, days: 4, massKg: 4.2, work: 3_500 },
+  // A low-power radio trades Data capacity for lower electrical draw. All three numbers are game estimates.
+  lowPowerAntenna: { factory: 'electronicsLab', inputs: { copper: 4, silicon: 2 }, days: 3, massKg: 0.8, work: 4_500 },
   radiationDetector: { factory: 'electronicsLab', inputs: { silicon: 4, copper: 3 }, days: 3, massKg: 1.5, work: 6_000 },
   tvCamera: { factory: 'electronicsLab', inputs: { silicon: 10, copper: 6 }, days: 5, massKg: 4, work: 15_000 },
   largeBus: { factory: 'metalWorks', inputs: { aluminium: 180 }, days: 12, massKg: 15, work: 18_000 },
@@ -174,7 +179,10 @@ export const OPTION_STATS = {
   solarCells: { solarW: 3 },
   smallBattery: { batteryWh: 360 },
   largeBattery: { batteryWh: 720 },
+  mediumBattery: { batteryWh: 420 },
   simpleAntenna: { powerUseW: 0.6, sendPerDay: 50 },
+  // Electrical draw, not RF output: Explorer 1's 10 mW transmitter inspired the lower-power choice.
+  lowPowerAntenna: { powerUseW: 0.14, sendPerDay: 24 },
   spin: {},
   radiationDetector: { powerUseW: 0.3, dataPerDay: 20 },
   // TIROS-1-like: with the Simple Antenna it uses 2 W, a little more than Solar Cells give on average (1.8 W),

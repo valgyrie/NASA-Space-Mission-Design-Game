@@ -4,6 +4,7 @@ import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
 import { SEED_MAX, checkSeed, randomSeed } from '../site/seed';
 import { JPL, type Place, START_KINDS, type StartKind, climateAt, isInUs, landAt, placeProblem, randomPlace } from '../game/places';
 import { t } from '../strings';
+import { DIFFICULTIES, type Difficulty } from '../game/modes';
 import { GlobePicker } from '../world/globePicker';
 import { formatDecimal } from './format';
 
@@ -12,12 +13,13 @@ export interface NewCompanyChoice {
   logo: CompanyLogo;
   seed: string;
   place: Place;
+  difficulty: Difficulty;
 }
 
 interface Options {
   /** Called whenever the Seed field holds a usable Seed or the place changes, so the Site can be previewed. */
   onPreview: (seed: string, place: Place) => void;
-  /** Called once, with an accepted name, Seed and place. */
+  /** Called once, with the Company's accepted setup choices. */
   onDone: (choice: NewCompanyChoice) => void;
 }
 
@@ -99,6 +101,32 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
   seedRow.append(seed.input, reroll);
 
   const logo = makeLogoEditor(DEFAULT_LOGO);
+
+  let difficulty: Difficulty = 'easy';
+  const mode = document.createElement('fieldset');
+  mode.className = 'mode-picker';
+  const modeLegend = document.createElement('legend');
+  modeLegend.textContent = t('mode.heading');
+  const modes = document.createElement('div');
+  modes.className = 'row start-kinds';
+  const modeNote = note('mode-note', t('mode.easy.note'));
+  modeNote.setAttribute('aria-live', 'polite');
+  for (const value of DIFFICULTIES) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.difficulty = value;
+    b.textContent = t(`mode.${value}`);
+    b.setAttribute('aria-pressed', String(value === difficulty));
+    b.addEventListener('click', () => {
+      difficulty = value;
+      for (const button of modes.querySelectorAll('button')) {
+        button.setAttribute('aria-pressed', String(button === b));
+      }
+      modeNote.textContent = t(`mode.${value}.note`);
+    });
+    modes.append(b);
+  }
+  mode.append(modeLegend, modes, modeNote);
 
   const error = document.createElement('p');
   error.className = 'error';
@@ -217,7 +245,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     globe?.dispose();
     logo.cancelUpload();
     form.remove();
-    onDone({ name: nameCheck.name, logo: logo.value(), seed: seedCheck.seed, place });
+    onDone({ name: nameCheck.name, logo: logo.value(), seed: seedCheck.seed, place, difficulty });
   });
 
   const left = document.createElement('div');
@@ -226,6 +254,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone }: Options
     name.label,
     name.input,
     note('company-note', t('newCompany.note')),
+    mode,
     logo.root,
     seed.label,
     seedRow,

@@ -1,4 +1,5 @@
 import { t } from '../strings';
+import type { Difficulty } from '../game/modes';
 
 export interface Menu {
   open(): void;
@@ -7,10 +8,10 @@ export interface Menu {
 }
 
 /**
- * The pause menu (Esc). Shows the Seed so it can be shared. Settings will live here too.
+ * The pause menu (Esc): Seed, settings and controls.
  * `onOpen` and `onClose` let the game pause and resume.
  */
-export function makeMenu(root: HTMLElement, seed: string, onOpen: () => void, onClose: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, difficulty: Difficulty, onOpen: () => void, onClose: () => void): Menu {
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
   backdrop.hidden = true;
@@ -54,6 +55,19 @@ export function makeMenu(root: HTMLElement, seed: string, onOpen: () => void, on
   resume.className = 'primary';
   resume.textContent = t('menu.resume');
 
+  const settings = document.createElement('span');
+  settings.className = 'menu-label';
+  settings.textContent = t('menu.settings');
+  const mode = document.createElement('p');
+  mode.className = 'menu-mode';
+  mode.textContent = t('menu.mode', { mode: t(`mode.${difficulty}`) });
+  const modeNote = document.createElement('p');
+  modeNote.className = 'note';
+  modeNote.textContent = t(`mode.${difficulty}.note`);
+  const fixedMode = document.createElement('p');
+  fixedMode.className = 'note';
+  fixedMode.textContent = t('menu.fixedMode');
+
   const controlsLabel = document.createElement('span');
   controlsLabel.className = 'menu-label';
   controlsLabel.textContent = t('menu.controls');
@@ -65,7 +79,7 @@ export function makeMenu(root: HTMLElement, seed: string, onOpen: () => void, on
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, controlsLabel, controls, resume);
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, mode, modeNote, fixedMode, controlsLabel, controls, resume);
   backdrop.append(panel);
   root.append(backdrop);
 

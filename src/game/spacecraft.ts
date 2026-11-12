@@ -1,6 +1,7 @@
 import type { Part } from '../economy/part';
 import { GROUND_STATION_STEP, MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
-import { type Era, eraOf, isBuildingOpen, partEra } from './eras';
+import { type Era, eraOf, isBuildingOpen, isPartOpen, partEra } from './eras';
+import { type Difficulty, partInMode } from './modes';
 import { type Contract, type Orbit, type PayloadKind, CONTRACTS, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
 import type { HistoryCardId } from './history';
 import { type Boosted, type TechId, boost } from './research';
@@ -32,8 +33,10 @@ export const OPTION_IDS = [
   'batteriesOnly',
   'solarCells',
   'smallBattery',
+  'mediumBattery',
   'largeBattery',
   'simpleAntenna',
+  'lowPowerAntenna',
   'spin',
   'noEngine',
   'mainEngine',
@@ -69,7 +72,9 @@ export const OPTIONS: Record<OptionId, SpacecraftOption> = {
   solarCells: option('solarCells', 'power', 'solarCells'),
   smallBattery: option('smallBattery', 'battery', 'smallBattery'),
   largeBattery: option('largeBattery', 'battery', 'largeBattery'),
+  mediumBattery: option('mediumBattery', 'battery', 'mediumBattery'),
   simpleAntenna: option('simpleAntenna', 'comms', 'simpleAntenna'),
+  lowPowerAntenna: option('lowPowerAntenna', 'comms', 'lowPowerAntenna'),
   // Explorer 1 kept steady by spinning around its long axis at 750 rpm: no Part needed.
   spin: option('spin', 'pointing', null),
   noEngine: option('noEngine', 'propulsion', null),
@@ -92,9 +97,10 @@ export function optionEra(id: OptionId): Era {
   return part ? partEra(part) : 1;
 }
 
-export function isUnlocked(state: Pick<SiteState, 'history' | 'hq'>, id: OptionId): boolean {
+export function isUnlocked(state: Pick<SiteState, 'history' | 'hq'> & Partial<Pick<SiteState, 'difficulty'>>, id: OptionId): boolean {
   const card = UNLOCKED_BY[id];
-  return (!card || state.history.includes(card)) && eraOf(state) >= optionEra(id);
+  const part = OPTIONS[id].part;
+  return (!card || state.history.includes(card)) && (!part || isPartOpen(state, part));
 }
 
 /** Does the Mission Designer show this slot yet? */
@@ -133,9 +139,11 @@ export function marksFor(state: SiteState, design: Design): Marks {
   return marks;
 }
 
-/** The options for a slot, in menu order. */
-export function optionsFor(slot: Slot): SpacecraftOption[] {
-  return OPTION_IDS.filter((id) => OPTIONS[id].slot === slot).map((id) => OPTIONS[id]);
+/** The options for a slot, in menu order. Without a difficulty, includes both sets. */
+export function optionsFor(slot: Slot, difficulty?: Difficulty): SpacecraftOption[] {
+  return OPTION_IDS.map((id) => OPTIONS[id]).filter((o) =>
+    o.slot === slot && (!difficulty || !o.part || partInMode(difficulty, o.part)),
+  );
 }
 
 /** The option picked for each slot, or null while it is empty. */
@@ -147,7 +155,7 @@ export function emptyDesign(): Design {
 }
 
 /** Pick an option for its slot. Options locked for this Company (`state`, when given) are refused. */
-export function choose(design: Design, id: OptionId, state?: Pick<SiteState, 'history' | 'hq'>): boolean {
+export function choose(design: Design, id: OptionId, state?: Pick<SiteState, 'history' | 'hq'> & Partial<Pick<SiteState, 'difficulty'>>): boolean {
   if (state && !isUnlocked(state, id)) return false;
   design[OPTIONS[id].slot] = id;
   return true;

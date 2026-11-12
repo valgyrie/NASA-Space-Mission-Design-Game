@@ -4,23 +4,23 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–19 (12, 13, 16, 17, 18 and 19 wait for a team test) and 31 built; local launchers merged. This session built ticket 19 on `codex/ticket-19-company-logo`, starting from the latest `origin/main` (`595253e`).
+**State:** tickets 01–20 (12, 13, 16, 17, 18, 19 and 20 wait for a team test) and 31 built; local launchers merged. This session built ticket 20 on `codex/ticket-20-easy-and-advanced`, starting from freshly pulled `main` (`f65450b`, including ticket 19).
 
-**Just finished: ticket 19, Company logo.** Rules: GDD §11. File map and decisions: `docs/tickets/19-company-logo.md`.
-- Shared logo editor at setup and from the logo beside the Company name: three shapes, three space icons and two colours. Original default: a gold star on a blue hexagon.
-- PNG/JPEG/WebP drawings up to 200 KB fit inside 128×128 without stretching; only the flattened PNG is saved. A warning says no photos of people or real organisation logos.
-- The HQ sign and flag, all four Launch Vehicles, and Mission Patches in the report and archive use the same current logo. Editing pauses the Site; Cancel or Esc discards the draft.
-- Save v16 adds `company.logo`; older saves get the preset and keep their game. Later shared Sites need report/hide controls for viewers.
-- Tested in Chromium at 1280×800 and 1024×768: maker, uploads and rejection paths, Save/Cancel/Esc, pause, reloads and old-save migration, HQ, rockets, earned patch and gallery; no page errors. 308 unit tests and build pass. Three save tests added; no new dependencies or test framework.
-- Not tested: touch or a team member's own drawing. Launcher checks still wait for the final ticket.
+**Just finished: ticket 20, Easy and Advanced modes.** Rules: GDD §7. File map and decisions: `docs/tickets/20-easy-and-advanced.md`.
+- Choose Easy (default) or Advanced at Company setup; the pause menu's Settings shows the fixed choice. Easy keeps the original Part set and balance.
+- Advanced adds a Medium Battery (4.2 kg, 420 Wh) and Low-power Antenna (0.8 kg, 0.14 W, 24 kB/day). The designer shows finer Part labels and battery Wh/kg. Research separates the historical basis from game estimates; no modern technology moved into 1958.
+- The same recipes, Marks, tech tree and flight rules handle both sets. Factories and the Market use the mode filter. Fixed Market rows displaying despite their hidden flag. The new Parts have 3D models; the Medium Battery also works with the eclipse Anomaly.
+- Save v17 adds `state.difficulty` and the new stock keys. Earlier Companies become Easy and keep their existing game, including Missions already shipping.
+- Tested: 314 unit tests and build pass; six focused tests added. Chromium at 1280×800 and 1024×768: setup, Settings, both Part sets, labels and bars, buying, Test Run, Shipping, reload, Factory choices, Market visibility and v16 migration. A production-build Launch with the new Parts reached a successful Mission Report (Shipping fast-forwarded to calm weather in a saved fixture). No page errors. Tutorial skipped for its known overlay issue.
+- Not tested: touch or team playtesting. No new dependencies or test framework. Launcher checks still wait for the final ticket.
 
 **QA review (2026-11-11):** checked `main` at `e2ba793`; recorded ten open fixes in tickets **01, 04, 05 (two), 08, 13, 14, 16, 17 and 31**, with steps and [screenshots](docs/qa/2026-11-11/README.md). Game code and existing ticket statuses are unchanged. The Scrub-card clock (16) and failed-rocket report (17) were already in the handoff.
 - Completed all four Milestones and played all three Anomalies reached through Launches, including both new TIROS-1 kinds. Also checked Mines, Market trades, storage, Research, Mk 2 Parts, building Upgrades, insurance and reloads. Chromium at 1440×900 and 1024×768; pause-menu and Research-bar issues also occur in the production build. The 305 tests and build passed during the review.
 - A person still needs to time the tutorial and judge the mini-games' difficulty; touch and performance on real laptops remain unchecked. No planned features were counted as bugs.
 
 **Next:**
-1. Team: try the logo maker and an uploaded drawing; play TIROS-1 to judge the panel timing and eclipse difficulty (ticket 12).
-2. Open tickets: 20, 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
+1. Team: compare Easy and Advanced, try the logo maker and an uploaded drawing, and play TIROS-1 to judge the panel timing and eclipse difficulty (ticket 12).
+2. Open tickets: 21 (unblocked), 24 (unblocked), 25, 26 (unblocked), 30. Ticket 27 after the official Resources (Nov 13).
 
 **Open:**
 - The panel shows "Push now!" on the intro card while the game waits (it is a still frame); harmless.
@@ -34,6 +34,7 @@
 
 ## Log
 
+- 2026-11-12: Ticket 20 built from freshly pulled main: Easy and Advanced at setup and in Settings, two extra Advanced Parts with finer labels, shared Factory/Market and flight rules, save v17. 314 tests, build and browser checks pass.
 - 2026-11-12: Ticket 19 built: Company logo maker and drawing upload, logo on HQ flag/sign, all four rockets and Mission Patches; save v16 migrates older Companies to the original preset. 308 tests and build pass.
 - 2026-11-11: Recorded ten confirmed QA fixes in the existing tickets, with reproduction steps and screenshots; game code unchanged.
 - 2026-11-11: Ticket 12 built: Stuck solar panel (Mark sets the chance, thruster in time with the swing) and Survive the eclipse (Power margin and battery set the chance, switch systems off till sunrise); one Anomaly per flight, new kinds first.

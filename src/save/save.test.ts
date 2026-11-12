@@ -33,6 +33,43 @@ describe('local save', () => {
     expect(loadGame(storage)).toEqual(game);
   });
 
+  it('keeps a version 16 Company in Easy with its design and stock intact', () => {
+    const storage = memoryStorage();
+    const old = structuredClone(game) as unknown as { version: number; state: Record<string, unknown> };
+    old.version = 16;
+    delete old.state.difficulty;
+    for (const key of ['parts', 'betterParts']) {
+      const stock = old.state[key] as Record<string, unknown>;
+      delete stock.mediumBattery;
+      delete stock.lowPowerAntenna;
+    }
+    storage.data.set(SAVE_KEY, JSON.stringify(old));
+    expect(loadGame(storage)).toEqual(game);
+  });
+
+  it('keeps Advanced, its extra Parts and a Mission already shipping after reload', () => {
+    const storage = memoryStorage();
+    const advanced = structuredClone(game);
+    advanced.state.difficulty = 'advanced';
+    acceptContract(advanced.state, 'explorer1');
+    for (const id of EXPLORER.map((id) => id === 'largeBattery' ? 'mediumBattery' : id === 'simpleAntenna' ? 'lowPowerAntenna' : id)) {
+      choose(advanced.state.design, id, advanced.state);
+    }
+    for (const part of partsNeeded(advanced.state.design)) advanced.state.parts[part] = 2;
+    advanced.state.betterParts.mediumBattery = [1];
+    expect(shipMission(advanced.state, advanced.state.design).ok).toBe(true);
+    expect(saveGame(storage, advanced)).toBe(true);
+    expect(loadGame(storage)).toEqual(advanced);
+  });
+
+  it('rejects a missing or unknown difficulty in current saves', () => {
+    const storage = memoryStorage();
+    for (const difficulty of [undefined, 'expert', null]) {
+      storage.data.set(SAVE_KEY, JSON.stringify({ ...game, state: { ...game.state, difficulty } }));
+      expect(loadGame(storage)).toBeNull();
+    }
+  });
+
   it('upgrades a version 15 Company with the original logo and keeps its game', () => {
     const storage = memoryStorage();
     const old = { ...game, version: 15, company: { name: game.company.name } };

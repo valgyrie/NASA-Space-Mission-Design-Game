@@ -42,10 +42,11 @@ export function cssColour(hex: number): string {
 }
 
 const decimalFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 1 });
+const preciseFormat = new Intl.NumberFormat(locale, { maximumFractionDigits: 2 });
 
-/** "11.5" (at most one decimal) */
-export function formatDecimal(n: number): string {
-  return decimalFormat.format(n);
+/** "11.5": at most one decimal, or two for Advanced's finer Part labels. */
+export function formatDecimal(n: number, digits: 1 | 2 = 1): string {
+  return (digits === 2 ? preciseFormat : decimalFormat).format(n);
 }
 
 /** "1 day", "12 days" */
