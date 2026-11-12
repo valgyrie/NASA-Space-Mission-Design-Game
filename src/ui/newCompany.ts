@@ -1,3 +1,4 @@
+import { readSharedSeed } from '../site/shareSeed';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { makeLogoEditor } from './logoEditor';
 import { NAME_MAX, NAME_MIN, checkCompanyName } from '../company/companyName';
@@ -86,7 +87,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }:
   name.input.setAttribute('aria-describedby', 'company-note');
 
   const seed = field('site-seed', t('newCompany.seedLabel'));
-  seed.input.maxLength = SEED_MAX + 4;
+  seed.input.maxLength = 120;
   seed.input.className = 'seed';
   seed.input.value = randomSeed();
   seed.input.setAttribute('aria-describedby', 'seed-note');
@@ -125,7 +126,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }:
       playNote.textContent = t(`playMode.${value}.note`);
       for (const [kind, button] of kindButtons) button.hidden = value === 'freePlay' && kind !== 'anywhere';
       kindButtons.get('anywhere')!.title = t(value === 'freePlay' ? 'freePlay.anywhere' : 'newCompany.start.anywhere.name');
-      setPlace(value === 'freePlay' ? { ...place, start: 'anywhere' } : place, false);
+      setPlace(value === 'freePlay' && place.start !== 'legacy' ? { ...place, start: 'anywhere' } : place, false);
     });
     playButtons.append(b);
   }
@@ -211,14 +212,18 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }:
   }
 
   const previewSeed = () => {
-    const check = checkSeed(seed.input.value);
-    if (check.ok) onPreview(check.seed, place);
+    const shared = readSharedSeed(seed.input.value);
+    if (!shared) return;
+    if (shared.place) {
+      seed.input.value = shared.seed;
+      setPlace(shared.place, true);
+    } else onPreview(shared.seed, place);
   };
   function setPlace(next: Place, turn: boolean) {
     place = next;
     for (const [kind, b] of kindButtons) b.setAttribute('aria-pressed', String(kind === place.start));
     globe?.setPin(place.lat, place.lon, turn);
-    placeKind.textContent = playMode === 'freePlay' ? t('freePlay.anywhere') : t(`newCompany.start.${place.start as 'historic'}.note`);
+    placeKind.textContent = playMode === 'freePlay' || place.start === 'legacy' ? t('freePlay.anywhere') : t(`newCompany.start.${place.start as 'historic'}.note`);
     placeNote.textContent = placeText(place);
     error.textContent = '';
     previewSeed();
@@ -262,6 +267,7 @@ export function showNewCompany(root: HTMLElement, { onPreview, onDone, onBack }:
       name.input.focus();
       return;
     }
+    previewSeed();
     const seedCheck = checkSeed(seed.input.value);
     if (!seedCheck.ok) {
       const key = seedCheck.problem === 'badWord' ? 'newCompany.error.seedBadWord' : 'newCompany.error.seedInvalid';

@@ -31,7 +31,7 @@ Starting the Company at JPL, Pasadena, where Explorer 1 was built. The other sta
 _Avoid_: default start
 
 **Seed**:
-A code that generates the same Site map every time it is used.
+A code that generates the same Site map with the same location. A shared Seed includes the location.
 _Avoid_: map code
 
 **Game date**:
@@ -284,7 +284,7 @@ Open-ended play with generated Contracts; where online features live.
 _Avoid_: sandbox (that is a separate mode)
 
 **Weekly Challenge**:
-A Free Play Contract that everyone plays with the same budget and Parts list, ranked on a leaderboard.
+A Free Play Contract that everyone plays with the same budget and Parts list, ranked on a leaderboard. Every finisher earns the same weekly Mission Patch; the final top three earn podium badges.
 
 **Demo Mode**:
 Ready-made saves, one per Era, so judges can jump into any stage of the game.

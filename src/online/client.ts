@@ -1,10 +1,12 @@
+import type { Design } from '../game/spacecraft';
+import type { WeeklyResult } from '../game/weekly';
 import { type Account, type Leader, type Metric, formatCode, normalizeCode, readFreePlaySave } from './model';
 import { type SaveData, type SaveStorage } from '../save/save';
 
 // Public project address; private database credentials exist only inside the Supabase function.
 export const ONLINE_URL = 'https://oyslhxxgxtqhgpfivwcb.supabase.co/functions/v1/leap-online';
 export const ACCOUNT_KEY = 'leap.online';
-export type OnlineProblem = 'name' | 'code' | 'network' | 'invalidSave' | 'conflict' | 'storage';
+export type OnlineProblem = 'name' | 'code' | 'network' | 'invalidSave' | 'conflict' | 'storage' | 'weekly' | 'expired';
 export class OnlineError extends Error {
   constructor(readonly problem: OnlineProblem) { super(problem); }
 }
@@ -28,7 +30,7 @@ export class OnlineClient {
       });
       const data = await response.json();
       if (!response.ok) {
-        const known: OnlineProblem[] = ['name', 'code', 'invalidSave', 'conflict'];
+        const known: OnlineProblem[] = ['name', 'code', 'invalidSave', 'conflict', 'weekly', 'expired'];
         throw new OnlineError(known.includes(data.error) ? data.error : 'network');
       }
       return data as T;
@@ -80,8 +82,25 @@ export class OnlineClient {
     return game;
   }
 
+  async weekly(): Promise<WeeklyBoard> {
+    return this.request<WeeklyBoard>({ action: 'weekly', code: this.code });
+  }
+
+  async attempt(week: string, design: Design): Promise<WeeklyResult> {
+    const result = await this.request<{ result: WeeklyResult }>({ action: 'weeklySubmit', code: this.code, week, design });
+    return result.result;
+  }
+
   async leaders(metric: Metric): Promise<Leader[]> {
     const result = await this.request<{ leaders: Leader[] }>({ action: 'leaderboard', metric });
     return result.leaders;
   }
+}
+
+export interface WeeklyLeader { nickname: string; score: number; }
+export interface WeeklyBoard {
+  week: string;
+  leaders: WeeklyLeader[];
+  previous: { week: string; leaders: WeeklyLeader[] };
+  earned: { week: string; score: number; rank: number | null }[];
 }

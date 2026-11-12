@@ -1,3 +1,4 @@
+import type { TestRun } from '../game/flight';
 import { type TradeResult, buy, buyPrice } from '../game/market';
 import { type SiteState, bestMark, partMass, partsByMark } from '../game/siteState';
 import { type BusId, hallLevelFor, hallTakes } from '../game/upgrades';
@@ -27,7 +28,7 @@ import type { TechId } from '../game/research';
 import type { Difficulty } from '../game/modes';
 import { makeLaunchPlanner } from './launchPlanner';
 import { makeTestRunScreen } from './testRun';
-import { testRunFor } from '../game/mission';
+import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
 import { t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
@@ -36,6 +37,7 @@ import { contractText, formatDecimal, formatMoney, formatNumber } from './format
 export interface MissionDesigner {
   open(): void;
   close(): void;
+  destroy(): void;
   readonly isOpen: boolean;
 }
 
@@ -179,24 +181,34 @@ export function showMissionDesigner(
   root: HTMLElement,
   state: SiteState,
   seed: string,
-  hooks: { onOpen(): void; onClose(): void; onChange(): void; onTestRun?(): void },
+  hooks: {
+    onOpen(): void; onClose(): void; onChange(): void; onTestRun?(): void;
+    challenge?: {
+      allows(id: SpacecraftOption['id']): boolean;
+      launchDay: number;
+      testRun(design: SiteState['design']): TestRun;
+      attempt(design: SiteState['design']): void;
+    };
+  },
 ): MissionDesigner {
   const backdrop = el('div', 'backdrop designer-backdrop');
   backdrop.hidden = true;
   const panel = el('div', 'panel designer');
   panel.setAttribute('role', 'dialog');
   panel.setAttribute('aria-modal', 'true');
-  panel.setAttribute('aria-labelledby', 'designer-heading');
+  const headingId = hooks.challenge ? 'weekly-designer-heading' : 'designer-heading';
+  if (hooks.challenge) backdrop.classList.add('weekly-designer-backdrop');
+  panel.setAttribute('aria-labelledby', headingId);
   backdrop.append(panel);
   root.append(backdrop);
 
   // Header
   const head = el('div', 'designer-head');
   const heading = el('h2', '', t('designer.heading'));
-  heading.id = 'designer-heading';
+  heading.id = headingId;
   const goal = el('span', 'designer-goal');
   const paused = el('span', 'designer-paused', t('designer.paused'));
-  const close = button('small designer-close', t('designer.close'));
+  const close = button('small designer-close', t(hooks.challenge ? 'weekly.back' : 'designer.close'));
   close.title = t('panel.closeName');
   head.append(heading, goal, paused, close);
 
@@ -221,6 +233,7 @@ export function showMissionDesigner(
     const choices = el('div', 'slot-options');
     const options = new Map<string, HTMLButtonElement>();
     for (const o of optionsFor(slot, state.difficulty)) {
+      if (hooks.challenge && !hooks.challenge.allows(o.id)) continue;
       const b = button('option', '');
       b.dataset.option = o.id;
       const stats = el('span', 'option-stats');
@@ -276,10 +289,16 @@ export function showMissionDesigner(
   const buyAll = button('small designer-buy-all', '');
   const problem = el('p', 'side-problem');
   problem.setAttribute('aria-live', 'polite');
-  const next = button('designer-next', t('designer.next'));
-  next.title = t('designer.nextName');
+  const next = button('designer-next', t(hooks.challenge ? 'weekly.submit' : 'designer.next'));
+  const challengeTest = button('small', t('testRun.heading'));
+  challengeTest.hidden = !hooks.challenge;
+  challengeTest.addEventListener('click', () => {
+    showView('testRun');
+    testRun.show(hooks.challenge!.testRun(state.design), missionGoal(state).contract.id);
+  });
+  next.title = t(hooks.challenge ? 'weekly.submit' : 'designer.nextName');
   next.dataset.tutorial = 'designer-next';
-  resBox.append(warnings, status, buyAll, problem, next);
+  resBox.append(warnings, status, buyAll, problem, challengeTest, next);
 
   const body = el('div', 'designer-body');
   body.append(slotsBox, viewBox, resBox);
@@ -304,7 +323,7 @@ export function showMissionDesigner(
       return check.problems.filter((p) => !blocking.has(p.kind)).map((p) => problemText(p, check));
     },
   });
-  const testRun = makeTestRunScreen({ onBack: () => showView('planner') });
+  const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
   panel.append(head, body, planner.root, testRun.root);
 
   const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
@@ -322,7 +341,10 @@ export function showMissionDesigner(
       if (which === 'planner') planner.render();
     }
   };
-  next.addEventListener('click', () => showView('planner'));
+  next.addEventListener('click', () => {
+    if (hooks.challenge) { hooks.challenge.attempt({ ...state.design }); api.close(); }
+    else showView('planner');
+  });
 
   const report = (result: TradeResult) => {
     problem.textContent = result.ok ? '' : t(`market.problem.${result.problem}`);
@@ -363,16 +385,22 @@ export function showMissionDesigner(
       } else if (state.parts[part] > 0) {
         stock.append(el('span', 'stock-ok', t('designer.inStock', { count: stockText(state, part) })));
       } else {
-        stock.append(el('span', 'stock-missing', t('designer.notInStock')));
+        stock.append(el('span', 'stock-missing', hooks.challenge ? t('weekly.partCost', { money: formatMoney(buyPrice(part)) }) : t('designer.notInStock')));
         const b = button('small trade', t('designer.buy', { price: formatMoney(buyPrice(part)) }));
         b.addEventListener('click', () => report(buy(state, part)));
-        stock.append(b);
+        if (!hooks.challenge) stock.append(b);
       }
     }
 
     view.show(state.design);
     viewEmpty.hidden = state.design.bus !== null;
 
+    if (hooks.challenge) {
+      check.gauges.budget.value += planLaunch(state, state.design).total;
+      check.gauges.budget.status = check.gauges.budget.value <= state.money ? 'ok' : 'short';
+      check.gauges.time.value = hooks.challenge.launchDay - state.day + check.goal.missionDays;
+      check.gauges.time.status = check.gauges.time.value <= check.goal.daysLeft ? 'ok' : 'short';
+    }
     for (const r of RESOURCES) {
       const g = check.gauges[r];
       const ui = gauges.get(r)!;
@@ -381,7 +409,7 @@ export function showMissionDesigner(
       ui.fill.style.width = `${(g.status === 'waiting' ? 0 : layout.fill) * 100}%`;
       ui.target.style.left = `${layout.target * 100}%`;
       ui.target.hidden = g.status === 'waiting';
-      ui.text.textContent = gaugeText(r, g, check, state.money);
+      ui.text.textContent = hooks.challenge && r === 'budget' ? t('weekly.budgetGauge', { cost: formatMoney(g.value), money: formatMoney(state.money) }) : gaugeText(r, g, check, state.money);
     }
 
     warnings.replaceChildren(...check.problems.map((p) => el('li', '', problemText(p, check))));
@@ -390,9 +418,11 @@ export function showMissionDesigner(
       : check.problems.length === 0
         ? t('designer.fillSlots')
         : '';
+    if (hooks.challenge) status.textContent = t('weekly.cost', { money: formatMoney(check.gauges.budget.value) });
     status.classList.toggle('ready', check.ready);
     const cost = costToBuy(state, state.design);
-    buyAll.hidden = cost === 0;
+    buyAll.hidden = !!hooks.challenge || cost === 0;
+    challengeTest.disabled = !isComplete(state.design);
     buyAll.textContent = t('designer.buyAll', { price: formatMoney(cost) });
     next.disabled = !isComplete(state.design);
   };
@@ -418,6 +448,11 @@ export function showMissionDesigner(
       view.stop();
       testRun.stop();
       hooks.onClose();
+    },
+    destroy() {
+      api.close();
+      view.dispose();
+      backdrop.remove();
     },
     get isOpen() {
       return !backdrop.hidden;

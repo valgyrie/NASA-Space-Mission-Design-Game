@@ -76,8 +76,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Free Play mode with generated Contracts
 - [x] Anonymous accounts (nickname generator, recovery code)
 - [x] Leaderboards
-- [ ] Weekly Challenge with fixed budget and scoring
-- [ ] Shareable Seeds (ticket 23)
+- [x] Weekly Challenge with fixed budget and scoring
+- [x] Shareable Seeds (ticket 23)
 - [x] Cloud saves for Free Play (ticket 22)
 
 ### Look and sound

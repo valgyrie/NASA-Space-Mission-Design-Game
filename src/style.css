@@ -2778,3 +2778,13 @@ button.upgrade {
   color: var(--muted);
   pointer-events: none;
 }
+
+/* Weekly Challenge uses the same Online panel and Mission Designer. */
+.weekly-section { border-top: 1px solid #354861; margin-top: 1.25rem; padding-top: 1rem; }
+.weekly-result { margin-top: 1rem; }
+.weekly-reward { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.weekly-reward svg { width: 80px; height: 80px; flex: 0 0 80px; }
+
+.weekly-designer-backdrop { z-index: 41; }
+
+.weekly-badge { border: 2px solid #e8bf62; border-radius: 999px; padding: .5rem .8rem; color: #ffe6a6; background: #493b20; font-weight: 700; }

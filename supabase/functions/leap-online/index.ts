@@ -1,3 +1,4 @@
+import { evaluateWeekly, weeklyId, previousWeek } from '../../../src/game/weekly';
 import { checkCompanyName } from '../../../src/company/companyName';
 import { leaderboardScores, METRICS, normalizeCode, formatCode, readFreePlaySave } from '../../../src/online/model';
 
@@ -34,14 +35,14 @@ Deno.serve(async (request) => {
     try { body = JSON.parse(text); } catch { return reply({ error: 'request' }, 400); }
     if (!body || typeof body !== 'object') return reply({ error: 'request' }, 400);
 
-    const db = async (query: string, method = 'GET', data?: object) => {
+    const db = async (query: string, method = 'GET', data?: object, table = 'leap_players') => {
       const key = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-      const result = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/leap_players?${query}`, {
+      const result = await fetch(`${Deno.env.get('SUPABASE_URL')}/rest/v1/${table}?${query}`, {
         method, headers: { apikey: key, Authorization: `Bearer ${key}`, 'Content-Type': 'application/json', Prefer: 'return=representation' },
         body: data === undefined ? undefined : JSON.stringify(data),
       });
       if (!result.ok) throw new Error('database');
-      return await result.json() as Record<string, unknown>[];
+      return result.status === 204 ? [] : await result.json() as Record<string, unknown>[];
     };
 
     if (body.action === 'leaderboard') {
@@ -63,8 +64,31 @@ Deno.serve(async (request) => {
       return reply({ ...summary(row!), code: formatCode(code) });
     }
     const filter = `recovery_hash=eq.${hash}`;
-    const [player] = await db(`${filter}&select=nickname,revision,updated_at`);
+    const [player] = await db(`${filter}&select=id,nickname,revision,updated_at`);
     if (!player) return reply({ error: 'code' }, 401);
+    if (body.action === 'weekly' || body.action === 'weeklySubmit') {
+      const week = weeklyId();
+      if (body.action === 'weeklySubmit') {
+        if (body.week !== week) return reply({ error: 'expired' }, 409);
+        const result = evaluateWeekly(week, body.design);
+        if (!result) return reply({ error: 'weekly' }, 400);
+        if (result.success) await db('', 'POST', { p_player: player.id, p_week: week, p_score: result.score }, 'rpc/leap_submit_weekly');
+        return reply({ result });
+      }
+      const leaders = async (id: string) => {
+        const rows = await db(`week=eq.${id}&select=player_id,score,leap_players(nickname)&order=score.desc,player_id.asc&limit=20`, 'GET', undefined, 'leap_weekly');
+        return rows.map((r) => ({ nickname: (r.leap_players as { nickname: string }).nickname, score: r.score }));
+      };
+      const past = previousWeek(week);
+      const entries = await db(`player_id=eq.${player.id}&select=week,score&order=week.desc`, 'GET', undefined, 'leap_weekly');
+      const earned = await Promise.all(entries.map(async (entry) => {
+        // Only completed weeks award podium badges; ties use a stable account ID, never speed.
+        const top = entry.week === week ? [] : await db(`week=eq.${entry.week}&select=player_id&order=score.desc,player_id.asc&limit=3`, 'GET', undefined, 'leap_weekly');
+        const rank = top.findIndex((r) => r.player_id === player.id) + 1;
+        return { ...entry, rank: rank || null };
+      }));
+      return reply({ week, leaders: await leaders(week), previous: { week: past, leaders: await leaders(past) }, earned });
+    }
     if (body.action === 'account') return reply(summary(player));
     if (body.action === 'rename' && nickname && nickname.ok) {
       const [row] = await db(filter, 'PATCH', { nickname: nickname.name });
