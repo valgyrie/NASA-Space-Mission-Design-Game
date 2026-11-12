@@ -30,7 +30,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 22 🧪 | [Online basics](22-online-basics.md) | 21 | Anonymous account (nickname generator, recovery code), manual Free Play cloud save and four leaderboards on the team's Supabase project. |
 | 23 🧪 | [Weekly Challenge and Seeds](23-weekly-challenge-and-seeds.md) | 22 | Same budget and Parts list for all, scoring weights, badges; share Seeds. |
 | 24 ✅ | [Demo Mode](24-demo-mode.md) | 18 | One ready save per finished Era on a fixed demo Site. |
-| 25 | [Sound and music](25-sound-and-music.md) | 01 | Code-made sound effects; music files from the team with looping crossfades; credits recorded. |
+| 25 🧪 | [Sound and music](25-sound-and-music.md) | 01 | Code-made sound effects; music files from the team with looping crossfades; credits recorded. |
 | 26 | [Look and feel pass](26-look-and-feel.md) | 18 | Cozy low-poly models and a clean NASA-style UI across all screens; Learn more → links. |
 | 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Adapt to the official Resources (Nov 13); make data use visible in game and credits. |
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |

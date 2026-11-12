@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import type { TestRun } from '../game/flight';
 import { type TradeResult, buy, buyPrice } from '../game/market';
 import { type SiteState, bestMark, partMass, partsByMark } from '../game/siteState';
@@ -437,6 +438,7 @@ export function showMissionDesigner(
     open() {
       if (!backdrop.hidden) return;
       backdrop.hidden = false;
+      audio.setScene('designer', 'designer');
       problem.textContent = '';
       hooks.onOpen();
       showView('design');
@@ -445,6 +447,7 @@ export function showMissionDesigner(
     close() {
       if (backdrop.hidden) return;
       backdrop.hidden = true;
+      audio.setScene('designer', null);
       view.stop();
       testRun.stop();
       hooks.onClose();

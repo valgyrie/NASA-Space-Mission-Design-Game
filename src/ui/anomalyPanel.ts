@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import { type Anomaly, type AnomalyAnswer, type AnomalyKind, lostDaysFor } from '../game/anomalies';
 import { t } from '../strings';
 import { antennaView } from './antennaView';
@@ -174,6 +175,7 @@ export function showAnomalyPanel(root: HTMLElement): AnomalyPanel {
 
   const api: AnomalyPanel = {
     open(a, h) {
+      audio.effect('alarm');
       anomaly = a;
       hooks = h;
       game = VIEWS[a.kind](a);

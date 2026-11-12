@@ -4,18 +4,18 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–24 and 31 built; 12, 13 and 16–23 still await their team playtests. Local launchers are merged. Ticket 23 was built on `codex/ticket-23-weekly-challenge` from freshly pulled `main` (`e3f2194`, including ticket 22). Prior ticket implementations, design and test patterns were reviewed first.
+**State:** tickets 01–25 and 31 built; 12, 13, 16–23 and 25 still await team playtests/listening. Local launchers are merged. This session built ticket 25 on `codex/ticket-25-sound-and-music` from freshly pulled `main` (`87a6b1a`, including tickets 22–24).
 
-**Just finished: ticket 23, Weekly Challenge and Seeds.** Rules, file map and detailed checks: `docs/tickets/23-weekly-challenge-and-seeds.md`, GDD §12 and `supabase/README.md`.
-- Online with a Free Play Company now offers a weekly design contest. Attempts use isolated resources and the existing Mission Designer, Test Run and flight simulation. Fixed budget/catalogue/location/Launch day; server-owned UTC week, objective validation and weighted scoring. The Company and its cloud-save revision are kept.
-- Best attempt per account/week survives concurrent submissions. Finishers collect the same weekly Mission Patch; final top-three podium badges arrive after the week closes. Rewards stay in the Online account and recover with its code. No currency sync, scheduled task or save migration.
-- Copy in the pause menu includes location and climate kind with the Seed. Company setup loads shared codes; raw Seeds still work. New Company from a Seed asks before replacing an existing Company. Legacy climate survives import and mode changes.
-- `weekly_challenge` migration (`20261112095744`) and updated `leap-online` function are deployed on the existing Supabase project. Same RLS/revoked-client-grant boundary as ticket 22; score upsert is service-only and security invoker. No dependencies added. Shared weekly-rule changes require rebuilding and redeploying the backend too.
-- Tested: 336 tests, client/backend type checks, production build and backend bundle pass. Four focused tests added. Chromium at 1280×800 and 1024×768 covers success, failure, Test Run, rewards, Campaign restriction and Seed import/cancel. Production checks include submission, Seed replacement/copy, active-Site challenge use and separate-browser reward recovery. Company save isolation, concurrent best results and direct-access denial verified. No application page errors in completed checks; QA accounts removed. Team playtesting, touch and real-laptop performance remain unchecked. Launcher checks stay deferred.
+**Just finished: ticket 25, Sound and music.** File map, measurements, approved cuts and rebuilding steps: `docs/tickets/25-sound-and-music.md`, `docs/audio/README.md` and GDD §13.
+- Web Audio plays the team's ten tracks by screen, restores cues after overlays, alternates Site tracks and schedules 3-second loop overlaps. Synthesized clicks, placement, countdown, liftoff, alarms and rewards use no external samples. Main/pause menus share volume controls and the full audio credit list.
+- Audio waits for a gesture, loads by screen and releases other decoded tracks. Hidden tabs suspend; stale or failed loads cannot take over a newer screen. Music/effects mute and levels persist in `leap.audio`, outside Company/Demo/cloud saves. No save migration or new dependencies.
+- Prepared audio: 14,732,651 bytes (38.7% smaller), 128 kbps stereo, every file within 0.02 LU of −16 LUFS and below −1 dBTP. Approved source windows and the existing short stingers retained. `scripts/prepare-music.py` reproduces preparation from originals in `87a6b1a`; `docs/audio/levels.json` records final measurements and hashes. Direct measured gain with encoded-result calibration preserved dynamics; a small-LRA loudness pass shifted the quiet intro and was discarded.
+- Tested: all 340 tests, client/backend type checks and production build pass; four focused tests added. Chromium at 1280×800 and 1024×768: gesture gating, all cue families/restoration, settings persistence, credits, one-shot completion, actual loop overlap without silence/clipping, background suspension and graceful unsupported/missing-audio behavior. Six effects rendered with OfflineAudioContext. Placement, Launch and Anomaly hooks checked; production success/failure Missions play the correct stingers and history cue. Fixtures advance assembly/Shipping to clear weather; a shortened buffer tests the real loop scheduler without a several-minute wait. No application page errors in completed checks.
+- Not checked: team listening on speakers/headphones, Safari/Firefox, touch and real-device performance. Launcher checks remain deferred. Shared weekly rules/backend were unchanged; no backend deployment was needed.
 
 **Next:**
-1. Next unblocked ticket: 25 (Sound and music); read the audio source notes first. Also unblocked: 26 and 30. Ticket 27 waits for the official Resources (Nov 13).
-2. Team: try Weekly Challenge in Free Play, compare retries and recover its rewards in another browser; share a Site code and check that its map matches. Try Online on two computers and keep the recovery code private; test Demo Mode, Free Play objectives and Campaign continuation, compare Easy/Advanced and judge the Anomaly difficulty. Older team-test criteria remain in their tickets.
+1. Next unblocked ticket: 26 (Look and feel pass). Also unblocked: 30. Ticket 27 waits for the official Resources (Nov 13).
+2. Team: listen to the screen changes, Site loops, stingers and effects on speakers/headphones; check mute and volume controls. Try Weekly Challenge in Free Play, compare retries and recover its rewards in another browser; share a Site code and check that its map matches. Try Online on two computers and keep the recovery code private; test Demo Mode, Free Play objectives and Campaign continuation, compare Easy/Advanced and judge the Anomaly difficulty. Older team-test criteria remain in their tickets.
 
 **Open:**
 - QA review on `e2ba793` recorded ten fixes in tickets 01, 04, 05 (two), 08, 13, 14, 16, 17 and 31. Reproduction steps and screenshots: `docs/qa/2026-11-11/README.md`. No unrelated fixes were folded into Demo Mode.
@@ -25,10 +25,11 @@
 - The tutorial overlay/timing still needs attention and a person to time it. Real-laptop performance and most touch flows remain unchecked; panel tap and eclipse buttons exist but have not been touch-tested.
 - Launcher checks wait for the final ticket (AGENTS.md). Team: save the organisers' early-start permission in writing and capture the official Resources on Nov 13.
 
-**Suggested skills:** `handoff`; read the audio source notes before ticket 25.
+**Suggested skills:** `handoff`; read the current art/style notes before ticket 26.
 
 ## Log
 
+- 2026-11-12: Ticket 25 built from freshly pulled main: screen music, crossfaded loops, generated effects, persistent volumes and audio credits; smaller normalized tracks. 340 tests, build and browser/audio checks pass.
 - 2026-11-12: Ticket 23 built from freshly pulled main: weekly design contest, server scoring and best attempts, finisher patches/podium badges, location-aware shared Seeds; backend deployed. 336 tests, builds and live API/browser checks pass.
 - 2026-11-12: Ticket 22 built after Supabase was connected: anonymous recovery-code accounts, manual private Free Play saves and four leaderboards; backend deployed. 332 tests, builds and live API/browser checks pass.
 - 2026-11-12: Ticket 22 checked on freshly pulled main (`9d3c02a`): not implemented, blocked by the missing team Supabase project. Reviewed prior code/test patterns; all 326 baseline tests, type checking and build pass.
@@ -43,4 +44,3 @@
 - 2026-11-10: Ticket 16 built: globe start picker, NASA POWER 2025 climate shapes the Site, Wallops Island as a second Launch Site with less lift, Shipping by distance, real launch weather Scrubs, Launch Window advisor, save v13.
 - 2026-11-10: Buildings now take 3 × 3 tiles (visible from the whole-Site view, Site still 64 × 64, older saves refitted); Earth from space is a smooth globe with rounded coasts.
 - 2026-11-10: Ticket 15 built: building levels and Upgrades, Part Marks (Mk 1–3), Assembly Hall (starts on the Site, sets the biggest Bus), save v12.
-- 2026-11-10: Ticket 14 built: TIROS-1 Milestone, Vanguard 1 card unlocks Solar Cells, TV Camera, Thor-Able (3D too), Research Lab, Research Points and four Era 1 tech tree Upgrades, save v11.

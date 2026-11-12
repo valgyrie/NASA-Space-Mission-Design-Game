@@ -1,3 +1,4 @@
+import { makeAudioControls } from './audioControls';
 import { shareSeed } from '../site/shareSeed';
 import { t } from '../strings';
 import type { SiteState } from '../game/siteState';
@@ -83,7 +84,7 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, controlsLabel, controls, resume);
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, makeAudioControls(), controlsLabel, controls, resume);
   const mainMenu = document.createElement('button');
   mainMenu.type = 'button';
   mainMenu.textContent = t('mainMenu.heading');

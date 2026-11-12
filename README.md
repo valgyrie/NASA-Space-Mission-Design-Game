@@ -41,6 +41,8 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 
 **Camera:** left-drag (or W A S D / arrows) to move, right-drag to turn and tilt (or Q E to turn, R F to tilt down to the horizon), mouse wheel (or + −) to zoom. **H** goes back to the view of your whole Site.
 
+**Sound:** music and effects start after your first click or key. Adjust their separate volumes (0 mutes) in the main or pause menu; Audio credits lists the music and original effects. Settings stay in this browser.
+
 **Keys:** Space pauses. Esc opens the menu (your Seed and the controls).
 
 **Online:** open it from the main menu or the Free Play pause menu. Generate a nickname or choose a filtered, made-up one. Keep a private copy of the recovery code to continue on another computer. **Save to cloud** saves your Free Play Company and updates four leaderboards. **Load cloud Company** asks before replacing the Company on this browser. Saves are manual; local play still works offline. No email or password is needed. Backend setup and deployment notes are in [`supabase/README.md`](supabase/README.md).

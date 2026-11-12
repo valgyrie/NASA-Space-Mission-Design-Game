@@ -1,3 +1,4 @@
+import { audio } from '../audio/sound';
 import { HISTORY_CARDS, type HistoryCardId } from '../game/history';
 import { t } from '../strings';
 
@@ -74,6 +75,7 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
       after = onDone;
       if (backdrop.hidden) {
         backdrop.hidden = false;
+        audio.setScene('history', 'history');
         hooks.onOpen();
       }
       done.focus();
@@ -81,6 +83,7 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
     close() {
       if (backdrop.hidden) return;
       backdrop.hidden = true;
+      audio.setScene('history', null);
       hooks.onClose();
       const next = after;
       after = undefined;
