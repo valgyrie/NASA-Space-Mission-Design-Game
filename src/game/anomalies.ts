@@ -35,7 +35,7 @@ export interface Anomaly {
    * Survive the eclipse: the battery it flew with, and the days it would last (null when sunlight alone covers
    * what the Spacecraft uses). Missing for the other kinds.
    */
-  battery?: 'smallBattery' | 'largeBattery';
+  battery?: 'smallBattery' | 'mediumBattery' | 'largeBattery';
   lastsDays?: number | null;
   /** Days of the Mission and the last day the Spacecraft had Power, so lost days never run past either. */
   missionDays: number;
@@ -118,7 +118,7 @@ export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, fl
     const solarMark = plan.marks?.power ?? 1;
     roll('panel', panelChance(solarMark), { solarMark });
     const power = flight.findings.find((f) => f.kind === 'power');
-    const battery = plan.design.battery === 'smallBattery' ? 'smallBattery' : 'largeBattery';
+    const battery = plan.design.battery as NonNullable<Anomaly['battery']>;
     const lastsDays = power?.kind === 'power' ? power.lastsDays : null;
     roll('eclipse', eclipseChance(lastsDays, flight.missionDays, battery), { battery, lastsDays });
   }

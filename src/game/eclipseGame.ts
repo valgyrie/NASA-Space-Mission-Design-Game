@@ -18,7 +18,7 @@ export const SYSTEM_W: Record<System, number> = { computer: 2, heaters: 3, radio
 /** Seconds in Earth's shadow, until sunrise. */
 export const ECLIPSE_TIME_S = 12;
 /** Battery charge (%) when the shadow begins, by the battery the Spacecraft carries. */
-export const START_CHARGE = { smallBattery: 34, largeBattery: 46 } as const;
+export const START_CHARGE = { smallBattery: 34, mediumBattery: 36, largeBattery: 46 } as const;
 /** Battery charge (%) each watt uses a second. */
 export const CHARGE_PER_W_S = 0.4;
 /** Seconds with the heaters off before the battery gets too cold to work. Back on, it warms as fast. */

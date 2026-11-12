@@ -209,7 +209,7 @@ function addBus(g: THREE.Group, id: keyof typeof BUS_SHAPE | null): BusShape {
 /** The Battery section below the Bus: a cage of struts holding rows of cells, wired up to the Bus. Returns its height. */
 function addBattery(g: THREE.Group, bus: BusShape, id: Design['battery']): number {
   if (!id) return 0;
-  const rows = id === 'largeBattery' ? 2 : 1;
+  const rows = id === 'largeBattery' || id === 'mediumBattery' ? 2 : 1;
   const h = rows * 0.24 + 0.04;
   const r = Math.min(bus.radius * 0.92, 0.5);
   const top = -bus.height / 2;
@@ -219,7 +219,7 @@ function addBattery(g: THREE.Group, bus: BusShape, id: Design['battery']): numbe
   g.add(ring(r, top - 0.015, S.steel, 0.03));
   g.add(ring(r, top - h + 0.015, S.steel, 0.03));
   // Cells round the core, row by row.
-  const count = r > 0.4 ? 14 : 10;
+  const count = (r > 0.4 ? 14 : 10) - (id === 'mediumBattery' ? 2 : 0);
   const cellR = Math.min(0.045, (Math.PI * r * 0.75) / count / 1.2);
   const cell = new THREE.CylinderGeometry(cellR, cellR, 0.19, 8);
   const cap = new THREE.CylinderGeometry(cellR * 0.6, cellR * 0.6, 0.02, 6);
@@ -266,12 +266,13 @@ function addSolarCells(g: THREE.Group, bus: BusShape): void {
 }
 
 /** Four whip antennas on hinged mounts, sticking out sideways and down, plus two slot antennas in the skin. */
-function addSimpleAntenna(g: THREE.Group, bus: BusShape, below: number): void {
-  const length = 0.9;
+function addSimpleAntenna(g: THREE.Group, bus: BusShape, below: number, lowPower = false): void {
+  const length = lowPower ? 0.65 : 0.9;
   const y = -bus.height / 2 - below * 0.5;
   const mountR = Math.min(bus.radius * 0.92, 0.5) + 0.02;
-  for (let i = 0; i < 4; i++) {
-    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+  const count = lowPower ? 2 : 4;
+  for (let i = 0; i < count; i++) {
+    const a = (i / count) * Math.PI * 2 + Math.PI / 4;
     const mount = onSide(new THREE.BoxGeometry(0.06, 0.06, 0.04), S.steel, mountR, a, y);
     g.add(mount);
     const whip = new THREE.Group();
@@ -438,7 +439,9 @@ export function buildSpacecraft(design: Design): THREE.Group {
   if (design.bus) addAdapter(g, bus, below);
   if (design.propulsion === 'mainEngine') addMainEngine(g, bus, below);
   if (design.power === 'solarCells') addSolarCells(g, bus);
-  if (design.comms === 'simpleAntenna') addSimpleAntenna(g, bus, below);
+  if (design.comms === 'simpleAntenna' || design.comms === 'lowPowerAntenna') {
+    addSimpleAntenna(g, bus, below, design.comms === 'lowPowerAntenna');
+  }
   if (design.pointing === 'spin') addSpin(g, bus);
   if (design.payload === 'radiationDetector') addRadiationDetector(g, bus);
   if (design.payload === 'tvCamera') addTvCamera(g, bus);

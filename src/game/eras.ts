@@ -2,6 +2,7 @@ import type { BuildingKind, Part } from '../economy/part';
 import { START_DATE_UTC } from './balance';
 import { CONTRACTS, CONTRACT_IDS } from './contracts';
 import type { SiteState } from './siteState';
+import { partInMode } from './modes';
 
 /**
  * Eras: periods of real space history that set which Milestones, Parts, buildings and Launch Vehicles exist.
@@ -65,8 +66,8 @@ export function partEra(part: Part): Era {
   return PART_ERA[part] ?? 1;
 }
 
-export function isPartOpen(state: Pick<SiteState, 'hq'>, part: Part): boolean {
-  return eraOf(state) >= partEra(part);
+export function isPartOpen(state: Pick<SiteState, 'hq'> & Partial<Pick<SiteState, 'difficulty'>>, part: Part): boolean {
+  return partInMode(state.difficulty ?? 'easy', part) && eraOf(state) >= partEra(part);
 }
 
 export function buildingEra(kind: BuildingKind): Era {

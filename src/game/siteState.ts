@@ -7,6 +7,7 @@ import type { HistoryCardId, Patch } from './history';
 import { type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen } from './launchVehicles';
 import { eraOf, eraStartDay, isBuildingOpen } from './eras';
 import { JPL, type Place } from './places';
+import type { Difficulty } from './modes';
 import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
@@ -82,6 +83,7 @@ export type Building = Mine | Factory | Warehouse | Lab | AssemblyHall | HQ | Gr
 
 /** Everything about the running Site that changes over time and is saved. */
 export interface SiteState {
+  difficulty: Difficulty;
   money: number;
   /** Game days since the start date. Fractions count. */
   day: number;
@@ -143,8 +145,9 @@ export function noBetterParts(): Record<Part, number[]> {
   return Object.fromEntries(PARTS.map((p) => [p, []])) as unknown as Record<Part, number[]>;
 }
 
-export function newSiteState(place: Place = JPL): SiteState {
+export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'): SiteState {
   return {
+    difficulty,
     money: START_MONEY,
     day: 0,
     mines: [],

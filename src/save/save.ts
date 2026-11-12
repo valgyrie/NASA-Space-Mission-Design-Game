@@ -8,13 +8,14 @@ import { TECH_IDS, newResearch } from '../game/research';
 import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { JPL, START_KINDS } from '../game/places';
+import { DIFFICULTIES } from '../game/modes';
 import { SLOTS, emptyDesign, isComplete, isValidChoice } from '../game/spacecraft';
 import { randomSeed } from '../site/seed';
 
 /** Local save in the browser. One save slot for now; cloud saves come with online play. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 16;
+export const SAVE_VERSION = 17;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -114,7 +115,7 @@ function isAnomaly(value: unknown): boolean {
     ['day', 'chance', 'sendPerDay', 'dataPerDay', 'missionDays', 'untilDay', 'lostDays', 'cut'].every((k) => isNumber(a[k])) &&
     typeof a.first === 'boolean' &&
     (a.solarMark === undefined || isNumber(a.solarMark)) &&
-    (a.battery === undefined || isOneOf(a.battery, ['smallBattery', 'largeBattery'])) &&
+    (a.battery === undefined || isOneOf(a.battery, ['smallBattery', 'mediumBattery', 'largeBattery'])) &&
     (a.lastsDays === undefined || a.lastsDays === null || isNumber(a.lastsDays)) &&
     (a.score === null || isNumber(a.score)) &&
     (a.answer === null || isOneOf(a.answer, ['played', 'skipped', 'unanswered']))
@@ -162,6 +163,7 @@ function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
     !!v &&
+    isOneOf(v.difficulty, DIFFICULTIES) &&
     isNumber(v.money) &&
     isNumber(v.day) &&
     Array.isArray(v.mines) &&
@@ -263,6 +265,7 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Version 14 had no Eras, HQ, Ground Stations, Propulsion slot or Era 2 Parts: Era 1 (the HQ is placed when the
  * Site is shown), no stations, every design without an engine, and none of the new Parts in stock.
  * Version 15 had no Company logo: use the original maker preset.
+ * Version 16 had one Part set: keep it as Easy, with no Advanced Parts in stock.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -357,6 +360,13 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   }
   if (v?.version === 15) {
     v = { ...v, version: 16, company: { ...(v.company as object), logo: { ...DEFAULT_LOGO } } };
+  }
+  if (v?.version === 16) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const parts = old.parts && typeof old.parts === 'object' ? { ...old.parts, mediumBattery: 0, lowPowerAntenna: 0 } : old.parts;
+    const betterParts = old.betterParts && typeof old.betterParts === 'object'
+      ? { ...old.betterParts, mediumBattery: [], lowPowerAntenna: [] } : old.betterParts;
+    v = { ...v, version: 17, state: { ...old, difficulty: 'easy', parts, betterParts } } as typeof v;
   }
   return v;
 }

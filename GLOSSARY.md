@@ -263,6 +263,12 @@ How long the Mission takes to build and how long it operates.
 
 ### Modes
 
+**Easy mode**:
+A difficulty with fewer Parts and rounded numbers, chosen when starting a Company.
+
+**Advanced mode**:
+A difficulty with more Part choices and finer numbers, chosen when starting a Company.
+
 **Campaign**:
 The story mode from 1958 to Artemis IV, built on real Milestones.
 _Avoid_: story mode, career

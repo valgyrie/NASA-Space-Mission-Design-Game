@@ -24,6 +24,7 @@ import {
   statsOf,
 } from '../game/spacecraft';
 import type { TechId } from '../game/research';
+import type { Difficulty } from '../game/modes';
 import { makeLaunchPlanner } from './launchPlanner';
 import { makeTestRunScreen } from './testRun';
 import { testRunFor } from '../game/mission';
@@ -62,17 +63,21 @@ export function optionName(o: SpacecraftOption): string {
  * "3 kg · carries 9 kg": mass and the one number that matters for the option, with tech tree Upgrades and the
  * Part's Mark applied. Better Marks are named first ("Mk 2 · 2.6 kg · ...").
  */
-export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], mark = 1): string {
+export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], mark = 1, difficulty: Difficulty = 'easy'): string {
   const s = statsOf(o, tech, mark);
+  const number = (n: number) => formatDecimal(n, difficulty === 'advanced' ? 2 : 1);
   const bits: string[] = [];
   if (o.part && mark > 1) bits.push(t('stat.mark', { mark }));
-  if (o.part) bits.push(t('stat.mass', { kg: formatDecimal(partMass(o.part, mark)) }));
+  if (o.part) bits.push(t('stat.mass', { kg: number(partMass(o.part, mark)) }));
   if (s.carriesKg) bits.push(t('stat.carries', { kg: formatNumber(s.carriesKg) }));
   if (s.batteryWh) bits.push(t('stat.battery', { wh: formatNumber(s.batteryWh) }));
-  if (s.solarW) bits.push(t('stat.solar', { w: formatDecimal(s.solarW) }));
+  if (s.solarW) bits.push(t('stat.solar', { w: number(s.solarW) }));
   if (s.dataPerDay) bits.push(t('stat.makes', { kb: formatNumber(s.dataPerDay) }));
   if (s.sendPerDay) bits.push(t('stat.sends', { kb: formatNumber(s.sendPerDay) }));
-  if (s.powerUseW) bits.push(t('stat.uses', { w: formatDecimal(s.powerUseW) }));
+  if (s.powerUseW) bits.push(t('stat.uses', { w: number(s.powerUseW) }));
+  if (difficulty === 'advanced' && o.part && s.batteryWh) {
+    bits.push(t('stat.energyDensity', { wh: number(s.batteryWh / partMass(o.part, mark)) }));
+  }
   if (!o.part) bits.push(t(`option.${o.id as NoPartOption}.about`));
   if (o.id === 'mainEngine') bits.push(t('option.mainEngine.about'));
   return bits.join(t('stat.join'));
@@ -198,6 +203,8 @@ export function showMissionDesigner(
   // Slots
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
+  slotsBox.append(el('p', 'side-note', t('designer.mode', { mode: t(`mode.${state.difficulty}`) })),
+    el('p', 'side-note', t(`designer.${state.difficulty}.note`)));
   const slotRows = new Map<Slot, { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
   const optionUi: {
     o: SpacecraftOption;
@@ -213,7 +220,7 @@ export function showMissionDesigner(
     label.append(el('span', 'slot-name', t(`slot.${slot}`)), el('span', 'slot-hint', t(`slot.${slot}.hint`)));
     const choices = el('div', 'slot-options');
     const options = new Map<string, HTMLButtonElement>();
-    for (const o of optionsFor(slot)) {
+    for (const o of optionsFor(slot, state.difficulty)) {
       const b = button('option', '');
       b.dataset.option = o.id;
       const stats = el('span', 'option-stats');
@@ -336,7 +343,7 @@ export function showMissionDesigner(
       if (locked) locked.hidden = state.history.includes(UNLOCKED_BY[o.id]!);
       if (eraLock) eraLock.hidden = open;
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);
-      stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1);
+      stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
     }
     for (const slot of SLOTS) {
       const { row, options, stock } = slotRows.get(slot)!;

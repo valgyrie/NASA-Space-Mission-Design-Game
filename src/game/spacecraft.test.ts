@@ -3,6 +3,10 @@ import { RECIPES } from './balance';
 import { acceptContract } from './contracts';
 import { buyPrice } from './market';
 import { newSiteState } from './siteState';
+import { isPartOpen } from './eras';
+import { planLaunch, shipMission, testRunFor } from './mission';
+import { fly } from './flight';
+import { JPL } from './places';
 import {
   type Design,
   type OptionId,
@@ -32,6 +36,58 @@ function design(...ids: OptionId[]): Design {
 const swap = (from: OptionId, to: OptionId) => EXPLORER.map((id) => (id === from ? to : id));
 
 describe('Mission Designer slots', () => {
+  it('keeps the smaller Part set in Easy across the designer, Market and Factories', () => {
+    const easy = newSiteState();
+    const advanced = newSiteState(JPL, 'advanced');
+    for (const id of ['mediumBattery', 'lowPowerAntenna'] as const) {
+      const slot = id === 'mediumBattery' ? 'battery' : 'comms';
+      expect(optionsFor(slot, 'easy').some((o) => o.id === id)).toBe(false);
+      expect(optionsFor(slot, 'advanced').some((o) => o.id === id)).toBe(true);
+      expect(isPartOpen(easy, id)).toBe(false);
+      expect(choose(easy.design, id, easy)).toBe(false);
+      expect(isPartOpen(advanced, id)).toBe(true);
+      expect(choose(advanced.design, id, advanced)).toBe(true);
+    }
+    expect(choose(advanced.design, 'solarCells', advanced)).toBe(false);
+    expect(choose(advanced.design, 'transponder', advanced)).toBe(false);
+  });
+
+  it('uses Advanced Parts and their Marks consistently from design through Shipping and flight', () => {
+    const state = newSiteState(JPL, 'advanced');
+    acceptContract(state, 'explorer1');
+    for (const id of EXPLORER.map((id) => id === 'largeBattery' ? 'mediumBattery' : id === 'simpleAntenna' ? 'lowPowerAntenna' : id)) {
+      expect(choose(state.design, id, state)).toBe(true);
+    }
+    expect(buyMissing(state, state.design)).toEqual({ ok: true });
+    state.betterParts.lowPowerAntenna = [1];
+    const check = checkDesign(state, state.design);
+    const plan = planLaunch(state, state.design);
+    const run = testRunFor(state, 'K7QXM2', state.design);
+    expect(check.ready).toBe(true);
+    expect(check.gauges.mass.value).toBeCloseTo(9.38);
+    expect(check.powerUseW).toBeCloseTo(0.426);
+    expect(run.asLabelled.success).toBe(true);
+    expect(shipMission(state, state.design).ok).toBe(true);
+    expect(state.parts.mediumBattery).toBe(0);
+    expect(state.parts.lowPowerAntenna).toBe(0);
+    expect(fly(state.mission!, plan.readyDay, plan.deadlineDay)).toEqual(run.asLabelled);
+    expect(run.asLabelled.batteryWh[0]).toBe(420);
+    expect(run.asLabelled.findings).toContainEqual(expect.objectContaining({ kind: 'orbit', massKg: plan.massKg }));
+  });
+
+  it('warns when the low-power radio cannot send a TV Camera’s Data, in the bars and flight', () => {
+    const state = newSiteState(JPL, 'advanced');
+    state.completed.push('explorer1');
+    state.history.push('vanguard1');
+    state.vehicle = 'thorAble';
+    for (const id of ['smallBus', 'solarCells', 'largeBattery', 'lowPowerAntenna', 'spin', 'tvCamera'] as const) {
+      choose(state.design, id, state);
+    }
+    expect(checkDesign(state, state.design).problems).toContainEqual({ kind: 'commsShort', sendPerDay: 24, dataPerDay: 40, stations: false });
+    expect(testRunFor(state, 'K7QXM2', state.design).asLabelled.findings)
+      .toContainEqual({ kind: 'comms', ok: false, sendPerDay: 24, dataPerDay: 40 });
+  });
+
   it('offers at least one unlocked option in every slot', () => {
     for (const slot of SLOTS) expect(optionsFor(slot).some((o) => isUnlocked(newSiteState(), o.id)), slot).toBe(true);
   });

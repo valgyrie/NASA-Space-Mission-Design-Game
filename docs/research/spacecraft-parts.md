@@ -91,6 +91,19 @@ Sources: [Wikipedia: Telstar 1](https://en.wikipedia.org/wiki/Telstar_1) · [NSS
 - **Advanced mode:** more options, closer to the table values.
 - **Eras:** older Eras get lower values (e.g. Era 1 batteries far below Li-ion, silicon cells before multi-junction). Older-Era numbers are scaled down by the designers and labelled as game estimates, not measurements.
 
+## Advanced choices (ticket 20, checked 2026-11-12)
+
+Keep early Parts tied to early technology, rather than giving 1958 a modern Li-ion pack or radio. The original Parts keep their game balance in both modes; Advanced adds two choices.
+
+| Research | Game choice |
+|---|---|
+| NASA's *Spacecraft Power* (William R. Corliss, NASA EP-59, 1970), printed p. 5, lists primary mercury batteries at 30–50 Wh/lb, about 66–110 Wh/kg. The same page says Explorer 1 used mercury batteries. | Medium Battery: 4.2 kg, 420 Wh, or 100 Wh/kg at Mk 1. This is a tuning choice within that historical range, not Explorer 1's measured battery. Chemistry and charge cycles are not simulated. |
+| NASA's Explorer information lists a 60 mW transmitter and a 10 mW transmitter, the latter lasting longer. These are radio output powers, not electrical draw. | Low-power Antenna: 0.8 kg, 0.14 W electrical draw, 24 kB/day instead of the Simple Antenna's 50. Those three figures are game estimates; the real lower-power transmitter motivates the trade-off, not a conversion from mW to daily Data. |
+
+Sources: [NASA EP-59, scan held by the US Department of Education](https://files.eric.ed.gov/fulltext/ED059058.pdf#page=12) · [NASA: Explorer information](https://www.nasa.gov/history/sputnik/expinfo.html).
+
+At Mk 1, a Small Bus, Medium Battery, Low-power Antenna, Spin and Radiation Detector total 9.5 kg and use 0.44 W. The battery lasts about 39.8 days: enough for Explorer 1, with a smaller Communications margin (24 against 20 kB/day). The radio cannot send the TV Camera's 40 kB/day without Ground Stations, which only open in Era 2. Advanced shows up to two decimals and battery Wh/kg; these remain game estimates.
+
 [^pow]: [NASA SoA 3.0 Power (2026)](https://www.nasa.gov/smallsat-institute/sst-soa/power-subsystems)
 [^gnc]: [NASA SoA 5.0 Guidance, Navigation and Control (2026)](https://www.nasa.gov/smallsat-institute/sst-soa/guidance-navigation-and-control)
 [^com]: [NASA SoA 9.0 Communications (2026)](https://www.nasa.gov/smallsat-institute/sst-soa/soa-communications)
