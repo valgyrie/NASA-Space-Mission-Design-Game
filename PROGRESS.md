@@ -4,27 +4,26 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26, 30 and 31 built; 27 partly built; 28’s and 29’s agent parts built. This is the QA-only branch `codex/qa-screenshots-tickets-19-31`, from the latest `main` at **4661008** (PR #30 merged). Game code and save format are unchanged. Team playtests and submission work remain open.
+**State:** tickets 01–26, 30 and 31 built; 27 partly built; 28’s and 29’s agent parts built. This documentation branch, `codex/development-feature-screenshots`, starts from freshly fetched `main` at **3e14a17** (PR #31 merged). Game code, tests, save format, dependencies and deployed services are unchanged.
 
-**Just finished: the requested bug reproduction and screenshot pass.** Full results: `docs/qa/2026-11-12/README.md`.
-- All eight previously open QA findings still reproduce. Six new findings plus ticket 30’s known narrow-panel overlap make **15 open findings**, recorded as unchecked QA items in the relevant existing tickets. Shared causes are counted once.
-- New: current v19 cloud saves fail against the deployed backend; local-save errors silently lose changes; the logo editor lets keyboard focus restart the clock; repeated setup/Back leaks building buffers; buying land during assembly leaves the old Shipping route; H crops an expanded Site.
-- All development captures are in `screenshots/development-No_NASA_resources-/features and game/` or `bugs and errors/`. Root images and old QA images were moved unchanged; links updated. `screenshots/game screenshots/` is reserved for the final demo. Start at `screenshots/README.md`.
-- 356 tests, client/backend type checks, production build and online bundle pass. Browser checks at 1440×900, 1024×768 and 700×600; production UI confirms the editor-clock and cloud-save failures. Live Weekly Challenge scored 90.88 and kept the local Company unchanged. The temporary cloud account/save/result were removed with explicit approval; both remaining-row counts are zero.
-- Failed automation selectors were corrected in ignored `work/` scripts; completed runs reported no application page errors. Fixtures and remaining human/device checks are described in the QA report. No tests, dependencies or framework added; launcher checks remain deferred.
+**Just finished: the requested feature screenshot guide.** Start at `screenshots/development-No_NASA_resources-/features and game/README.md`, linked from `screenshots/README.md`.
+- **81 new PNGs** at 1440×900 in Chromium 156, with ticket links, short captions, entry paths, fixture details, verification and limits. Coverage spans the built features across tickets 01–31: entry/setup, every building, Market, design, all five Launch Vehicles in the catalogue, Shipping, Test Run, 3D Launch/staging, the three Anomalies, reports/Patches/history, Research/Marks, Campaign Eras 1–2, Free Play, Online, Weekly Challenge, sound/data/credits, bought land and Space view.
+- Most building views use the actual Era 2 Demo. Mission/progression/Research/land captures also use prepared local states. The logo/save path starts through real Company setup. Current Weekly design/Test Run captures use an offline fixture; public leaderboard captures only read. No accounts, cloud saves or attempts were created. The earlier live weekly result and all other old captures remain unchanged and labelled with their original build.
+- **356 tests in 39 files**, client/backend type checks, production build and online bundle pass. Existing large-chunk warning remains. All new images were visually inspected; their dimensions, links, ticket coverage and preserved earlier captures were checked. Completed capture passes reported no uncaught application page errors. Launcher checks remain deferred.
+- Capture scripts stay in ignored `work/`, following the earlier run. Two harness mistakes were corrected: wait for the refreshed Launch button, and supply the design to `testRunFor`. Standalone Anomaly captures were remounted in the normal Launch parent so its controls receive input. No product fixes or acceptance ticks were made.
 
 **Next:**
-1. Review the QA report and fix one recorded finding at a time. Start with ticket 22’s deployed save-validator mismatch and ticket 02’s silent local-save failure, then the dialog clock and ticket 30 regressions. Each fix needs its focused check and a browser recheck before its checkbox is ticked.
-2. Team: playtest the built tickets, judge Anomaly difficulty and tutorial timing, listen to the music and review art on real devices. The agent checks do not replace those.
-3. Nov 13: finish ticket 27’s official Resources work, then review the Era prompts. Team generates the actual Era art; see `docs/art/README.md`.
-4. Finish ticket 28’s names, hosting, video, project page, repository visibility and organisers’ logo answer; run final launcher checks at that ticket.
+1. Fix the open QA findings one at a time, starting with ticket 22’s deployed v19 save-validator mismatch and ticket 02’s silent local-save failure. Full evidence: `docs/qa/2026-11-12/README.md`; visible problems: `screenshots/development-No_NASA_resources-/bugs and errors/README.md`. The 15 findings remain open.
+2. Finish ticket 27’s official Resources work and review the Era prompts; the team supplies the real art for ticket 29. This guide shows the current text-only fallbacks.
+3. Team: beginner tutorial timing, Anomaly difficulty, listening, real-device and cross-browser review. Finish ticket 28’s names, hosting, video, project page, repository visibility and organisers’ logo answer; final launcher checks stay at that ticket.
 
-**Working convention:** keep the existing short ticket/QA writing, glossary terms and limited tests. Put new screenshots in the agreed folders with `ticket-NN-what-happened.png` names and link them from the relevant ticket. Record background errors with a trigger and measured evidence; screenshots are for visible problems. Current coverage and unchecked work are in the QA report, not implied by the screenshot alone.
+**Working convention:** use the glossary and the existing short, factual ticket/QA style. New images go in the agreed development folders with `ticket-NN-what-happened.png` names, source build, viewport, steps and observed result. Label fixtures and earlier evidence. Record background failures with measured evidence, and tick fixes only after their focused tests and browser recheck. The guide does not replace the tickets’ acceptance criteria or team tests.
 
 **Suggested skills:** `research` for official Resources; `handoff`.
 
 ## Log
 
+- 2026-11-12: Feature guide on main 3e14a17: 81 new screenshots across the built tickets, with captions, entry paths, fixtures and limits; older images kept. 356 tests, both type checks and production/online builds pass. Game code unchanged.
 - 2026-11-12: QA on main 4661008: rechecked eight open bugs, confirmed six new findings and the known narrow-panel overlap; 15 findings in existing tickets. Screenshots organised, background evidence recorded. 356 tests, both type checks, production/online builds and focused browser/API checks pass.
 - 2026-11-12: Ticket 31 QA fix: the Space view camera can no longer go inside Earth. 356 tests, build and before/after browser checks pass.
 - 2026-11-12: Ticket 30 built from freshly pulled main: Plots next door with their own Deposits, hover highlight and Plot card, buying grows the Site (building, border, camera, shadows, Shipping road), Free Play land Contracts, save v19. 354 tests, build and browser checks pass.
@@ -39,4 +38,3 @@
 - 2026-11-12: Ticket 24 built from freshly pulled main: main menu, two ready Demo Mode Companies on a fixed Site, isolated saves and menu return. 326 tests, build and browser checks pass.
 - 2026-11-12: Ticket 21 built from freshly pulled main: modern Free Play, generated Contracts, Falcon 9 Rideshares, same-Company continuation, save v18. 321 tests, build and browser checks pass.
 - 2026-11-12: Ticket 20 built from freshly pulled main: Easy and Advanced at setup and in Settings, two extra Advanced Parts with finer labels, shared Factory/Market and flight rules, save v17. 314 tests, build and browser checks pass.
-- 2026-11-12: Ticket 19 built: Company logo maker and drawing upload, logo on HQ flag/sign, all four rockets and Mission Patches; save v16 migrates older Companies to the original preset. 308 tests and build pass.
