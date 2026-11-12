@@ -15,7 +15,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. Demo Mode uses a separate storage adapter; Online reuses this format and validator. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 18;
+export const SAVE_VERSION = 19;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -203,7 +203,11 @@ function isSiteState(value: unknown): value is SiteState {
     isResearch(v.research) &&
     isOneOf(v.vehicle, LAUNCH_VEHICLE_IDS) &&
     isPlace(v.place) &&
-    isOneOf(v.launchSite, LAUNCH_SITE_IDS)
+    isOneOf(v.launchSite, LAUNCH_SITE_IDS) &&
+    Array.isArray(v.plots) &&
+    v.plots.every((p) => Array.isArray(p) && p.length === 2 && p.every(Number.isInteger) && !(p[0] === 0 && p[1] === 0)) &&
+    isNumber(v.freePlots) &&
+    v.freePlots >= 0
   );
 }
 
@@ -268,6 +272,7 @@ function historyFrom(old: Record<string, unknown>): { history: HistoryCardId[]; 
  * Version 15 had no Company logo: use the original maker preset.
  * Version 16 had one Part set: keep it as Easy, with no Advanced Parts in stock.
  * Version 17 had no play mode: its Companies stay in Campaign.
+ * Version 18 had no Plots: the Site is the Home Site alone.
  */
 function upgrade(data: unknown, newSeed: () => string): unknown {
   let v = data as { version?: unknown; company?: unknown; site?: unknown };
@@ -372,6 +377,9 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   }
   if (v?.version === 17) {
     v = { ...v, version: 18, state: { ...(v as { state?: object }).state, playMode: 'campaign' } } as typeof v;
+  }
+  if (v?.version === 18) {
+    v = { ...v, version: 19, state: { ...(v as { state?: object }).state, plots: [], freePlots: 0 } } as typeof v;
   }
   return v;
 }

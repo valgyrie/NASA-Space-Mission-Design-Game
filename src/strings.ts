@@ -990,6 +990,28 @@ export const STRINGS = {
   'material.aluminium': 'Aluminium',
   'material.copper': 'Copper',
   'material.silicon': 'Silicon',
+
+  'plot.heading': 'Land next door',
+  'plot.intro': 'A Plot the size of your Site. Buy it to build on it.',
+  'plot.deposits': 'Deposits',
+  'plot.deposit': '{material}: {count}',
+  'plot.water': 'Water',
+  'plot.water.none': 'None',
+  'plot.water.some': 'About {percent}% of the land',
+  'plot.land': 'Land',
+  'plot.price': 'Price',
+  'plot.free': 'Free: won from a Contract',
+  'plot.buy': 'Buy this Plot',
+  'plot.take': 'Take this Plot',
+  'plot.problem.money': 'Not enough money.',
+  'plot.problem.notTouching': 'Too far away. Buy the land between first.',
+  'plot.problem.owned': 'This land is already yours.',
+  'terrain.grass': 'grass',
+  'terrain.sand': 'sand',
+  'terrain.hills': 'hills',
+  'terrain.mountain': 'mountains',
+  'contracts.rewardPlot': '{money} and a Plot of land next door',
+  'report.rewardPlot': 'You also won a Plot of land. Click the land next to your Site to choose it.',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

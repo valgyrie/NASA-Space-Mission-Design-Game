@@ -35,7 +35,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Adapt to the official Resources (Nov 13); make data use visible in game and credits. |
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
 | 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
-| 30 | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
+| 30 ✅ | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
 | 31 ✅ | [Space view](31-space-view.md) _(added 2026-11-09)_ | 10 | See every Spacecraft in orbit round Earth; click one to follow it along its real orbit. |
 
 **Changed since (2026-11-10, asked for by the team):** every building takes 3 × 3 tiles so it shows from the whole-Site view (GDD §4; tickets 04, 05 and 15 were built with one tile each), and the Earth seen from space is a smooth globe (ticket 26's Earth box, done early).

@@ -19,9 +19,11 @@ import {
 import { eraOf } from './game/eras';
 import { showEraCard } from './ui/eraCard';
 import { type SaveData, type SaveStorage, saveGame, startAutosave } from './save/save';
-import { generateSite } from './site/site';
+import { generateSite, ownsPlot } from './site/site';
 import { showBuildMenu } from './ui/buildMenu';
 import { showBuildingPanel } from './ui/buildingPanel';
+import { showPlotPanel } from './ui/plotPanel';
+import { addOwnedPlots, checkPlot } from './game/plots';
 import { showContractsPanel } from './ui/contractsPanel';
 import { showHud } from './ui/hud';
 import { showMarketPanel } from './ui/marketPanel';
@@ -57,6 +59,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   audio.setScene('screen', 'site');
   const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
   const state = game.state;
+  // Plots of land bought next door are part of the Site (ticket 30).
+  addOwnedPlots(site, state);
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
   settleUnanswered(state);
   world.showSite(site);
@@ -147,6 +151,12 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     saveGame(storage, game);
   }, () => saveGame(storage, game));
   const panel = showBuildingPanel(ui, site, state, () => saveGame(storage, game));
+  // The card for a Plot of land next door; buying one redraws the land with it inside the Site.
+  const plotPanel = showPlotPanel(ui, site, state, () => {
+    audio.effect('build');
+    world.redrawLand();
+    saveGame(storage, game);
+  });
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
   const designer = showMissionDesigner(ui, state, game.site.seed, {
@@ -160,6 +170,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       contracts.close();
       tracker.close();
       panel.close();
+      plotPanel.close();
     },
     onClose() {
       world.keyboardEnabled = true;
@@ -207,6 +218,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       contracts.close();
       tracker.close();
       panel.close();
+      plotPanel.close();
     },
     onClose() {
       world.keyboardEnabled = true;
@@ -244,6 +256,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     market.close();
     tracker.close();
     panel.close();
+    plotPanel.close();
     const taken = accepted(state, contract);
     cardsAfterReport = state.history.slice(cardsBefore);
     const patch = patchFor(state, result.report);
@@ -301,6 +314,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       contracts.close();
       tracker.close();
       panel.close();
+      plotPanel.close();
       logo.open();
     },
   );
@@ -332,7 +346,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     buildMenu.setPlacing(kind);
     world.markTile(null);
     world.renderer.domElement.classList.toggle('placing', kind !== null);
-    if (kind) panel.close();
+    if (kind) {
+      panel.close();
+      plotPanel.close();
+      world.markPlot(null);
+    }
   };
   // Picking the building you are already placing stops placing.
   const buildMenu = showBuildMenu(ui, state, (kind) => setPlacing(placing === kind ? null : kind));
@@ -341,7 +359,12 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   const canvas = world.renderer.domElement;
   let down: { x: number; y: number } | null = null;
   canvas.addEventListener('pointermove', (e) => {
-    if (!placing) return;
+    if (!placing) {
+      // Hovering the land next door highlights its Plot: green if it can be bought now.
+      const plot = world.plotAtScreen(e.clientX, e.clientY);
+      world.markPlot(plot, !!plot && checkPlot(site, state, plot.px, plot.pz).ok);
+      return;
+    }
     const tile = world.tileAtScreen(e.clientX, e.clientY);
     world.markTile(tile, !!tile && checkBuild(site, state, placing, tile.x, tile.z).ok);
   });
@@ -352,8 +375,15 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     if (!down || Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_SLOP) return;
     const tile = world.tileAtScreen(e.clientX, e.clientY);
     if (!placing) {
-      if (tile) panel.show(tile.x, tile.z);
-      else panel.close();
+      const plot = tile ? null : world.plotAtScreen(e.clientX, e.clientY);
+      if (plot && !ownsPlot(site, plot.px, plot.pz)) {
+        panel.close();
+        plotPanel.show(plot);
+      } else {
+        plotPanel.close();
+        if (tile) panel.show(tile.x, tile.z);
+        else panel.close();
+      }
       return;
     }
     if (!tile) return;
@@ -383,6 +413,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       else if (report.isOpen) report.close();
       else if (designer.isOpen) designer.close();
       else if (placing) setPlacing(null);
+      else if (plotPanel.isOpen) plotPanel.close();
       else if (panel.isOpen) panel.close();
       else if (market.isOpen) market.close();
       else if (tracker.isOpen) tracker.close();
@@ -438,6 +469,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     tracker.update();
     hud.update(state);
     panel.update();
+    plotPanel.update();
     buildMenu.update();
     const covered =
       launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || online.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
@@ -461,5 +493,5 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   startAutosave(storage, () => game);
 
   // Dev builds only: a handle for browser tests and the console.
-  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts } });
+  if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts, plotPanel } });
 }

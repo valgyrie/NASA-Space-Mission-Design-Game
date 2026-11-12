@@ -37,6 +37,15 @@ export const BUILD_COST: Record<BuildingKind, number> = {
   groundStation: 400_000,
 };
 
+/**
+ * What a Plot of land next door costs (ticket 30): a base price for its dry land (all of it if there is no water),
+ * more for each Deposit on it, and dearer with each Plot already bought. Never less than `min`. Game estimates.
+ */
+export const PLOT_PRICE = { base: 600_000, perDeposit: 100_000, perBought: 0.5, min: 100_000 } as const;
+
+/** Every few Free Play Contracts gives a Plot of land as well as money. */
+export const LAND_CONTRACT_EVERY = 4;
+
 // ---- Building levels and Upgrades ----
 
 /** The Assembly Hall every Site starts with. Not built by the player; its Upgrades are priced from this. */

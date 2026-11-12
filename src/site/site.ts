@@ -36,8 +36,36 @@ export interface Site {
   size: number;
   water: WaterKind;
   climate: SiteClimate;
-  /** Row by row: tile (x, z) is at index z * size + x. */
+  /** Row by row: tile (x, z) is at index z * size + x. The Home Site, Plot (0, 0). */
   tiles: Tile[];
+  /** Tiles of the other Plots the Company owns, keyed by `plotKey` (ticket 30). Added with `addPlot`. */
+  plots: Map<string, Tile[]>;
+}
+
+/** A Plot's place in the grid of Site-sized land around the Home Site, which is Plot (0, 0). */
+export interface PlotRef {
+  px: number;
+  pz: number;
+}
+
+export const plotKey = (px: number, pz: number): string => `${px},${pz}`;
+
+/** The Plot that tile (x, z) lies in. Plot (px, pz) covers tiles px*SITE_SIZE … px*SITE_SIZE + SITE_SIZE - 1. */
+export function plotOf(x: number, z: number): PlotRef {
+  return { px: Math.floor(x / SITE_SIZE), pz: Math.floor(z / SITE_SIZE) };
+}
+
+/** Is the Plot part of the Site? */
+export function ownsPlot(site: Site, px: number, pz: number): boolean {
+  return (px === 0 && pz === 0) || site.plots.has(plotKey(px, pz));
+}
+
+/** Every Plot of the Site, the Home Site first. */
+export function sitePlots(site: Site): PlotRef[] {
+  return [{ px: 0, pz: 0 }, ...[...site.plots.keys()].map((k) => {
+    const [px, pz] = k.split(',').map(Number) as [number, number];
+    return { px, pz };
+  })];
 }
 
 export const MAX_LEVEL = 9;
@@ -50,9 +78,12 @@ export function placeholderClimate(rng: Rng): SiteClimate {
   return { dryness: Math.round(rng() * 100) / 100 };
 }
 
+/** The tile at (x, z) if it is on the Site: the Home Site or a Plot the Company owns. */
 export function tileAt(site: Site, x: number, z: number): Tile | undefined {
-  if (x < 0 || z < 0 || x >= site.size || z >= site.size) return undefined;
-  return site.tiles[z * site.size + x];
+  if (x >= 0 && z >= 0 && x < site.size && z < site.size) return site.tiles[z * site.size + x];
+  if (site.plots.size === 0) return undefined;
+  const { px, pz } = plotOf(x, z);
+  return site.plots.get(plotKey(px, pz))?.[(z - pz * SITE_SIZE) * SITE_SIZE + (x - px * SITE_SIZE)];
 }
 
 /** The ground at one spot: what it is and how high. */
@@ -115,7 +146,29 @@ export function generateSite(seed: string, climate?: SiteClimate): Site {
     for (let x = 0; x < size; x++) tiles.push({ ...land.groundAt(x, z), deposit: null });
   }
   placeDeposits(rng, tiles, size);
-  return { seed, size, water: land.water, climate: land.climate, tiles };
+  return { seed, size, water: land.water, climate: land.climate, tiles, plots: new Map() };
+}
+
+/**
+ * The tiles of any Plot, row by row, as they would be if the Company bought it. The Home Site's are the Site's own;
+ * every other Plot places its Deposits with its own random numbers, so buying land never changes the Home Site.
+ */
+export function plotTiles(site: Site, px: number, pz: number, land: Land = landOf(site)): Tile[] {
+  if (px === 0 && pz === 0) return site.tiles;
+  const owned = site.plots.get(plotKey(px, pz));
+  if (owned) return owned;
+  const tiles: Tile[] = [];
+  for (let z = 0; z < SITE_SIZE; z++) {
+    for (let x = 0; x < SITE_SIZE; x++) tiles.push({ ...land.groundAt(px * SITE_SIZE + x, pz * SITE_SIZE + z), deposit: null });
+  }
+  placeDeposits(makeRng(hashText(`${site.seed}:plot:${px},${pz}`)), tiles, SITE_SIZE);
+  return tiles;
+}
+
+/** Make a Plot part of the Site, so it can be built on. */
+export function addPlot(site: Site, px: number, pz: number, land?: Land): void {
+  if (ownsPlot(site, px, pz)) return;
+  site.plots.set(plotKey(px, pz), plotTiles(site, px, pz, land));
 }
 
 /** The land around (and under) a Site, for drawing the scenery out to the horizon. */
