@@ -256,6 +256,12 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Later:** visiting other Companies' Sites (with their logo), preset messages ("Can you send 500 titanium?"), sending resources, cooperative missions. **No chat.**
 - **Backend:** Supabase's hosted free tier (ADR-0001). We don't run a server of our own.
 
+Ticket 22 adds **Online** to the main menu and Free Play pause menu, using the existing panels. Create a nickname or recover an account before starting a Company. The generated secret code is the account's key; keep a copy. No email, password or personal identity is required (ADR-0004).
+
+**Save to cloud** stores one Free Play Company per account and updates its leaderboard scores. Saving and loading are manual. **Load cloud Company** asks before replacing this browser's Company; network failures keep the local save. Simultaneous writes are rejected. Campaign and Demo Mode stay local, with the existing separate demo slot. The game's save format remains v18.
+
+The four leaderboards show the top 20 saved Companies by one measure at a time. **Company value** is money + Raw Materials at making value + Parts at making cost + buildings at their build price and completed Upgrade cost; the HQ counts at its base value because its level marks the Era. Part Marks do not change their making value; Spacecraft in flight and pending Upgrades are not counted. **Missions completed** counts fulfilled Contracts. **Reputation** adds 10 per successful Mission Report and subtracts 5 per failed one, with a floor of zero. Missed-deadline penalties remain a later fix. **Research** counts all Research Points earned, including those spent. These are game estimates. Scores are calculated on the backend from player saves; those saves remain editable, so this is a casual leaderboard rather than an authoritative competition. Weekly Challenge rules stay in ticket 23.
+
 ## 13. Look, sound and text
 
 - **Look:** cozy, colourful low-poly world under a daytime sky, with sun shadows and soft shading in corners and at the foot of cliffs. Clean, calm NASA-style interface (dark panels, crisp charts). Not overwhelming.

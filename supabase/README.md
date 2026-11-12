@@ -1,0 +1,22 @@
+# Online setup
+
+The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`). Ticket 22's migration and `leap-online` function are deployed there. The public endpoint is in `src/online/client.ts`. Local play needs no Supabase configuration.
+
+## Updating the backend
+
+1. Run `npm run check` and `npm run build:online`. The latter bundles the shared name filter, save validator and score rules into `work/online-edge/index.js` using the existing Vite dependency.
+2. Apply any new files in `supabase/migrations/` with the Supabase migration tool. Do not rerun existing migrations.
+3. Deploy the generated `work/online-edge/index.js` as the `leap-online` function with JWT verification disabled. The function authenticates private requests itself with the recovery code. With an authenticated Supabase CLI, `supabase functions deploy leap-online --project-ref oyslhxxgxtqhgpfivwcb` uses `config.toml`'s generated entrypoint. The live deployment was checked through the connected Supabase tools.
+4. Check the live endpoint and a browser save/recovery round trip. Changes to the shared save format, name filter or score rules need a backend rebuild and deployment too.
+
+The function uses Supabase's server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; never put the service key in the game, repository or chat. No new npm dependencies are required.
+
+## Data and authentication
+
+- Each account has a random UUID, filtered nickname and SHA-256 hash of a 160-bit random recovery code. The browser keeps the code in `leap.online`, separate from `leap.save` and `leap.demo`. A copied code restores the account on another browser; the player then explicitly loads its Company. No email, password, real name or Supabase Auth identity is required.
+- `leap_players` holds one private Free Play save, its revision/date and four derived scores. RLS is enabled, with no client policies, and all `anon`/`authenticated` table grants are revoked. Only the function's service role accesses it. The security advisor's “RLS Enabled No Policy” informational notice is intentional: browsers have no direct table access.
+- Requests use HTTPS POST bodies. Codes are never URL parameters, database plaintext, leaderboard results or application logs. Anyone holding the code controls that account. There is no code reset; losing all copies loses access.
+- Leaderboards expose only nickname and scores. Scores are derived server-side from validated player saves, which remain editable on the player's computer. This is a casual leaderboard, without authoritative simulation or anti-cheat.
+- Save is manual and replaces the account's previous cloud Company. Load requires a second confirmation before replacing local data. Revision checks reject simultaneous writes; offline failures leave local data alone. Demo Mode never uploads automatically, and its pause menu has no Online action.
+
+Supabase references: [function configuration](https://supabase.com/docs/guides/functions/function-configuration), [deployment](https://supabase.com/docs/guides/functions/deploy), [RLS informational notice](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).

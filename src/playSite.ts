@@ -46,6 +46,7 @@ import { showTopBar } from './ui/topBar';
 import { LaunchView } from './world/launchView';
 import { SpaceView } from './world/spaceView';
 import type { World } from './world/world';
+import { showOnline } from './ui/online';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
 const CLICK_SLOP = 6;
@@ -103,6 +104,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       // Reload releases this session's frame callbacks, WebGL views and input listeners together.
       window.location.reload();
     },
+    demoEra === undefined ? () => online.open() : undefined,
   );
   if (demoEra !== undefined) {
     const note = document.createElement('p');
@@ -129,6 +131,13 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       },
     };
   };
+  const online = showOnline(ui, () => game, {
+    ...pauser(),
+    onLoad(saved) {
+      // The existing pagehide autosave must write the downloaded Company during the reload too.
+      Object.assign(game, saved);
+    },
+  });
   // Accepting a Milestone shows its Real History card: the real story before you build it.
   const contracts = showContractsPanel(ui, state, (id) => {
     const card = historyCardFor(id, 'before');
@@ -380,6 +389,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     if (
       launchShow.isOpen ||
       menu.isOpen ||
+      online.isOpen ||
       logo.isOpen ||
       designer.isOpen ||
       report.isOpen ||
@@ -426,7 +436,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     panel.update();
     buildMenu.update();
     const covered =
-      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
+      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || online.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
     tutorial.update(state, covered, designer.isOpen);
     // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {

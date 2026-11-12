@@ -74,10 +74,11 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 ### Free Play and online
 - [x] Free Play mode with generated Contracts
-- [ ] Anonymous accounts (nickname generator, recovery code)
-- [ ] Leaderboards
+- [x] Anonymous accounts (nickname generator, recovery code)
+- [x] Leaderboards
 - [ ] Weekly Challenge with fixed budget and scoring
-- [ ] Shareable Seeds, cloud saves
+- [ ] Shareable Seeds (ticket 23)
+- [x] Cloud saves for Free Play (ticket 22)
 
 ### Look and sound
 - [ ] Cozy low-poly art, clean NASA-style UI

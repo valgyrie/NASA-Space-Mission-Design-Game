@@ -3,7 +3,7 @@ import { ERA_YEARS } from '../game/eras';
 import { t } from '../strings';
 
 /** A small main menu over the live Site. Starting play removes it before the game installs its controls. */
-export function showMainMenu(root: HTMLElement, options: { companyName?: string; onPlay(): void; onDemo(era: DemoEra): void }): void {
+export function showMainMenu(root: HTMLElement, options: { companyName?: string; onPlay(): void; onDemo(era: DemoEra): void; onOnline(): void }): void {
   const panel = document.createElement('section');
   panel.className = 'panel dialog main-menu';
   panel.setAttribute('aria-labelledby', 'main-menu-heading');
@@ -25,7 +25,11 @@ export function showMainMenu(root: HTMLElement, options: { companyName?: string;
   const demo = document.createElement('button');
   demo.type = 'button';
   demo.textContent = t('demo.heading');
-  actions.append(play, demo);
+  const online = document.createElement('button');
+  online.type = 'button';
+  online.textContent = t('online.heading');
+  online.addEventListener('click', options.onOnline);
+  actions.append(play, demo, online);
 
   const picker = document.createElement('div');
   picker.className = 'main-menu-actions';
