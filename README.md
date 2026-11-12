@@ -45,6 +45,10 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 
 **Online:** open it from the main menu or the Free Play pause menu. Generate a nickname or choose a filtered, made-up one. Keep a private copy of the recovery code to continue on another computer. **Save to cloud** saves your Free Play Company and updates four leaderboards. **Load cloud Company** asks before replacing the Company on this browser. Saves are manual; local play still works offline. No email or password is needed. Backend setup and deployment notes are in [`supabase/README.md`](supabase/README.md).
 
+**Weekly Challenge:** in Online with a Free Play Company, design with the same budget and Parts as everyone else. Test for free, submit attempts and keep your best score. Every finisher gets the same weekly Mission Patch; the final top three earn podium badges. Your Company save is kept.
+
+**Share a Site:** Esc → Copy includes the Seed and location. Use **New Company from a Seed** on the main menu and paste the code into the Seed field. Starting asks before replacing an existing Company. A raw Seed still works with the location you choose.
+
 **Market:** open it under your Company name. Sell Raw Materials in 10 kg lots, or Parts one at a time, for money.
 
 **Contracts and Mission Designer:** both buttons are under your Company name. The Mission Designer pauses the Site: pick a Part for each slot, turn the 3D Spacecraft by dragging, and watch the six bars (Mass, Power, Budget, Data, Communications, Time). Missing Parts can be bought right there.

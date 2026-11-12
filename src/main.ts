@@ -21,6 +21,19 @@ world.start();
 
 const saved = loadGame(localStorage);
 const online = showOnline(root, () => loadGame(localStorage), { onOpen() {}, onClose() {} });
+function startNew(): void {
+  showNewCompany(root, {
+    onBack: mainMenu,
+    onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
+    onDone: ({ name, logo, seed, place, difficulty, playMode }) => {
+      if (saved && !window.confirm(t('seed.replace'))) { mainMenu(); return; }
+      online.destroy();
+      world.controls.enabled = true;
+      world.keyboardEnabled = true;
+      playSite(world, root, { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) });
+    },
+  });
+}
 function mainMenu(): void {
   world.keyboardEnabled = false;
   world.controls.enabled = false;
@@ -28,6 +41,7 @@ function mainMenu(): void {
   showMainMenu(root, {
     companyName: saved?.company.name,
     onOnline: () => online.open(),
+    onSharedSeed: () => startNew(),
     onPlay() {
       if (saved) {
         online.destroy();
@@ -35,16 +49,7 @@ function mainMenu(): void {
         world.keyboardEnabled = true;
         playSite(world, root, saved);
       } else {
-        showNewCompany(root, {
-          onBack: mainMenu,
-          onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
-          onDone: ({ name, logo, seed, place, difficulty, playMode }) => {
-            online.destroy();
-            world.controls.enabled = true;
-            world.keyboardEnabled = true;
-            playSite(world, root, { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) });
-          },
-        });
+        startNew();
       }
     },
     onDemo(era) {

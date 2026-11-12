@@ -1,3 +1,4 @@
+import { shareSeed } from '../site/shareSeed';
 import { t } from '../strings';
 import type { SiteState } from '../game/siteState';
 
@@ -11,7 +12,7 @@ export interface Menu {
  * The pause menu (Esc): Seed, settings and controls.
  * `onOpen` and `onClose` let the game pause and resume.
  */
-export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void, onOnline?: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode' | 'place'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void, onOnline?: () => void): Menu {
   const difficulty = state.difficulty;
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
@@ -39,7 +40,7 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
   copy.textContent = t('menu.copy');
   copy.title = t('menu.copySeed');
   copy.addEventListener('click', async () => {
-    if (await copyText(seed)) {
+    if (await copyText(shareSeed(seed, state.place))) {
       copy.textContent = t('menu.copied');
       window.setTimeout(() => (copy.textContent = t('menu.copy')), 1500);
     }

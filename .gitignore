@@ -2,3 +2,5 @@ node_modules/
 dist/
 .leap/
 __pycache__/
+work/
+supabase/.temp/

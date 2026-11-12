@@ -214,10 +214,10 @@ export function drawOrbit(canvas: HTMLCanvasElement, orbitKm: { low: number; hig
 
 // ---- The screen ----
 
-export function makeTestRunScreen(hooks: { onBack(): void }): TestRunScreen {
+export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean }): TestRunScreen {
   const root = el('div', 'testrun');
   root.hidden = true;
-  const back = el('button', 'small planner-back', t('testRun.back'));
+  const back = el('button', 'small planner-back', t(hooks.designBack ? 'planner.back' : 'testRun.back'));
   back.type = 'button';
   back.dataset.tutorial = 'testrun-back';
   back.addEventListener('click', () => hooks.onBack());

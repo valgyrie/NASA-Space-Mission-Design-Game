@@ -131,6 +131,15 @@ export class SpacecraftView {
     this.running = false;
   }
 
+  /** Release a discarded designer, including its WebGL context and resize listener. */
+  dispose(): void {
+    this.stop();
+    this.resize.disconnect();
+    this.controls.dispose();
+    this.renderer.dispose();
+    this.renderer.forceContextLoss();
+  }
+
   private fit(): void {
     const { clientWidth: w, clientHeight: h } = this.canvas;
     if (w === 0 || h === 0) return;

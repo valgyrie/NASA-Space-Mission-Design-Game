@@ -1,6 +1,6 @@
 # Online setup
 
-The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`). Ticket 22's migration and `leap-online` function are deployed there. The public endpoint is in `src/online/client.ts`. Local play needs no Supabase configuration.
+The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`). Tickets 22 and 23's migrations and the `leap-online` function are deployed there. The public endpoint is in `src/online/client.ts`. Local play needs no Supabase configuration.
 
 ## Updating the backend
 
@@ -20,3 +20,11 @@ The function uses Supabase's server-side `SUPABASE_URL` and `SUPABASE_SERVICE_RO
 - Save is manual and replaces the account's previous cloud Company. Load requires a second confirmation before replacing local data. Revision checks reject simultaneous writes; offline failures leave local data alone. Demo Mode never uploads automatically, and its pause menu has no Online action.
 
 Supabase references: [function configuration](https://supabase.com/docs/guides/functions/function-configuration), [deployment](https://supabase.com/docs/guides/functions/deploy), [RLS informational notice](https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy).
+
+## Weekly Challenge
+
+`weekly_challenge` adds `leap_weekly` and the service-only `leap_submit_weekly` SQL function. The same RLS/grant boundary as `leap_players` applies. The SQL function uses one upsert with `greatest` to retain the best score under concurrent requests; it is `security invoker`, with an empty search path and no public, `anon` or `authenticated` execution grant. The table has indexes for weekly ordering and account rewards. Its no-policy informational notice is intentional too.
+
+The Edge Function authenticates with the recovery code, selects the week using its UTC clock and evaluates only a submitted design through `src/game/weekly.ts`. Client scores, budgets, tech and Company resources are never accepted. Only successful attempts enter the table. Responses expose nicknames and scores, plus the caller's own earned weeks and podium ranks; IDs and recovery hashes stay private. Completed weeks reject new submissions. A successful entry is the finisher patch; final top-three ranks are the podium badges. There is no scheduled job or extra reward currency to sync. Future scoring changes must keep previous weeks' stored scores intact and be deployed with their client changes.
+
+SQL RPCs returning `void` produce an empty 204 response; the shared database helper handles that explicitly. Rebuild and deploy the function whenever the shared weekly rules change. These casual boards do not add rate limiting or prevent players from creating multiple anonymous accounts.

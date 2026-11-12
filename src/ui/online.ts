@@ -1,3 +1,4 @@
+import { makeWeekly } from './weekly';
 import { checkCompanyName, NAME_MAX } from '../company/companyName';
 import { OnlineClient, OnlineError } from '../online/client';
 import { METRICS, formatCode, generateNickname, type Metric } from '../online/model';
@@ -66,8 +67,12 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
       recoveryArea.querySelectorAll<HTMLButtonElement>('button').forEach((b) => { b.disabled = false; });
       tabs.querySelectorAll<HTMLButtonElement>('button').forEach((b) => { b.disabled = false; });
       close.disabled = false;
+      weeklyHost.querySelectorAll<HTMLButtonElement>('button').forEach((b) => { b.disabled = false; });
     }
   };
+  const weekly = makeWeekly(root, client, run);
+  const weeklyHost = el('div');
+  weeklyHost.append(weekly.root);
   function nicknameForm(creating: boolean) {
     const name = input('online.nickname', creating ? generateNickname() : client.account!.nickname);
     name.field.maxLength = NAME_MAX;
@@ -82,11 +87,13 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
       if (creating) await client.create(checked.name);
       else await client.rename(checked.name);
       await renderBoard();
+      if (current()?.state.playMode === 'freePlay') await weekly.refresh();
     }, creating ? 'online.ready' : 'online.renamed'));
     accountArea.append(row, submit);
   }
   function renderAccount() {
     accountArea.replaceChildren();
+    weeklyHost.hidden = current()?.state.playMode !== 'freePlay' || !client.account;
     if (!client.account) {
       if (!client.code) nicknameForm(true);
       return;
@@ -131,7 +138,7 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
 
   const recover = input('online.recovery', '');
   recoveryArea.append(el('h2', t('online.recover')), note('online.recoverNote'), recover.wrapper,
-    button('online.recover', () => void run(async () => { await client.recover(recover.field.value); recover.field.value = ''; }, 'online.ready')));
+    button('online.recover', () => void run(async () => { await client.recover(recover.field.value); recover.field.value = ''; if (current()?.state.playMode === 'freePlay') await weekly.refresh(); }, 'online.ready')));
 
   const tabs = el('div', '', 'online-tabs');
   for (const id of METRICS) {
@@ -162,14 +169,15 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
     board.append(table);
   }
   const close = button('mainMenu.back', () => api.close());
-  panel.append(heading, note('online.intro'), status, accountArea, recoveryArea, el('h2', t('online.leaderboards')), note('online.leaderNote'), tabs, board, note('online.scoreNote'), close);
+  panel.append(heading, note('online.intro'), status, accountArea, recoveryArea, el('h2', t('online.leaderboards')), note('online.leaderNote'), tabs, board, note('online.scoreNote'), weeklyHost, close);
   backdrop.append(panel);
   root.append(backdrop);
   const onKey = (event: KeyboardEvent) => {
     if (!api.isOpen || event.key !== 'Escape') return;
     event.stopImmediatePropagation();
     event.preventDefault();
-    api.close();
+    if (weekly.isPlaying) weekly.closeDesigner();
+    else api.close();
   };
   const api = {
     get isOpen() { return !backdrop.hidden; },
@@ -180,7 +188,7 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
       renderAccount();
       close.focus({ preventScroll: true });
       panel.scrollTop = 0;
-      void run(async () => { await client.refresh(); await renderBoard(); });
+      void run(async () => { await client.refresh(); await renderBoard(); if (current()?.state.playMode === 'freePlay' && client.account) await weekly.refresh(); });
     },
     close() {
       if (!api.isOpen || busy) return;
@@ -188,6 +196,7 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
       hooks.onClose();
     },
     destroy() {
+      weekly.destroy();
       window.removeEventListener('keydown', onKey, true);
       backdrop.remove();
     },
