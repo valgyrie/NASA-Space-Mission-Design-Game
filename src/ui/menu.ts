@@ -11,7 +11,7 @@ export interface Menu {
  * The pause menu (Esc): Seed, settings and controls.
  * `onOpen` and `onClose` let the game pause and resume.
  */
-export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void): Menu {
   const difficulty = state.difficulty;
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
@@ -83,6 +83,11 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
   }
 
   panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, controlsLabel, controls, resume);
+  const mainMenu = document.createElement('button');
+  mainMenu.type = 'button';
+  mainMenu.textContent = t('mainMenu.heading');
+  mainMenu.addEventListener('click', onMainMenu);
+  panel.append(mainMenu);
   backdrop.append(panel);
   root.append(backdrop);
 

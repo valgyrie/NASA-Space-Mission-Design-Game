@@ -32,6 +32,8 @@ Three generated offers stay on the board: radiation surveys, weather photography
 
 After all **currently built** Campaign Milestones (through Syncom 3), the board offers **Continue in Free Play**. The same Company keeps its name, logo, place, Seed, buildings, stock, Marks, money, Research, reports, Patches and History Archive. The date jumps forward to 2026 (never backwards); pending Upgrade time is preserved. This interim endpoint moves when later Campaign Milestones are built; the planned story still ends after Artemis IV. Save v18 preserves earlier games as Campaign Companies. Online features wait for tickets 22–23.
 
+**Demo Mode (ticket 24):** the main menu offers the two finished Campaign Eras on one fixed Site (Seed `K7QXM2`, Historic JPL place). Era 1 has Explorer 1 accepted and a batteries-only design; Era 2 has the earlier Milestones completed, Telstar 1 accepted, a solar-powered relay design and a Ground Station. Both have working industry, a Warehouse, spare Parts and enough money to test, change the design and ship at once. They use Easy mode and skip the tutorial, with the normal Mission rules and risks. Selecting an Era starts its prepared Company afresh; all demo saving is separate from the player's Company. The pause menu saves the current session before returning to the main menu. Later Campaign Eras need their own prepared save when built.
+
 ## 4. Starting the game
 
 - **Name your Company** and make a **logo** (see §11).
