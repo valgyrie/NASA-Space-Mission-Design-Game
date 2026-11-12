@@ -4,7 +4,9 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–21, 24 and 31 built; 12, 13, 16–21 still await their team playtests. Local launchers are merged. This session built ticket 24 on `codex/ticket-24-demo-mode` from freshly pulled `main` (`f69d941`, including ticket 21).
+**State:** tickets 01–21, 24 and 31 built; 12, 13, 16–21 still await their team playtests. Local launchers are merged. Ticket 22 is not implemented on freshly pulled `main` (`9d3c02a`, including ticket 24).
+
+**Ticket 22 check:** reviewed tickets 20, 21 and 24, their changes, save/UI modules and test patterns. The team's Supabase project is still missing: no project configuration in the checkout or environment, no relevant GitHub issue, and no connected Supabase integration. Asked the team to connect Supabase and identify its project, or supply its project URL and public publishable/anon key. Secret/service-role keys must stay out of chat and client code. Account recovery, cloud saves and leaderboards remain unbuilt and untested. Existing baseline: all 326 tests, type checking and the production build pass. No game code, dependencies or tests changed; launcher checks remain deferred.
 
 **Just finished: ticket 24, Demo Mode.** Rules and file map: `docs/tickets/24-demo-mode.md`, GDD §3.
 - Main menu over the live Site: Continue the saved Company (or Start your Company), Demo Mode and an Era picker. Company setup has Back; the pause menu saves before returning to the main menu. Returning reloads the page to release the previous session's views, listeners and frame callbacks.
@@ -14,7 +16,7 @@
 - Not tested: touch, real-laptop performance or team playtesting. Software-rendered Chromium loads the demos in seconds. Launcher checks still wait for the final ticket.
 
 **Next:**
-1. Ticket 22 still needs the team's Supabase project: no configuration or project credentials are supplied in the repo/environment. Ticket 23 depends on 22. The next unblocked ticket in order is 25 (Sound and music), then 26. Also unblocked: 30. Ticket 27 waits for the official Resources (Nov 13).
+1. Resume ticket 22 when the team supplies its Supabase project and access. Its first acceptance criterion is a human prerequisite. Follow the existing panels, `src/strings.ts`, save format and focused Vitest/browser checks; verify recovery on a second browser session, private Free Play cloud saves and all four leaderboards against the real project before marking it built. Ticket 23 depends on 22. Other unblocked tickets: 25 (Sound and music), 26 and 30. Ticket 27 waits for the official Resources (Nov 13).
 2. Team: try Demo Mode; play Free Play objectives and Campaign continuation, compare Easy/Advanced and judge the Anomaly difficulty. Older team-test criteria remain in their tickets.
 
 **Open:**
@@ -29,6 +31,7 @@
 
 ## Log
 
+- 2026-11-12: Ticket 22 checked on freshly pulled main (`9d3c02a`): not implemented, blocked by the missing team Supabase project. Reviewed prior code/test patterns; all 326 baseline tests, type checking and build pass.
 - 2026-11-12: Ticket 24 built from freshly pulled main: main menu, two ready Demo Mode Companies on a fixed Site, isolated saves and menu return. 326 tests, build and browser checks pass.
 - 2026-11-12: Ticket 21 built from freshly pulled main: modern Free Play, generated Contracts, Falcon 9 Rideshares, same-Company continuation, save v18. 321 tests, build and browser checks pass.
 - 2026-11-12: Ticket 20 built from freshly pulled main: Easy and Advanced at setup and in Settings, two extra Advanced Parts with finer labels, shared Factory/Market and flight rules, save v17. 314 tests, build and browser checks pass.
