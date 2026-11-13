@@ -107,7 +107,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Official Resources (approved 2026-11-13, in build order)
 - [x] Four Segments in the Launch planner and Mission Report (ticket 32)
 - [x] Maturity strip and Design Review (ticket 33)
-- [ ] NASA's GMAT trajectories: Syncom 3's transfer and Reference paths in the Space view (ticket 34)
+- [x] NASA's GMAT trajectories: Syncom 3's transfer and Reference paths in the Space view (ticket 34)
 - [ ] Orbit maths checked against GMAT (ticket 35)
 - [ ] Like the real one: the real Spacecraft at the end of the Mission Report (ticket 36)
 - [ ] Alouette 1 side story card (ticket 37)

@@ -5,6 +5,8 @@ import { buildEarth } from './earthMesh';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
 import { makeStars } from './spacecraftView';
 import { outsideSphere } from './spaceCamera';
+import { COMPANION, type ReferenceTrajectoryId, radiusRange, referenceBurns, referenceMinutes, referencePoints, referencePositionAt } from './referenceTrajectory';
+import type { ReferencePathKey } from './referencePaths';
 
 /**
  * The Space view in 3D: Earth with every Spacecraft the Company has in orbit, each on its real orbit
@@ -25,6 +27,26 @@ const MODEL_SIZE = 0.6;
 /** How close a click must be: an invisible ball this size round each Spacecraft. */
 const PICK_RADIUS = 2.6;
 const COLOUR = { working: 0x4fa3ff, silent: 0x7b8798, done: 0xa9c4e6 } as const;
+/** Reference Trajectories are drawn thin, dashed and warm, so they never look like the Company's own (blue) Spacecraft. */
+const REFERENCE_COLOUR = 0xffb454;
+const MOON_COLOUR = 0xb8bcc4;
+/** The Moon's real radius, km. */
+const MOON_KM = 1_737;
+/** The farthest the camera may see, in view units: past the Moon (about 2,000 units out). */
+const FAR = 30_000;
+
+/** A Reference Trajectory (or the Moon's own path) drawn in the view, with a dot moving along it on time. */
+interface ShownPath {
+  key: ReferencePathKey;
+  group: THREE.Group;
+  marker: THREE.Object3D;
+  minutes: number;
+}
+
+/** GMAT's frame (x to the March equinox, z to the north pole, km) in this view (y up is north). */
+function toView(p: { x: number; y: number; z: number }): THREE.Vector3 {
+  return new THREE.Vector3(p.x * KM, p.z * KM, -p.y * KM);
+}
 
 interface Shown {
   sat: Satellite;
@@ -45,11 +67,13 @@ export class SpaceView {
   readonly canvas = document.createElement('canvas');
   private readonly renderer: THREE.WebGLRenderer;
   private readonly scene = new THREE.Scene();
-  private readonly camera = new THREE.PerspectiveCamera(40, 1, 0.05, 3_000);
+  private readonly camera = new THREE.PerspectiveCamera(40, 1, 0.05, FAR);
   private readonly controls: OrbitControls;
   private readonly earth = buildEarth(EARTH_RADIUS);
   private readonly glowMap = glowTexture();
   private shown: Shown[] = [];
+  private readonly stars = makeStars(1_500);
+  private readonly references = new Map<ReferenceTrajectoryId, { paths: ShownPath[]; started: number }>();
   private following: Shown | null = null;
   private readonly lastTarget = new THREE.Vector3();
   /** Which way the followed Spacecraft faced last frame, so the camera turns with it round the orbit. */
@@ -68,7 +92,10 @@ export class SpaceView {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.scene.background = new THREE.Color(0x02050c);
-    this.scene.add(makeStars(1_500), this.earth.earth);
+    // The stars travel with the camera and are drawn first, so they stay behind everything even far out past the Moon.
+    this.stars.renderOrder = -1;
+    (this.stars.material as THREE.PointsMaterial).depthWrite = false;
+    this.scene.add(this.stars, this.earth.earth);
     this.earth.spin(THREE.MathUtils.degToRad(80));
     this.scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0a0f18, 0.5));
     const sun = new THREE.DirectionalLight(0xfff2dc, 2.8);
@@ -127,6 +154,23 @@ export class SpaceView {
     this.keepOutsideEarth();
   }
 
+  /** Show or hide a Reference Trajectory. It starts from its beginning each time it is switched on. */
+  showReference(id: ReferenceTrajectoryId, on: boolean): void {
+    const was = this.references.get(id);
+    if (was && !on) {
+      for (const p of was.paths) disposeGroup(p.group);
+      this.references.delete(id);
+    }
+    if (on && !was) {
+      const keys: ReferencePathKey[] = [id];
+      const companion = COMPANION[id];
+      if (companion) keys.push(companion);
+      this.references.set(id, { paths: keys.map((key) => this.addPath(key)), started: this.minutes });
+      this.placeReferences();
+    }
+    if (!this.following) this.overview();
+  }
+
   /** Screen positions of each Spacecraft, for name tags; hidden when behind Earth or off screen. */
   tags(): { id: number; x: number; y: number; visible: boolean }[] {
     const w = this.canvas.clientWidth;
@@ -150,6 +194,8 @@ export class SpaceView {
       this.minutes += (seconds * SPEEDUP) / 60;
       this.earth.spin(((seconds * SPEEDUP) / 60 / SIDEREAL_DAY_MIN) * Math.PI * 2);
       this.place();
+      this.placeReferences();
+      this.stars.position.copy(this.camera.position);
       if (this.following) {
         // Keep the camera in step with the Spacecraft it follows, turning with it round the orbit
         // (and keeping any turn or zoom the player made).
@@ -163,6 +209,8 @@ export class SpaceView {
       }
       this.controls.update(seconds);
       this.keepOutsideEarth();
+      this.stars.position.copy(this.camera.position);
+      this.fitNear();
       this.fit();
       this.renderer.render(this.scene, this.camera);
       this.onFrame();
@@ -209,6 +257,63 @@ export class SpaceView {
     return { sat, plane, body, model, glow, pick, line, lapMinutes: orbitMinutes(sat.orbitKm), start: i * 0.37, share: 0 };
   }
 
+  private addPath(key: ReferencePathKey): ShownPath {
+    const moon = key === 'moon';
+    const group = new THREE.Group();
+    // Dashes in step with the path's size, so they read the same on the transfer and on the flight to the Moon.
+    const dash = radiusRange(key).max * KM * 0.012;
+    const line = new THREE.Line(
+      new THREE.BufferGeometry().setFromPoints(referencePoints(key).map(toView)),
+      new THREE.LineDashedMaterial({ color: moon ? MOON_COLOUR : REFERENCE_COLOUR, dashSize: dash, gapSize: dash * 0.7, transparent: true, opacity: moon ? 0.5 : 0.85 }),
+    );
+    line.computeLineDistances();
+    group.add(line);
+    // Where an engine fires: a small bright ring that keeps its size on screen.
+    for (const burn of referenceBurns(key)) {
+      const dot = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: this.glowMap, color: 0xffffff, sizeAttenuation: false, depthWrite: false, transparent: true }),
+      );
+      dot.scale.setScalar(0.035);
+      dot.position.copy(toView(burn));
+      group.add(dot);
+    }
+    let marker: THREE.Object3D;
+    if (moon) {
+      marker = new THREE.Mesh(new THREE.SphereGeometry(MOON_KM * KM, 32, 16), new THREE.MeshStandardMaterial({ color: MOON_COLOUR, roughness: 1 }));
+      const glow = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: this.glowMap, color: MOON_COLOUR, sizeAttenuation: false, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
+      );
+      glow.scale.setScalar(0.05);
+      marker.add(glow);
+    } else {
+      marker = new THREE.Sprite(
+        new THREE.SpriteMaterial({ map: this.glowMap, color: REFERENCE_COLOUR, sizeAttenuation: false, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
+      );
+      marker.scale.setScalar(0.045);
+    }
+    group.add(marker);
+    this.scene.add(group);
+    return { key, group, marker, minutes: referenceMinutes(key) };
+  }
+
+  /** Move each Reference Trajectory's dot (and the Moon) to where it is now; each starts over when it ends. */
+  private placeReferences(): void {
+    for (const { paths, started } of this.references.values()) {
+      // The paths shown together share one clock, set by the first (the Moon's covers the same days).
+      const lap = paths[0].minutes;
+      const now = (this.minutes - started) % lap;
+      for (const p of paths) p.marker.position.copy(toView(referencePositionAt(p.key, now)));
+    }
+  }
+
+  /** Far out the near limit can grow, so the depth stays sharp from the Moon down to a Spacecraft. */
+  private fitNear(): void {
+    const near = Math.max(0.05, this.camera.position.length() / 600);
+    if (Math.abs(near - this.camera.near) / this.camera.near < 0.05) return;
+    this.camera.near = near;
+    this.camera.updateProjectionMatrix();
+  }
+
   /** Where a Spacecraft is and which way it faces: x along its path, y away from Earth. */
   private frameOf(s: Shown): { at: THREE.Vector3; frame: THREE.Quaternion } {
     const at = s.body.getWorldPosition(new THREE.Vector3());
@@ -238,7 +343,11 @@ export class SpaceView {
 
   private overview(): void {
     // Far enough back to see the highest orbit: a geostationary one is over six times Earth's size.
-    const highest = Math.max(0, ...this.shown.map((s) => (EARTH_KM + s.sat.orbitKm.high) * KM));
+    const highest = Math.max(
+      0,
+      ...this.shown.map((s) => (EARTH_KM + s.sat.orbitKm.high) * KM),
+      ...[...this.references.values()].flatMap((r) => r.paths.map((p) => radiusRange(p.key).max * KM)),
+    );
     const k = Math.max(1, (highest * 2.6) / 126);
     this.camera.position.set(70 * k, 45 * k, 95 * k);
     this.controls.target.set(0, 0, 0);
@@ -299,6 +408,14 @@ const FALLBACK_DESIGN = {
   propulsion: 'noEngine',
   payload: null,
 } as const;
+
+function disposeGroup(group: THREE.Group): void {
+  group.removeFromParent();
+  group.traverse((o) => {
+    if (o instanceof THREE.Mesh || o instanceof THREE.Line) o.geometry.dispose();
+    if (o instanceof THREE.Mesh || o instanceof THREE.Line || o instanceof THREE.Sprite) (o.material as THREE.Material).dispose();
+  });
+}
 
 /** A soft round glow for each Spacecraft's dot. */
 function glowTexture(): THREE.Texture {

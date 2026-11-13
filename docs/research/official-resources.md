@@ -59,6 +59,7 @@ R. Wessen, C. Borden, J. Ziemer, J. Kwok (JPL), "Space Mission Concept Developme
 
 - Raw size about 250 KB together. The `.js` files hold JSON inside a JavaScript string.
 - **Check by hand:** two-body maths for 2,240 × 151,900 km gives a semi-major axis of 83,441 km and a period of about 66.6 h, matching the 66.7 h above. A geostationary radius of 35,786 + 6,371 km = 42,157 km is 8 km from the transfer run's final 42,165 km.
+- **Earth → Moon file, read in ticket 34:** it starts 158,311 km from Earth, passes 8,620 km from Earth's centre on day 1.4, comes within 10,000 km of the Moon on day 6.4 and then stays about 9,200 km from the Moon's centre until the end (day 21.4): a week to get there, two weeks in orbit round the Moon. The Moon's path is 18.95° to the equator, at the low end of its 18–29° range _(verify the 2014 value)_, which supports the equatorial frame. The transfer to GEO is in one plane at 12.85° to the equator: it ends circling at geostationary height, but tilted, so strictly geosynchronous.
 - **Check outside the repo** (plain two-body maths, not LEAP's code): matched the long-ellipse run to 0.7% of distance on average over 2.8 days, 3.2% at worst, near apogee, where the Moon's pull shows.
 - **Licence:** no top-level licence file; `X3Dom/LICENSE` is the X3DOM library's MIT/GPL licence. NASA-published material. Credit: "NASA Mission Viz (github.com/nasa/mission-viz), trajectories generated with NASA GMAT" _(verify the licence wording with the team)_.
 - **Planned in LEAP:** tickets 34, 35, 47.

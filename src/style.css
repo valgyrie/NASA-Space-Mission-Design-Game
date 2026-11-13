@@ -2266,6 +2266,86 @@ button.space-item[aria-pressed='true'] {
   background: #7b8798;
 }
 
+/* Reference Trajectories: warm and dashed in the view, so the list dot is warm too. */
+.space-refs {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--panel-edge);
+}
+
+.space-refs h3 {
+  margin: 0 0 4px;
+  font-size: 15px;
+}
+
+.space-dot.space-ref-dot {
+  background: transparent;
+  border: 2px dashed #ffb454;
+  box-sizing: border-box;
+}
+
+button.space-item[aria-pressed='true'] .space-ref-dot {
+  background: #ffb454;
+}
+
+.space-ref-line {
+  margin: 3px 2px 6px;
+  color: var(--muted);
+  line-height: 1.4;
+}
+
+/* The transfer to geostationary orbit in the Launch planner (NASA GMAT path). */
+.transfer-picture {
+  margin: 8px 0;
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr);
+  gap: 10px;
+  align-items: center;
+}
+
+.transfer-picture[hidden] {
+  display: none;
+}
+
+.transfer-picture svg {
+  width: 150px;
+  height: 150px;
+  background: #0b1424;
+  border-radius: 8px;
+}
+
+.transfer-picture figcaption {
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.transfer-picture figcaption strong {
+  color: var(--text);
+}
+
+.transfer-earth {
+  fill: #2f6fb3;
+}
+
+.transfer-path {
+  fill: none;
+  stroke: #ffb454;
+  stroke-width: 500;
+  stroke-dasharray: 1800 1000;
+}
+
+.transfer-burn {
+  fill: #fff;
+}
+
+.transfer-label {
+  fill: #fff;
+  font-size: 5400px;
+  font-weight: 700;
+}
+
 .space-detail {
   margin-top: 12px;
   padding-top: 10px;
