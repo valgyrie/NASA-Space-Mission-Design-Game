@@ -4,26 +4,24 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26, 30 and 31 built; 27 partly built; 28’s and 29’s agent parts built. Tickets 32–48 written, none started. Branch `claude/ecstatic-hawking-lk8q65`, from `main` at **f3aed16**, merged into `main`. Docs only this session (game code unchanged).
+**State:** tickets 01–26 and 30–32 built (32 waits for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Branch `claude/affectionate-turing-vxoteg`, from `main` at **60a51dd**. 370 tests and both type checks pass.
 
-**Just finished: the official Resources (published 13 Nov) turned into docs and tickets.** The team approved all 19 ideas on 13 Nov.
-- Source files are in the repo: `docs/research/sources/` (Mission Viz / GMAT trajectory files; text of the slides, CubeSat 101, the Webb game's options and the Mission Design Lab page; index in its README). Every ticket 32–48 names the files it needs. `scripts/fetch_spaceapps_page.py <url>` prints live challenge-site pages (Resources tab, guides, FAQ).
-- `docs/challenge.md`: the Resources tab with NASA's own descriptions and links, and a short "Rules published 13 Nov" section (early start, demo limit, project page, AI watermark and branding, judging, licence). Stale team note removed; the Details tab is unchanged.
-- `docs/research/official-resources.md` (new): what each Resource contains, JPL's CML levels, 80% rule and 35% margins, the four Mission Viz/GMAT trajectory files, CubeSat 101 page references, Alouette 1 facts, and how to reach spaceappschallenge.org from a container (missing SSL.com intermediate).
-- Tickets 32–48 (one per idea; 2 and 3 share ticket 33). Ticket 27 now covers finishing the Resources' Real data entries; 28 has the rule items (early-start disclosure, demo limit, References, licence, AI, links, under-18, deadline); 29 has the watermark and no-NASA-branding items.
-- GDD §3, §6–§10, §14 and §16 list the planned features, each marked planned with its ticket. Glossary: Segment, Concept Maturity Level, Design Review, Ground Test, Reference Trajectory, Team Mode. Checklist: Resources item ticked, early-start item reworded, one line per new ticket. AGENTS.md: organisers line.
+**Done this session (13 Nov):**
+- **Ticket 32, Segments:** Launch planner and Mission Report under NASA's four Segments, user first (`src/game/segments.ts`, `reportSegments`). Reports keep `ground` (optional, no save bump). Slides added to Real data (`missionSegments`). Browser-checked for Explorer 1 and Telstar 1 at 1280×800 and 1024×768.
+- **Ticket 27:** live Resources tab re-read; identical to the 13 Nov copy.
+- **Ticket 28:** Apache 2.0 `LICENSE`; README "How AI was used" and "Licence"; music ID3-tagged as AI (audio identical; `docs/audio/levels.json` updated); GitHub Pages workflow (checked with a local subpath build); project page text in `docs/submission.md`. Team name "Team Artemis-IV" confirmed real.
+- **Ticket 29:** `prepare-era-art.py` burns in an "AI-generated" mark; Era card crops from the top so it shows; prompts audited. **All three Era pictures in the game**, made from game screenshots so the pad and buildings match (Era 1 in Canva; Era 2 and Free Play by the team in ChatGPT from the pack). The Era card no longer crops pictures.
+- Tickets 30 and 31 had nothing left for an agent (team playtest only).
 
-**Next (recommended build order, `docs/tickets/README.md`):**
-1. Ticket 27’s remaining item as each feature ships → 32 Segments → 33 Maturity strip and Design Review → 34 GMAT trajectories → 35 GMAT check → 36 Like the real one → 37 Alouette 1 → 38 tips → 39 six steps → rule items in 28/29 → 40 Ground Tests → 41 Team Mode → the rest. Stop adding features Saturday night.
-2. Team: save Space Apps support’s early-start message and disclose the early start on the project page; choose the licence (Apache 2.0 or MIT) and demo format (30-second video or 7 slides); check the open _(verify)_ items (Mission Viz licence wording, Alouette photo credit, Syncom 3 end date, CubeSat 6U limits, GMAT script keywords).
-3. Sunday: hosting, demo, project page, repo public, final launcher checks (ticket 28).
+**Next:**
+1. Ticket 33 (maturity strip and Design Review), then 34–39 in the order in `docs/tickets/README.md`. Add each Resource to `DATASETS` as it ships (ticket 27).
+2. Team: make the repo public, then Settings → Pages → Source: GitHub Actions (link: `https://valgyrie.github.io/NASA-Space-Mission-Design-Game/`); paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
-**Working convention:** use the glossary and the existing short, factual ticket/QA style. New images go in the agreed development folders with `ticket-NN-what-happened.png` names; a fixed bug gets a `_solved` copy beside the original. Tick fixes only after focused tests and a browser recheck. Headless Chromium here renders the Site at about 3 fps, so give browser scripts long timeouts. The downloaded Resources are not in the repo; re-fetch from the links in `docs/research/official-resources.md` when needed.
-
-**Suggested skills:** `research` for the _(verify)_ items; `handoff`.
+**Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). To capture game scenes for art: Demo Mode, hide `#ui`, move `window.leap.world.camera` (dev server only); `window.leap.launchShow.play(...)` plays any rocket.
 
 ## Log
 
+- 2026-11-13: Ticket 32 built (Segments in planner and report); ticket 28 licence, AI disclosure, music AI tags, Pages workflow and project page text; ticket 29 watermark and Era 1 picture from game screenshots; Era 2 and Free Play pictures added from the team's ChatGPT results. 370 tests, type checks and browser checks pass.
 - 2026-11-13: Official Resources captured into `docs/challenge.md` with the rules published that day; research note `official-resources.md`; tickets 32–48 written from the 19 approved ideas; tickets 27–29, GDD, glossary, checklist and AGENTS.md updated. Docs only; game code unchanged. Source files added under `docs/research/sources/` and linked from each ticket; `scripts/fetch_spaceapps_page.py` reads the challenge site.
 - 2026-11-13: Fixed all 15 QA findings (tickets 01, 02, 04, 05, 08, 13, 16, 17, 19, 22, 26, 30) with tests and `_solved` screenshots; `leap-online` redeployed and a live v19 cloud save/load checked. 362 tests, both type checks and production/online builds pass.
 - 2026-11-12: Feature guide on main 3e14a17: 81 new screenshots across the built tickets, with captions, entry paths, fixtures and limits; older images kept. 356 tests, both type checks and production/online builds pass. Game code unchanged.

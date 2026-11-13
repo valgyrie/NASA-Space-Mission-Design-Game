@@ -96,6 +96,8 @@ Menu and Company setup use the menu theme; the Site and its side panels use the 
 
 Measured from the final encoded files with ffmpeg, not inferred from encoder settings. All tracks are within 0.02 LU of −16 LUFS, with true peaks below −1 dBTP. Exact sizes, source windows and SHA-256 checksums: [`levels.json`](levels.json).
 
+**AI tags (13 Nov 2026):** every music file carries ID3 tags saying it is AI-generated with Google Lyria 3.5 (Space Apps rule: audio acknowledges SI in text and metadata). The audio frames were copied, not re-encoded: decoded samples are identical, so loudness, peaks and loop windows are unchanged; only sizes and checksums in `levels.json` changed.
+
 | Track | File length (s) | LUFS | True peak (dBTP) |
 |---|---:|---:|---:|
 | `menu-theme` | 117.316 | -16.00 | -4.06 |
