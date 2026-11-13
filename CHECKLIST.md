@@ -8,12 +8,12 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Preparation
 - [x] Challenge brief in the repo (`docs/challenge.md`)
 - [x] Design session: GDD, glossary, decisions
-- [ ] Get the organisers' "you may start early" message in writing and save it
+- [ ] Save Space Apps support's message allowing our early start (the FAQ says teams may not start before the hackathon; support allowed it, 2026-11-13) and disclose the early start in the submission (ticket 28)
 - [x] Music prompts (Lyria 3.5) and audio source list in `docs/audio/`
 - [x] Research and cite: Milestone facts, Launch Vehicles, Part numbers, spaceports
 - [ ] Close remaining _(verify)_ items in `docs/research/` (Juno I and Delta D/900 capacity, spaceport latitudes, Moon/Mars window sources)
 - [x] Split the build into tickets (`docs/tickets/`)
-- [ ] Capture the official Resources tab (Nov 13) and adapt the data plan
+- [x] Capture the official Resources tab (Nov 13) and adapt the data plan (`docs/challenge.md`, `docs/research/official-resources.md`, GDD §14; tickets 32–48)
 
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
@@ -103,6 +103,18 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Project page on spaceappschallenge.org
 - [ ] Make the repo public before the deadline
 
+### Official Resources (approved 2026-11-13, in build order)
+- [ ] Four Segments in the Launch planner and Mission Report (ticket 32)
+- [ ] Maturity strip and Design Review (ticket 33)
+- [ ] NASA's GMAT trajectories: Syncom 3's transfer and Reference paths in the Space view (ticket 34)
+- [ ] Orbit maths checked against GMAT (ticket 35)
+- [ ] Like the real one: the real Spacecraft at the end of the Mission Report (ticket 36)
+- [ ] Alouette 1 side story card (ticket 37)
+- [ ] Sourced tips from CubeSat 101 (ticket 38)
+- [ ] Tutorial under NASA's six steps (ticket 39)
+- [ ] Ground Tests before Shipping (ticket 40)
+- [ ] Team Mode on one screen (ticket 41)
+
 ## Optional (later)
 
 - [x] Buy neighbouring Plots to grow the Site (ticket 30)
@@ -119,6 +131,13 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Live weather mode (today's real weather)
 - [ ] Visit other Companies' Sites, preset messages, send resources
 - [ ] Cooperative missions (up to 4 players)
+- [ ] Science-first Contracts: who needs the Data, then choose a question (ticket 42)
+- [ ] Save for GMAT from the Space view (ticket 43)
+- [ ] Rideshares leave on their date (ticket 44)
+- [ ] Save, share and compare designs (ticket 45)
+- [ ] End of mission: orbits decay, plans to leave orbit (ticket 46)
+- [ ] A timeline you can drag in the Space view (ticket 47)
+- [ ] CubeSat sizes for Free Play Buses (ticket 48)
 - [ ] Sandbox mode
 - [ ] Mars, asteroids, outer planets
 - [ ] Era-flavoured music

@@ -1,6 +1,6 @@
 # Tickets
 
-> **Status: approved by the team (2026-11-07).** Each ticket's "done when" list is in its own file. Tick a ticket here when all its criteria pass. 🧪 = built, waiting for a team test.
+> **Status: approved by the team (2026-11-07; tickets 32–48 on 2026-11-13).** Each ticket's "done when" list is in its own file. Tick a ticket here when all its criteria pass. 🧪 = built, waiting for a team test.
 
 Each ticket is a thin, playable slice of the game that fits in one session. Do a ticket only once everything it's **blocked by** is done.
 
@@ -32,11 +32,30 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 24 ✅ | [Demo Mode](24-demo-mode.md) | 18 | One ready save per finished Era on a fixed demo Site. |
 | 25 🧪 | [Sound and music](25-sound-and-music.md) | 01 | Code-made sound effects; music files from the team with looping crossfades; credits recorded. |
 | 26 🧪 | [Look and feel pass](26-look-and-feel.md) | 18 | Cozy low-poly models and a clean NASA-style UI across all screens; Learn more → links. |
-| 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Adapt to the official Resources (Nov 13); make data use visible in game and credits. |
+| 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Official Resources captured and mapped (docs, Nov 13); each Resource used gets a Real data and Credits entry when its ticket ships. |
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
 | 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
 | 30 ✅ | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
 | 31 ✅ | [Space view](31-space-view.md) _(added 2026-11-09)_ | 10 | See every Spacecraft in orbit round Earth; click one to follow it along its real orbit. |
+| 32 | [Four segments on screen](32-four-segments.md) | 18, 27 | Launch planner and Mission Report grouped under NASA's Launch, Space, Ground and User Segments. |
+| 33 | [Maturity strip and Design Review](33-maturity-strip-and-design-review.md) | 32 | JPL's four Concept Maturity Levels on the Mission Designer; a red/yellow/green Design Review (35% margins, 80% green) replaces the planner's warnings. |
+| 34 | [NASA's GMAT trajectories](34-gmat-trajectories.md) | 27, 31 | Syncom 3's real LEO → GEO transfer and Reference paths (long ellipse, Earth → Moon) from NASA Mission Viz. |
+| 35 | [Orbit maths checked against GMAT](35-orbit-maths-checked-against-gmat.md) | 34 | A repo test compares LEAP's Kepler code with a GMAT run; one line in Real data. |
+| 36 | [Like the real one](36-like-the-real-one.md) | 18, 21 | The Mission Report ends with the player's Spacecraft beside the real one. |
+| 37 | [Alouette 1 card](37-alouette-1-card.md) | 18 | "Also in 1962" side story after Telstar 1, from CSA. |
+| 38 | [Sourced tips](38-sourced-tips.md) | 12, 26 | About eight loading tips and report lines from CubeSat 101, each with its page. |
+| 39 | [NASA's six steps](39-nasas-six-steps.md) | 13 | The tutorial's eight steps under NASA's six step names. |
+| 40 | [Ground Tests](40-ground-tests.md) | 12, 33 | Vibration, thermal vacuum and Day in the Life tests: days and money against Anomaly risk. |
+| 41 | [Team Mode on one screen](41-team-mode.md) | 33 | Two to four players, roles own slots, everyone signs the Design Review before Shipping. |
+| 42 | [Science-first Contracts](42-science-first-contracts.md) _(Optional)_ | 21 | Light: every Free Play Contract says who needs the Data. Full: choose a question first. |
+| 43 | [Open in GMAT](43-open-in-gmat.md) _(Later)_ | 31, 34 | Save a Spacecraft's orbit as a GMAT script; needs a person to test it in GMAT. |
+| 44 | [Rideshares leave on their date](44-rideshares-leave-on-their-date.md) _(Later)_ | 16, 21 | Fixed departure days; miss one and wait. Needs play-testing. |
+| 45 | [Save, share and compare designs](45-save-share-compare-designs.md) _(Later)_ | 07, 23 | Two designs side by side; a design as a short code. |
+| 46 | [End of mission](46-end-of-mission.md) _(Later)_ | 31 | Low orbits decay; Free Play Contracts ask for a plan to leave orbit. Research first. |
+| 47 | [A timeline you can drag](47-timeline-you-can-drag.md) _(Later)_ | 31 | Drag through a Mission's events in the Space view. |
+| 48 | [CubeSat sizes](48-cubesat-sizes.md) _(Later)_ | 20, 21 | Free Play Buses become 1U, 3U and 6U; needs a rebalance. |
+
+**Recommended build order (2026-11-13):** 27 → 32 → 33 → 34 → 35 → 36 → 37 → 38 → 39 → the rule items in 28 and 29 → 40 → 41 → the rest (42–48). Stop adding features on Saturday night (14 Nov). Sunday is for hosting, the demo, the project page and the final launcher checks (ticket 28).
 
 **Changed since (2026-11-10, asked for by the team):** every building takes 3 × 3 tiles so it shows from the whole-Site view (GDD §4; tickets 04, 05 and 15 were built with one tile each), and the Earth seen from space is a smooth globe (ticket 26's Earth box, done early).
 

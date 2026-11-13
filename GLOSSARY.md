@@ -170,6 +170,22 @@ _Avoid_: simulation (alone), practice
 The share of a Test Run's quick runs in which the Mission met its Contract, shown as a percentage.
 _Avoid_: success rate, odds, probability
 
+**Segment**:
+One of the four parts every Mission has, after NASA: the Launch segment (Launch Vehicle and Launch Site), the Space segment (the Spacecraft), the Ground segment (Ground Stations) and the User segment (the client, the people who use the Data, and the Research Lab).
+_Avoid_: section, part (a Part is a Spacecraft component), stage (a Stage is part of a rocket)
+
+**Concept Maturity Level**:
+How far a Mission design has come, after JPL's scale. LEAP shows the first four: Cocktail Napkin, Initial Feasibility, Trade Space and Point Design.
+_Avoid_: level (alone; buildings have levels), readiness level, progress
+
+**Design Review**:
+A check before Shipping that rates each requirement and margin of a design green, yellow or red. It passes when at least 80% of its lines are green. A design that fails it can still ship.
+_Avoid_: checklist (alone), inspection, warnings
+
+**Ground Test**:
+An optional test of the Spacecraft on Earth before Shipping (vibration, thermal vacuum, Day in the Life). It costs days and money and makes one Anomaly less likely.
+_Avoid_: Test Run (the free simulation), environmental test (in game text)
+
 **Launch**:
 The real attempt to fly a Mission, with costs and risks.
 
@@ -184,6 +200,10 @@ _Avoid_: results screen, summary
 **Space view**:
 A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
 _Avoid_: map, radar, tracker (that is the Mission tracker)
+
+**Reference Trajectory**:
+A real path through space computed by NASA with GMAT, shown for comparison, such as a transfer to geostationary orbit or a flight to the Moon. Not one of the Company's Spacecraft. "Reference path" in short player text.
+_Avoid_: real orbit (the Space view's orbits are the Company's own), demo path
 
 **Whole Launch**:
 Paying for an entire Launch Vehicle instead of a Rideshare, as AT&T did for Telstar 1; the price does not change with mass.
@@ -285,6 +305,10 @@ _Avoid_: sandbox (that is a separate mode)
 
 **Weekly Challenge**:
 A Free Play Contract that everyone plays with the same budget and Parts list, ranked on a leaderboard. Every finisher earns the same weekly Mission Patch; the final top three earn podium badges.
+
+**Team Mode**:
+Two to four players sharing one Mission design on one screen, each owning the slots of a role (Mission lead, Power, Communications, Science). The design ships only when every role has signed the Design Review.
+_Avoid_: multiplayer, co-op (that is the online Optional idea), party mode
 
 **Demo Mode**:
 Ready-made saves, one per Era, so judges can jump into any stage of the game.
