@@ -1,5 +1,8 @@
-import { DATASET_IDS, DATASETS } from '../game/sources';
-import { t } from '../strings';
+import { DATASET_IDS, DATASETS, type DatasetId } from '../game/sources';
+import { t, type StringKey } from '../strings';
+
+/** A test in the repo checks LEAP against this dataset; the line says how close it is. */
+const CHECKS: Partial<Record<DatasetId, StringKey>> = { missionViz: 'data.missionViz.check' };
 
 /** Each real dataset with its link, what it does in LEAP and its credit. Shared by the menus and Credits. */
 export function makeDatasetList(): HTMLUListElement {
@@ -19,7 +22,15 @@ export function makeDatasetList(): HTMLUListElement {
     const credit = document.createElement('p');
     credit.className = 'note';
     credit.textContent = t(`data.${id}.credit`);
-    item.append(name, use, credit);
+    item.append(name, use);
+    const check = CHECKS[id];
+    if (check) {
+      const line = document.createElement('p');
+      line.className = 'dataset-check';
+      line.textContent = t(check);
+      item.append(line);
+    }
+    item.append(credit);
     list.append(item);
   }
   return list;

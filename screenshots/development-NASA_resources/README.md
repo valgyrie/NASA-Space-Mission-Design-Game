@@ -19,4 +19,6 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [ticket-34-space-long-ellipse-1280.png](features%20and%20game/ticket-34-space-long-ellipse-1280.png) | Reference path: the long ellipse | Same → A long ellipse |
 | [ticket-34-space-earth-to-moon-1280.png](features%20and%20game/ticket-34-space-earth-to-moon-1280.png) | Reference path: Earth to the Moon, the Moon (grey) on its own path | Same → Earth to the Moon |
 | [ticket-34-space-two-paths-1024.png](features%20and%20game/ticket-34-space-two-paths-1024.png) | Two paths at once at 1024×768 | Same, both switched on |
+| [ticket-35-real-data-gmat-check-1280.png](features%20and%20game/ticket-35-real-data-gmat-check-1280.png) | Real data: Mission Viz entry with the line on the GMAT check of LEAP's orbit maths | Main menu → Where LEAP uses real data |
+| [ticket-35-real-data-gmat-check-1024.png](features%20and%20game/ticket-35-real-data-gmat-check-1024.png) | The same at 1024×768 | Same |
 | [ticket-32-report-rocket-failed-1280.png](features%20and%20game/ticket-32-report-rocket-failed-1280.png) | A rocket failure: the Launch segment comes first, the rest say what the design would have done | Same, with stage 2 failed |

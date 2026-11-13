@@ -1,5 +1,6 @@
-import { readFileSync, statSync } from 'node:fs';
+import { statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { readMissionVizSource } from './missionVizSource';
 import { REFERENCE_PATH_DATA, REFERENCE_PATH_SOURCE, type ReferencePathKey } from './referencePaths';
 import {
   COMPANION,
@@ -12,14 +13,7 @@ import {
   referencePositionAt,
 } from './referenceTrajectory';
 
-/** Reads a source file as text (never runs it), the same way the bake script does. */
-function source(file: string): { minutes: number; x: number; y: number; z: number }[] {
-  let text = readFileSync(`docs/research/sources/mission-viz/${file}`, 'utf8').replace(/^﻿/, '');
-  if (file.endsWith('.js')) text = [...text.matchAll(/'((?:[^'\\]|\\.)*)'/g)].map((m) => m[1]).join('');
-  const raw = JSON.parse(text).coordinates as { Date: string; Time: string; X: number; Y: number; Z: number }[];
-  const when = (p: { Date: string; Time: string }) => Date.parse(`${p.Date.trim()} ${p.Time} UTC`);
-  return raw.map((p) => ({ minutes: (when(p) - when(raw[0])) / 60_000, x: p.X, y: p.Y, z: p.Z }));
-}
+const source = readMissionVizSource;
 
 const KEYS = Object.keys(REFERENCE_PATH_DATA) as ReferencePathKey[];
 
