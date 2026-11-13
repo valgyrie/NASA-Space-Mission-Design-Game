@@ -40,7 +40,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 32 🧪 | [Four segments on screen](32-four-segments.md) | 18, 27 | Launch planner and Mission Report grouped under NASA's Launch, Space, Ground and User Segments. |
 | 33 🧪 | [Maturity strip and Design Review](33-maturity-strip-and-design-review.md) | 32 | JPL's four Concept Maturity Levels on the Mission Designer; a red/yellow/green Design Review (35% margins, 80% green) replaces the planner's warnings. |
 | 34 🧪 | [NASA's GMAT trajectories](34-gmat-trajectories.md) | 27, 31 | Syncom 3's real LEO → GEO transfer and Reference paths (long ellipse, Earth → Moon) from NASA Mission Viz. |
-| 35 | [Orbit maths checked against GMAT](35-orbit-maths-checked-against-gmat.md) | 34 | A repo test compares LEAP's Kepler code with a GMAT run; one line in Real data. |
+| 35 ✅ | [Orbit maths checked against GMAT](35-orbit-maths-checked-against-gmat.md) | 34 | A repo test compares LEAP's Kepler code with a GMAT run; one line in Real data. |
 | 36 | [Like the real one](36-like-the-real-one.md) | 18, 21 | The Mission Report ends with the player's Spacecraft beside the real one. |
 | 37 | [Alouette 1 card](37-alouette-1-card.md) | 18 | "Also in 1962" side story after Telstar 1, from CSA. |
 | 38 | [Sourced tips](38-sourced-tips.md) | 12, 26 | About eight loading tips and report lines from CubeSat 101, each with its page. |

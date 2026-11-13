@@ -57,6 +57,7 @@ export const STRINGS = {
   'data.missionViz.name': 'NASA Mission Viz (GMAT trajectories)',
   'data.missionViz.use': "the Reference paths in the Space view and the transfer to geostationary orbit in the Launch planner.",
   'data.missionViz.credit': "NASA Mission Viz (github.com/nasa/mission-viz, Daniel O'Neil, NASA), trajectories generated with NASA's General Mission Analysis Tool (GMAT). Thinned to fewer points.",
+  'data.missionViz.check': "LEAP's own orbit maths is tested against GMAT's long ellipse: within 0.3% of the distance from Earth on average, 1.2% at worst.",
   'data.globe': 'Land colours: NASA Blue Marble',
   'credits.heading': 'Credits',
   'credits.team.heading': 'Made by',
