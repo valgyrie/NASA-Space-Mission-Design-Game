@@ -16,4 +16,6 @@
 
 **Sources:** challenge brief, "The ability to save, share, and compare mission designs" (`docs/challenge.md`); Goddard Mission Design Lab's Tailored Trade Study ("compare different mission architectures and design options") <https://etd.gsfc.nasa.gov/capabilities/integrated-design-center/mission-design-lab/>.
 
+**In the repo for this ticket:** [`docs/research/sources/mission-design-lab.txt`](../research/sources/mission-design-lab.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** whether a design code should also work in the Weekly Challenge (it could leak answers during the week).

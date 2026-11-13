@@ -27,6 +27,8 @@
 
 **Real data and Credits:** add the slides to `DATASETS` (`src/game/sources.ts`, strings `data.<id>.*`) when this ships (ticket 27).
 
+**In the repo for this ticket:** [`docs/research/sources/design-and-develop-science-missions.txt`](../research/sources/design-and-develop-science-missions.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:**
 - Order of the headings: User first (the slides' advice) or Launch first (the order the player acts in).
 - Where the Telstar 1 Whole Launch and Rideshare lines sit (Launch segment) and where Budget lines sit (no Segment of their own; under the Segment that costs the money).

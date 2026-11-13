@@ -27,6 +27,8 @@
 
 **Honest mapping note:** CubeSat 101's thermal vacuum *bakeout* is mainly there to let materials outgas before launch; its thermal vacuum *cycling* (p. 62) "can help screen for problems caused by the thermal cycling on orbit". The game's thermal vacuum test stands for the cycling kind. Say so in the Learn more line or the research note.
 
+**In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt), [`docs/research/sources/design-and-develop-science-missions.txt`](../research/sources/design-and-develop-science-missions.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:**
 - **Weekly Challenge:** it has no Anomaly mini-games, so Ground Tests would only cost. Hide them there, or let them raise the Weekly score's Reliability.
 - **First-flight rule:** each Anomaly kind is mandatory the first time, and the Company's first flight always meets Point the antenna. Decide whether a Ground Test can prevent that first one (probably not: the tutorial needs it) and say so in the planner.

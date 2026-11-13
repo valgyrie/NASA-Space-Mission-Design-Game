@@ -27,3 +27,5 @@ The Resources tab is due Nov 13. On Nov 12 the build container could not reach s
 **To finish:** as each of tickets 32–42 ships, add its Resource to `DATASETS` and strings `data.<id>.*` (Real data and Credits show it). Then tick the third item. Planned entries: Design and Develop Science Missions (32, 39), Concept Maturity Levels (33), Mission Viz and GMAT (34, 35), Webb game (36, 42), CubeSat 101 (38, 40), CSA (37, 42). The Mission Design Lab and the 2023 challenge are reading sources (41, 45, 47) rather than data.
 
 **Rechecked (2026-11-12):** The Real data list opens and displays the existing dataset uses and credits. The official Resources work remains pending. [QA report](../qa/2026-11-12/README.md).
+
+**Re-checking the Resources tab:** `python3 scripts/fetch_spaceapps_page.py "<challenge url>?tab=resources"` prints the live tab (more Resources may be added before the hackathon). The 13 Nov copy is `docs/research/sources/resources-tab.txt`.

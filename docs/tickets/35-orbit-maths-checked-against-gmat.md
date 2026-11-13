@@ -2,7 +2,7 @@
 
 **What to build:** A repo test that compares LEAP's own orbit code with NASA GMAT's output from ticket 34, and one line in Real data that says the check exists and how close it is.
 
-**Blocked by:** 34 (its baked trajectory module)
+**Blocked by:** 34 (its baked trajectory module). The GMAT runs themselves are in `docs/research/sources/mission-viz/`.
 
 **Status:** not started (approved 2026-11-13)
 
@@ -21,6 +21,8 @@
 **In the code (read-only pointers):** `src/game/space.ts` (`EARTH_KM` 6,371, `EARTH_GM` 398,600, `orbitMinutes`, `orbitPosition`); its tests in `src/game/space.test.ts`; facts in `docs/research/orbits.md`. `orbitPosition` takes a share of a lap from the lowest point, so turn GMAT's time since the lowest point into a share with the lap time.
 
 **Sources:** trajectory files and numbers in ticket 34 and `docs/research/official-resources.md`. GMAT <https://software.nasa.gov/software/GSC-19468-1>.
+
+**In the repo for this ticket:** [`docs/research/sources/mission-viz/`](../research/sources/mission-viz/) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
 
 **Open points:**
 - Whether the line belongs in Real data or in Credits' Software section (GMAT is software; the run is data).

@@ -7,6 +7,7 @@
 **State:** tickets 01–26, 30 and 31 built; 27 partly built; 28’s and 29’s agent parts built. Tickets 32–48 written, none started. Branch `claude/ecstatic-hawking-lk8q65`, from `main` at **f3aed16**, merged into `main`. Docs only this session (game code unchanged).
 
 **Just finished: the official Resources (published 13 Nov) turned into docs and tickets.** The team approved all 19 ideas on 13 Nov.
+- Source files are in the repo: `docs/research/sources/` (Mission Viz / GMAT trajectory files; text of the slides, CubeSat 101, the Webb game's options and the Mission Design Lab page; index in its README). Every ticket 32–48 names the files it needs. `scripts/fetch_spaceapps_page.py <url>` prints live challenge-site pages (Resources tab, guides, FAQ).
 - `docs/challenge.md`: the Resources tab with NASA's own descriptions and links, and a short "Rules published 13 Nov" section (early start, demo limit, project page, AI watermark and branding, judging, licence). Stale team note removed; the Details tab is unchanged.
 - `docs/research/official-resources.md` (new): what each Resource contains, JPL's CML levels, 80% rule and 35% margins, the four Mission Viz/GMAT trajectory files, CubeSat 101 page references, Alouette 1 facts, and how to reach spaceappschallenge.org from a container (missing SSL.com intermediate).
 - Tickets 32–48 (one per idea; 2 and 3 share ticket 33). Ticket 27 now covers finishing the Resources' Real data entries; 28 has the rule items (early-start disclosure, demo limit, References, licence, AI, links, under-18, deadline); 29 has the watermark and no-NASA-branding items.
@@ -23,7 +24,7 @@
 
 ## Log
 
-- 2026-11-13: Official Resources captured into `docs/challenge.md` with the rules published that day; research note `official-resources.md`; tickets 32–48 written from the 19 approved ideas; tickets 27–29, GDD, glossary, checklist and AGENTS.md updated. Docs only; game code unchanged.
+- 2026-11-13: Official Resources captured into `docs/challenge.md` with the rules published that day; research note `official-resources.md`; tickets 32–48 written from the 19 approved ideas; tickets 27–29, GDD, glossary, checklist and AGENTS.md updated. Docs only; game code unchanged. Source files added under `docs/research/sources/` and linked from each ticket; `scripts/fetch_spaceapps_page.py` reads the challenge site.
 - 2026-11-13: Fixed all 15 QA findings (tickets 01, 02, 04, 05, 08, 13, 16, 17, 19, 22, 26, 30) with tests and `_solved` screenshots; `leap-online` redeployed and a live v19 cloud save/load checked. 362 tests, both type checks and production/online builds pass.
 - 2026-11-12: Feature guide on main 3e14a17: 81 new screenshots across the built tickets, with captions, entry paths, fixtures and limits; older images kept. 356 tests, both type checks and production/online builds pass. Game code unchanged.
 - 2026-11-12: QA on main 4661008: rechecked eight open bugs, confirmed six new findings and the known narrow-panel overlap; 15 findings in existing tickets. Screenshots organised, background evidence recorded. 356 tests, both type checks, production/online builds and focused browser/API checks pass.

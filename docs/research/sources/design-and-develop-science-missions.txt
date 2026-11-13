@@ -1,0 +1,502 @@
+                                                                    Na tion al Ae rona utics
+                                                                and Space Administration
+
+                            National Aeronautics and Space Administration
+
+
+
+
+                           Design and Develop
+                             Science Missions
+
+                                                      March 26, 2025
+               ww
+                                Access to Space for All
+                    Systems Engineering Webinar Series
+
+
+
+
+                                                            Julie Levri
+                                              Flight Systems Engineer
+
+www.nasa.gov                                  www.nasa.gov/smallsat-institute
+                                                                                               Na tion al Ae rona utics
+
+
+Useful References                                                                          and Space Administration
+
+
+
+
+1. NASA System Engineering Handbook, NASA SP-2016-6105 (Rev 2)
+   https://www.nasa.gov/reference/systems-engineering-handbook/
+      Concept of Operations Outline, Appendix S
+      https://www.nasa.gov/reference/appendix-s-concept-of-operations-annotated-outline/
+2. NASA Systems Engineering Processes and Requirements, NPR 7123.1 (version D)
+   https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7123_001D_&page_name=main
+3. NASA Space Flight Program and Project Management Requirements, NPR 7120.5 (version F)
+   https://nodis3.gsfc.nasa.gov/displayDir.cfm?t=NPR&c=7120&s=5E
+4. NASA Research and Technology Program and Project Management Requirements, NPR 7120.8
+   (version A)
+   https://nodis3.gsfc.nasa.gov/displayDir.cfm?Internal_ID=N_PR_7120_008A_&page_name=main
+5. Risk Classification for NASA Payloads, NPR 8705.4 (version B)
+   https://nodis3.gsfc.nasa.gov/displayDir.cfm?t=NPR&c=8705&s=4B
+6. NASA Science Mission Directorate https://science.nasa.gov/learn/
+7. System Engineering Curriculum Intro, 20210021839, https://ntrs.nasa.gov/citations/20210021839
+
+
+National Aeronautics and Space Administration                                                                             2
+                                                                              Na tion al Ae rona utics
+
+
+Webinar Overview:                                                         and Space Administration
+
+
+
+
+This webinar will conclude by providing an overview
+to design a concept mission applying various
+processes and tools described over the course of this
+series. This overview includes:
+                                                                 Purpose:
+                                                        To provide attendees with
+      • What is defined as a science mission?
+                                                             information and
+      • What segments make up a science mission?          knowledge of how to
+      • What steps and processes are taken to design       design and develop
+        and develop a science mission?                      science missions.
+      • What are examples of a science mission
+        design?
+
+
+National Aeronautics and Space Administration                                                            3
+                                                    Na tion al Ae rona utics
+                                                and Space Administration
+
+
+
+
+   What is defined as a science mission?
+
+
+
+
+National Aeronautics and Space Administration                                  4
+                                                                                                                        Na tion al Ae rona utics
+
+
+What is defined as a science mission?                                                                               and Space Administration
+
+
+
+
+For NASA, a science mission, managed by the Science Mission Directorate (SMD), is
+defined as a spaceflight mission primarily focused on scientific research and
+exploration, encompassing disciplines such as:
+    • Earth science
+    • Heliophysics
+    • Planetary science
+    • Astrophysics
+with the goal of advancing
+scientific understanding
+and potentially benefiting
+humanity.
+ Science missions are usually driven
+ by NASA Science Mission
+ Directorate strategic plans, whereas
+ the exploration missions may be
+ driven
+National    by a Presidential
+         Aeronautics                    directive.
+                     and Space Administration        Credit: “About NASA Science” March 2025 https://science.nasa.gov/about-us/                    5
+                                                                                                            Na tion al Ae rona utics
+                                                                                                        and Space Administration
+
+
+
+
+National Aeronautics and Space Administration                                                                                          6
+                                                Credit: “About NASA Science” March 2025 https://science.nasa.gov/about-us/
+                                                    Na tion al Ae rona utics
+                                                and Space Administration
+
+
+
+
+   What segments make up a science mission?
+
+
+
+
+National Aeronautics and Space Administration                                  7
+                                                                                    Na tion al Ae rona utics
+
+
+What segments make up a science mission?                                        and Space Administration
+
+
+
+
+ A NASA science mission can be broken down into several segments:
+        • Launch segment: Launch vehicle and related services used to get the
+          spacecraft into space.
+        • Space segment: Spacecraft and various components like orbiters, landers,
+          rovers, and instruments used to collect data.
+        • Ground segment: Ground stations and mission control centers that
+          communicate with the spacecraft, receive data, and manage the mission.
+        • User segment: Scientists and the public who will use the data collected by the
+          mission for research and education.
+
+
+
+National Aeronautics and Space Administration                                                                  8
+                                                    Na tion al Ae rona utics
+                                                and Space Administration
+
+
+
+
+   What steps and processes are taken to
+   design and develop a science mission?
+
+
+
+
+National Aeronautics and Space Administration                                  9
+                                                                                         Na tion al Ae rona utics
+
+
+Big Picture Process to Design & Develop a Space Mission                              and Space Administration
+
+
+
+
+            Identify
+                                         Define      Define               Build &
+            Need &                                               Design             Implement
+                                        Concept   Requirements             Verify
+             Goals
+
+
+
+
+National Aeronautics and Space Administration                                                                       10
+Example Research Mission – BioNutrients
+                                                                                     Na tion al Ae rona utics
+                                                                                 and Space Administration
+
+
+
+
+ What is BioNutrients? https://www.nasa.gov/general/what-is-bionutrients/
+ • Foods & supplements stored long-term, like in human missions to Mars, experience
+   nutrient degradation.
+ • Can genetically-modified yeast that are degradation-resistant in spore form, be used to
+   generate nutrients as they grow?
+
+                                                BioNutrients-1 Production Pack
+
+
+
+
+National Aeronautics and Space Administration                                                                   11
+Need & Goals – BioNutrients-2
+                                                                                           Na tion al Ae rona utics
+                                                                                       and Space Administration
+
+
+
+
+ Need of BioNutrients Project
+        Enable rapid, safe & reliable in-place production of dietary nutrients using minimal
+        mass, power & volume for long duration missions.
+
+
+ Goals of BioNutrients-2
+        1. Enable growth of yeast organisms
+        2. Produce targeted beta carotene on the International Space Station (ISS)
+        3. Reduce mass & volume as compared to the BioNutrients-1 Payload
+
+
+
+
+National Aeronautics and Space Administration                                                                         12
+                                                                                   Na tion al Ae rona utics
+
+
+Role of the Concept of Operations                                              and Space Administration
+
+
+
+
+ NPR 7123.1 Description of Concept of Operations
+        • Describes overall high-level concept of how system will be used to meet
+          stakeholder expectations, usually in a time sequenced manner.
+        • Describes the system from an operational perspective & helps facilitate
+          understanding of system goals.
+        • Stimulates development of requirements & architecture.
+        • Serves as the basis for subsequent definition documents & provides the
+          foundation for the long-range operational planning activities.
+        • Provides the criteria for the validation of the system.
+
+
+
+National Aeronautics and Space Administration                                                                 13
+                                                                               Na tion al Ae rona utics
+
+
+Mission Segments - BioNutrients-2                                          and Space Administration
+
+
+
+
+ • Launch segment: NG-18 to ISS, soft-stowed at room temperature.
+ • Space segment: Experiment conducted on ISS. Samples are hydrated,
+   incubated, then frozen & returned to Earth.
+ • Ground segment: Scientists & engineers watch experiment initiation in real-time
+   then monitor temperature from ground.
+ • User segment: Scientists receive frozen samples, process samples and analyze.
+   Scientific research is published.
+
+
+
+
+National Aeronautics and Space Administration                                                             14
+                                                                                                   Na tion al Ae rona utics
+
+
+Begin with the End in Mind - User Segment - BioNutrients-2                                     and Space Administration
+
+
+
+
+    1. Delivery                           2. Thaw          3. Empty and Wash   4. Centrifuge      5. Analyze
+
+
+       1. Delivery                              2. Thaw   3. Empty and Wash    4. Centrifuge     5. Analyze
+
+National Aeronautics and Space Administration                                                                                 15
+                                                                                                  Na tion al Ae rona utics
+
+
+Space Segment & Ground Segment - BioNutrients-2                                               and Space Administration
+
+
+
+
+                                                                        Ground Segment: Scientists
+                                                                        & engineers watch
+                                                                        experiment initiation in real-
+                                                                        time then monitor
+                                                                        temperature from ground.
+
+
+
+
+    1. Delivery                           2. Thaw   3. Empty and Wash         4. Centrifuge      5. Analyze
+
+
+
+
+National Aeronautics and Space Administration                                                                                16
+                                                                                            Na tion al Ae rona utics
+
+
+Launch Segment - BioNutrients-2                                                         and Space Administration
+
+
+
+
+ • NG-18
+ • Samples soft-
+   stowed
+ • Room (ambient)
+   temperature
+ • Protected from
+   oxygen & moisture
+
+
+    1. Delivery                           2. Thaw   3. Empty and Wash   4. Centrifuge      5. Analyze
+
+
+
+
+National Aeronautics and Space Administration                                                                          17
+                              –Requirements
+                           – Requirements   – BioNutrients-2
+                                          – BioNutrients-2
+                                                                                                                Na tion al Ae rona utics
+
+
+  Begin
+Begin withwith
+           thethe
+               EndEnd in Mind
+                   in Mind                                                                                  and Space Administration
+
+
+
+
+                           Recall goals:
+                               1. Enable growth of yeast organisms
+                               2. Produce targeted beta carotene on the International Space Station (ISS)
+                               3. Reduce mass & volume as compared to the BioNutrients-1 Payload
+
+  Information/data, in the form of a
+  publication, is part of the end product.                                     • ≥ 12 replicate samples
+      • What type & quantity of data is                                        • ≥ 30mL volume per sample
+        needed to answer research                                              • ≥ 3µg beta carotene / mL of
+        questions?                                                               returned sample
+      • To obtain that type & quantity of                                      • ≥ 1 mg dry cell weight per
+        data from sample processing, what                                        sample
+        quantity, repetition and quality of
+                                                                               • No microbial contamination
+        samples are needed?
+
+
+ National Aeronautics and Space Administration                                                                                             18
+                              –Requirements
+                           – Requirements   – BioNutrients-2
+                                          – BioNutrients-2
+                                                                                                                          Na tion al Ae rona utics
+
+
+  Begin
+Begin withwith
+           thethe
+               EndEnd in Mind
+                   in Mind                                                                                            and Space Administration
+
+
+
+
+                          Recall goals:
+                              1. Enable growth of yeast organisms
+                              2. Produce targeted beta carotene on the International Space Station (ISS)
+                              3. Reduce mass & volume as compared to the BioNutrients-1 Payload
+
+
+                                                                               For same starting sample size
+                                                                               as BioNutrients-1, have:
+  Demonstration of reduced resource use
+  (mass & volume) is the other part of the                                     • < 250 g sample container
+  end product.                                                                 • < 300mL total occupied
+                                                                                 volume
+
+
+      When identifying requirements, also plan how you will verify that design satisfies requirements (prior to implementation).
+      For example, < 250 g sample container is verified by weighing an empty sample container.
+
+
+
+
+ National Aeronautics and Space Administration                                                                                                       19
+                      in Mind –Requirements – BioNutrients-2
+                   – BioNutrients-2
+                                                                   Na tion al Ae rona utics
+
+
+  Begin
+Design   with the End
+       (Hardware)                                              and Space Administration
+
+
+
+
+ National Aeronautics and Space Administration                                                20
+         with the End– in Mind –Requirements – BioNutrients-2
+                                                                                   Na tion al Ae rona utics
+
+
+  Begin
+Design (Experiment)     BioNutrients-2                                         and Space Administration
+
+
+
+
+     Sample Hydration and Agitation              Sample Incubation
+
+
+
+                                                                     Sample Freezing
+ National Aeronautics and Space Administration                                                                21
+         with –    End in Mind –Requirements – BioNutrients-2
+                                                                                                                     Na tion al Ae rona utics
+
+
+   Begin
+Build & Verify the
+                 BioNutrients-2                                                                                  and Space Administration
+
+
+
+
+      After hardware is fabricated, & sterilized, it is   After organism & media loading, hardware assembly is completed.
+         loaded with organism & growth media.
+
+
+
+
+ National Aeronautics and Space Administration                                                                                                  22
+             the End in Mind –Requirements – BioNutrients-2
+          – BioNutrients-2
+                                                                                                 Na tion al Ae rona utics
+
+
+  Begin with
+Implement                                                                                    and Space Administration
+
+
+
+
+                                                   Scientists & engineers are on-console during
+                                                 experiment operations in case of crew questions
+                                                                   or anomalies.
+
+
+
+
+ National Aeronautics and Space Administration                                                                              23
+                                                                                                                        Na tion al Ae rona utics
+
+
+What are examples of a science missions?                                                                            and Space Administration
+
+
+
+
+ •     NASA's PUNCH Mission (Polarimeter to Unify the Corona and Heliosphere): This mission uses a constellation of four small
+       satellites in low Earth orbit to make global, 3D observations of the Sun's corona, aiming to understand how mass and
+       energy from the corona become the solar wind that fills the solar system. https://science.nasa.gov/mission/punch/
+ •     PILOT (Plasma Imaging, LOcal measurement, and Tomographic experiment): This mission, designed to study the effects
+       of the Sun on Earth's magnetosphere, involves a fleet of 34 satellites in two different orbits to measure the flow of cold,
+       dense plasma into and out of Earth's magnetosphere. https://advancedspace.com/pilot-magnetosphere-science-mission-
+       design/
+ •     NASA's Dawn Mission: This mission was the first spacecraft to orbit two small bodies, asteroid Vesta and dwarf planet
+       Ceres, allowing scientists to explore the environment in which planets formed.
+       https://exploreintrosems.stanford.edu/news/aa-118n-how-design-space-mission-concept-execution
+ •     Mars Moon Sampler: Phobos/Deimos Lunar Lander: This mission, part of the New Frontiers Class, aims to determine the
+       origins of Phobos and Deimos, the moons of Mars, by returning samples to Earth.
+       https://www1.grc.nasa.gov/facilities/compass-lab/designs-by-type/
+ •     Space Launch System (SLS): SLS is a heavy-lift launch vehicle designed to enable future exploration goals, offering
+       reduced mission time, increased mass margins, and increased payload volume.
+       https://ntrs.nasa.gov/api/citations/20130013034/downloads/20130013034.pdf
+
+ •     Artemis Program: The Artemis program is a series of missions, including Artemis X, that aims to deliver lunar surface
+       logistics and enable long-term astronaut stays on the moon. https://en.wikipedia.org/wiki/Artemis_program
+
+
+National Aeronautics and Space Administration                                                                                                      24
+                                             Na tion al Ae rona utics
+
+      Click to edit Master title style   and Space Administration
+
+
+
+
+Questions?
+
+
+www.nasa.gov/smallsat-institute/
+

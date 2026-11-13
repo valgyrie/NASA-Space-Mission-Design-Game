@@ -1,0 +1,585 @@
+Build It Yourself: Telescope
+
+The main game screen is dark blue with lighter blue and green swirls. At left is an illustrator
+drawing of the James Webb Space Telescope with its golden mirrors and silver 5-layer
+sunshield. At right are the credits.
+
+Author/Creator: Maggie Masetti
+Programmer: Mike Wojnarowski
+Artist: Susan LIn
+Special Thanks To: Dr. Kevin Boyce, Dr. Barb Mattson, Dr. Koji Muka, Dr. Scott Rohrbach, , Dr.
+Douglas Schwer, and Dr. Amber Straughn
+
+Below this is a button that says Start.
+
+The next Screen has black outlines of various unidentified spacecraft against a backdrop of blue
+with lighter blue and green filaments. There are 3 buttons at the left that say Level 1, Level 3,
+Level 3. At bottom right is a button that says “Need a hint.”
+
+
+
+Level 1
+
+The Science Screen. On this screen you will pick your science goals.
+
+There is an instruction box at the bottom center where you can click to bring up instructions. At
+bottom right there are “previous” and “next” buttons. At bottom left is a button that says “Back to
+Main Menu”
+
+The instructions box says, “Move the cursor over the science icons on the right to learn more
+about each one. Tap or click one if you'd like to select it. If you change your mind, click on
+another icon to select it instead.”
+
+The main part of the screen is divided into two halves. On the right are science buttons: Black
+Holes, Star Formation, Early Universe, Galaxies, and Exoplanets. Each button has an image
+representative of that topic. When you mouse over the buttons text is displayed on the left part
+of the screen. After reading through, you select one and then choose next. The science text is
+as follows:
+Science
+
+Black Holes:
+
+Black holes vary in size. Most local, massive galaxies are thought to have a supermassive black
+hole (hundreds of thousands to billions of times the mass of our Sun) at their centers. Other,
+much smaller, black holes are collapsed stars.
+
+Black holes are so dense that light cannot escape. This means we cannot “see” them directly,
+but there are indirect ways to detect and learn about them.
+
+Choose to study black holes and you might learn how the nuclei of galaxies are powered or
+about the life cycles of stars!
+
+
+
+Star Formation
+
+There are details of how stars are born and evolve that are still mysterious to scientists. To “see”
+individual star birth, we have to be able to peer into the clouds of dust and gas that act as stellar
+nurseries. Scientists are also interested in how the many stars in galaxies act collectively to
+affect the evolution of those galaxies over cosmic time.
+
+Choose to study star formation and maybe you will learn something new about star birth – or
+even about the formation of planetary systems!
+
+
+
+Early Universe
+
+Because light from objects that are very far away from us must travel a long time to reach us,
+when we observe these objects, we are really seeing them as they were a long time ago.
+Studying the most distant objects can help us to learn about the first ever galaxies, and maybe
+even the first stars.
+
+Additionally, the Big Bang (which occurred ~13.7 billion years ago) left residual radiation.
+Observing this radiation can help us to understand the conditions of the early universe.
+
+Choose to study the early universe and investigate our cosmic beginnings!
+
+
+
+Exoplanets
+Planets around other stars are more common than we once thought. Currently, large gaseous
+planets, orbiting very close to their parent star, are most frequently discovered. Who knows how
+far away we are from finding another Earth, or even signs of life elsewhere in the universe?
+
+Choose to study exoplanets and learn about the building blocks of planet formation and the
+evolution of planetary systems.
+
+
+
+Galaxies
+
+Scientists still have many unanswered questions about galaxies, like how the first galaxies
+formed, or how we ended up with the large variety of galaxies we see today.
+
+Scientists would also like to know what the relationship is between the extremely large black
+holes that live at the centers of most galaxies and the galaxy that hosts them, and about how
+dark matter plays into the formation of galaxies.
+
+Choose to study galaxies and learn about how galaxies are powered and see how stars form
+within them.
+
+
+
+
+At this point, the game will vary based on what science goal you have picked. The instruction
+box says, “Move the cursor over the wavelength icons on the far right to learn how that
+wavelength might be used to study your science topic. Tap or click one if you'd like to select it. If
+you change your mind, click on a different icon to select it instead. “
+
+Here are all the choices with respect to the science goal previously chosen.
+
+
+
+Wavelength
+(with respect to the science previously chosen)
+
+Black Holes -> X-ray
+
+Though no light can escape from a black hole itself, we can detect when matter is pulled into a
+black hole. As the matter falls toward the black hole, it gains energy and heats up, emitting
+ultraviolet light, X-rays, and gamma rays. For stellar black holes, this can happen if a black hole
+passes through a cloud of interstellar matter or ”steals” matter from a close binary companion.
+
+When a supermassive black hole is at the center of a galaxy, it can spew a massive amount of
+energy outward, often in the form of powerful jets or streams of particles. Part of the energy
+emitted is in the form of X-rays and gamma rays.
+
+If you choose to study black holes using X-rays, you might be able to learn what happens near
+the black hole at the center of these galaxies - or you might learn about how black holes interact
+with nearby stars.
+
+
+
+Black Holes -> Gamma ray
+
+Though no light can escape from a black hole itself, we can detect when matter is pulled into a
+black hole. As the matter falls toward the black hole, it gains energy and heats up, emitting
+ultraviolet light, X-rays, and gamma rays. For stellar black holes, this can happen if a black hole
+passes through a cloud of interstellar matter or “steals” matter from a close binary companion.
+
+When a black hole is at the center of a galaxy, it can spew a massive amount of energy
+outward, often in the form of powerful jets or streams of particles. Part of the energy emitted is in
+the form of X-rays and gamma rays. Scientists have also recently learned that the birth of a
+black hole is often signaled by a huge burst of gamma rays.
+
+If you choose to study black holes using gamma rays, you might learn more about the physics
+of the particles present in a black hole’s jets, or about black hole formation.
+
+
+
+Black Holes -> Optical
+
+Measurements of the optical light emitted by stars can be used to determine their speed and
+motion. This can tell you if the star is orbiting a stellar black hole and what the mass of that
+black hole is. The faster the star moves, the more massive the object it’s orbiting is. (Because it
+is the spectra of the stars that contain the motion information you will need to detect the
+presence of a black hole, you’ll want your satellite to have a spectrometer.)
+
+This technique of measuring orbital velocities of stars can also work for finding supermassive
+black holes at the center of galaxies. Additionally, measuring changes in the optical light in the
+center of a galaxy can tell you whether or not a central black hole is pulling material towards it.
+These types of “accreting” black holes at the centers of galaxies are called Active Galactic
+Nuclei (AGN).
+
+If you choose optical light to study black holes, you might learn more about their strange
+properties.
+
+
+
+Black Holes -> Ultraviolet
+Though no light can escape from a black hole itself, we can detect when matter is pulled into a
+black hole. As the matter falls toward the black hole, it gains energy and heats up, emitting
+ultraviolet light, X-rays, and gamma rays. For stellar black holes, this can happen if a black hole
+passes through a cloud of interstellar matter or ”steals” matter from a close binary companion.
+
+Sometimes the black hole will gravitationally rip apart and devour its companion star. When it
+does this, a bright ultraviolet flare is sometimes emitted.
+
+If you choose to study black holes using ultraviolet light, you might be able to learn more about
+what happens when objects interact with black holes.
+
+
+
+Star Formation -> Optical
+
+While we know that stars are formed from collapsing clouds of dust and gas (or nebulae), we
+don’t fully understand the process. We do know that stellar wind and radiation from young stars
+can compress and shape nebulae, which can trigger more star formation. One way we can learn
+about stellar nurseries is to make optical observations of the clouds of gas that hide and help
+create new stars.
+
+If you choose to study star formation at optical wavelengths, you might develop a better
+understanding of how stars, dust, and gas interact in regions where stars are being born.
+
+
+
+Star Formation -> IR
+
+Stars are born from collapsing clouds of dust and gas, though we don’t fully understand the
+process. Additionally, any optical light emitted by these young stars is absorbed by the dust
+clouds, essentially making them invisible. Fortunately, stars also emit infrared light, which isn’t
+absorbed by cosmic dust the same way visible light is.
+
+If you choose to study star formation using infrared light, you’ll be able to see inside the dense
+clouds of dust and gas that keep young stars hidden from optical telescopes.
+
+
+
+Star Formation -> UV
+
+One characteristic of a star-forming region is the presence of young, hot, massive stars that
+radiate intense ultraviolet light, which can illuminate the surrounding dust and gas. This is true in
+our galaxy, as well as in others. A survey of the stars in other galaxies can tell us something
+about the ages of their stars, and ultimately, this could help us understand how galaxies evolve
+and change.
+If you choose to study star formation using ultraviolet light, you might learn more about
+populations of young stars.
+
+
+
+Early Universe -> Optical
+
+Though infrared light is best for getting a view of the earliest galaxies, a powerful optical
+telescope will still allow us to look back to when the universe was a fraction of its current age.
+
+If you choose to study the early universe at optical wavelengths, you might learn about types of
+galaxies that populated the early universe.
+
+
+
+Early Universe -> Microwave
+
+The Big Bang left behind a heat signature that permeates the entire Universe. Scientists call it
+the cosmic microwave background (CMB).
+
+If you choose to study the early universe using microwaves, you might be able to get a picture
+of the universe only a few hundred thousand years after the Big Bang took place, long before
+stars or galaxies existed.
+
+
+
+Early Universe -> IR
+
+The Big Bang caused spacetime to expand, taking everything in the universe along with it. As a
+result, most galaxies are moving away from each other.
+
+The most distant (and thus youngest) galaxies are moving away so quickly that the light they
+emit gets shifted towards the red end of the electromagnetic spectrum. (This is very similar to
+listening to a train whistle shifting from higher to lower frequency as it passes by.) Thus, visible
+light from far away, quickly-moving, “high redshift” galaxies is shifted to the infrared.
+
+If you choose to study the early universe at infrared wavelengths, you might learn something
+new about the earliest galaxies.
+
+
+
+Galaxies -> Optical
+
+Optical wavelengths are useful for observations of galaxies because stars and some abundant
+gasses emit optical light. For example, clouds of ionized hydrogen gas emit light at visible
+wavelengths – these so-called H II regions are often associated with star birth. Optical
+observations of HII regions, their distribution and even presence/absence can be used to
+determine the distance, chemical composition, and structure of the galaxies they are in.
+
+You can also use emission from hydrogen gas to figure out how fast a galaxy is spinning - a shift
+in the wavelength of the light, called Doppler shift, indicates that the gas is moving relative to
+you. These "rotation curves" provide one clue about the presence of dark matter.
+
+If you choose to observe galaxies at optical wavelengths you could learn more about their
+structure.
+
+
+
+Galaxies -> IR
+
+Infrared light is useful for studying young (and very distant) galaxies because the optical light
+they emit is shifted towards the red end of the spectrum. (This is due to the Big Bang expanding
+spacetime, causing galaxies to move away from each other).
+
+Additionally, infrared light can help us to learn about the cores of galaxies, which are obscured
+by dust and gas at other wavelengths.
+
+Infrared spectroscopy can be used to identify the elements (particularly those heavier than
+hydrogen) that are formed in galaxies. If you choose to study galaxies in the infrared, you could
+learn something new about their evolution, structure, or composition.
+
+
+
+Galaxies -> X-ray
+
+X-rays are created when matter is heated to extremely hot temperatures. If a galaxy has a black
+hole at its center, it will pull in material from the region around it. As this material falls towards
+the black hole, it heats up and emits X-rays and gamma rays.
+
+If you choose to study the X-ray light emitted from galaxies, you may learn more about the
+black holes that can live at their centers.
+
+
+
+Galaxies –> gamma ray
+
+Galaxies give off gamma rays, sometimes as a result of powerful jets of matter moving at
+relativistic speeds, and sometimes expelled in mysterious bursts. These gamma ray bursts,
+considered some of the most powerful explosions in the universe, are thought to be associated
+with the formation of black holes or the merging of neutron stars.
+
+If you choose to study galaxies in gamma rays, you might learn more about the mechanisms
+behind gamma ray emission.
+Galaxies -> UV
+
+Young, hot, massive stars emit ultraviolet light, so ultraviolet surveys of the sky could reveal star
+forming regions both within our galaxy, as well as in other galaxies. We also know that the way
+galaxies form stars changes over time, so observing star formation in galaxies at different times
+in the universe’s history helps us to understand galaxy evolution on a large scale.
+
+If you choose to study galaxies using ultraviolet light, you might survey and map galaxies to
+learn about the ages of their stars, leading to a better understanding about how galaxies evolve
+and change.
+
+Exoplanets -> Optical
+
+Optical telescopes on satellites have been used successfully to find extrasolar planets by
+measuring the relative brightness of a star over a long period of time and looking for small,
+periodic changes that could be caused by the transit of a planet across the star.
+
+If you choose to study exoplanets in optical light, you might learn about how they are detected.
+
+
+
+Exoplanets -> IR
+
+Infrared light is useful for studying young planets for the same reason that it is useful for
+studying young stars. Infrared light isn’t blocked by the dust and gas in the regions where young
+solar systems are formed.
+
+A very sensitive infrared telescope might be able to obtain images of giant planets and planetary
+systems, characterize their ages and masses by measuring their spectra, and maybe even
+discover the atmospheric composition of planets that pass in front of their stars.
+
+If you choose to study exoplanets in infrared light, you might learn about planets and planet
+formation.
+
+
+
+
+Now the game will vary based not only on what science goal you have picked, but on what
+wavelength. The instruction box says, “Move the cursor over the instrument icons on the far
+right to choose instruments for the wavelength you have chosen. Tap or click one if you'd like to
+select it. If you change your mind, click on a different icon to select it instead.”
+
+Here are all the choices with respect to the science goal and wavelength previously chosen.
+Instruments
+(with respect to the wavelength)
+
+Optical -> Camera IR -> Camera X-ray -> Camera UV -> Camera
+
+Telescope cameras work very similarly to ordinary digital cameras. They generally have a kind
+of shutter to let light in or keep it out, and detectors that convert light into a digital signal. On a
+satellite, this electronic data is stored and then transmitted to Earth, where it is processed and
+converted to images.
+
+There are many different kinds of cameras. If you choose a camera for your satellite, you can
+easily build one that is optimized for whatever wavelength you’d like to study.
+
+
+
+Optical -> Spectrometer IR -> Spectrometer X-ray -> Spectrometer UV -> Spectrometer
+
+A spectrometer (also sometimes called a spectrograph) is used to disperse light from an object
+into a spectrum. The atoms and molecules in the object actually imprint lines on its spectrum
+that uniquely fingerprint each chemical element present and can reveal a wealth of information
+about physical conditions in the object. Analyzing the spectrum of an object can tell us about its
+physical properties, including temperature, mass, chemical composition, and motion.
+
+If you choose a spectrometer for your satellite, you can easily build one that is optimized for
+whatever wavelength you’d like to study, from optical to gamma ray. (Note that gamma ray
+astronomy of this type is done with a type of detector called a scintillator).
+
+
+
+Microwave -> Radiometer
+
+A radiometer is an instrument used to measure the radiant flux, or power, of electromagnetic
+radiation given off by an object. A microwave radiometer can be used to detect and study the
+low level of background microwave radiation that exists as a result of the Big Bang. One way to
+do this is to measure and compare the temperature differences between different points in the
+microwave sky. Fluctuations in the temperature of the cosmic microwave background can be
+related to the density of matter in the early universe.
+
+If you choose a radiometer, you can learn about the initial conditions for the formation of things
+like galaxies and galaxy clusters.
+X-ray -> Proportional Counter
+
+Proportional counters are filled with gas (like Xenon) that produces an electrical pulse when an
+X-ray passes through it. You can determine things like the energy, time, and position in the sky
+of the X-ray photon from measuring the strength, shape, and timing of the electrical signal.
+Counters like this are used less frequently now than they used to be.
+
+If you choose a counter, you won’t need optics for it, and it can give you interesting X-ray data
+about objects like black holes.
+
+
+
+Gamma ray -> Scintillator
+
+One way to detect gamma rays is to use a scintillator. In this sort of detector, an incoming
+gamma ray produces charged particles when it hits the scintillator crystals in the instrument. The
+charged particles interact with the crystals and emit lower energy (usually visible) photons of
+light, which are then collected by photomultiplier tubes. (Photomultipliers are very sensitive light
+detectors, generally sensitive to the ultraviolet, visible and near-infrared parts of the spectrum.)
+
+By adding up the energy of the light collected in the photomultiplier tubes, the energy of the
+initial gamma ray can be determined. In some cases, the flashes of visible light produced by the
+scintillator can even be used to locate the source of the gamma rays in the sky.
+
+If you choose a scintillator, you can detect and analyze cosmic gamma rays.
+
+
+
+
+Now the game will vary based not only on what science goal you have picked, but on what
+wavelength and what instrument. The instruction box says, “Move the cursor over the optics
+icons on the far right to choose optics for the instrument(s) you have chosen. Tap or click one if
+you'd like to select it. If you change your mind, click on a different icon to select it instead. If you
+have chosen more than one instrument, you will need to pick optics for each one.”
+
+Here are all the choices with respect to the science goal and wavelength and instrument
+previously chosen.
+
+Optics
+(with respect to instruments/wavelength)
+
+Small or Med -> X-ray -> Segmented
+Picture throwing a stone into a pond. Unless you throw it at a very shallow angle so that it skips
+on the surface, the stone will pass right through the surface of the water. In this way, X-rays will
+pass through a typical telescope mirror unless they approach the mirror at a very shallow angle.
+To maximize the number of X-rays captured, X-ray mirrors are made of multiple, nested layers
+of cylindrical shells. The X-rays enter the end of the cylinder and then hit the mirrors at a
+shallow enough angle that they can be directed to the instrument located at the mirror’s focal
+point.
+
+Many X-ray mirrors are made with thin foils – they provide good collecting area, are relatively
+cheap, easy to make, and lightweight. They may not be as accurate as more expensive and
+heavy alternatives, such as glass, but they fit the budget that a smaller satellite would have.
+
+If you have an X-ray instrument that requires optics, try a segmented mirror!
+
+
+
+Large -> X-ray -> Segmented
+
+Picture throwing a stone into a pond. Unless you throw it at a very shallow angle so that it skips
+on the surface, the stone will pass right through the surface of the water. In this way, X-rays will
+pass through a typical telescope mirror unless they approach the mirror at a very shallow angle.
+To maximize the number of X-rays captured, X-ray mirrors are made of multiple, nested layers
+of cylindrical shells. The X-rays enter the end of the cylinder and then hit the mirrors at a
+shallow enough angle that they can be directed to the instrument located at the mirror’s focal
+point.
+
+Many X-ray mirrors are made with thin foils – they provide good collecting area, are relatively
+cheap, easy to make, and lightweight. However, if you are building a larger X- ray satellite, you
+might use glass mirrors. These are heavier (thus more expensive to launch) and thicker, so you
+won’t be able to fit in very many (just four or so). This means your collecting area will be small,
+but the mirrors will be very accurate.
+
+If you have an X-ray instrument that requires optics, try a segmented mirror!
+
+
+
+Large -> IR or Optical or UV-> Segmented
+
+The bigger your mirror is, the heavier it will be, and the more expensive it will be to launch. One
+alternative is to make your mirror in multiple segments that will act like a single mirror when they
+are put together. This type of mirror can work for optical, infrared or even ultraviolet
+wavelengths.
+
+If you choose a segmented mirror, it will be more expensive than just making a smaller mirror
+(and you’ll have to investigate new technologies to do it), but it will be less expensive than trying
+to launch a single giant mirror into space! If you use a lightweight, but strong substance (like
+beryllium) to make your mirror segments out of, you might just pull it off!
+
+
+
+Sm, Med, Large ->Optical, IR, Microwave, UV -> Single Primary
+
+A single primary mirror is traditional for telescopes and will work for a variety of wavelengths
+(from microwave to ultraviolet) and instruments. You can even make them fairly large in size –
+but the larger they are, the heavier and more expensive they are.
+
+If you do want a mirror larger than Hubble’s, you might want to look into a segmented mirror.
+However, if your satellite isn't big enough to support a mirror that big, a single primary mirror
+will suit your needs!
+
+
+
+Sm, Med -> X-ray -> No optics
+
+If you are building an X-ray imaging mission, you will likely want optics to increase the amount
+of light you collect and in turn decrease the amount of observation time you’ll need to collect
+enough X-ray photos to create a good picture. However, there are types of measurements that
+don’t require optics at all.
+
+If you’re doing X-ray spectroscopy, or doing timing measurements with a proportional counter,
+such as precisely measuring when each X-ray photon is detected, you won’t necessarily need
+optics.
+
+
+
+Sm, Med, Large -> gamma ray –> No optics
+
+When a gamma ray hits a mirror or a lens, it won’t be reflected or refracted like optical light, and
+it won’t bounce off the way an X-ray would – it will interact with the mirror in such a way as to
+destroy the gamma ray or change its energy by a large amount. Thus, while we can focus
+X-rays using optics, we actually don’t yet have the technology to focus gamma rays, so current
+gamma ray telescopes don’t use optics at all! Some types of detectors can determine the
+direction of a strong source of light to a fine degree of accuracy, but they don’t actually focus the
+light.
+
+If you are building a gamma ray instrument, you won’t need optics.
+
+
+
+
+Now that you have made all your choices, you can launch your mission by clicking on the
+launch button.
+
+An animation plays of a rocket blasting across the screen over the background of the Earth, and
+then your science result appears. The result will show a drawing of a real satellite similar to the
+one you built, and real data that might resemble that your instrument gathered, and text
+describing the science result.
+
+Please see the other docs for the text for every possible permutation in the game.
+
+
+
+Level 2/3
+
+The user interface for these levels is the same as for Level 1.
+
+For Level 2, you may pick up to two science goals, up to two wavelengths (think about whether
+they are compatible!). It may be possible to choose the same wavelength for each science topic,
+or if you have only chosen one, you may choose two wavelengths for it. Next you must pick
+instruments to match with the wavelengths you have chosen. Each wavelength must have at
+least one instrument so consider your options and pick carefully! Lastly you must pick optics to
+go with each instrument selected.
+
+When you launch, a bigger rocket launches and a science result is displayed. Level 2 has a
+different range of comparable missions and comparable science data. You may get more than
+one science result, so look for the arrow on top to click through all your results!
+
+If you play again, the shadows on the main screen fill in as comparable missions are unlocked.
+
+For Level 3, you may select 4 science goals, a total of 3 wavelengths (one per science goal), a
+total of 3 instruments (one for each wavelength), and the optics options for optical/infrared
+include a segmented mirror like Webb.
+
+When you launch, and even bigger rocket animation is shown, and a comparable mission and
+science result or results are displayed. Going back to the main menu each time you play and
+unlock one of the mystery missions causes that shadow to fill in with an illustration.
+
+If you click the “need a hint” button, it tells you to move the cursor over an unknown satellite for
+a hint on how to build it.
+
+The hints are:
+
+Top left: Try something that would require the use of a scintillator. You'll have to figure out what
+wavelength it might be used for.
+Bottom left: Try using a large segmented mirror - but a much higher energy wavelength than
+optical light.
+
+Top middle: This large telescope looks pretty similar to JWST.
+
+Bottom middle: Smaller than JWST, this telescope will also look at the infrared universe.
+
+Top right: This X-ray telescope doesn't have optics, but can still "see" black holes.
+
+Middle right: This type of satellite can observe radiation left over from the early universe at this
+wavelength. And it's not infrared.
+
+Bottom Right: This large telescope looks pretty similar to Hubble.
+
+
+
+To read through all the permutations, please view the other available docs.
+

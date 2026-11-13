@@ -26,6 +26,8 @@
 
 **Sources:** Design and Develop Science Missions, slide 10 "Big Picture Process to Design & Develop a Space Mission": Identify Need & Goals → Define Concept → Define Requirements → Design → Build & Verify → Implement. Slide 19: "When identifying requirements, also plan how you will verify that design satisfies requirements". <https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf>
 
+**In the repo for this ticket:** [`docs/research/sources/design-and-develop-science-missions.txt`](../research/sources/design-and-develop-science-missions.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:**
 - The Mines and Factory steps are tycoon steps, not NASA's "Define Concept". Alternative: put them under "Build & Verify" and show "Define Concept" and "Define Requirements" both on the design step. Decide with the team.
 - If ticket 33's maturity strip is built first, keep the two rows from crowding the Mission Designer: the six steps belong to the tutorial card only.

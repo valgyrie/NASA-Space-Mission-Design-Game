@@ -15,4 +15,6 @@
 
 **Sources:** GMAT in the NASA Software Catalog (GSC-19468-1, names R2025a; open source; Windows, Linux, Mac OS) <https://software.nasa.gov/software/GSC-19468-1>; downloads on SourceForge <https://sourceforge.net/projects/gmat/> (R2026a is the newest release there). GMAT script syntax: GMAT's own User Guide _(verify the exact keywords against the guide; none were tested here)_.
 
+**In the repo for this ticket:** [`docs/research/sources/mission-viz/`](../research/sources/mission-viz/) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** whether to keep the file to Keplerian elements only (simplest) and how to state the frame (Earth-centred, equatorial).

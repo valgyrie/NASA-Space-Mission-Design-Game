@@ -18,4 +18,6 @@
 
 **Sources:** CubeSat 101 (October 2017) <https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf>.
 
+**In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** keep "Small / Medium / Large Bus" in Easy mode and show CubeSat sizes only in Advanced?

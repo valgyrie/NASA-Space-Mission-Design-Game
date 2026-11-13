@@ -15,3 +15,5 @@
 **In the code (read-only pointers):** Space view `src/world/spaceView.ts`, `src/ui/spaceScreen.ts` (`statusText`, `satelliteFacts`); Mission Report data in `src/game/mission.ts`; Anomaly day in `src/game/anomalies.ts`.
 
 **Sources:** 2023 Space Apps challenge "Visualize a Space Mission Using Virtual Reality" (mission concept, orbital trajectories, mission timeline, 3D) <https://www.spaceappschallenge.org/2023/challenges/visualize-a-space-mission-using-virtual-reality/>; NASA Mission Viz <https://nasa.github.io/mission-viz/>.
+
+**In the repo for this ticket:** Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md). The 2023 challenge text is summarised in the note.
