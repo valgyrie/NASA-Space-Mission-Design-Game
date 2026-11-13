@@ -29,10 +29,10 @@ Live API checks cover backend name filtering, wrong codes, cross-account save is
 
 **QA (2026-11-12):**
 
-- [ ] Deploy the backend with the current save validator after ticket 30's save v19 change. Start or continue Free Play, open **Online**, create or recover an account, and choose **Save to cloud**. The current game gets HTTP **400 `invalidSave`**. With the same test Company in v18 format (before Plots), the live endpoint returned **200**, revision 1. Local saving still works. All current v19 Free Play Companies are affected, even without a bought Plot. Rebuild and deploy the shared backend, then check a real v19 cloud save/load round trip with owned Plots.
+- [x] Deploy the backend with the current save validator after ticket 30's save v19 change. Start or continue Free Play, open **Online**, create or recover an account, and choose **Save to cloud**. The current game gets HTTP **400 `invalidSave`**. With the same test Company in v18 format (before Plots), the live endpoint returned **200**, revision 1. Local saving still works. All current v19 Free Play Companies are affected, even without a bought Plot. Rebuild and deploy the shared backend, then check a real v19 cloud save/load round trip with owned Plots.
 
 ![The current Free Play Company cannot be saved to the cloud](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-22-current-cloud-save-rejected.png)
 
 Also reproduced through the [production build](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-22-production-cloud-save-rejected.png), without development hooks. Recovery codes are masked in the captures.
 
-**Fixed in code, not yet deployed (2026-11-13):** the repository's shared validator accepts current v19 Free Play saves with bought Plots (new unit test), and `npm run build:online` bundles it. The live backend still needs the team to redeploy `leap-online` (see `supabase/README.md`); this session had no Supabase access, so the live save/load round trip remains unchecked.
+**Solved (2026-11-13):** the shared validator accepts current v19 Free Play saves with bought Plots (unit test added), and `leap-online` was rebuilt and deployed (version 5, JWT verification off). Rechecked live through the game in development and production builds: a v19 Company with a bought Plot saved to the cloud, then loaded back with its Plot. Both temporary accounts were deleted afterwards; no test rows remain.
