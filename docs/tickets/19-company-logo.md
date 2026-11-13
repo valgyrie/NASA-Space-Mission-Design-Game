@@ -23,8 +23,10 @@ The HQ's sign and both sides of its flag, all four Launch Vehicles, and Mission 
 
 **QA (2026-11-12):**
 
-- [ ] Keep the Site paused while the logo editor is open, including keyboard input. Click the Company logo, Tab past the editor's controls to **1×** or **4×** in the top bar, then Enter. The Game date and Contract deadline keep moving behind the editor. The pause menu has the same existing issue (ticket 04); the editor added in this ticket also needs to contain focus.
+- [x] Keep the Site paused while the logo editor is open, including keyboard input. Click the Company logo, Tab past the editor's controls to **1×** or **4×** in the top bar, then Enter. The Game date and Contract deadline keep moving behind the editor. The pause menu has the same existing issue (ticket 04); the editor added in this ticket also needs to contain focus.
 
 ![The logo editor open while the Site runs](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-logo-editor-keyboard-runs-clock.png)
 
 Also reproduced in the production build, without development hooks: **4×** runs behind the editor. [Before](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-production-logo-clock-before.png), [after](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-19-production-logo-clock-after.png).
+
+**Solved (2026-11-13):** the editor keeps Tab inside itself and the speed buttons wait until it closes (shared fix with ticket 04). Rechecked in development and in the production build at 4×: the Game date did not move.

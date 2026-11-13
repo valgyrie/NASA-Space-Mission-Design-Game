@@ -34,3 +34,5 @@ Live API checks cover backend name filtering, wrong codes, cross-account save is
 ![The current Free Play Company cannot be saved to the cloud](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-22-current-cloud-save-rejected.png)
 
 Also reproduced through the [production build](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-22-production-cloud-save-rejected.png), without development hooks. Recovery codes are masked in the captures.
+
+**Fixed in code, not yet deployed (2026-11-13):** the repository's shared validator accepts current v19 Free Play saves with bought Plots (new unit test), and `npm run build:online` bundles it. The live backend still needs the team to redeploy `leap-online` (see `supabase/README.md`); this session had no Supabase access, so the live save/load round trip remains unchecked.

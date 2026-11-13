@@ -18,8 +18,10 @@
 
 **QA (2026-11-11):**
 
-- [ ] Keep the tutorial clear of the controls it points at. At **1440×900**, step 6 tells the player to book the Rideshare, but covers the Shipping button's label and price at the bottom of the Launch planner. Clicking the centre hits the guide; the exposed sides still work, or the player can skip the tutorial. The card can also cover part of Test Run. Checked after building a Mine and Metal Works.
+- [x] Keep the tutorial clear of the controls it points at. At **1440×900**, step 6 tells the player to book the Rideshare, but covers the Shipping button's label and price at the bottom of the Launch planner. Clicking the centre hits the guide; the exposed sides still work, or the player can skip the tutorial. The card can also cover part of Test Run. Checked after building a Mine and Metal Works.
 
 ![Step 6 covers the Shipping button](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/2026-11-11/tutorial-covers-shipping.png)
 
 **Rechecked (2026-11-12):** still reproduces on `4661008`. Current screenshots: [1](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-13-tutorial-covers-shipping.png).
+
+**Solved (2026-11-13):** while the guide sits low over the Mission Designer, its lists get room at the end equal to the guide's height, so Shipping and Test Run scroll clear of it. Rechecked at 1440×900 and 1024×768: the centre and both sides of both buttons are clickable.
