@@ -36,6 +36,8 @@ jobs:
 
   deploy:
     needs: build
+    # Pages needs a public repo (or a paid plan): skip while private, so main stays green. Build and tests still run.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-latest
     environment:
       name: github-pages
