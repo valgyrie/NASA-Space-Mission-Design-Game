@@ -4,13 +4,13 @@ Checked the latest `main`, **4661008**, on `codex/qa-screenshots-tickets-19-31`.
 
 Screenshots now live under [`screenshots/`](../../../screenshots/README.md). The [problem index](../../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/README.md) gives the visible trigger and current captures. The two background failures have measured evidence in their tickets, without a screenshot. Earlier captures are kept separately; none were deleted.
 
-**Update, 13 November 2026:** 14 of the 15 findings are solved and rechecked in the browser, each with focused tests. Visible ones have a `_solved` screenshot beside the original. Current cloud saves are fixed in the repository but wait for the team to redeploy the backend.
+**Update, 13 November 2026:** all 15 findings are solved and rechecked in the browser, each with focused tests. Visible ones have a `_solved` screenshot beside the original. The backend was redeployed for the cloud-save fix; the temporary test accounts were deleted.
 
 ## Findings
 
 | Ticket | Finding | This pass | Status (13 Nov) |
 |---|---|---|---|
-| [22](../../tickets/22-online-basics.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Current cloud saves rejected | **New.** Live v19 save: HTTP 400 `invalidSave`; the same Company in v18 format: HTTP 200, revision 1. Also seen in the production UI. | **Fixed in code; waiting for backend deployment.** Live save not rechecked. |
+| [22](../../tickets/22-online-basics.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Current cloud saves rejected | **New.** Live v19 save: HTTP 400 `invalidSave`; the same Company in v18 format: HTTP 200, revision 1. Also seen in the production UI. | **Solved.** Backend redeployed; live v19 save/load with a bought Plot checked. |
 | [02](../../tickets/02-company-and-saving.md) | Refused local saves silently lose changes | **New, background.** A QuotaExceededError fixture refused a logo save; the game changed, no alert appeared, and reload restored the old logo. | **Solved.** |
 | [19](../../tickets/19-company-logo.md) | Logo editor lets keyboard input restart the Site | **New.** Tab reaches background speed buttons; the Game date advances behind the editor. Production check also passes through the real UI. | **Solved.** |
 | [26](../../tickets/26-look-and-feel.md) | Site previews retain old building buffers | **New, background.** Three setup/Back round trips: 2,161 → 4,303 → 6,445 → 8,587 outstanding WebGL buffers. | **Solved.** |

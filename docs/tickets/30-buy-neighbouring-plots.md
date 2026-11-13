@@ -40,7 +40,7 @@
 
 ![The Plot card starts under the top bar](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-plot-card-under-top-bar.png)
 
-- [ ] Check the live cloud save after this save-format change; current v19 saves are rejected by the deployed v18 backend. Reproduction and visible error: ticket 22's QA note.
+- [x] Check the live cloud save after this save-format change; current v19 saves are rejected by the deployed v18 backend. Reproduction and visible error: ticket 22's QA note.
 
 - [x] Extend an active Shipping route when land is bought on its exit side. On Seed **K7QXM2**, Historic start, book Telstar 1 and buy the Plot east of the Site while assembly is under way. The old route still ends at world **x=60**, inside the now-owned east Plot (which reaches x=96). At 98% of Shipping the truck disappears there. `World.updateShipping` only makes a route when the Mission ID changes; buying the Plot keeps the old route. Check an in-progress expansion as well as buying land before Shipping starts.
 
@@ -52,4 +52,4 @@ The matched pair shows the [truck still present](../../screenshots/development-N
 
 ![Whole Site view crops the bought land to the right](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-whole-site-view-crops-owned-plots.png)
 
-**Solved (2026-11-13):** the Plot card follows the top bar (ticket 26's fix). Buying land keeps an active Mission's dock and runs its road past the new edge: on K7QXM2 the route end moves from x=60 to x=124, and the truck stays visible across the bought Plot. **H** now centres on all owned land and backs off to fit it; with two east Plots it looks at x=64 from 343 units and every corner is on screen. Zoom-out grows to match. Unit tests added. The cloud-save item stays open: see ticket 22.
+**Solved (2026-11-13):** the Plot card follows the top bar (ticket 26's fix). Buying land keeps an active Mission's dock and runs its road past the new edge: on K7QXM2 the route end moves from x=60 to x=124, and the truck stays visible across the bought Plot. **H** now centres on all owned land and backs off to fit it; with two east Plots it looks at x=64 from 343 units and every corner is on screen. Zoom-out grows to match. Unit tests added. The live cloud save now accepts v19 saves and keeps bought Plots through a save/load round trip (ticket 22).
