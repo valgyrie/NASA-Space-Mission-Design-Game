@@ -36,18 +36,20 @@
 
 **QA (2026-11-12):**
 
-- [ ] Keep the Plot card below the wrapped top bar. At **700×600**, click a neighbouring Plot: the heading and close control overlap the bar (card y=84, bar bottom y=136). The building panel has the same issue (ticket 26).
+- [x] Keep the Plot card below the wrapped top bar. At **700×600**, click a neighbouring Plot: the heading and close control overlap the bar (card y=84, bar bottom y=136). The building panel has the same issue (ticket 26).
 
 ![The Plot card starts under the top bar](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-plot-card-under-top-bar.png)
 
 - [ ] Check the live cloud save after this save-format change; current v19 saves are rejected by the deployed v18 backend. Reproduction and visible error: ticket 22's QA note.
 
-- [ ] Extend an active Shipping route when land is bought on its exit side. On Seed **K7QXM2**, Historic start, book Telstar 1 and buy the Plot east of the Site while assembly is under way. The old route still ends at world **x=60**, inside the now-owned east Plot (which reaches x=96). At 98% of Shipping the truck disappears there. `World.updateShipping` only makes a route when the Mission ID changes; buying the Plot keeps the old route. Check an in-progress expansion as well as buying land before Shipping starts.
+- [x] Extend an active Shipping route when land is bought on its exit side. On Seed **K7QXM2**, Historic start, book Telstar 1 and buy the Plot east of the Site while assembly is under way. The old route still ends at world **x=60**, inside the now-owned east Plot (which reaches x=96). At 98% of Shipping the truck disappears there. `World.updateShipping` only makes a route when the Mission ID changes; buying the Plot keeps the old route. Check an in-progress expansion as well as buying land before Shipping starts.
 
 The matched pair shows the [truck still present](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-truck-before-disappearing-on-owned-land.png) and [gone while still Shipping](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-truck-disappeared-on-owned-land.png).
 
 ![The truck near the old route end, inside the bought Plot](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-shipping-route-stops-inside-bought-plot.png)
 
-- [ ] Fit all owned land in **Whole Site view (H)**. Buy the two Plots east of the Home Site, then press **H**. It still centres (0, 0) and uses the original 171.67-unit camera distance; both eastern corners are outside the screen. The maximum zoom-out also stays at 214.59 units. On the test Site, the outer east corners projected beyond three screen half-widths. Pan still reaches the bought land, but H no longer gives a view of the whole Site.
+- [x] Fit all owned land in **Whole Site view (H)**. Buy the two Plots east of the Home Site, then press **H**. It still centres (0, 0) and uses the original 171.67-unit camera distance; both eastern corners are outside the screen. The maximum zoom-out also stays at 214.59 units. On the test Site, the outer east corners projected beyond three screen half-widths. Pan still reaches the bought land, but H no longer gives a view of the whole Site.
 
 ![Whole Site view crops the bought land to the right](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-30-whole-site-view-crops-owned-plots.png)
+
+**Solved (2026-11-13):** the Plot card follows the top bar (ticket 26's fix). Buying land keeps an active Mission's dock and runs its road past the new edge: on K7QXM2 the route end moves from x=60 to x=124, and the truck stays visible across the bought Plot. **H** now centres on all owned land and backs off to fit it; with two east Plots it looks at x=64 from 343 units and every corner is on screen. Zoom-out grows to match. Unit tests added. The cloud-save item stays open: see ticket 22.

@@ -74,11 +74,23 @@ export function shippingRoute(site: Site, start: { x: number; z: number }, occup
   }
   const { dir, dock } = best!;
   const from = { x: dock.x - half + 0.5, z: dock.z - half + 0.5 };
-  // Distance from the dock to the Site's edge along the road (bought Plots included), then on past it.
+  return { dock, dir, from, to: roadEnd(site, dock, dir, from) };
+}
+
+/** Where the drive ends: from the dock to the Site's edge along the road (bought Plots included), then on past it. */
+function roadEnd(site: Site, dock: ShippingRoute['dock'], dir: ShippingRoute['dir'], from: ShippingRoute['from']): ShippingRoute['to'] {
   let toEdge = 0;
   while (tileAt(site, dock.x + dir.x * toEdge, dock.z + dir.z * toEdge)) toEdge++;
   const length = toEdge - 0.5 + DRIVE_BEYOND_SITE;
-  return { dock, dir, from, to: { x: from.x + dir.x * length, z: from.z + dir.z * length } };
+  return { x: from.x + dir.x * length, z: from.z + dir.z * length };
+}
+
+/**
+ * The same route after land was bought: the dock and the road's direction stay, and the drive now ends past
+ * the new edge of the Site, so the truck never vanishes on owned land (ticket 30).
+ */
+export function extendRoute(site: Site, route: ShippingRoute): ShippingRoute {
+  return { ...route, to: roadEnd(site, route.dock, route.dir, route.from) };
 }
 
 /** Where the truck is `fraction` (0–1) of the way along the road. It pulls away slowly and speeds up. */

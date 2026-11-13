@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { checkCompanyName } from '../company/companyName';
 import { createDemo } from '../game/demo';
 import { newSiteState } from '../game/siteState';
-import { SAVE_KEY } from '../save/save';
+import { SAVE_KEY, SAVE_VERSION } from '../save/save';
 import { ACCOUNT_KEY, OnlineClient } from './client';
 import { formatCode, generateNickname, leaderboardScores, normalizeCode, readFreePlaySave } from './model';
 
@@ -30,6 +30,15 @@ describe('Online basics', () => {
     expect(readFreePlaySave(game)).toEqual(game);
     expect(readFreePlaySave({ ...game, state: { ...game.state, design: {} } })).toBeNull();
     expect(readFreePlaySave(null)).toBeNull();
+  });
+
+  it('accepts a current Free Play save with bought Plots, as the cloud receives it (ticket 22)', () => {
+    const game = createDemo(2);
+    game.state.playMode = 'freePlay';
+    game.state.plots = [[1, 0], [2, 0]];
+    const sent = JSON.parse(JSON.stringify(game));
+    expect(sent.version).toBe(SAVE_VERSION);
+    expect(readFreePlaySave(sent)).toEqual(game);
   });
 
   it('counts owned stock and paid building levels, completed Missions, Reputation and earned Research', () => {

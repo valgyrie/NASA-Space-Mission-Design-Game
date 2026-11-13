@@ -57,6 +57,10 @@ export function showBuildMenu(root: HTMLElement, state: SiteState, onPick: (kind
 
   menu.append(hint, row);
   root.append(menu);
+  // Side panels end above the menu, which wraps onto more rows on narrow screens (tickets 26, 30).
+  const measure = () => root.style.setProperty('--build-menu-top', `${Math.floor(menu.getBoundingClientRect().top)}px`);
+  new ResizeObserver(measure).observe(menu);
+  window.addEventListener('resize', measure);
 
   let placing: BuildingKind | null = null;
   let timer = 0;

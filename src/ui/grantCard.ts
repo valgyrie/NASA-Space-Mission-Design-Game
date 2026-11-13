@@ -15,6 +15,7 @@ export function showGrantCard(root: HTMLElement, hooks: { onOpen(): void; onClos
   const panel = document.createElement('section');
   panel.className = 'panel dialog grant-card';
   panel.setAttribute('role', 'alertdialog');
+  panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', 'grant-title');
   const title = document.createElement('h2');
   title.id = 'grant-title';

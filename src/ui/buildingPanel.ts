@@ -111,13 +111,14 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       setText(mark, t('panel.factoryMark', { mark: factory.level }));
       const missing = missingInputs(state, factory.making);
       const working = factory.progress !== null;
+      // Nothing missing but not started yet: the Site is paused, and it starts as soon as time runs (ticket 05).
+      const ready = !working && Object.keys(missing).length === 0;
+      const part = t(`part.${factory.making}`);
       setText(
         status,
-        working
-          ? t('panel.working', { part: t(`part.${factory.making}`) })
-          : t('panel.waiting', { missing: inputsText(missing) }),
+        working ? t('panel.working', { part }) : ready ? t('panel.ready', { part }) : t('panel.waiting', { missing: inputsText(missing) }),
       );
-      status.classList.toggle('warn', !working);
+      status.classList.toggle('warn', !working && !ready);
       fill.style.width = `${Math.round(((factory.progress ?? 0) / RECIPES[factory.making].days) * 100)}%`;
       for (const c of choices) {
         const on = String(c.part === factory.making);

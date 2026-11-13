@@ -7,16 +7,22 @@ import { SOURCES } from '../game/sources';
 
 export interface ScrubCard {
   show(site: LaunchSiteId, weather: Weather, advice: LaunchAdvice | null): void;
+  close(): void;
+  readonly isOpen: boolean;
 }
 
-/** The card shown when the weather Scrubs a Launch: why, and the Launch Window advisor's next good day. */
-export function showScrubCard(root: HTMLElement): ScrubCard {
+/**
+ * The card shown when the weather Scrubs a Launch: why, and the Launch Window advisor's next good day.
+ * `onOpen` and `onClose` pause the Site while it is read, so the advised day cannot pass behind it (ticket 16).
+ */
+export function showScrubCard(root: HTMLElement, hooks: { onOpen(): void; onClose(): void }): ScrubCard {
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
   backdrop.hidden = true;
   const panel = document.createElement('section');
   panel.className = 'panel dialog scrub-card';
   panel.setAttribute('role', 'alertdialog');
+  panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', 'scrub-title');
   const title = document.createElement('h2');
   title.id = 'scrub-title';
@@ -30,17 +36,25 @@ export function showScrubCard(root: HTMLElement): ScrubCard {
   panel.append(title, why, advice, learnMore(SOURCES.climate, t('sources.climate')), ok);
   backdrop.append(panel);
   root.append(backdrop);
-  const close = () => (backdrop.hidden = true);
-  ok.addEventListener('click', close);
-  backdrop.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') close();
-  });
-  return {
+  const card: ScrubCard = {
     show(site, weather, next) {
       why.textContent = scrubText(site, weather);
       advice.textContent = adviceText(next);
-      backdrop.hidden = false;
+      if (backdrop.hidden) {
+        backdrop.hidden = false;
+        hooks.onOpen();
+      }
       ok.focus();
     },
+    close() {
+      if (backdrop.hidden) return;
+      backdrop.hidden = true;
+      hooks.onClose();
+    },
+    get isOpen() {
+      return !backdrop.hidden;
+    },
   };
+  ok.addEventListener('click', () => card.close());
+  return card;
 }

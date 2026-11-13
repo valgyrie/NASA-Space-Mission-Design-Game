@@ -5,7 +5,7 @@ import { makePatch } from './patch';
 import { DEFAULT_LOGO } from '../company/logo';
 import { t } from '../strings';
 import { contractText, formatDecimal, formatMoney } from './format';
-import { findingText } from './missionReport';
+import { findingText, reachedOrbit } from './missionReport';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, text = '', className = ''): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
@@ -45,7 +45,8 @@ export function makeWeekly(root: HTMLElement, client: OnlineClient, run: (job: (
               for (const key of ['reliability', 'science', 'money', 'mass'] as const) result.append(el('p', t(`weekly.${key}`, { n: formatDecimal(scored[key] * 100, 2) }), 'note'));
               result.append(el('p', t('weekly.cost', { money: formatMoney(scored.cost) }), 'note'));
               const why = el('ul', '', 'report-findings');
-              for (const finding of scored.flight.findings) why.append(el('li', findingText(finding)));
+              const flown = reachedOrbit(scored.flight.findings);
+              for (const finding of scored.flight.findings) why.append(el('li', findingText(finding, flown)));
               result.append(why);
               await refresh();
             });

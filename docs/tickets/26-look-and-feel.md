@@ -35,8 +35,10 @@ The shared dark panels and blue accents remain. Muted text has more contrast; ke
 
 **QA (2026-11-12):**
 
-- [ ] Keep the building panel below the wrapped top bar. At **700×600**, open the Assembly Hall. The panel starts at y=84 while the bar reaches y=136; its heading and close control sit under the bar. Ticket 30's Plot card uses the same position and is affected too.
+- [x] Keep the building panel below the wrapped top bar. At **700×600**, open the Assembly Hall. The panel starts at y=84 while the bar reaches y=136; its heading and close control sit under the bar. Ticket 30's Plot card uses the same position and is affected too.
 
 ![The Assembly Hall panel starts under the top bar](../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/ticket-26-building-panel-under-top-bar.png)
 
-- [ ] Dispose the old building models when the Site preview is replaced. With a saved Era 2 Company, open **New Company from a Seed**, then **Back**, three times. Instrumenting the browser's WebGL buffer creation/deletion showed **2,161 → 4,303 → 6,445 → 8,587** outstanding buffers after each return to the same main menu: **2,142 more per round**. `World.showSite` disposes the old land, then calls `buildings.clear()` without disposing those models' geometry/materials. This is a background resource leak; no screenshot demonstrates it. Release those resources before clearing, then repeat the same menu round trips. A crash or frame-rate drop was not measured.
+- [x] Dispose the old building models when the Site preview is replaced. With a saved Era 2 Company, open **New Company from a Seed**, then **Back**, three times. Instrumenting the browser's WebGL buffer creation/deletion showed **2,161 → 4,303 → 6,445 → 8,587** outstanding buffers after each return to the same main menu: **2,142 more per round**. `World.showSite` disposes the old land, then calls `buildings.clear()` without disposing those models' geometry/materials. This is a background resource leak; no screenshot demonstrates it. Release those resources before clearing, then repeat the same menu round trips. A crash or frame-rate drop was not measured.
+
+**Solved (2026-11-13):** side panels open 12 px below the top bar's real height and end above the build menu. Rechecked at 700×600: panel top 148 (bar 136), close button clickable. Replacing the Site preview now releases the old building shapes and instanced scenery buffers: three setup/Back round trips stay at **2,161** outstanding WebGL buffers.

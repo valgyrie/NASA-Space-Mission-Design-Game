@@ -65,6 +65,9 @@ export function showTutorialGuide(root: HTMLElement, onSkip: () => void): Tutori
       const hidden = !step || covered;
       if (box.hidden !== hidden) box.hidden = hidden;
       if (box.classList.contains('low') !== low) box.classList.toggle('low', low);
+      // Low over the Mission Designer: its lists get room at the end, so what the step points at can scroll clear (ticket 13).
+      const room = !hidden && low;
+      if (document.body.classList.contains('tutorial-low') !== room) document.body.classList.toggle('tutorial-low', room);
       if (step !== shown) {
         shown = step;
         for (const e of document.querySelectorAll('.tutorial-target')) e.classList.remove('tutorial-target');
@@ -75,6 +78,11 @@ export function showTutorialGuide(root: HTMLElement, onSkip: () => void): Tutori
       if (label.textContent !== progress) label.textContent = progress;
       const text = t(`tutorial.step.${step}`);
       if (line.textContent !== text) line.textContent = text;
+      // The room left under the Mission Designer's lists: the guide's height, its gap from the bottom and a margin.
+      if (room) {
+        const needed = `${box.offsetHeight + 48}px`;
+        if (document.body.style.getPropertyValue('--tutorial-room') !== needed) document.body.style.setProperty('--tutorial-room', needed);
+      }
     },
   };
 }

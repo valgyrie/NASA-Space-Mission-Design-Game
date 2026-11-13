@@ -14,6 +14,7 @@ import {
   mineMaterial,
   placeAssemblyHall,
   placeHQ,
+  type PlaceCheck,
   storageFree,
 } from './game/siteState';
 import { eraOf } from './game/eras';
@@ -50,6 +51,8 @@ import { LaunchView } from './world/launchView';
 import { SpaceView } from './world/spaceView';
 import type { World } from './world/world';
 import { showOnline } from './ui/online';
+import { containFocus } from './ui/focusTrap';
+import { showSaveWarning } from './ui/saveWarning';
 
 /** A click that moves less than this many pixels is a click, not a camera drag. */
 const CLICK_SLOP = 6;
@@ -64,10 +67,17 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   // A game closed mid-flight left its Anomaly open: settle it now, so the reward is paid.
   settleUnanswered(state);
   world.showSite(site);
+  // A refused save (storage full or turned off) shows a warning; the game keeps going (ticket 02).
+  const saveWarning = showSaveWarning(ui);
+  const save = (): boolean => {
+    const saved = saveGame(storage, game);
+    saveWarning.set(!saved);
+    return saved;
+  };
   // Every Site starts with an Assembly Hall near its middle; a new game (or an older save) gets it now.
   const hall = placeAssemblyHall(site, state);
   // A save from when buildings took one tile: move apart the ones that now overlap.
-  if (fitBuildings(site, state)) saveGame(storage, game);
+  if (fitBuildings(site, state)) save();
   world.addBuilding('assemblyHall', hall.x, hall.z);
   // The HQ stands beside it; its level is the Company's Era.
   const hq = placeHQ(site, state);
@@ -106,7 +116,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       setSpeed(speedBeforeMenu);
     },
     () => {
-      saveGame(storage, game);
+      save();
       // Reload releases this session's frame callbacks, WebGL views and input listeners together.
       window.location.reload();
     },
@@ -118,7 +128,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     note.textContent = t('demo.playing', { era: demoEra });
     ui.append(note);
   }
-  const market = showMarketPanel(ui, state, () => saveGame(storage, game));
+  const market = showMarketPanel(ui, state, () => save());
   // Pause the Site while a dialog is up, and put the speed back afterwards (Real History cards, the History Archive).
   const pauser = () => {
     let before: Speed = 1;
@@ -148,14 +158,14 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   const contracts = showContractsPanel(ui, state, (id) => {
     const card = historyCardFor(id, 'before');
     if (card && unlockCard(state, card)) history.show(card);
-    saveGame(storage, game);
-  }, () => saveGame(storage, game));
-  const panel = showBuildingPanel(ui, site, state, () => saveGame(storage, game));
+    save();
+  }, () => save());
+  const panel = showBuildingPanel(ui, site, state, () => save());
   // The card for a Plot of land next door; buying one redraws the land with it inside the Site.
   const plotPanel = showPlotPanel(ui, site, state, () => {
     audio.effect('build');
     world.redrawLand();
-    saveGame(storage, game);
+    save();
   });
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
@@ -177,11 +187,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       world.hidden = false;
       setSpeed(speedBeforeDesigner);
     },
-    onChange: () => saveGame(storage, game),
+    onChange: () => save(),
     onTestRun() {
       if (state.tutorial.testRun) return;
       state.tutorial.testRun = true;
-      saveGame(storage, game);
+      save();
     },
   });
   // The Mission Report pauses the Site while it is read.
@@ -234,7 +244,8 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     onLaunch: () => launchMission(),
     isFollowing: () => world.isFollowingTruck,
   });
-  const scrub = showScrubCard(ui);
+  // The Scrub card pauses the Site, so its advised Launch day cannot pass while it is read (ticket 16).
+  const scrub = showScrubCard(ui, pauser());
   const launchMission = () => {
     const contract = state.mission?.contract;
     // Weather over the limits Scrubs the Launch: say why and when the next good day is.
@@ -247,7 +258,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     const cardsBefore = state.history.length;
     const result = launch(state, game.site.seed);
     if (!result || !contract) return;
-    saveGame(storage, game);
+    save();
     world.keyboardEnabled = false;
     speedBeforeReport = speed;
     setSpeed(0);
@@ -267,7 +278,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       best: isMandatory(state, kind) ? null : state.anomalyBest[kind]!,
       onAnswer: (score: number, answer: 'played' | 'skipped') => {
         settleAnomaly(state, result.report, score, answer);
-        saveGame(storage, game);
+        save();
       },
     };
     launchShow.play(
@@ -323,10 +334,28 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     onSave() {
       world.setCompanyLogo(game.company.logo);
       hud.updateLogo();
-      saveGame(storage, game);
+      save();
     },
   });
-  const topBar = showTopBar(ui, setSpeed);
+  // A dialog holds the Site paused: the top bar's speed buttons wait until it closes (tickets 04, 19).
+  const covering = () =>
+    launchShow.isOpen ||
+    report.isOpen ||
+    space.isOpen ||
+    menu.isOpen ||
+    online.isOpen ||
+    history.isOpen ||
+    archive.isOpen ||
+    grant.isOpen ||
+    eraCard.isOpen ||
+    logo.isOpen ||
+    scrub.isOpen;
+  const dialogOpen = () => covering() || designer.isOpen;
+  const topBar = showTopBar(ui, (s) => {
+    if (!dialogOpen()) setSpeed(s);
+  });
+  // Tab stays inside the open dialog instead of reaching the Site's controls behind it.
+  containFocus(ui);
   const archive = showArchive(ui, state, game.company, { ...pauser(), onCard: (id) => history.show(id) });
   // Real History cards go above everything else, the History Archive included.
   const history = showHistoryCard(ui, pauser());
@@ -337,7 +366,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   // The tutorial guide sits above the Mission Designer, so it can lead the player through it.
   const tutorial = showTutorialGuide(ui, () => {
     state.tutorial.skipped = true;
-    saveGame(storage, game);
+    save();
   });
 
   let placing: BuildingKind | null = null;
@@ -351,6 +380,11 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       plotPanel.close();
       world.markPlot(null);
     }
+  };
+  // Like checkBuild, but the Shipping dock is taken while a Spacecraft is assembled or shipped (ticket 08).
+  const canBuild = (kind: BuildingKind, x: number, z: number): PlaceCheck => {
+    const check = checkBuild(site, state, kind, x, z);
+    return check.ok && world.onShippingDock(x, z) ? { ok: false, problem: 'dock' } : check;
   };
   // Picking the building you are already placing stops placing.
   const buildMenu = showBuildMenu(ui, state, (kind) => setPlacing(placing === kind ? null : kind));
@@ -366,7 +400,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       return;
     }
     const tile = world.tileAtScreen(e.clientX, e.clientY);
-    world.markTile(tile, !!tile && checkBuild(site, state, placing, tile.x, tile.z).ok);
+    world.markTile(tile, !!tile && canBuild(placing, tile.x, tile.z).ok);
   });
   canvas.addEventListener('pointerdown', (e) => {
     down = e.button === 0 ? { x: e.clientX, y: e.clientY } : null;
@@ -387,22 +421,24 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       return;
     }
     if (!tile) return;
-    const result = build(site, state, placing, tile.x, tile.z);
+    const free = canBuild(placing, tile.x, tile.z);
+    const result = free.ok ? build(site, state, placing, tile.x, tile.z) : free;
     if (result.ok) {
       audio.effect('build');
       const material = placing === 'mine' ? (mineMaterial(site, { x: tile.x, z: tile.z }) ?? undefined) : undefined;
       world.addBuilding(placing, tile.x, tile.z, material);
-      saveGame(storage, game);
+      save();
     } else {
       buildMenu.showProblem(result.problem);
     }
-    world.markTile(tile, checkBuild(site, state, placing, tile.x, tile.z).ok);
+    world.markTile(tile, canBuild(placing, tile.x, tile.z).ok);
   });
   window.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape' && (e.target instanceof HTMLInputElement || e.target instanceof HTMLSelectElement)) return;
     if (e.key === 'Escape') {
       // Esc closes the menu first; otherwise stop placing, close a panel, or open the menu.
       if (launchShow.isOpen) launchShow.skip();
+      else if (scrub.isOpen) scrub.close();
       else if (eraCard.isOpen) eraCard.close();
       else if (grant.isOpen) grant.close();
       else if (history.isOpen) history.close();
@@ -421,20 +457,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       else menu.open();
       return;
     }
-    if (
-      launchShow.isOpen ||
-      menu.isOpen ||
-      online.isOpen ||
-      logo.isOpen ||
-      designer.isOpen ||
-      report.isOpen ||
-      space.isOpen ||
-      history.isOpen ||
-      archive.isOpen ||
-      grant.isOpen ||
-      eraCard.isOpen
-    )
-      return;
+    if (dialogOpen()) return;
     if (e.key === ' ') {
       e.preventDefault();
       setSpeed(speed === 0 ? lastSpeed : 0);
@@ -471,26 +494,25 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     panel.update();
     plotPanel.update();
     buildMenu.update();
-    const covered =
-      launchShow.isOpen || report.isOpen || space.isOpen || menu.isOpen || online.isOpen || history.isOpen || archive.isOpen || grant.isOpen || eraCard.isOpen || logo.isOpen;
+    const covered = covering();
     tutorial.update(state, covered, designer.isOpen);
     // A new Era's card, once the HQ Upgrade is done and nothing else is on screen.
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {
       state.eraSeen = eraOf(state);
-      saveGame(storage, game);
+      save();
       eraCard.show(eraOf(state));
     }
     // The startup grant waits until nothing else is on screen (a failed Mission's report and cards first).
     if (!covered && !designer.isOpen && !eraCard.isOpen) {
       const paid = payGrant(state);
       if (paid > 0) {
-        saveGame(storage, game);
+        save();
         audio.effect('reward');
         grant.show(paid);
       }
     }
   });
-  startAutosave(storage, () => game);
+  startAutosave(storage, () => game, (saved) => saveWarning.set(!saved));
 
   // Dev builds only: a handle for browser tests and the console.
   if (import.meta.env.DEV) Object.assign(window, { leap: { world, site, state, setSpeed, designer, launchShow, space, history, archive, grant, report, eraCard, panel, contracts, plotPanel } });

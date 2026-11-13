@@ -4,25 +4,27 @@ Checked the latest `main`, **4661008**, on `codex/qa-screenshots-tickets-19-31`.
 
 Screenshots now live under [`screenshots/`](../../../screenshots/README.md). The [problem index](../../../screenshots/development-No_NASA_resources-/bugs%20and%20errors/README.md) gives the visible trigger and current captures. The two background failures have measured evidence in their tickets, without a screenshot. Earlier captures are kept separately; none were deleted.
 
-## Open findings
+**Update, 13 November 2026:** 14 of the 15 findings are solved and rechecked in the browser, each with focused tests. Visible ones have a `_solved` screenshot beside the original. Current cloud saves are fixed in the repository but wait for the team to redeploy the backend.
 
-| Ticket | Finding | This pass |
-|---|---|---|
-| [22](../../tickets/22-online-basics.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Current cloud saves rejected | **New.** Live v19 save: HTTP 400 `invalidSave`; the same Company in v18 format: HTTP 200, revision 1. Also seen in the production UI. |
-| [02](../../tickets/02-company-and-saving.md) | Refused local saves silently lose changes | **New, background.** A QuotaExceededError fixture refused a logo save; the game changed, no alert appeared, and reload restored the old logo. |
-| [19](../../tickets/19-company-logo.md) | Logo editor lets keyboard input restart the Site | **New.** Tab reaches background speed buttons; the Game date advances behind the editor. Production check also passes through the real UI. |
-| [26](../../tickets/26-look-and-feel.md) | Site previews retain old building buffers | **New, background.** Three setup/Back round trips: 2,161 → 4,303 → 6,445 → 8,587 outstanding WebGL buffers. |
-| [30](../../tickets/30-buy-neighbouring-plots.md) | Active Shipping route ignores bought land | **New.** Buy the east Plot during assembly: the truck disappears at x≈59.29 inside owned land, while Shipping is still under way. |
-| [30](../../tickets/30-buy-neighbouring-plots.md) | Whole Site view crops bought Plots | **New.** Buy two east Plots, press H: the camera keeps its Home Site centre and distance. The east corners remain outside the screen. |
-| [26](../../tickets/26-look-and-feel.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Wrapped top bar covers side panels | Known from ticket 30; also affects the building panel. Reproduced at 700×600. The Era 2 building panel is clear at 1024×768. |
-| [01](../../tickets/01-project-skeleton.md) | Site camera enters a hillside | Reproduced close to the coast on K7QXM2; terrain is cut open. H recovers it. |
-| [04](../../tickets/04-mines-and-time.md) | Pause-menu keyboard input restarts the Site | Reproduced: Tab to 1× and Enter; the clock runs behind “Paused”. |
-| [05](../../tickets/05-factories-and-market.md) | Factory completion/returned inputs overfill storage | Reproduced **503 / 500 kg** and **540 / 500 kg**. |
-| [05](../../tickets/05-factories-and-market.md) | Paused Factory has an empty waiting reason | Reproduced “Waiting for” with all 40 kg Aluminium available. |
-| [08](../../tickets/08-first-full-mission-loop.md) | Warehouse can occupy the Shipping dock | Reproduced: green marker at (48, 36), then a paid Warehouse through the truck/crane. |
-| [13](../../tickets/13-tutorial-and-history.md) | Tutorial covers the Shipping button | Reproduced at 1440×900. The centre of Shipping hits `tutorial-line`. |
-| [16](../../tickets/16-real-places-and-weather.md) | Scrub card leaves the clock running | Reproduced: the card still recommends 7 March 1962 after the date has moved beyond it. |
-| [17](../../tickets/17-risk-and-failure.md) | Failed-rocket report claims flight achievements | Reproduced Thor-Delta stage 2 failure; report still claims 136 days of Power, all Data home and completion before the deadline. Insurance pays $2.18M correctly. |
+## Findings
+
+| Ticket | Finding | This pass | Status (13 Nov) |
+|---|---|---|---|
+| [22](../../tickets/22-online-basics.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Current cloud saves rejected | **New.** Live v19 save: HTTP 400 `invalidSave`; the same Company in v18 format: HTTP 200, revision 1. Also seen in the production UI. | **Fixed in code; waiting for backend deployment.** Live save not rechecked. |
+| [02](../../tickets/02-company-and-saving.md) | Refused local saves silently lose changes | **New, background.** A QuotaExceededError fixture refused a logo save; the game changed, no alert appeared, and reload restored the old logo. | **Solved.** |
+| [19](../../tickets/19-company-logo.md) | Logo editor lets keyboard input restart the Site | **New.** Tab reaches background speed buttons; the Game date advances behind the editor. Production check also passes through the real UI. | **Solved.** |
+| [26](../../tickets/26-look-and-feel.md) | Site previews retain old building buffers | **New, background.** Three setup/Back round trips: 2,161 → 4,303 → 6,445 → 8,587 outstanding WebGL buffers. | **Solved.** |
+| [30](../../tickets/30-buy-neighbouring-plots.md) | Active Shipping route ignores bought land | **New.** Buy the east Plot during assembly: the truck disappears at x≈59.29 inside owned land, while Shipping is still under way. | **Solved.** |
+| [30](../../tickets/30-buy-neighbouring-plots.md) | Whole Site view crops bought Plots | **New.** Buy two east Plots, press H: the camera keeps its Home Site centre and distance. The east corners remain outside the screen. | **Solved.** |
+| [26](../../tickets/26-look-and-feel.md), [30](../../tickets/30-buy-neighbouring-plots.md) | Wrapped top bar covers side panels | Known from ticket 30; also affects the building panel. Reproduced at 700×600. The Era 2 building panel is clear at 1024×768. | **Solved.** |
+| [01](../../tickets/01-project-skeleton.md) | Site camera enters a hillside | Reproduced close to the coast on K7QXM2; terrain is cut open. H recovers it. | **Solved.** |
+| [04](../../tickets/04-mines-and-time.md) | Pause-menu keyboard input restarts the Site | Reproduced: Tab to 1× and Enter; the clock runs behind “Paused”. | **Solved.** |
+| [05](../../tickets/05-factories-and-market.md) | Factory completion/returned inputs overfill storage | Reproduced **503 / 500 kg** and **540 / 500 kg**. | **Solved.** |
+| [05](../../tickets/05-factories-and-market.md) | Paused Factory has an empty waiting reason | Reproduced “Waiting for” with all 40 kg Aluminium available. | **Solved.** |
+| [08](../../tickets/08-first-full-mission-loop.md) | Warehouse can occupy the Shipping dock | Reproduced: green marker at (48, 36), then a paid Warehouse through the truck/crane. | **Solved.** |
+| [13](../../tickets/13-tutorial-and-history.md) | Tutorial covers the Shipping button | Reproduced at 1440×900. The centre of Shipping hits `tutorial-line`. | **Solved.** |
+| [16](../../tickets/16-real-places-and-weather.md) | Scrub card leaves the clock running | Reproduced: the card still recommends 7 March 1962 after the date has moved beyond it. | **Solved.** |
+| [17](../../tickets/17-risk-and-failure.md) | Failed-rocket report claims flight achievements | Reproduced Thor-Delta stage 2 failure; report still claims 136 days of Power, all Data home and completion before the deadline. Insurance pays $2.18M correctly. | **Solved.** |
 
 ## Tickets 19–31
 

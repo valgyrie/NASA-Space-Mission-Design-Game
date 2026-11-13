@@ -4,7 +4,7 @@ import { logoTexture } from './logoTexture';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
-import { type Land, type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotOf, tileAt } from '../site/site';
+import { type Land, type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotOf, sitePlots, tileAt } from '../site/site';
 import {
   FOV_DEGREES,
   MAX_DISTANCE,
@@ -12,6 +12,9 @@ import {
   MIN_DISTANCE,
   MIN_ELEVATION,
   START_AZIMUTH,
+  GROUND_CLEARANCE,
+  GROUND_REACH,
+  wholeSiteView,
   START_DISTANCE,
   START_ELEVATION,
   HOME_SECONDS,
@@ -29,7 +32,7 @@ import { FOOTPRINT, covers, footprint, foundationLevel } from '../game/siteState
 import { buildCrane, buildLevelSign } from './buildingParts';
 import { buildMine } from './mineMesh';
 import type { Design } from '../game/spacecraft';
-import { type ShippingRoute, shippingRoute } from './shippingRoute';
+import { type ShippingRoute, extendRoute, shippingRoute } from './shippingRoute';
 import { ShippingView } from './shippingView';
 
 /** How close the camera comes when it follows the Shipping truck. */
@@ -146,7 +149,7 @@ export class World {
   private readonly heldKeys = new Set<string>();
   private home: { from: CameraPose; to: CameraPose; t: number } | null = null;
   private readonly shipping = new ShippingView((x, z) => this.groundY(x, z));
-  private route: { id: string; route: ShippingRoute } | null = null;
+  private route: { id: string; route: ShippingRoute; inUse: boolean } | null = null;
   private following = false;
   /** Turn off while a menu or dialog is open, so keys don't move the camera behind it. */
   keyboardEnabled = true;
@@ -220,17 +223,36 @@ export class World {
     });
   }
 
+  /** The whole-Site view from this corner: every owned Plot on screen (ticket 30). */
+  private wholeSite(azimuth: number): { x: number; z: number; distance: number } {
+    if (!this.site) return { x: 0, z: 0, distance: START_DISTANCE };
+    const o = -SITE_SIZE / 2;
+    const corners = sitePlots(this.site).flatMap(({ px, pz }) =>
+      [0, 1].flatMap((i) => [0, 1].map((k) => ({ x: (px + i) * SITE_SIZE + o, z: (pz + k) * SITE_SIZE + o }))),
+    );
+    return wholeSiteView(corners, azimuth, this.camera.aspect);
+  }
+
+  /** Let the camera zoom out far enough to see all the owned land, from any corner. */
+  private fitZoomOut(): void {
+    const widest = Math.max(...[0, 1, 2, 3].map((i) => this.wholeSite(START_AZIMUTH + (i * Math.PI) / 2).distance));
+    this.controls.maxDistance = Math.max(MAX_DISTANCE, widest * (MAX_DISTANCE / START_DISTANCE));
+  }
+
   /** Glide back to the isometric view of the whole Site, keeping the nearest corner you were looking from. */
   goHome(): void {
     this.following = false;
     const from = this.pose();
+    const azimuth = nearestIsoAzimuth(from.azimuth);
+    const view = this.wholeSite(azimuth);
+    this.fitZoomOut();
     this.home = {
       from,
       to: {
-        target: new THREE.Vector3(0, this.groundY(0, 0), 0),
-        azimuth: nearestIsoAzimuth(from.azimuth),
+        target: new THREE.Vector3(view.x, this.groundY(view.x, view.z), view.z),
+        azimuth,
         polar: polarFromElevation(START_ELEVATION),
-        distance: START_DISTANCE,
+        distance: view.distance,
       },
       t: 0,
     };
@@ -287,7 +309,7 @@ export class World {
       Math.max(this.controls.minPolarAngle, p.polar - step('tiltUp', 'tiltDown') * KEY_SPEED.tilt * seconds),
     );
     p.distance = Math.min(
-      MAX_DISTANCE,
+      this.controls.maxDistance,
       Math.max(MIN_DISTANCE, p.distance * (1 - step('zoomIn', 'zoomOut') * KEY_SPEED.zoom * seconds)),
     );
     this.setPose(p);
@@ -347,11 +369,16 @@ export class World {
   showSite(site: Site): void {
     this.site = site;
     this.land = landOf(site);
+    this.route = null;
     this.redrawLand();
+    // Release the old building models' shapes; their materials are shared with the rest of the world (ticket 26).
+    this.buildings.traverse((o) => {
+      if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments || o instanceof THREE.Points) o.geometry.dispose();
+      if (o instanceof THREE.InstancedMesh) o.dispose();
+    });
     this.buildings.clear();
     this.buildingAt.clear();
     this.shipping.reset();
-    this.route = null;
     this.following = false;
   }
 
@@ -364,6 +391,9 @@ export class World {
     }
     this.siteGroup = buildSiteMesh(this.site, COLOURS.horizon);
     this.scene.add(this.siteGroup);
+    this.fitZoomOut();
+    // A Mission on its way keeps its dock; its road now runs on past any land just bought (ticket 30).
+    if (this.route) this.route.route = extendRoute(this.site, this.route.route);
     for (const model of this.buildingAt.values()) {
       const { x, z } = model.userData.tile as { x: number; z: number };
       for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
@@ -414,10 +444,19 @@ export class World {
       // The route is fixed when the Mission ships, so a building placed later doesn't move the dock.
       const occupied = (x: number, z: number) =>
         [...this.buildingAt.values()].some((model) => covers(model.userData.tile as { x: number; z: number }, x, z));
-      this.route = { id: state.id, route: shippingRoute(this.site, state.start, occupied) };
+      this.route = { id: state.id, route: shippingRoute(this.site, state.start, occupied), inUse: true };
     }
+    // The dock is in use until the Spacecraft has left for the Launch Site.
+    this.route.inUse = state.stage !== 'ready';
     this.shipping.show({ route: this.route.route, design: state.design, stage: state.stage, fraction: state.fraction });
     this.shipping.animate(gameSeconds, realSeconds);
+  }
+
+  /** Would a building centred on tile (x, z) stand on the Shipping dock while it is in use (ticket 08)? */
+  onShippingDock(x: number, z: number): boolean {
+    const route = this.route;
+    if (!route?.inUse) return false;
+    return footprint(x, z).some((t) => covers(route.route.dock, t.x, t.z));
   }
 
   /** Let the camera ride along with the Shipping truck until the player drags the map or it drives out of sight. */
@@ -437,6 +476,17 @@ export class World {
     const tz = Math.floor(z + this.site.size / 2);
     const level = tileAt(this.site, tx, tz)?.level ?? this.land.groundAt(tx, tz).level;
     return Math.max(0, level) * STEP;
+  }
+
+  /** Keep the camera itself out of the hills: lift it above the highest land under and around it (ticket 01). */
+  private keepAboveGround(): void {
+    const { x, z } = this.camera.position;
+    let floor = this.groundY(x, z);
+    for (const [dx, dz] of [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]] as const) {
+      floor = Math.max(floor, this.groundY(x + dx * GROUND_REACH, z + dz * GROUND_REACH));
+    }
+    floor += GROUND_CLEARANCE;
+    if (this.camera.position.y < floor) this.camera.position.y = floor;
   }
 
   /** Let the point the camera orbits glide up and down with the ground, so hills and plateaus stay in view. */
@@ -607,6 +657,7 @@ export class World {
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
     this.camera.updateProjectionMatrix();
+    this.fitZoomOut();
   }
 
   /** Keep the sun's shadows over the Plot the camera looks at, so buildings on every Plot cast them. */
@@ -629,6 +680,7 @@ export class World {
       this.moveCamera(seconds);
       this.followGround(seconds);
       this.controls.update();
+      this.keepAboveGround();
       this.followSun();
       const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
       this.fog.near = near;
@@ -646,5 +698,7 @@ function disposeAll(group: THREE.Object3D): void {
       o.geometry.dispose();
       (o.material as THREE.Material).dispose();
     }
+    // Instanced scenery keeps its positions (and colours) in buffers of its own.
+    if (o instanceof THREE.InstancedMesh) o.dispose();
   });
 }
