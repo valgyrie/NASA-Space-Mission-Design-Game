@@ -407,11 +407,14 @@ export function saveGame(storage: SaveStorage, data: SaveData): boolean {
 }
 
 /**
- * Save now, then every AUTOSAVE_MS and whenever the page is hidden or closed.
- * Returns a function that stops autosaving.
+ * Save now, then every AUTOSAVE_MS and whenever the page is hidden or closed. `onResult` hears whether each
+ * save worked. Returns a function that stops autosaving.
  */
-export function startAutosave(storage: SaveStorage, current: () => SaveData): () => void {
-  const save = () => saveGame(storage, current());
+export function startAutosave(storage: SaveStorage, current: () => SaveData, onResult?: (saved: boolean) => void): () => void {
+  const save = () => {
+    const saved = saveGame(storage, current());
+    onResult?.(saved);
+  };
   const onHidden = () => {
     if (document.visibilityState === 'hidden') save();
   };

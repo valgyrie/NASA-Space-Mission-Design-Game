@@ -1,5 +1,7 @@
 /** Pure camera maths. No Three.js objects here, so it is easy to test. */
 
+import { SITE_SIZE } from '../site/site';
+
 /** Classic isometric tilt: the camera looks down at atan(1/√2) ≈ 35.26° above the ground. */
 export const ISO_ELEVATION = Math.atan(1 / Math.SQRT2);
 
@@ -77,6 +79,44 @@ export function clampToBox(
   box: { minX: number; maxX: number; minZ: number; maxZ: number },
 ): { x: number; z: number } {
   return { x: Math.min(box.maxX, Math.max(box.minX, x)), z: Math.min(box.maxZ, Math.max(box.minZ, z)) };
+}
+
+/** How far the camera stays above the land under it and close around it, in world units (ticket 01). */
+export const GROUND_CLEARANCE = 1;
+/** How far around the camera the land is checked, so the near edge of the view can't cut into a slope. */
+export const GROUND_REACH = 1.5;
+
+/**
+ * The whole-Site view of land with these corners (world x/z, every owned Plot's): the point to look at, and the
+ * distance that fits it all on a screen of this `aspect` at the isometric tilt, seen from `azimuth`. The Home Site
+ * alone gives START_DISTANCE; more land, further back (ticket 30).
+ */
+export function wholeSiteView(corners: { x: number; z: number }[], azimuth: number, aspect: number): { x: number; z: number; distance: number } {
+  const cos = Math.cos(azimuth);
+  const sin = Math.sin(azimuth);
+  // Across the screen, and along the ground away from the camera.
+  const extent = (points: { x: number; z: number }[]) => {
+    const across = points.map((p) => p.x * cos - p.z * sin);
+    const along = points.map((p) => p.x * sin + p.z * cos);
+    const a = [Math.min(...across), Math.max(...across)] as const;
+    const d = [Math.min(...along), Math.max(...along)] as const;
+    // Height on screen needed to show it, for this screen shape.
+    const need = Math.max((d[1] - d[0]) * Math.sin(ISO_ELEVATION), (a[1] - a[0]) / aspect);
+    return { a: (a[0] + a[1]) / 2, d: (d[0] + d[1]) / 2, need };
+  };
+  const half = SITE_SIZE / 2;
+  const home = extent([
+    { x: -half, z: -half },
+    { x: half, z: -half },
+    { x: -half, z: half },
+    { x: half, z: half },
+  ]);
+  const land = extent(corners);
+  return {
+    x: land.a * cos + land.d * sin,
+    z: -land.a * sin + land.d * cos,
+    distance: START_DISTANCE * Math.max(1, land.need / home.need),
+  };
 }
 
 /** Keep the look-at point over the Site or near it, so the player can't wander off. */

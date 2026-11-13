@@ -208,6 +208,32 @@ describe('Factories and the Warehouse', () => {
     expect(factory.making).toBe('largeBattery');
   });
 
+  it("keeps room for a Factory's inputs, so its Part or returned inputs never overfill storage (ticket 05)", () => {
+    const fill = (state: ReturnType<typeof newSiteState>) => {
+      state.stock.copper += Math.max(0, BASE_STORAGE_KG - storageUsed(state));
+    };
+    // A Small Bus finishing into full storage.
+    const finished = newSiteState();
+    build(site, finished, 'metalWorks', ...bare);
+    finished.stock.aluminium = RECIPES.smallBus.inputs.aluminium!;
+    advanceDays(site, finished, 1);
+    expect(finished.factories[0]!.progress).not.toBeNull();
+    expect(storageUsed(finished)).toBeCloseTo(RECIPES.smallBus.inputs.aluminium!);
+    fill(finished);
+    advanceDays(site, finished, RECIPES.smallBus.days);
+    expect(finished.parts.smallBus).toBe(1);
+    expect(storageUsed(finished)).toBeLessThanOrEqual(BASE_STORAGE_KG);
+    // Switching Part gives the inputs back into full storage.
+    const switched = newSiteState();
+    build(site, switched, 'metalWorks', ...bare);
+    switched.stock.aluminium = RECIPES.smallBus.inputs.aluminium!;
+    advanceDays(site, switched, 1);
+    fill(switched);
+    setMaking(switched, switched.factories[0]!, 'mediumBus');
+    expect(switched.stock.aluminium).toBe(RECIPES.smallBus.inputs.aluminium!);
+    expect(storageUsed(switched)).toBeLessThanOrEqual(BASE_STORAGE_KG + 1e-9);
+  });
+
   it('stop Mines when storage is full; a Warehouse adds room', () => {
     const state = newSiteState();
     build(site, state, 'mine', ...copper);

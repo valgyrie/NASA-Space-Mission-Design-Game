@@ -60,7 +60,7 @@ export function at(values: readonly number[], day: number): number {
 /** Every predicted problem in plain words: what the design does as labelled, then thin margins found by the runs. */
 export function predictedProblems(run: TestRun): string[] {
   const findings = run.asLabelled.findings;
-  const lines = findings.filter((f) => !f.ok).map(findingText);
+  const lines = findings.filter((f) => !f.ok).map((f) => findingText(f));
   for (const kind of ['power', 'comms'] as const) {
     const failsAnyway = findings.some((f) => f.kind === kind && !f.ok);
     const count = run.missed[kind];

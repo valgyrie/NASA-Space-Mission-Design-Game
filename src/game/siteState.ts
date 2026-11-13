@@ -195,7 +195,8 @@ export function partsMadeBy(kind: FactoryKind): Part[] {
 
 // ---- Building ----
 
-export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money' | 'era';
+/** `dock`: the Shipping truck's loading dock is in use there (checked by the Site view, which knows the dock). */
+export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money' | 'era' | 'dock';
 
 export type PlaceCheck = { ok: true } | { ok: false; problem: PlaceProblem };
 
@@ -439,12 +440,21 @@ export function storageCapacity(state: SiteState): number {
   return BASE_STORAGE_KG + state.warehouses.reduce((kg, w) => kg + warehouseStorage(w), 0);
 }
 
-/** Kilograms in storage now: Raw Materials plus the mass of every Part. */
+/**
+ * Kilograms in storage now: Raw Materials plus the mass of every Part. A Factory's Raw Materials for the Part it
+ * is making still take room, so the finished Part, or the inputs given back, always fit (ticket 05).
+ */
 export function storageUsed(state: SiteState): number {
   let kg = 0;
   for (const m of RAW_MATERIALS) kg += state.stock[m];
+  for (const f of state.factories) if (f.progress !== null) kg += inputsMass(f.making);
   for (const p of PARTS) partsByMark(state, p).forEach((n, i) => (kg += n * partMass(p, i + 1)));
   return kg;
+}
+
+/** Kilograms of Raw Materials a Part is made from. */
+function inputsMass(part: Part): number {
+  return Object.values(RECIPES[part].inputs).reduce((kg, n) => kg + (n ?? 0), 0);
 }
 
 export function storageFree(state: SiteState): number {
@@ -606,7 +616,8 @@ export function advanceDays(site: Site, state: SiteState, days: number): void {
   if (days <= 0) return;
   state.day += days;
   finishUpgrades(state);
-  // Mines stop when storage is full. A finished Part always weighs less than its inputs, so Factories never overfill it.
+  // Mines stop when storage is full. A Factory's inputs keep their room until its Part is done, and a finished Part
+  // weighs less than its inputs, so Factories never overfill it.
   const out = outputPerDay(site, state);
   const total = RAW_MATERIALS.reduce((sum, m) => sum + out[m], 0) * days;
   const share = total > 0 ? Math.min(1, storageFree(state) / total) : 0;

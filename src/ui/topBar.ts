@@ -73,6 +73,10 @@ export function showTopBar(root: HTMLElement, onSpeed: (speed: Speed) => void): 
   }
   bar.append(speeds);
   root.append(bar);
+  // Side panels open below the bar, which wraps onto more rows on narrow screens (tickets 26, 30).
+  const measure = () => root.style.setProperty('--top-bar-bottom', `${Math.ceil(bar.getBoundingClientRect().bottom)}px`);
+  new ResizeObserver(measure).observe(bar);
+  window.addEventListener('resize', measure);
 
   return {
     update(site, state, speed) {

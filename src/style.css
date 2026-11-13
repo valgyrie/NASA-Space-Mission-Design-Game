@@ -451,8 +451,10 @@ button.small {
 }
 
 .building-panel {
-  top: 84px;
+  /* Below the top bar, which wraps onto more rows on narrow screens (tickets 26, 30). */
+  top: max(84px, calc(var(--top-bar-bottom, 0px) + 12px));
   right: 12px;
+  max-height: calc(min(100vh - 136px, var(--build-menu-top, 100vh) - 12px) - max(84px, calc(var(--top-bar-bottom, 0px) + 12px)));
 }
 
 .side-head {
@@ -1464,6 +1466,12 @@ button.launch-button {
   color: var(--warn);
 }
 
+.report-findings .report-not-flown {
+  margin-top: 4px;
+  color: var(--muted);
+  font-style: italic;
+}
+
 .report-reward {
   margin: 16px 0 0;
   font-weight: 600;
@@ -2233,6 +2241,14 @@ button.space-item[aria-pressed='true'] {
   display: none;
 }
 
+/* Room at the end of the Mission Designer's lists, so the low guide never covers the button it points at. */
+.tutorial-low .planner,
+.tutorial-low .testrun,
+.tutorial-low .designer-slots,
+.tutorial-low .designer-resources {
+  padding-bottom: var(--tutorial-room, 160px);
+}
+
 .tutorial-head {
   display: flex;
   align-items: center;
@@ -2950,3 +2966,23 @@ button.upgrade {
 .era-art figcaption { padding: 6px 10px; font-size: 12px; color: var(--muted); }
 .era-card h2 { margin: 4px 0 0; }
 .era-card > p { margin: 0 0 8px; }
+
+/* ---- Save warning (ticket 02) ---- */
+.save-warning {
+  position: absolute;
+  top: calc(var(--top-bar-bottom, 72px) + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  width: min(460px, calc(100vw - 24px));
+  box-sizing: border-box;
+  margin: 0;
+  padding: 10px 14px;
+  border-color: var(--warn);
+  color: var(--warn);
+  font-weight: 600;
+}
+
+.save-warning[hidden] {
+  display: none;
+}

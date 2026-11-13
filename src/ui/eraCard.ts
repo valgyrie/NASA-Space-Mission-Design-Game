@@ -25,6 +25,7 @@ export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(
   const panel = document.createElement('section');
   panel.className = 'panel dialog era-card';
   panel.setAttribute('role', 'alertdialog');
+  panel.setAttribute('aria-modal', 'true');
   panel.setAttribute('aria-labelledby', 'era-title');
   const figure = document.createElement('figure');
   figure.className = 'era-art';

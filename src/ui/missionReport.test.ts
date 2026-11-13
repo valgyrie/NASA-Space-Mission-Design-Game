@@ -99,3 +99,23 @@ describe('a Spacecraft with no Main Engine', () => {
     );
   });
 });
+
+describe('a rocket that failed', () => {
+  it('says what the design would have done, not what the flight did (ticket 17)', async () => {
+    const { findingText, reachedOrbit } = await import('./missionReport');
+    const design: Design = emptyDesign();
+    for (const id of ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'radiationDetector'] as OptionId[]) choose(design, id);
+    const plan = { contract: 'explorer1' as const, design, vehicle: 'juno1' as const, tech: [] };
+    const worked = fly(plan, 40, 400);
+    const failed = fly(plan, 40, 400, undefined, 2);
+    expect(reachedOrbit(worked.findings)).toBe(true);
+    expect(reachedOrbit(failed.findings)).toBe(false);
+    const lines = failed.findings.filter((f) => f.kind !== 'orbit').map((f) => findingText(f, false));
+    for (const line of lines) expect(line).not.toMatch(/^(Power lasted|All the Data reached|Finished on|Carried)/);
+    expect(lines.find((l) => l.startsWith('Power'))).toMatch(/^Power would have/);
+    expect(lines.find((l) => l.includes('Data'))).toMatch(/would have/);
+    expect(lines.find((l) => l.includes('deadline'))).toMatch(/^Would have finished on/);
+    // A flight that reached orbit keeps its past-tense lines.
+    expect(findingText(worked.findings.find((f) => f.kind === 'time')!)).toMatch(/^Finished on/);
+  });
+});

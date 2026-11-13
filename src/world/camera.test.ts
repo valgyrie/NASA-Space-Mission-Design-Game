@@ -13,6 +13,7 @@ import {
   distanceToShow,
   hazeFor,
   polarFromElevation,
+  wholeSiteView,
 } from './camera';
 
 describe('camera', () => {
@@ -64,5 +65,35 @@ describe('camera', () => {
   it('stops panning at the edge of the Site', () => {
     expect(clampToGround(50, -50, 32)).toEqual({ x: 32, z: -32 });
     expect(clampToGround(3, -4, 32)).toEqual({ x: 3, z: -4 });
+  });
+});
+
+describe('whole-Site view (ticket 30)', () => {
+  const corners = (plots: [number, number][]) =>
+    plots.flatMap(([px, pz]) => [0, 1].flatMap((i) => [0, 1].map((k) => ({ x: (px + i) * 64 - 32, z: (pz + k) * 64 - 32 }))));
+
+  it('is the usual view for the Home Site alone', () => {
+    for (const aspect of [1.6, 1.17, 0.6]) {
+      const v = wholeSiteView(corners([[0, 0]]), START_AZIMUTH, aspect);
+      expect(v.x).toBeCloseTo(0);
+      expect(v.z).toBeCloseTo(0);
+      expect(v.distance).toBeCloseTo(START_DISTANCE);
+    }
+  });
+
+  it('centres on bought land and backs off until every corner is on screen', () => {
+    const land = corners([[0, 0], [1, 0], [2, 0]]);
+    const aspect = 1440 / 900;
+    const v = wholeSiteView(land, START_AZIMUTH, aspect);
+    expect(v.x).toBeCloseTo(64);
+    expect(v.z).toBeCloseTo(0);
+    expect(v.distance).toBeGreaterThan(START_DISTANCE);
+    // Every corner falls inside the screen at that distance (seen straight along the view).
+    const height = 2 * v.distance * Math.tan((FOV_DEGREES * Math.PI) / 360);
+    const width = height * aspect;
+    for (const p of land) {
+      const across = (p.x - v.x) * Math.cos(START_AZIMUTH) - (p.z - v.z) * Math.sin(START_AZIMUTH);
+      expect(Math.abs(across)).toBeLessThan(width / 2);
+    }
   });
 });
