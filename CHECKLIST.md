@@ -89,7 +89,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Learn more → links on real things
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
-- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). Guide, prompts and the card's image slot done; images still to generate
+- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). Guide, prompts, the card's image slot and the burned-in watermark done; images still to generate
 
 ### Judges and submission
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)

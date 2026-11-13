@@ -3041,7 +3041,8 @@ button.upgrade {
 .era-card { width: min(560px, calc(100vw - 32px)); }
 .era-art { flex-shrink: 0; margin: -4px 0 4px; border-radius: 8px; overflow: hidden; background: #05080e; }
 .era-art[hidden] { display: none; }
-.era-art img { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 38vh; object-fit: cover; }
+/* Crop from the top on short screens: the bottom-right corner holds the burned-in "AI-generated" watermark. */
+.era-art img { display: block; width: 100%; aspect-ratio: 16 / 9; max-height: 38vh; object-fit: cover; object-position: 50% 100%; }
 .era-art figcaption { padding: 6px 10px; font-size: 12px; color: var(--muted); }
 .era-card h2 { margin: 4px 0 0; }
 .era-card > p { margin: 0 0 8px; }

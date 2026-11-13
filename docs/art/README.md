@@ -4,7 +4,9 @@ One illustration per Era, shown at the top of the Era card when the Company ente
 
 The team generates the images (ChatGPT or a similar image tool) from the prompts below. An agent then compresses them into the game.
 
-**Check first:** the official Space Apps Resources arrive on Nov 13 (ticket 27). If they include a real NASA image that fits an Era better, use it instead and credit it like the Real History photos.
+**Checked 13 Nov:** the official Space Apps Resources (ticket 27) hold no image that fits an Era, so the prompts below stay.
+
+**Space Apps rules (13 Nov):** generated images need a **visible watermark** in the image itself; `scripts/prepare-era-art.py` burns a small "AI-generated" mark into the bottom-right corner. Prompts carry no NASA branding: no logos, flags, insignia, mission patches, or mission names or numbers on hardware.
 
 ## Style guide
 
@@ -31,7 +33,8 @@ The team generates the images (ChatGPT or a similar image tool) from the prompts
 
 **Rules:**
 - No text, letters, numbers or flags anywhere in the image.
-- No logos or insignia of NASA, SpaceX or any real organisation. Rockets and buildings stay plain.
+- No logos, insignia or mission patches of NASA, SpaceX or any real organisation. No mission names or numbers painted on hardware. Rockets and buildings stay plain.
+- Keep the bottom-right corner free of important detail: the watermark goes there.
 - No real, recognisable people. Small faceless figures are fine.
 - Hardware should look like its Era, but it is an illustration: it does not need to be exact.
 - 16:9 landscape. Keep the main subject near the centre: the game crops edges on narrow screens.
@@ -40,11 +43,15 @@ The team generates the images (ChatGPT or a similar image tool) from the prompts
 
 ## Prompts
 
-Every prompt starts with the same style block so the three images match. Paste the whole block, then the Era part.
+Every prompt starts with the same style block so the three images match. Paste the whole block, then the Era part (the quoted text only).
+
+The **What happened** notes are background for the team. Never paste them into the generator: they name real missions and agencies.
+
+**Audit (13 Nov):** the three prompts and the style block name no agency, mission, rocket, place name on hardware, logo, flag or patch.
 
 **Style block (use for every Era):**
 
-> Stylised low-poly 3D illustration, flat-shaded facets, cozy and colourful like a miniature diorama in a video game. Soft lighting, gentle shadows, simple clean shapes. Colour palette: sky blue #5b97cf fading to pale #d3e4ee, sea blue #4aa3d8, grass green #8cc66d, sand #e3cf94, white #f7f8fa, warm red roofs #d9583a, warm lamp light #ffe08a. Clearly an illustration, not a photo, not photorealistic. No text, no letters, no numbers, no logos, no flags, no recognisable people. 16:9 landscape, main subject near the centre.
+> Stylised low-poly 3D illustration, flat-shaded facets, cozy and colourful like a miniature diorama in a video game. Soft lighting, gentle shadows, simple clean shapes. Colour palette: sky blue #5b97cf fading to pale #d3e4ee, sea blue #4aa3d8, grass green #8cc66d, sand #e3cf94, white #f7f8fa, warm red roofs #d9583a, warm lamp light #ffe08a. Clearly an illustration, not a photo, not photorealistic. No text, no letters, no numbers, no logos, no insignia, no flags, no recognisable people. Plain unmarked rockets and buildings. 16:9 landscape, main subject near the centre, bottom-right corner kept simple.
 
 ### Era 1: 1958–1960 (`era-1`)
 
@@ -67,7 +74,7 @@ What it is in LEAP: the Company carries on in 2026 with generated Contracts and 
 ## Adding the images
 
 1. Save the team's picks anywhere (not in the repo), one per Era.
-2. Run `python3 scripts/prepare-era-art.py 1 era1.png 2 era2.png 5 freeplay.png` from the repo root (needs Pillow). It crops to 16:9, resizes to 1280 × 720 and writes `public/eras/era-1.webp`, `era-2.webp` and `era-5.webp`.
+2. Run `python3 scripts/prepare-era-art.py 1 era1.png 2 era2.png 5 freeplay.png` from the repo root (needs Pillow). It crops to 16:9, resizes to 1280 × 720, burns in the "AI-generated" watermark and writes `public/eras/era-1.webp`, `era-2.webp` and `era-5.webp`.
 3. Fill in the table below: tool, date, who chose it, the final prompt if it changed.
 4. Start a new Campaign (Era 1 card), and use a Demo Company's HQ Upgrade or the Free Play move to check the other two.
 
