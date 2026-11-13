@@ -393,6 +393,19 @@ describe('local save', () => {
     expect(loadGame(storage)?.state.design).toEqual({ ...emptyDesign(), bus: 'smallBus', payload: 'radiationDetector' });
   });
 
+  it('keeps the designs tried in a Test Run (maturity strip), still as version 19, and loads saves without them', () => {
+    const storage = memoryStorage();
+    const tested = structuredClone(game);
+    tested.state.testedDesigns = { contract: 'explorer1', designs: ['a', 'b'] };
+    saveGame(storage, tested);
+    expect(SAVE_VERSION).toBe(19);
+    expect(loadGame(storage)?.state.testedDesigns).toEqual({ contract: 'explorer1', designs: ['a', 'b'] });
+    saveGame(storage, game);
+    expect(loadGame(storage)?.state.testedDesigns).toBeUndefined();
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...game, state: { ...state, testedDesigns: { contract: 'nope', designs: [] } } }));
+    expect(loadGame(storage)).toBeNull();
+  });
+
   it('ignores a save with an option in the wrong slot', () => {
     const storage = memoryStorage();
     const odd = { ...game, state: { ...state, design: { ...emptyDesign(), bus: 'largeBattery' } } };

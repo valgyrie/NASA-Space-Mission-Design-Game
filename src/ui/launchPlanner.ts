@@ -23,6 +23,7 @@ import { t } from '../strings';
 import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 import { learnMore } from './learnMore';
 import { SITE_SOURCES, SOURCES, VEHICLE_SOURCES } from '../game/sources';
+import { makeDesignReview } from './designReview';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -89,13 +90,13 @@ function closedText(status: VehicleStatus): string {
  * The Launch planner, shown inside the Mission Designer, under NASA's four Segments: who gets the Data and when
  * (User), the Spacecraft (Space), the dishes that talk to it (Ground), and the Launch Vehicle, Launch Site,
  * costs, Launch Insurance and weather (Launch). Then a free Test Run, then ship.
- * `designWarnings` gives the Mission Designer's warnings, so a weak design ships knowingly.
+ * The Design Review sits above the button, so a weak design ships knowingly.
  * The Seed prices the insurance from the same Test Run the player sees.
  */
 export function makeLaunchPlanner(
   state: SiteState,
   seed: string,
-  hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void; designWarnings(): string[] },
+  hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void },
 ): LaunchPlanner {
   const root = el('div', 'planner');
   root.hidden = true;
@@ -212,11 +213,9 @@ export function makeLaunchPlanner(
   const groundHint = el('p', 'planner-hint');
   ground.append(groundRows, groundHint);
 
-  // Warnings, blockers and the button
+  // The Design Review, blockers and the button
   const footer = el('section', 'planner-footer');
-  const warnHead = el('h3', '', t('planner.warnings'));
-  const warnings = el('ul', 'designer-warnings');
-  const warnNote = el('p', 'planner-hint', t('planner.warningsNote'));
+  const review = makeDesignReview();
   const problems = el('ul', 'planner-problems');
   problems.setAttribute('aria-live', 'polite');
   const testRun = button('planner-testrun', t('planner.testRun'));
@@ -225,7 +224,7 @@ export function makeLaunchPlanner(
   const ship = button('planner-ship', '');
   ship.dataset.tutorial = 'planner-ship';
   testRun.dataset.tutorial = 'planner-testrun';
-  footer.append(warnHead, warnings, warnNote, problems, testRun, ship);
+  footer.append(review.root, problems, testRun, ship);
 
   const segment = (id: MissionSegment, ...cards: HTMLElement[]) => {
     const section = el('section', `planner-segment planner-segment-${id}`);
@@ -358,9 +357,7 @@ export function makeLaunchPlanner(
     weatherLine.textContent = weatherText(site, plan.readyDay);
     adviceLine.textContent = adviceText(adviseLaunch(site, plan.readyDay));
 
-    const warn = hooks.designWarnings();
-    warnings.replaceChildren(...warn.map((w) => el('li', '', w)));
-    warnHead.hidden = warnNote.hidden = warn.length === 0;
+    review.render(state);
     problems.replaceChildren(...plan.problems.map((p) => el('li', '', planProblemText(p, plan))));
     ship.textContent = t('planner.ship', { price: formatMoney(total) });
     ship.disabled = !plan.ok;

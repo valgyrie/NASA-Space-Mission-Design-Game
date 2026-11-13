@@ -28,6 +28,8 @@ import {
 import type { TechId } from '../game/research';
 import type { Difficulty } from '../game/modes';
 import { makeLaunchPlanner } from './launchPlanner';
+import { makeMaturityStrip } from './designReview';
+import { recordTestRun } from '../game/maturity';
 import { makeTestRunScreen } from './testRun';
 import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
@@ -306,6 +308,10 @@ export function showMissionDesigner(
   const body = el('div', 'designer-body');
   body.append(slotsBox, viewBox, resBox);
 
+  // JPL's Concept Maturity Levels for the Contract on the table; the Weekly Challenge has its own score instead.
+  const strip = makeMaturityStrip();
+  strip.root.hidden = !!hooks.challenge;
+
   // The Launch planner takes the designer's place once the design is complete; a Test Run takes the planner's.
   const planner = makeLaunchPlanner(state, seed, {
     onBack: () => showView('design'),
@@ -314,20 +320,18 @@ export function showMissionDesigner(
       api.close();
     },
     onTestRun: (vehicle) => {
+      recordTestRun(state, state.design);
       showView('testRun');
       hooks.onTestRun?.();
       testRun.show(testRunFor(state, seed, state.design, vehicle), missionGoal(state).contract.id);
     },
-    onVehicle: () => hooks.onChange(),
-    designWarnings: () => {
-      const check = checkDesign(state, state.design);
-      // Mass blocks shipping (the planner says why) and missing Parts are bought in the designer.
-      const blocking = new Set(['tooHeavy', 'busFull', 'money']);
-      return check.problems.filter((p) => !blocking.has(p.kind)).map((p) => problemText(p, check));
+    onVehicle: () => {
+      hooks.onChange();
+      strip.render(state);
     },
   });
   const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
-  panel.append(head, body, planner.root, testRun.root);
+  panel.append(head, strip.root, body, planner.root, testRun.root);
 
   const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
   const showView = (which: keyof typeof headings) => {
@@ -336,6 +340,7 @@ export function showMissionDesigner(
     testRun.root.hidden = which !== 'testRun';
     heading.textContent = t(headings[which]);
     if (which !== 'testRun') testRun.stop();
+    if (!hooks.challenge) strip.render(state);
     if (which === 'design') {
       view.start();
       render();
@@ -358,6 +363,7 @@ export function showMissionDesigner(
 
   const render = () => {
     const check = checkDesign(state, state.design);
+    if (!hooks.challenge) strip.render(state);
     const contract = contractText(check.goal.contract.id);
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });

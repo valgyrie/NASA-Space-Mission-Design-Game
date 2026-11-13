@@ -160,6 +160,11 @@ const isTutorial = (v: unknown): boolean => {
   return !!t && typeof t.skipped === 'boolean' && typeof t.testRun === 'boolean';
 };
 
+const isTestedDesigns = (v: unknown): boolean => {
+  const t = v as Partial<NonNullable<SiteState['testedDesigns']>> | null;
+  return !!t && isContractId(t.contract) && Array.isArray(t.designs) && t.designs.every((d) => typeof d === 'string' && d.length < 200);
+};
+
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
   return (
@@ -208,7 +213,8 @@ function isSiteState(value: unknown): value is SiteState {
     Array.isArray(v.plots) &&
     v.plots.every((p) => Array.isArray(p) && p.length === 2 && p.every(Number.isInteger) && !(p[0] === 0 && p[1] === 0)) &&
     isNumber(v.freePlots) &&
-    v.freePlots >= 0
+    v.freePlots >= 0 &&
+    (v.testedDesigns === undefined || isTestedDesigns(v.testedDesigns))
   );
 }
 
