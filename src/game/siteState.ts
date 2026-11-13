@@ -142,6 +142,11 @@ export interface SiteState {
   plots: [number, number][];
   /** Plots won from Contracts and not yet chosen: the next Plot bought is free. */
   freePlots: number;
+  /**
+   * Designs tried in a Test Run for one Contract, for the maturity strip's Trade Space step (ticket 33).
+   * Optional, so saves stay v19 and the deployed cloud validator still reads them; missing until the first Test Run.
+   */
+  testedDesigns?: { contract: ContractId; designs: string[] };
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
