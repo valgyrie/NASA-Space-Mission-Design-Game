@@ -11,6 +11,9 @@ import { t } from '../strings';
 import { lostText, percentText } from './anomalyPanel';
 import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 import { makePatch } from './patch';
+import { type MissionSegment, bySegment, findingSegment } from '../game/segments';
+import { SOURCES } from '../game/sources';
+import { learnMore } from './learnMore';
 
 /** The Mission Patch a report earned, and whether it is the Company's first. */
 export interface EarnedPatch {
@@ -19,7 +22,8 @@ export interface EarnedPatch {
 }
 
 export interface MissionReportDialog {
-  show(report: MissionReport, deadlineDay: number | null, today: number, earned?: EarnedPatch | null): void;
+  /** `labs`: the Company's Research Labs now, for where the Data goes. */
+  show(report: MissionReport, deadlineDay: number | null, today: number, earned?: EarnedPatch | null, labs?: number): void;
   close(): void;
   readonly isOpen: boolean;
 }
@@ -85,6 +89,47 @@ export function findingText(f: Finding, flown = true): string {
   }
 }
 
+/** A line of the Mission Report: a requirement met (ok), not met (short), or a plain fact (info). */
+export interface ReportLine {
+  segment: MissionSegment;
+  mark: 'ok' | 'short' | 'info';
+  text: string;
+}
+
+/**
+ * The report's "Why" lines under NASA's four Segments. Segments with something that went wrong come first, and
+ * inside each, what went wrong comes first: that is what the player needs to fix. A Segment with nothing to say
+ * is left out. `labs` is how many Research Labs the Company has, for where the Data goes.
+ */
+export function reportSegments(report: MissionReport, labs: number): { segment: MissionSegment; lines: ReportLine[] }[] {
+  const flown = reachedOrbit(report.findings);
+  const finding = (f: Finding): ReportLine => ({
+    segment: findingSegment(f),
+    mark: f.ok ? 'ok' : 'short',
+    // Without orbit, only the orbit line is about what happened; the rest say what the design would have done.
+    text: findingText(f, flown || f.kind === 'orbit'),
+  });
+  const rank = { short: 0, ok: 1, info: 2 } as const;
+  const lines = [...report.findings].sort((a, b) => Number(b.kind === 'orbit') - Number(a.kind === 'orbit')).map(finding);
+  if (flown) {
+    const client = contractText(report.contract, 'client');
+    lines.push({ segment: 'user', mark: 'info', text: t(labs > 0 ? 'report.user.labs' : 'report.user.waiting', { client }) });
+    if (report.ground !== undefined) {
+      lines.push({
+        segment: 'ground',
+        mark: 'info',
+        text: report.ground > 1 ? t('report.ground.own', { boost: formatDecimal(report.ground) }) : t('report.ground.borrowed'),
+      });
+    }
+  }
+  const groups = bySegment(lines, (l) => l.segment).map(({ segment, items }) => ({
+    segment,
+    lines: [...items].sort((a, b) => rank[a.mark] - rank[b.mark]),
+  }));
+  const hasShort = (g: (typeof groups)[number]) => g.lines.some((l) => l.mark === 'short');
+  return [...groups].sort((a, b) => Number(hasShort(b)) - Number(hasShort(a)));
+}
+
 /** The Anomaly's lines: what happened and what it cost, and why it happened. Empty when there was none. */
 export function anomalyLines(report: MissionReport): string[] {
   const a = report.anomaly;
@@ -141,7 +186,11 @@ export function showMissionReport(
   const sources = el('div', '');
   const outcome = el('p', 'report-outcome');
   const why = el('h3', '', t('report.why'));
-  const findings = el('ul', 'report-findings');
+  // The lines sit under NASA's four Segments, with one line on what they are.
+  const segmentsIntro = el('p', 'report-segments-intro', t('segment.intro'));
+  segmentsIntro.append(' ', learnMore(SOURCES.segments, t('sources.segments')));
+  const notFlown = el('p', 'report-not-flown', t('report.notFlown'));
+  const findings = el('div', 'report-segments');
   const anomalyHeading = el('h3', '', t('report.anomaly'));
   const anomaly = el('div', 'report-anomaly');
   const reward = el('p', 'report-reward');
@@ -158,13 +207,13 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, sources, outcome, why, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
+  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
 
   const api: MissionReportDialog = {
-    show(report, deadlineDay, today, earned = null) {
+    show(report, deadlineDay, today, earned = null, labs = 0) {
       const contract = contractText(report.contract);
       sources.replaceChildren(missionLinks(report.contract, report.vehicle));
       subtitle.textContent = t('report.subtitle', {
@@ -175,22 +224,25 @@ export function showMissionReport(
       });
       outcome.textContent = t(report.success ? 'report.success' : 'report.failure', { contract });
       outcome.classList.toggle('ok', report.success);
-      const line = (f: Finding, flown: boolean) => {
-        const li = el('li', f.ok ? 'ok' : 'short');
-        const mark = el('span', 'report-mark', t(f.ok ? 'report.ok' : 'report.short'));
-        mark.setAttribute('aria-label', t(f.ok ? 'report.okName' : 'report.shortName'));
-        li.append(mark, el('span', '', findingText(f, flown)));
+      const line = (l: ReportLine) => {
+        const li = el('li', l.mark);
+        const mark = el('span', 'report-mark', t(l.mark === 'ok' ? 'report.ok' : l.mark === 'short' ? 'report.short' : 'report.info'));
+        if (l.mark === 'info') mark.setAttribute('aria-hidden', 'true');
+        else mark.setAttribute('aria-label', t(l.mark === 'ok' ? 'report.okName' : 'report.shortName'));
+        li.append(mark, el('span', '', l.text));
         return li;
       };
-      // What went wrong comes first: that is what the player needs to fix.
-      const sorted = [...report.findings].sort((a, b) => Number(a.ok) - Number(b.ok));
-      if (reachedOrbit(report.findings)) findings.replaceChildren(...sorted.map((f) => line(f, true)));
-      else {
-        // It never reached orbit: say so, then what the design would have done, never what it did.
-        const orbit = sorted.filter((f) => f.kind === 'orbit');
-        const rest = sorted.filter((f) => f.kind !== 'orbit');
-        findings.replaceChildren(...orbit.map((f) => line(f, true)), el('li', 'report-not-flown', t('report.notFlown')), ...rest.map((f) => line(f, false)));
-      }
+      notFlown.hidden = reachedOrbit(report.findings);
+      findings.replaceChildren(
+        ...reportSegments(report, labs).map(({ segment, lines }) => {
+          const group = el('section', 'report-segment');
+          group.dataset.segment = segment;
+          const list = el('ul', 'report-findings');
+          list.append(...lines.map(line));
+          group.append(el('h4', '', t(`segment.${segment}`)), list);
+          return group;
+        }),
+      );
       const lines = anomalyLines(report);
       anomaly.replaceChildren(...lines.map((line, i) => el('p', i === 0 ? '' : 'report-anomaly-why', line)));
       anomalyHeading.hidden = anomaly.hidden = lines.length === 0;

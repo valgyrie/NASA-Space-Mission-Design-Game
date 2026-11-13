@@ -37,7 +37,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 29 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
 | 30 ✅ | [Buy the land next door](30-buy-neighbouring-plots.md) _(Optional)_ | 05 | Look at the Plots around your Site, see their Deposits, and buy them to grow the Site. |
 | 31 ✅ | [Space view](31-space-view.md) _(added 2026-11-09)_ | 10 | See every Spacecraft in orbit round Earth; click one to follow it along its real orbit. |
-| 32 | [Four segments on screen](32-four-segments.md) | 18, 27 | Launch planner and Mission Report grouped under NASA's Launch, Space, Ground and User Segments. |
+| 32 🧪 | [Four segments on screen](32-four-segments.md) | 18, 27 | Launch planner and Mission Report grouped under NASA's Launch, Space, Ground and User Segments. |
 | 33 | [Maturity strip and Design Review](33-maturity-strip-and-design-review.md) | 32 | JPL's four Concept Maturity Levels on the Mission Designer; a red/yellow/green Design Review (35% margins, 80% green) replaces the planner's warnings. |
 | 34 | [NASA's GMAT trajectories](34-gmat-trajectories.md) | 27, 31 | Syncom 3's real LEO → GEO transfer and Reference paths (long ellipse, Earth → Moon) from NASA Mission Viz. |
 | 35 | [Orbit maths checked against GMAT](35-orbit-maths-checked-against-gmat.md) | 34 | A repo test compares LEAP's Kepler code with a GMAT run; one line in Real data. |

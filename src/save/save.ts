@@ -140,7 +140,8 @@ function isReport(value: unknown): boolean {
     r.findings.every((f) => typeof f?.kind === 'string' && typeof f.ok === 'boolean') &&
     (r.design === null || (isDesign(r.design) && isComplete(r.design!))) &&
     isAnomaly(r.anomaly) &&
-    isNumber(r.insurancePaid)
+    isNumber(r.insurancePaid) &&
+    (r.ground === undefined || isNumber(r.ground))
   );
 }
 

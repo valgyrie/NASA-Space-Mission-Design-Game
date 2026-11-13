@@ -104,7 +104,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Make the repo public before the deadline
 
 ### Official Resources (approved 2026-11-13, in build order)
-- [ ] Four Segments in the Launch planner and Mission Report (ticket 32)
+- [x] Four Segments in the Launch planner and Mission Report (ticket 32)
 - [ ] Maturity strip and Design Review (ticket 33)
 - [ ] NASA's GMAT trajectories: Syncom 3's transfer and Reference paths in the Space view (ticket 34)
 - [ ] Orbit maths checked against GMAT (ticket 35)

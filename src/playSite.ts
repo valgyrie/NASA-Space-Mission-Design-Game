@@ -285,7 +285,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       result,
       () => {
         world.hidden = false;
-        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day), earned);
+        report.show(result.report, taken ? deadlineDay(taken) : null, Math.floor(state.day), earned, state.labs.length);
       },
       hooks || undefined,
     );

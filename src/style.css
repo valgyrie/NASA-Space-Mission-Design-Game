@@ -1085,11 +1085,60 @@ button.planner-back {
   font-size: 13px;
 }
 
+/* NASA's four Segments: User, Space and Ground stacked on the left, the Launch segment wider on the right. */
+.planner-intro {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--muted);
+}
+
 .planner-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
   gap: 14px;
-  margin-top: 12px;
+  margin-top: 8px;
+  align-items: start;
+}
+
+.planner-column,
+.planner-launch,
+.planner-segment-cards {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.planner-column {
+  gap: 14px;
+}
+
+.planner-segment-launch .planner-segment-cards {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.designer .planner-segment > h3 {
+  margin: 4px 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.planner-segment > .planner-hint {
+  margin-bottom: 6px;
+}
+
+.designer .planner-card h4 {
+  margin: 10px 0 6px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.planner-card > .planner-rows:first-child {
+  margin-top: 10px;
 }
 
 .planner-card,
@@ -1198,7 +1247,11 @@ button.planner-back {
 
 @media (max-width: 1100px) {
   .planner-grid {
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+
+  .planner-segment-launch .planner-segment-cards {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -1466,10 +1519,36 @@ button.launch-button {
   color: var(--warn);
 }
 
-.report-findings .report-not-flown {
-  margin-top: 4px;
+.report .report-not-flown {
+  margin: 0 0 8px;
   color: var(--muted);
   font-style: italic;
+}
+
+.report .report-not-flown[hidden] {
+  display: none;
+}
+
+/* The "Why" lines under NASA's four Segments. */
+.report-segments-intro {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.report-segment + .report-segment {
+  margin-top: 10px;
+}
+
+.report-segment h4 {
+  margin: 0 0 4px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.report-findings .info .report-mark {
+  color: var(--muted);
 }
 
 .report-reward {

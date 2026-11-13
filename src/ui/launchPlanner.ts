@@ -12,6 +12,9 @@ import {
   vehicleStatus,
 } from '../game/launchVehicles';
 import type { BusId } from '../game/upgrades';
+import { isBuildingOpen } from '../game/eras';
+import type { MissionSegment } from '../game/segments';
+import { dataOf } from '../game/spacecraft';
 import { type LaunchPlan, type PlanProblem, insuranceQuote, planLaunch, shipMission } from '../game/mission';
 import { adviseLaunch, shippingTo } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
@@ -83,9 +86,9 @@ function closedText(status: VehicleStatus): string {
 }
 
 /**
- * The Launch planner, shown inside the Mission Designer: pick the Launch Vehicle (mass check, how often it
- * works), see the Launch Site, what the Rideshare and Shipping cost, choose Launch Insurance, and when the
- * Mission would end; try a free Test Run; then ship.
+ * The Launch planner, shown inside the Mission Designer, under NASA's four Segments: who gets the Data and when
+ * (User), the Spacecraft (Space), the dishes that talk to it (Ground), and the Launch Vehicle, Launch Site,
+ * costs, Launch Insurance and weather (Launch). Then a free Test Run, then ship.
  * `designWarnings` gives the Mission Designer's warnings, so a weak design ships knowingly.
  * The Seed prices the insurance from the same Test Run the player sees.
  */
@@ -102,7 +105,7 @@ export function makeLaunchPlanner(
   // Launch Vehicle and Launch Site
   const choices = el('section', 'planner-card');
   const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
-  choices.append(el('h3', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
+  choices.append(el('h4', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
   const vehicleButtons = new Map<
     LaunchVehicleId,
     { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement; price: HTMLElement }
@@ -139,7 +142,7 @@ export function makeLaunchPlanner(
   // How a geostationary orbit is reached, shown when the Contract asks for one.
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
   choices.append(geoNote, learnMore(SOURCES.orbits, t('sources.orbits')));
-  choices.append(el('h3', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
+  choices.append(el('h4', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
   const siteButtons = new Map<string, HTMLButtonElement>();
   for (const id of LAUNCH_SITE_IDS) {
     const ls = LAUNCH_SITES[id];
@@ -170,7 +173,7 @@ export function makeLaunchPlanner(
   const weather = el('section', 'planner-card');
   const weatherLine = el('p', 'planner-weather');
   const adviceLine = el('p', 'planner-advice');
-  weather.append(el('h3', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')), learnMore(SOURCES.climate, t('sources.climate')), el('p', 'planner-hint', t('sources.estimates')));
+  weather.append(el('h4', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')), learnMore(SOURCES.climate, t('sources.climate')), el('p', 'planner-hint', t('sources.estimates')));
 
   // Costs and timeline
   const costs = el('section', 'planner-card');
@@ -189,10 +192,25 @@ export function makeLaunchPlanner(
   const insureLine = el('p', 'planner-hint');
   const lighter = el('p', 'planner-hint', t('planner.lighter'));
   const wholeNote = el('p', 'planner-hint', t('planner.wholeLaunchNote'));
-  costs.append(el('h3', '', t('planner.costs')), costRows, insureLabel, insureLine, lighter, wholeNote);
+  costs.append(el('h4', '', t('planner.costs')), costRows, insureLabel, insureLine, lighter, wholeNote);
   const timeline = el('section', 'planner-card');
   const timeRows = el('dl', 'planner-rows');
-  timeline.append(el('h3', '', t('planner.timeline')), timeRows);
+  timeline.append(el('h4', '', t('planner.timeline')), timeRows);
+
+  // User segment: who gets the Data, where it goes, and when the Mission ends.
+  const user = el('section', 'planner-card');
+  const userRows = el('dl', 'planner-rows');
+  const labsHint = el('p', 'planner-hint', t('planner.labsHint'));
+  user.append(userRows, labsHint);
+  // Space segment: the Spacecraft itself.
+  const spacecraft = el('section', 'planner-card');
+  const spaceRows = el('dl', 'planner-rows');
+  spacecraft.append(spaceRows);
+  // Ground segment: which dishes talk to it, and whether the Data fits through them.
+  const ground = el('section', 'planner-card');
+  const groundRows = el('dl', 'planner-rows');
+  const groundHint = el('p', 'planner-hint');
+  ground.append(groundRows, groundHint);
 
   // Warnings, blockers and the button
   const footer = el('section', 'planner-footer');
@@ -209,9 +227,24 @@ export function makeLaunchPlanner(
   testRun.dataset.tutorial = 'planner-testrun';
   footer.append(warnHead, warnings, warnNote, problems, testRun, ship);
 
+  const segment = (id: MissionSegment, ...cards: HTMLElement[]) => {
+    const section = el('section', `planner-segment planner-segment-${id}`);
+    section.dataset.segment = id;
+    const body = el('div', 'planner-segment-cards');
+    body.append(...cards);
+    section.append(el('h3', '', t(`segment.${id}`)), el('p', 'planner-hint', t(`segment.${id}.hint`)), body);
+    return section;
+  };
+  const intro = el('p', 'planner-intro', t('segment.intro'));
+  intro.append(' ', learnMore(SOURCES.segments, t('sources.segments')));
+  // Begin with the end in mind: the people who use the Data come first, the Launch last.
+  const side = el('div', 'planner-column');
+  side.append(segment('user', user), segment('space', spacecraft), segment('ground', ground));
+  const launchSide = el('div', 'planner-launch');
+  launchSide.append(costs, timeline, weather);
   const grid = el('div', 'planner-grid');
-  grid.append(choices, costs, timeline, weather);
-  root.append(back, grid, footer);
+  grid.append(side, segment('launch', choices, launchSide));
+  root.append(back, intro, grid, footer);
 
   const row = (rows: HTMLElement, label: string, value: string, className = '') => {
     const dt = el('dt', className, label);
@@ -286,14 +319,41 @@ export function makeLaunchPlanner(
       : t('planner.insuranceRefused', { pct });
 
     timeRows.replaceChildren();
-    const bus = state.design.bus;
-    if (bus) row(timeRows, t('planner.assembly', { bus: t(`part.${bus as BusId}`) }), t('planner.days', { days: formatNumber(plan.assemblyDays) }));
     row(timeRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), t('planner.days', { days: formatNumber(plan.shippingDays) }));
     row(timeRows, t('planner.arrives', { site: t(`launchSite.${site}.short`) }), formatGameDate(plan.readyDay));
-    row(timeRows, t('planner.ends', { days: formatNumber(plan.goal.missionDays) }), formatGameDate(plan.endDay));
+
+    userRows.replaceChildren();
+    const labs = state.labs.length;
+    row(userRows, t('planner.client'), contractText(plan.goal.contract.id, 'client'));
+    row(userRows, t('planner.dataTo'), labs === 0 ? t('planner.labs.none') : t(labs === 1 ? 'planner.labs.one' : 'planner.labs.other', { count: formatNumber(labs) }));
+    labsHint.hidden = labs > 0;
+    row(userRows, t('planner.ends', { days: formatNumber(plan.goal.missionDays) }), formatGameDate(plan.endDay));
     if (plan.deadlineDay !== null) {
-      row(timeRows, t('planner.deadline'), formatGameDate(plan.deadlineDay), plan.endDay > plan.deadlineDay ? 'warn' : '');
+      row(userRows, t('planner.deadline'), formatGameDate(plan.deadlineDay), plan.endDay > plan.deadlineDay ? 'warn' : '');
     }
+
+    spaceRows.replaceChildren();
+    row(spaceRows, t('planner.mass'), t('planner.kg', { kg: formatDecimal(plan.massKg) }));
+    const bus = state.design.bus;
+    if (bus) row(spaceRows, t('planner.assembly', { bus: t(`part.${bus as BusId}`) }), t('planner.days', { days: formatNumber(plan.assemblyDays) }));
+
+    groundRows.replaceChildren();
+    const stations = state.groundStations.length;
+    row(
+      groundRows,
+      t('planner.stations'),
+      stations === 0 ? t('planner.stations.none') : t(stations === 1 ? 'planner.stations.one' : 'planner.stations.other', { count: formatNumber(stations) }),
+    );
+    const data = dataOf(state.design, state.research.tech, plan.goal.ground);
+    const short = data.sendPerDay < data.dataPerDay;
+    row(groundRows, t('planner.sends'), t('planner.kbPerDay', { kb: formatNumber(data.sendPerDay) }), short ? 'warn' : '');
+    row(groundRows, t('planner.makes'), t('planner.kbPerDay', { kb: formatNumber(data.dataPerDay) }));
+    groundHint.textContent =
+      stations > 0
+        ? t('planner.stationsBoost', { boost: formatDecimal(plan.goal.ground) })
+        : isBuildingOpen(state, 'groundStation')
+          ? t('planner.stationsBuild')
+          : t('planner.stationsBorrowed');
 
     weatherLine.textContent = weatherText(site, plan.readyDay);
     adviceLine.textContent = adviceText(adviseLaunch(site, plan.readyDay));
