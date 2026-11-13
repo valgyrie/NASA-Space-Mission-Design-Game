@@ -29,6 +29,8 @@
 
 **Sources:** Webb "Build It Yourself: Satellite!" (NASA Goddard; page heading "A Learning Game About Telescopes") <https://science.nasa.gov/mission/webb/game-build-it-yourself/>. Mission figures: `docs/research/milestones.md`.
 
+**In the repo for this ticket:** [`docs/research/sources/webb-build-it-yourself-options.txt`](../research/sources/webb-build-it-yourself-options.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md). Real figures already sourced: [`docs/research/milestones.md`](../research/milestones.md).
+
 **Open points:**
 - Show it for failed Missions too? (Probably yes: Explorer 1's batteries are the lesson.)
 - Which mass to compare for Syncom 3: in orbit (39 kg, after its apogee motor burned) or at launch (68 kg). LEAP's Mass bar counts the Main Engine.

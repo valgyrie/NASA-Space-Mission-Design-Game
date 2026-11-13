@@ -27,6 +27,8 @@ Both:
 
 **Sources:** Webb "Build It Yourself: Satellite!" (science goal → wavelength → instrument → optics; options that don't fit are unavailable) <https://science.nasa.gov/mission/webb/game-build-it-yourself/>. Design and Develop Science Missions, slide 15 "Begin with the End in Mind - User Segment". CSA's RADARSAT Constellation Mission game: "Help a farmer, a captain and a first responder achieve their missions using RADARSAT imagery" <https://www.asc-csa.gc.ca/eng/youth-educators/digital-games-and-activities.asp>.
 
+**In the repo for this ticket:** [`docs/research/sources/webb-build-it-yourself-options.txt`](../research/sources/webb-build-it-yourself-options.txt), [`docs/research/sources/design-and-develop-science-missions.txt`](../research/sources/design-and-develop-science-missions.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:**
 - Full needs Payloads LEAP doesn't have yet (multispectral camera, telescope: GDD §7). Limit the questions to existing Payloads, or build Full after those Parts.
 - Light could also reach the Campaign's Milestone cards (they already tell the real need).

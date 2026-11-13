@@ -34,6 +34,8 @@
 
 **Real data and Credits:** add the CML paper to `DATASETS` when this ships (ticket 27).
 
+**In the repo for this ticket:** Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md). The JPL paper is not stored (copyright); its levels, 80% rule and margins are written out in the note.
+
 **Open points:**
 - How LEAP measures each margin: spare mass as (lift − mass) ÷ mass? Spare power as sunlight watts against watts used, spare energy as the Power bar's Wh against Wh used? Decide and write it in GDD §7.
 - Designs on batteries alone have no "power" margin in sunlight terms: count the line as not applicable (left out of the 80%) or measure battery watts.

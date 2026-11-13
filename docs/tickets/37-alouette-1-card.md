@@ -26,5 +26,7 @@
 
 **Sources:** CSA Alouette page above. Partner agency resources are "highly encouraged" by the Project Submission Guide (`docs/challenge.md`).
 
+**In the repo for this ticket:** Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md). The Alouette 1 facts and their CSA source are in the note.
+
 **Open points:**
 - Photo: the CSA page shows an Alouette I image (`/images/satellites/alouette-ban-id-155.jpg`); its credit and terms are not stated on the page _(verify)_. A NASA image may be easier to clear.

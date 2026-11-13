@@ -19,4 +19,6 @@
 
 **Sources to research:** Goddard Mission Design Lab (covers "end-of-mission planning" and orbital debris) <https://etd.gsfc.nasa.gov/capabilities/integrated-design-center/mission-design-lab/>; CubeSat 101 §6.1 Orbital Debris Mitigation Compliance (p. 54: the ODAR shows the CubeSat "will deorbit in a reasonable amount of time") <https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf>; real re-entry dates from NASA NSSDC _(verify)_. GMAT supports end-of-life modelling (Goddard GMAT page).
 
+**In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt), [`docs/research/sources/mission-design-lab.txt`](../research/sources/mission-design-lab.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** how fast decay is shown (real decay takes years to decades; the Space view runs 300× real time).

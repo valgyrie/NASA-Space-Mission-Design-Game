@@ -1,0 +1,58 @@
+What the MDL Provides
+NASA’s Mission Design Lab (MDL) provides a collaborative engineering environment for the development of space flight designs and architecture concepts. The key components of the MDL (i.e. people, process, tools and facility) result in a responsive dynamic atmosphere that affords a unique opportunity for accelerated development of design products tailored to a customer’s needs. 
+Engineers and science partners work to develop a mission concept in the Mission Design Lab
+Range of study options, to match best value to concept development needs or products can be tailored to support customer need 
+Concept Maturity Levels <https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/44299> (CMLs), initially defined by NASA’s Jet Propulsion Laboratory (JPL), provide a standardized tool to advance mission concept designs by assessing the current state of a concept and identifying remaining work to proceed to the next level.  IDC studies can be tailored to support concept maturation from CML 1 through CML 4. 
+Office Hours
+Timeframe: ~ 1 hr
+No/low prep
+Brainstorming Session
+Identify tall poles and key trade studies
+Recommend next steps and point of contact for early engineering support
+Concept Development
+Timeframe: A few half days
+Potential Products: Concept Feasibility, Risk assessment
+Scope informed by Concept Maturity Level (CML). A CML is a measure of how developed, tested, and ready a concept, idea, or technology is for implementation or deployment.
+Tailored Trade Study
+Timeframe: Variable
+Potential Products: Concept, ConOps, Resources Summary, Trade Tree, possible ROM cost*
+Scope informed by Concept Maturity Level (CML)
+Point Design Study
+Timeframe: 6 days
+Products: CAD, MEL, engineering models, CEMA cost
+Entry Criteria: “Pass” CML checklist
+MDL Capabilities
+Orbit view of space relay communications concept.
+The MDL provides specific engineering analysis and services for mission design and provides end-to-end mission design products with capabilities that include:  
+LEO, GEO, libration, retrograde, drift away, lunar, and deep space orbit design
+Missions that entail single spacecraft, constellations, formation flying or distributed systems 
+Ground system concept development including services, and products 
+Launch vehicle accommodations 
+End-of-Mission considerations including controlled and uncontrolled de-orbit, reconnaissance and landing, sample return, etc. 
+MDL Disciplines
+During the study, each system/subsystem prepares material that addresses the requirements, baseline design, alternative designs & trade studies, functional diagrams, interfaces, detailed estimates of mass, power, and data rate, technical risk assessment, issues/concerns, recommendations, models, parametric/grassroots costs, and background information. 
+MDL’s Discipline Engineering Team provides mission systems expertise across a very broad spectrum, including: 
+ Attitude Control
+ Mission Cost
+ Propulsion
+ Avionics
+ Mechanical Designer
+ Reliability
+ Flight Dynamics
+ Flight Software
+ Mechanical Systems
+ Orbital Debris
+ Radiation Environment
+ Structural
+ Communications
+ Mission Operations
+ Power Systems
+ Thermal
+Sample MDL Products
+Spacecraft System Block Diagrams
+Orbit Analysis
+Communication and Ground System Analysis
+Launch Systems Accommodations​ 
+Spacecraft Master Equipment List (MEL)​ 
+Mechanical Packaging/CAD Model
+Observatory Concept 3D Models

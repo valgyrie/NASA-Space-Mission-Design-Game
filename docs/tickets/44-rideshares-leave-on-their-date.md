@@ -18,4 +18,6 @@
 
 **Sources:** CubeSat 101 (October 2017) §2.15 Launch, p. 28: "If your project gets delayed for any reason, the launch will not be delayed. If your CubeSat is not delivered in time, the LV will definitely leave without your CubeSat onboard." <https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf>
 
+**In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** how often each historical Rideshare departs (game estimate; real launch rates per year could anchor it _(verify)_).

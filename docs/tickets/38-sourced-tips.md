@@ -32,4 +32,6 @@ Page numbers are the printed page numbers in the October 2017 revision.
 
 **Real data and Credits:** add CubeSat 101 to `DATASETS` (or reading sources) when this ships (ticket 27).
 
+**In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:** keep the "build two" tip only if it does not suggest a feature LEAP lacks; drop any tip that needs CubeSat words the player has not met.

@@ -27,6 +27,8 @@ With fewer than four players, one player holds more than one role (e.g. two play
 
 **Sources:** challenge brief, Collaboration and Game design sections ("up to four participants", "different roles or responsibilities", "negotiate between competing priorities") in `docs/challenge.md`. Roles drawn from Goddard's Mission Design Lab disciplines (power, communications, mission operations and others) <https://etd.gsfc.nasa.gov/capabilities/integrated-design-center/mission-design-lab/>.
 
+**In the repo for this ticket:** [`docs/research/sources/mission-design-lab.txt`](../research/sources/mission-design-lab.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
+
 **Open points:**
 - Is Team Mode a Company setting, a per-Mission switch, or a main-menu entry with a ready Demo Mode Company? A Demo entry may suit judges best.
 - Does a team score anything extra ("successful collaboration" in the brief)? E.g. a Patch line naming the roles.

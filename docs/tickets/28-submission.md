@@ -35,3 +35,5 @@
 - **Checked:** type checks and 345 tests pass; Chromium at 1280×800 and 700×600: open, read, scroll, Esc and Back, Demo picker still returns focus, no horizontal scroll, no page errors.
 
 **Rechecked (2026-11-12):** Credits opens and Back/Esc returns to the menu. Hosting and the other team tasks remain open. [QA report](../qa/2026-11-12/README.md).
+
+**Re-reading the rules:** `python3 scripts/fetch_spaceapps_page.py <url>` prints the live Project Submission Guide, Judging and Awards Guide or FAQ. Check them once more before submitting.
