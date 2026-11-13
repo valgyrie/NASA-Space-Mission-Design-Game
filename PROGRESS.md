@@ -10,19 +10,18 @@
 - **Ticket 32, Segments:** Launch planner and Mission Report under NASA's four Segments, user first (`src/game/segments.ts`, `reportSegments`). Reports keep `ground` (optional, no save bump). Slides added to Real data (`missionSegments`). Browser-checked for Explorer 1 and Telstar 1 at 1280×800 and 1024×768.
 - **Ticket 27:** live Resources tab re-read; identical to the 13 Nov copy.
 - **Ticket 28:** Apache 2.0 `LICENSE`; README "How AI was used" and "Licence"; music ID3-tagged as AI (audio identical; `docs/audio/levels.json` updated); GitHub Pages workflow (checked with a local subpath build); project page text in `docs/submission.md`. Team name "Team Artemis-IV" confirmed real.
-- **Ticket 29:** `prepare-era-art.py` burns in an "AI-generated" mark; Era card crops from the top so it shows; prompts audited. **Era 1 picture in the game** (`public/eras/era-1.webp`), made in Canva from game screenshots so the pad and buildings match. Canva credits ran out; a ChatGPT pack for Era 2 and Free Play was sent to the user.
+- **Ticket 29:** `prepare-era-art.py` burns in an "AI-generated" mark; Era card crops from the top so it shows; prompts audited. **All three Era pictures in the game**, made from game screenshots so the pad and buildings match (Era 1 in Canva; Era 2 and Free Play by the team in ChatGPT from the pack). The Era card no longer crops pictures.
 - Tickets 30 and 31 had nothing left for an agent (team playtest only).
 
 **Next:**
-1. When `era-2.png` and `era-5.png` come back from ChatGPT: `python3 scripts/prepare-era-art.py 2 era-2.png 5 era-5.png`, check both cards (Demo Era 1 → HQ Upgrade; Free Play move), fill the Credits table in `docs/art/README.md`. The pack's prompts are summarised there.
-2. Ticket 33 (maturity strip and Design Review), then 34–39 in the order in `docs/tickets/README.md`. Add each Resource to `DATASETS` as it ships (ticket 27).
-3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions (link: `https://valgyrie.github.io/NASA-Space-Mission-Design-Game/`); paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
+1. Ticket 33 (maturity strip and Design Review), then 34–39 in the order in `docs/tickets/README.md`. Add each Resource to `DATASETS` as it ships (ticket 27).
+2. Team: make the repo public, then Settings → Pages → Source: GitHub Actions (link: `https://valgyrie.github.io/NASA-Space-Mission-Design-Game/`); paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
 **Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). To capture game scenes for art: Demo Mode, hide `#ui`, move `window.leap.world.camera` (dev server only); `window.leap.launchShow.play(...)` plays any rocket.
 
 ## Log
 
-- 2026-11-13: Ticket 32 built (Segments in planner and report); ticket 28 licence, AI disclosure, music AI tags, Pages workflow and project page text; ticket 29 watermark and Era 1 picture from game screenshots; ChatGPT pack for the other two. 370 tests, type checks and browser checks pass.
+- 2026-11-13: Ticket 32 built (Segments in planner and report); ticket 28 licence, AI disclosure, music AI tags, Pages workflow and project page text; ticket 29 watermark and Era 1 picture from game screenshots; Era 2 and Free Play pictures added from the team's ChatGPT results. 370 tests, type checks and browser checks pass.
 - 2026-11-13: Official Resources captured into `docs/challenge.md` with the rules published that day; research note `official-resources.md`; tickets 32–48 written from the 19 approved ideas; tickets 27–29, GDD, glossary, checklist and AGENTS.md updated. Docs only; game code unchanged. Source files added under `docs/research/sources/` and linked from each ticket; `scripts/fetch_spaceapps_page.py` reads the challenge site.
 - 2026-11-13: Fixed all 15 QA findings (tickets 01, 02, 04, 05, 08, 13, 16, 17, 19, 22, 26, 30) with tests and `_solved` screenshots; `leap-online` redeployed and a live v19 cloud save/load checked. 362 tests, both type checks and production/online builds pass.
 - 2026-11-12: Feature guide on main 3e14a17: 81 new screenshots across the built tickets, with captions, entry paths, fixtures and limits; older images kept. 356 tests, both type checks and production/online builds pass. Game code unchanged.
