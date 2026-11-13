@@ -130,9 +130,79 @@ A strong solution might include a functional interactive game or simulation with
 
 ## Resources
 
-*For data and resources related to this challenge, refer to the Resources tab at the top of the page. More resources may be added before the hackathon begins.*
+> **Source:** the **Resources** tab of the official challenge page, <https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/?tab=resources>, page last published 2026-11-13 and captured that day. Descriptions below are NASA's own text, copied as published. What each Resource really contains, and LEAP's planned use of it: [`docs/research/official-resources.md`](research/official-resources.md) and GDD §14.
 
-> (Team note: the **Resources** tab has not been captured in this file yet. Check it on the official page and add it here once it is available. On 2026-11-12 the agents' build container could not open spaceappschallenge.org, so a team member may need to paste it in.)
+### NASA Data & Resources
+
+**[Design and Develop Science Missions](https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf?emrc=a454cf)**: An overview of the systems-engineering approach used to develop scientific space missions. It explains how a mission progresses from an initial scientific need through requirements definition, design, verification and implementation. Four major mission segments are identified:
+- Launch segment: the launch vehicle and services required to place the mission in space.
+- Space segment: spacecraft, instruments, orbiters, landers or rovers used to conduct the mission.
+- Ground segment: ground stations and mission-control facilities responsible for communication, data reception and mission management.
+- User segment: scientists and other users who analyse and apply the mission's data.
+
+**[General Mission Analysis Tool (GMAT)](https://software.nasa.gov/software/GSC-19468-1)**: GMAT is an open-source, enterprise-level software system developed to support the design, analysis, optimisation, and navigation of space missions. Developed through collaboration involving NASA, private industry, academia, and other contributors, GMAT provides a comprehensive environment for modelling and analysing spacecraft trajectories across a wide range of mission scenarios. These include low Earth orbit, geostationary and highly elliptical orbits, lunar missions, libration-point trajectories, interplanetary transfers, and deep-space exploration.
+
+GMAT enables users to model spacecraft, propulsion systems, trajectories, manoeuvres, and other mission components using high-fidelity physical models. It can be used for orbit propagation, trajectory optimisation, orbit determination, navigation-data simulation, launch-window analysis, manoeuvre planning, and the evaluation of different mission scenarios and engineering trade-offs. The software also provides capabilities for visualising mission parameters and analysing results through plots, reports, and other analytical outputs.
+
+**[Concept Maturity Levels (CMLs)](https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/44299)**: The paper presents CMLs, a framework developed by NASA's Jet Propulsion Laboratory (JPL) to measure and progressively develop the maturity of a space mission concept before entering formal project formulation.
+
+The framework divides mission development into stages, from CML 1 (an initial mission idea) through increasingly detailed levels involving feasibility analysis, trade studies, point design, implementation planning, and detailed engineering. The paper focuses mainly on CML 1–4, where the greatest design decisions are made.
+
+**[Mission Design Lab (MDL)](https://etd.gsfc.nasa.gov/capabilities/integrated-design-center/mission-design-lab/)**: NASA's MDL is a collaborative environment where engineers and scientists rapidly develop and evaluate space mission concepts. It helps transform an initial idea into a technically assessed mission design. The MDL uses different levels of study depending on how mature the mission concept is:
+- Office Hours: Quick brainstorming and identification of major challenges.
+- Concept Development: Feasibility and risk assessment.
+- Trade Studies: Compare different mission architectures and design options.
+- Point Design: More detailed design, including CAD models, equipment lists, engineering models and cost estimates.
+
+It considers the complete mission, including orbit and trajectory, spacecraft, communications, ground systems, launch vehicle, mission operations and end-of-mission planning. It also analyses key spacecraft disciplines such as power, propulsion, thermal, structures, avionics, communications, attitude control, software, reliability, cost and risk.
+
+**[NASA Mission Viz](https://nasa.github.io/mission-viz/)**: NASA Mission Viz is an interactive, web-based visualization environment designed to represent and explore space mission concepts and trajectories. When users access the platform, they are presented with a three-dimensional representation of the space environment, in which celestial bodies, spacecraft, and mission trajectories can be visually examined.
+
+The platform enables users to explore the spatial and temporal characteristics of a mission, including the movement of spacecraft along predefined trajectories and their relationships with relevant celestial bodies. Through interactive visualization, users can change their perspective and examine the mission from different viewpoints, facilitating a more intuitive understanding of orbital and interplanetary dynamics.
+
+Mission Viz is particularly relevant for space mission design and education, as it provides a visual means of communicating concepts that are otherwise difficult to interpret through numerical data alone. The representation of trajectories, spacecraft positions, celestial bodies, and mission events can help users understand the relationship between mission objectives, orbital mechanics, spacecraft movement, and mission operations.
+
+**[A Learning Game About Telescopes](https://science.nasa.gov/mission/webb/game-build-it-yourself/)**: When users access this game, they enter an educational simulation in which they assume the role of a scientist responsible for designing a space telescope. The game is intended to demonstrate how scientific objectives determine the engineering characteristics of a space mission.
+
+The player begins by selecting the scientific objectives that the satellite should investigate. Based on these objectives, the player must then select appropriate wavelengths, scientific instruments, and optical systems. The available choices are constrained, and some options are unavailable when they are not scientifically or technologically compatible with the selected mission objectives.
+
+The game is organized into three levels of increasing complexity. At higher levels, players can select multiple scientific objectives and corresponding wavelengths, instruments, and optical configurations. This progressively introduces the concept that a more ambitious scientific mission requires more complex and carefully coordinated engineering decisions.
+
+After completing the design, the player launches the satellite through an animated sequence. The game then presents the resulting spacecraft configuration and provides scientific results based on the player's design. It also identifies real NASA missions with similar characteristics and scientific objectives, allowing the player to relate their virtual design to actual space missions.
+
+> (Team note: on the tab this link has no title; the page it opens is headed "A Learning Game About Telescopes": the Webb game "Build It Yourself: Satellite!".)
+
+**[Cubesat 101 - Basic Concepts and Processes for First-Time CubeSat Developers](https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf)**: This document was created for cubesat missions developers (CSLI mainly). This is a powerful guide with basic concepts of every phase of a cubesat space mission, from ConOps to launch and operation.
+
+**[Visualize a Space Mission Using Virtual Reality](https://www.spaceappschallenge.org/2023/challenges/visualize-a-space-mission-using-virtual-reality/)**: This was a 2023 NASA Space Apps Challenge focused on making complex space missions easier to understand through interactive virtual reality (VR). The challenge was classified as suitable for beginners/youth, intermediate, and advanced participants, with a focus on games, software, space exploration, and planets and moons.
+
+The challenge asked participants to develop an interactive VR application capable of visualising an entire space mission, including:
+- Mission concept: what the spacecraft is intended to accomplish.
+- Orbital trajectories: how the spacecraft travels through space, such as Earth orbit, Earth–Moon transfers, planetary orbits, or deep-space trajectories.
+- Mission timeline: the sequence and timing of major mission events and operations.
+- Three-dimensional visualization: allowing users to explore and better understand the spatial relationships and dynamics of the mission.
+
+### Space Agency Partner Resources
+
+**CSA (Canadian Space Agency)**
+
+**[Digital Games and Activities](https://www.asc-csa.gc.ca/eng/youth-educators/digital-games-and-activities.asp)**: Explore the CSA collection of digital games, e-books, videos, and hands-on activities designed for learners of all ages. These interactive resources make space science and exploration accessible, engaging, and fun while highlighting Canada's role in space.
+
+> (Team note: the Details tab was compared sentence by sentence with this file on 2026-11-13 and is unchanged since 2026-11-07.)
+
+---
+
+## Rules published 13 Nov
+
+Short summary for the team; the linked pages are the authority. Submission tasks: ticket 28.
+
+- **Early start.** FAQ: "Teams are not allowed to begin working on the challenges prior to the hackathon." The team asked Space Apps support, who allowed this team to start early (team, 2026-11-13). Save that message and **disclose the early start in the project submission**. <https://www.spaceappschallenge.org/resources/participant-faqs/>
+- **Demo.** A video of 30 seconds or less, or at most 7 slides (title and intro included). Over the limit is not eligible for Global Judging. <https://www.spaceappschallenge.org/resources/project-submission-guide/>
+- **Project page.** English on the page and linked materials (a video may be spoken in another language with English subtitles). Links public, no login. No image, video, audio or likeness of anyone under 18. Submit before Sunday 15 November, 23:59 local time of the Local Event.
+- **NASA data.** "To be eligible for a Global Award, you must use at least one NASA data or resource." List all data, resources and tools, open-source code, text and images used (References). Partner agency resources are "highly encouraged". Optional: request a FortiGuard web filter classification for a newly hosted site.
+- **AI ("Super Intelligence", SI).** Allowed, but "SI should not be used to (come up with your idea of how to solve the challenge)". Generated content may not use, contain or modify NASA branding (logos, flags, mission identifiers). Images and videos: a visible watermark. Audio, code and data: acknowledged in descriptive text and metadata. The submission form asks how SI tools were used; judges don't see the answer, but they do see the indicators in the project.
+- **Judging.** Five criteria, each scored 1–5: Impact, Creativity, Validity, Relevance (answers the challenge and "meaningfully integrates NASA data, utilizing it as a core component of the proposed solution rather than a superficial addition") and Presentation. Teams of 1–6 in the same Local Event. Awards that fit LEAP: Best Mission Concept, Best Use of Data, Art & Technology, Best Storytelling. Global Nominees 3 Dec 2026, Finalists 17 Dec 2026, Winners 26 Jan 2027. <https://www.spaceappschallenge.org/resources/judging-awards-guide/>
+- **Licence.** Original content must be freely available or under an OSI open-source licence; with none chosen, NASA distributes it under Apache 2.0. Non-NASA materials must be freely and publicly available or open source. <https://www.spaceappschallenge.org/legal/>
 
 ---
 

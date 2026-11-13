@@ -25,6 +25,7 @@ You run a small space **Company**. You build **Mines** and **Factories** on your
 | **Weekly Challenge** | Free Play only. Same budget, Parts list and weekly Seed for everyone. | ✅ |
 | **Demo Mode** | One fixed demo Site, one ready save per Era. | ✅ |
 | **Sandbox** | No limits, everything unlocked. | Later |
+| **Team Mode** | _Planned (ticket 41)._ Two to four players share one Mission design on one screen and pass the mouse; each role (Mission lead, Power, Communications, Science) owns its slots and signs its lines of the Design Review before the design ships. No networking. | ✅ planned |
 
 **As built (ticket 21):** choose Campaign or Free Play independently of Easy/Advanced. Free Play starts on 1 January 2026, anywhere on Earth's land, with HQ level 5 and a level 1 Assembly Hall. It uses the Parts built so far and the same economy, Marks, Research, six bars, Test Run, Shipping and flight rules; Solar Cells do not need the Vanguard 1 card here. Buildings and better Marks still need money and days. Falcon 9 Rideshares replace the retired historical rockets; see §8 and `docs/research/launch-vehicles.md`.
 
@@ -117,6 +118,8 @@ After all **currently built** Campaign Milestones (through Syncom 3), the board 
 - **Telstar 1 Milestone (ticket 18):** client AT&T; Low Earth Orbit (the real 952 × 5,933 km at 44.8°), a **Radio Transponder**, **136 days** of Data (it worked normally from 10 July to 23 November 1962); reward $8M. As AT&T did, the Company pays for the **whole Launch Vehicle**, not a Rideshare: Thor-Delta costs $2.7M (AT&T paid NASA $2,680,982), whatever the mass. The transponder makes 90 kB a day, more than a Simple Antenna sends (50), so it needs a **Ground Station**. Cards: "TV across the ocean" and "Live via satellite" (the Andover horn antenna).
 - **Syncom 3 Milestone (ticket 18):** client NASA; **geostationary orbit** (35,786 km over the equator), a Radio Transponder, **66 days** of Data (launch on 19 August 1964 to the end of the Tokyo Olympics, 24 October); reward $10M. The rocket only reaches a transfer orbit; the Spacecraft's own **Main Engine** (24 kg, like Syncom's solid apogee motor) does the rest, else it is "Stuck in the transfer orbit". With the engine it weighs about 48 kg: too much for Thor-Delta's 45 kg to the transfer orbit, so it flies on **Delta D** (104 kg), and its Parts need the **Large Bus** (Assembly Hall level 3, which opens in Era 2). Up there it is in sunlight 99% of the time (NASA's figure for Syncom). Cards: "A satellite that stands still" and "The Tokyo Olympics, live".
 - **Ground Stations (ticket 18):** an Era 2 building ($400K): a big dish that turns while it works. Each one adds its level's boost to what every antenna sends home (one level 1 station doubles it, level 2 adds 1.5, level 3 adds 2; game estimates). Without one, Spacecraft use borrowed stations (×1). A Mission keeps the boost it shipped with. Sending more also lowers the chance of Point the antenna.
+- **Who needs the Data** _(planned, ticket 42)_: every generated Free Play Contract says who needs the Data and why. Later, a "Choose a question" Contract derives orbit, Payload and days from the question and greys out options that can't answer it (the Webb game's pattern; NASA's "begin with the end in mind").
+- **Rideshare dates** _(planned, ticket 44, Later)_: Rideshares leave on fixed days; a late Spacecraft waits for the next one. A Whole Launch picks its own day (CubeSat 101 §2.15).
 - **Destinations (hackathon):** Low Earth Orbit → Sun-synchronous orbit → Geostationary orbit → Moon (orbit, then surface). Mars and beyond are Later.
 - **Own rockets:** rent (Rideshare) at first. Own **Launch Vehicles** and a **Spaceport Site** arrive in Era 4 (1990s, when private rockets really appeared), about **1–3 hours** into the Campaign. Free Play can reach them sooner.
 - **Endless:** after Artemis IV, the Campaign continues as Free Play.
@@ -181,6 +184,10 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 | **Crewed only** | **Crew Module** (oxygen, water, food, temperature, CO₂ removal, in one Part) + **Launch Escape System** (required) |
 
 - Every Part has **mass, power use, cost, build time, reliability**. Payload also has **Data per day** and **science value**. Real ranges: [`docs/research/spacecraft-parts.md`](research/spacecraft-parts.md). Older Eras use lower, clearly labelled game estimates.
+- **Maturity strip** _(planned, ticket 33)_: four steps at the top of the Mission Designer with JPL's Concept Maturity Level names: 1 Cocktail Napkin (Contract accepted), 2 Initial Feasibility (every bar covered), 3 Trade Space (a second design tried in a Test Run), 4 Point Design (Design Review passed).
+- **Design Review** _(planned, ticket 33)_: before Shipping, a red / yellow / green line per requirement plus spare mass, power and energy against JPL's 35%; it passes at 80% green (JPL's rule). It replaces the repeated warnings in the Launch planner. A weak design can still ship.
+- **Compare designs** _(planned, ticket 45, Later)_: two designs side by side; a short code copies a design, like a Seed.
+- **CubeSat sizes** _(planned, ticket 48, Later)_: Free Play Buses become 1U, 3U and 6U (a 1U is a 10 cm cube of about 1 to 1.33 kg, CubeSat 101 §1.1).
 - **Crewed rule:** estimated success must be **≥95%** to Launch.
 - There is rarely one right answer: several designs can meet a Contract.
 
@@ -191,6 +198,8 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Mass check:** the game blocks launches where Spacecraft mass is over the vehicle's capacity for that orbit.
 - **Thor-Able (ticket 14):** 120 kg to Low Earth Orbit, Rideshare $25,000 per kg (game estimate), 27 m, three stages (Thor 165 s, Able 115 s, Altair 38 s). Bookable once Explorer 1 is done (it first flew in April 1958); before that the planner shows it with "Opens after Explorer 1". The vehicle picked in the Launch planner is saved, and the Mission Designer's Mass bar measures against it; when a design is too heavy, its warning names a bigger open vehicle. The 3D Launch shows a Thor-Able for it, with "Staging" between stages 1 and 2. Numbers: [`docs/research/launch-vehicles.md`](research/launch-vehicles.md).
 - **First Mission loop (ticket 08):** the Launch planner sits inside the Mission Designer. It shows the Launch Vehicle (only Juno I in Era 1) with its lift and a fits/too-heavy line, the Launch Site (Cape Canaveral), the costs (Rideshare = kg × price per kg, plus Shipping), and a timeline (assembly, Shipping, arrival, Mission end, deadline). The Mission Designer's warnings are repeated there: a weak design can still ship, so the Mission Report can show what went wrong. Shipping is blocked only for no accepted Contract, a Mission already on its way, empty slots, too much mass, missing Parts or not enough money, each with one plain reason.
+- **Segments** _(planned, ticket 32)_: the Launch planner groups its cards under NASA's four mission Segments: User (client, Data, Research Lab), Space (the Spacecraft), Ground (Ground Stations), Launch (Launch Vehicle, Launch Site). Source: Design and Develop Science Missions, slide 8.
+- **Ground Tests** _(planned, ticket 40)_: three optional tests before Shipping, each costing days and money and lowering one Anomaly's chance: vibration test → Stuck solar panel, thermal vacuum test → Survive the eclipse, Day in the Life test → Point the antenna (CubeSat 101 §6.9). Numbers will be game estimates.
 - **Book Rideshare and ship** pays both costs at once and takes the Parts out of the Warehouse. The Site keeps running while the Spacecraft is assembled and shipped; the HUD counts down, then shows **Launch**. One Mission at a time.
 - **Watching the Shipping:** the Mission happens on the Site, not just in numbers. A loading dock (concrete pad, crane, lamps) appears beside the Warehouse, or in the middle of the Site without one. During assembly the player's own Spacecraft stands on a flatbed truck inside a yellow scaffold while the crane swings over it. When Shipping starts, a crate closes over it and the truck drives off the Site, the side with the least water, and out of sight as the Shipping days run out (7 days: 14 seconds at 1×). **Follow the truck** glides the camera after it; dragging the map stops following, and once the truck is gone the camera returns to the Site. Nothing can be built on the dock while it is in use. Land bought on the road's side during a Mission keeps the dock, and the road runs on past the new edge.
 - **Mission tracker** (HUD button while a Mission is on its way): a road from "Your Site" to the Launch Site with the truck on it, what is happening now and the days left, and four stages with their dates: assembly, Shipping, Launch (from the arrival date) and the Mission's days of Data (when it would end if launched then), then the deadline (orange if the Mission would end too late). It holds the Launch button once the Spacecraft has arrived. The Launch itself becomes a 3D sequence in ticket 10.
@@ -235,11 +244,14 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 - **Hackathon:** build 3 (antenna, solar panel, eclipse), then the other 2 if time allows. All 3 built (tickets 11 and 12).
 
 - **Space view (ticket 31):** a Spacecraft that reaches orbit stays there. **Space view** (HUD button, shown once something is in orbit; also **See it in orbit** on the Mission Report) shows Earth with every Spacecraft the Company has in orbit, each on its real orbit (size, shape and tilt; Explorer 1: 358 × 2,550 km, 33.24°), moving as Kepler says, 300× faster than real, with Earth turning at the same pace. Name tags and a list; clicking a Spacecraft (on screen, on its tag or in the list) follows its 3D model round the orbit with Earth beside it, and shows what it is doing: "Sending Data: day N of M", "Silent since day N: the Power ran out. Still in orbit." or "Mission done. Still in orbit.", plus its Launch, orbit and lap time ("One lap takes 115 minutes", worked out from Kepler's third law). Drag to turn, scroll to zoom, **See the whole Earth** to go back, Esc to close. It pauses the Site. Orbits round the Moon and other worlds join with their Contracts (Era 3 on). Facts: `docs/research/orbits.md`.
+- **Reference Trajectories** _(planned, ticket 34)_: NASA Mission Viz's GMAT-computed paths: Syncom 3's transfer orbit shown with the real LEO → GEO run ("Path computed with NASA's GMAT"), and a Reference paths list in the Space view with a long ellipse and the Earth → Moon flight. **Orbit maths checked** _(planned, ticket 35)_: a repo test compares the Space view's Kepler maths with a GMAT run.
+- **Later in the Space view** _(planned)_: a timeline to drag through a Mission's events (ticket 47); low orbits decay and Spacecraft come down, with end-of-mission plans in Free Play (ticket 46); **Save for GMAT** exports an orbit for NASA's GMAT (ticket 43).
 
 ## 10. Mission Report and scoring
 
 - Explains **why** the Mission ended as it did, linked to design choices ("Battery ran out in eclipse because Power margin was 3%. A larger battery or more solar cells would fix this.").
 - **First version (ticket 08):** the outcome ("Explorer 1 worked!" / "failed."), then one line per requirement with ✓ or ✗ and the design numbers behind it, failures first: orbit (mass against lift), Payload, Power (battery Wh, watts used, days it lasted), Communications (kB sent against kB made) and Time (end date against deadline). Then the reward, or until when the Contract stays open. It pauses the Site while open. Every report is saved for the History Archive later.
+- **Planned:** lines grouped under the four Segments (ticket 32); a **Like the real one** ending: the player's Spacecraft beside the real one (mass, power source, how long it worked), or a real mission of the same kind in Free Play (ticket 36, from the Webb game); sourced lines from CubeSat 101 where they fit, e.g. "double up on the burn wire" after Stuck solar panel (ticket 38); whether a Ground Test was done (ticket 40).
 - Rewards: money, Reputation, Research Points, a **Mission Patch**, and Real History cards.
 - **Weekly Challenge score:** the objective must be met to score at all. Then **Reliability 40%**, **Science value 30%**, **Money left 20%**, **Mass margin 10%**. Best attempt counts; speed does not. Everyone who completes it gets the same reward; the top 3 get a badge.
 
@@ -290,19 +302,32 @@ One best score is stored per account per week, including under simultaneous subm
 
 ## 14. NASA data in the game
 
-The challenge expects the provided data to be used visibly. Planned slots, to be adjusted when the official Resources appear (Nov 13):
+The challenge expects NASA data to be used visibly; the judging guide's Relevance criterion asks that it be "a core component of the proposed solution rather than a superficial addition" (`docs/challenge.md`). Data already in the game, and earlier planned slots:
 
 | Data | Used for |
 |---|---|
 | NASA POWER (climate) | Site sunshine, wind, rain, temperature; launch weather. **In the game (ticket 16):** 2025 yearly climate for every start, daily 2025 weather at the Launch Sites |
-| NASA GIBS (satellite imagery) | Real satellite photos of your region after Earth-imaging Missions |
-| JPL Horizons | Moon (and later Mars) positions and Launch Windows |
-| NASA DONKI (space weather) | Real solar storms as flight events |
+| NASA GIBS (satellite imagery) | Real satellite photos of your region after Earth-imaging Missions (Optional) |
+| JPL Horizons | Moon (and later Mars) positions and Launch Windows (Optional) |
+| NASA DONKI (space weather) | Real solar storms as flight events (Optional) |
 | NASA 3D Resources | Models of real spacecraft for Real History cards |
 | NASA Small Spacecraft State-of-the-Art report | Real Part numbers |
 | Natural Earth (public domain, not NASA) | Real continents on the Mission Designer's globe |
 | NASA Blue Marble: Next Generation, via NASA GIBS | **In the game (ticket 27):** the colours of the land on the globe in the Mission Designer, Launch and Space view |
-| Official challenge Resources | To be added on Nov 13 |
+
+**Official challenge Resources (published 13 Nov).** All planned, none built yet. Each one used gets an entry in Real data and Credits when its ticket ships (ticket 27). Contents and numbers: [`docs/research/official-resources.md`](research/official-resources.md).
+
+| Resource | Planned use |
+|---|---|
+| Design and Develop Science Missions (NASA slides, 2025) | Four Segments in the Launch planner and Mission Report (ticket 32); the tutorial under NASA's six steps (39); "begin with the end in mind" for Contracts (42) |
+| GMAT | Its trajectories via Mission Viz (34); LEAP's orbit maths tested against a GMAT run (35); Save for GMAT (43, Later) |
+| Concept Maturity Levels (JPL) | Maturity strip and Design Review with JPL's 35% margins and 80% rule (33) |
+| Mission Design Lab (Goddard) | Team Mode roles from its disciplines (41); comparing designs (45); end of mission (46). Reading source, not data |
+| NASA Mission Viz | GMAT-computed Reference Trajectories: Syncom 3's transfer, a long ellipse, Earth → Moon (34); draggable timeline (47) |
+| Webb game "Build It Yourself: Satellite!" | "Like the real one" at the end of the Mission Report (36); science-first Contracts (42) |
+| CubeSat 101 | Sourced loading tips and report lines (38); Ground Tests (40); Rideshare dates (44); end of mission (46); CubeSat sizes (48) |
+| Visualize a Space Mission Using VR (2023 challenge) | Draggable timeline (47). Reading source |
+| CSA Digital Games and Activities | Alouette 1 side story card (37); the RADARSAT game's "farmer, captain, first responder" for science-first Contracts (42) |
 
 **Where the player sees it (ticket 27):** the main and pause menus have **Real data → Where LEAP uses real data**: each dataset with its link, what it does in LEAP and its credit. The globe says "Land colours: NASA Blue Marble"; climate and weather lines name NASA POWER; Real History cards credit their photos. Prices, Part numbers and Reliability stay labelled as game estimates.
 
@@ -325,8 +350,10 @@ Main menu · New game (mode, Company, logo, globe, Seed) · Site view (money, Ra
 
 Each step teaches one idea, hands-on, with a short line of text. No walls of text.
 
+**Planned (ticket 39):** the eight steps sit under NASA's six step names (Identify Need & Goals → Define Concept → Define Requirements → Design → Build & Verify → Implement; slide 10 of Design and Develop Science Missions). **Planned (ticket 38):** loading tips from CubeSat 101's "Free advice", each with its page.
+
 **As built (ticket 13):** a small guide card under the top bar ("Step N of 8", one line, **Skip**) and a glow on the button to press next. Steps: accept Explorer 1 → build a Mine → build a Metal Works → fill every slot in the Mission Designer → open a free Test Run → ship → wait for the truck (try 4×) → Launch. The guide reads the game itself, so it survives a reload and never blocks: buying Parts instead of building moves it on. It moves to the bottom of the screen inside the Mission Designer, hides during the Launch show and dialogs, and ends with the first Mission Report. Skip closes it for good. The Company name, place (Historic start by default) and Site come first (New game).
-- **Real History cards:** accepting a Milestone shows its "before" card (the real story); a successful Mission shows the "after" card once its Mission Report is closed. Each card has a real NASA photo with a credit line, a short true story and **Learn more →** to an official NASA page. Both pause the Site. Explorer 1's: "The race to space" (Sputnik, Vanguard TV3, 84 days) and "The Van Allen belts". A Milestone can also have **side story** cards ("Also in 1958") shown after its "after" card: Vanguard 1 after Explorer 1. TIROS-1's cards use a NASA photo of a Thor-Able launch (no TIROS-1 photo was found in NASA's library) and a NASA satellite image of a hurricane. Facts and photo sources: `docs/research/milestones.md`.
+- **Real History cards:** accepting a Milestone shows its "before" card (the real story); a successful Mission shows the "after" card once its Mission Report is closed. Each card has a real NASA photo with a credit line, a short true story and **Learn more →** to an official NASA page. Both pause the Site. Explorer 1's: "The race to space" (Sputnik, Vanguard TV3, 84 days) and "The Van Allen belts". A Milestone can also have **side story** cards ("Also in 1958") shown after its "after" card: Vanguard 1 after Explorer 1. _Planned (ticket 37):_ Alouette 1, Canada's first satellite, "Also in 1962" after Telstar 1 (CSA facts). TIROS-1's cards use a NASA photo of a Thor-Able launch (no TIROS-1 photo was found in NASA's library) and a NASA satellite image of a hurricane. Facts and photo sources: `docs/research/milestones.md`.
 - **Mission Patch:** every successful Mission earns one, drawn by the game: Company name round the top, Mission name round the bottom, Earth, the Spacecraft on its orbit, the year and the Company logo in the centre. The Mission Report shows it ("Your first Mission Patch!").
 - **History Archive** (HUD button, shown once it holds something): the patch gallery and every unlocked Real History card; click a card to read it again.
 
