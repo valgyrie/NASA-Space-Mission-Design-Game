@@ -95,12 +95,13 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
 - [x] Demo Mode: one save per finished Era (ticket 24: Eras 1 and 2, separate from the player Company)
 - [x] NASA data used visibly in the game (see GDD §14)
-- [x] Credits screen (data, audio, sources; team names still a placeholder)
+- [x] Credits screen (data, audio, sources; team: Team Artemis-IV, confirmed 13 Nov)
 - [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits
 - [x] README: how to play and run
-- [ ] Hosted playable link
+- [ ] Hosted playable link (GitHub Pages workflow ready in `.github/workflows/pages.yml`; switch Pages on once the repo is public)
+- [x] Licence (Apache 2.0) and how AI was used, in the README; AI tags in the music files
 - [ ] Submission video
-- [ ] Project page on spaceappschallenge.org
+- [ ] Project page on spaceappschallenge.org (text ready to paste: `docs/submission.md`)
 - [ ] Make the repo public before the deadline
 
 ### Official Resources (approved 2026-11-13, in build order)

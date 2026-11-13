@@ -71,6 +71,10 @@ What it is in LEAP: the Company carries on in 2026 with generated Contracts and 
 
 > [Style block] Scene: dawn over a modern coastal launch site. A tall, plain white two-stage rocket climbs into a pink-and-blue sky, its flame bright and its trail curving out over the sea. In the upper part of the image, above the curve of the Earth seen from space, a cluster of many small box-shaped satellites with fold-out solar panels spreads out gently from an open rocket stage, each one tiny and colourful. Below, a neat modern launch site with clean white buildings, solar panels on roofs and a big satellite dish. Feeling: space is open to everyone now; anything is possible.
 
+## Matching the game: screenshots as references
+
+Text prompts alone gave buildings that did not look like LEAP's. The fix: attach game screenshots and ask the image tool to keep their shapes and colours, plus the finished Era 1 picture as the style to match. The ChatGPT pack for Era 2 and Free Play (one folder per prompt with `prompt.md` and the screenshots to attach) was built on 13 Nov 2026 and sent to the team; its prompts are the same as below but start with "Use the attached game screenshots as the exact reference for every building". To capture new screenshots: Demo Mode → Era 2, hide the UI, and move `window.leap.world.camera` close to a building (dev server only).
+
 ## Adding the images
 
 1. Save the team's picks anywhere (not in the repo), one per Era.
@@ -86,6 +90,6 @@ Every image is credited in the game as "Illustration (AI-generated)" on its card
 
 | File | Era | Tool | Date | Prompt changes |
 |---|---|---|---|---|
-| `public/eras/era-1.webp` | 1 | _(to fill)_ | | |
-| `public/eras/era-2.webp` | 2 | _(to fill)_ | | |
-| `public/eras/era-5.webp` | Free Play | _(to fill)_ | | |
+| `public/eras/era-1.webp` | 1 | Canva image generator (Canva connector), with two game screenshots as references (the launch pad with Juno I, and the Demo Site) | 13 Nov 2026, chosen by the agent at the team's request | Prompt rewritten to keep the game's own pad, red lattice tower, rocket and buildings; the first try from the text prompt alone was dropped because its buildings did not look like the game's |
+| `public/eras/era-2.webp` | 2 | ChatGPT, from the pack below (not made yet: the card shows text only until then) | | |
+| `public/eras/era-5.webp` | Free Play | ChatGPT, from the pack below (not made yet) | | |
