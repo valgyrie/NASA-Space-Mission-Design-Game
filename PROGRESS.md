@@ -4,23 +4,24 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 30–32 built (32 waits for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Branch `claude/affectionate-turing-vxoteg`, from `main` at **60a51dd**. 370 tests and both type checks pass.
+**State:** tickets 01–26 and 30–33 built (32 and 33 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Branch `claude/gallant-allen-v4v19k`, from `main` at **60a51dd**, with `main` **b09d70e** (ticket 32) merged in. 385 tests and both type checks pass.
 
-**Done this session (13 Nov):**
-- **Ticket 32, Segments:** Launch planner and Mission Report under NASA's four Segments, user first (`src/game/segments.ts`, `reportSegments`). Reports keep `ground` (optional, no save bump). Slides added to Real data (`missionSegments`). Browser-checked for Explorer 1 and Telstar 1 at 1280×800 and 1024×768.
-- **Ticket 27:** live Resources tab re-read; identical to the 13 Nov copy.
-- **Ticket 28:** Apache 2.0 `LICENSE`; README "How AI was used" and "Licence"; music ID3-tagged as AI (audio identical; `docs/audio/levels.json` updated); GitHub Pages workflow (checked with a local subpath build); project page text in `docs/submission.md`. Team name "Team Artemis-IV" confirmed real.
-- **Ticket 29:** `prepare-era-art.py` burns in an "AI-generated" mark; Era card crops from the top so it shows; prompts audited. **All three Era pictures in the game**, made from game screenshots so the pad and buildings match (Era 1 in Canva; Era 2 and Free Play by the team in ChatGPT from the pack). The Era card no longer crops pictures.
-- Tickets 30 and 31 had nothing left for an agent (team playtest only).
+**Done this session (13 Nov): ticket 33, maturity strip and Design Review.**
+- Strip: JPL's four Concept Maturity Levels under the Mission Designer's header (`src/game/maturity.ts`); each step lights on its own rule; hidden in the Weekly Challenge. Hints hide below 1100 px wide.
+- Design Review: replaces the planner's warnings list, in the footer above Test Run (`src/game/designReview.ts`, `src/ui/designReview.ts`). Seven requirement lines (met = green, else red) and three margin lines against 35% (green / yellow / red); passes at 80% of counted lines. Spare power does not count on batteries alone. Shipping rules unchanged.
+- Results: Explorer 1 tutorial design 7/9 (not passed: thin mass and energy are the Era 1 lesson), TIROS-1 8/10 passed, Syncom 3 10/10. Decisions in GDD §7 and the ticket.
+- Tested designs are saved as an optional v19 field `testedDesigns`: no save bump, no backend redeploy.
+- CML paper added to Real data (`cml`, ticket 27). Screenshots in `screenshots/development-NASA_resources/`.
 
 **Next:**
-1. Ticket 33 (maturity strip and Design Review), then 34–39 in the order in `docs/tickets/README.md`. Add each Resource to `DATASETS` as it ships (ticket 27).
-2. Team: make the repo public, then Settings → Pages → Source: GitHub Actions (link: `https://valgyrie.github.io/NASA-Space-Mission-Design-Game/`); paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
+1. Team: test tickets 32 and 33 (the Explorer 1 tutorial should feel fine with a "Not passed" review). Then ticket 34 (GMAT trajectories), 35–39 in the order in `docs/tickets/README.md`.
+2. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
 **Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). To capture game scenes for art: Demo Mode, hide `#ui`, move `window.leap.world.camera` (dev server only); `window.leap.launchShow.play(...)` plays any rocket.
 
 ## Log
 
+- 2026-11-13: Ticket 33 built: maturity strip (JPL's four Concept Maturity Levels) and the Design Review (35% margins, 80% green) replacing the planner's warnings; tested designs saved without a version bump; CML paper in Real data. Merged main's ticket 32. 385 tests, type checks and browser checks (Explorer 1, TIROS-1, Syncom 3; 1280×800 and 1024×768) pass.
 - 2026-11-13: Ticket 32 built (Segments in planner and report); ticket 28 licence, AI disclosure, music AI tags, Pages workflow and project page text; ticket 29 watermark and Era 1 picture from game screenshots; Era 2 and Free Play pictures added from the team's ChatGPT results. 370 tests, type checks and browser checks pass.
 - 2026-11-13: Official Resources captured into `docs/challenge.md` with the rules published that day; research note `official-resources.md`; tickets 32–48 written from the 19 approved ideas; tickets 27–29, GDD, glossary, checklist and AGENTS.md updated. Docs only; game code unchanged. Source files added under `docs/research/sources/` and linked from each ticket; `scripts/fetch_spaceapps_page.py` reads the challenge site.
 - 2026-11-13: Fixed all 15 QA findings (tickets 01, 02, 04, 05, 08, 13, 16, 17, 19, 22, 26, 30) with tests and `_solved` screenshots; `leap-online` redeployed and a live v19 cloud save/load checked. 362 tests, both type checks and production/online builds pass.
