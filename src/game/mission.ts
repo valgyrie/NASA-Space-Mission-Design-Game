@@ -358,6 +358,8 @@ export interface MissionReport {
   anomaly: Anomaly | null;
   /** Money Launch Insurance paid back after a failure (0 when it wasn't bought or the Mission worked). */
   insurancePaid: number;
+  /** How much the Company's Ground Stations multiplied its antenna (1: borrowed stations). Missing in older saves. */
+  ground?: number;
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -406,6 +408,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
     design: { ...m.design },
     anomaly,
     insurancePaid,
+    ground: m.ground,
   };
   state.reports.push(report);
   state.mission = null;

@@ -24,7 +24,9 @@ The Resources tab is due Nov 13. On Nov 12 the build container could not reach s
 
 **Done on 2026-11-13 (docs only):** the Resources tab is in `docs/challenge.md` with NASA's own descriptions and the rules published that day; what each Resource contains is in `docs/research/official-resources.md`; GDD §14 lists each Resource with its planned use and ticket. The team approved the new tickets 32–48 the same day.
 
-**To finish:** as each of tickets 32–42 ships, add its Resource to `DATASETS` and strings `data.<id>.*` (Real data and Credits show it). Then tick the third item. Planned entries: Design and Develop Science Missions (32, 39), Concept Maturity Levels (33), Mission Viz and GMAT (34, 35), Webb game (36, 42), CubeSat 101 (38, 40), CSA (37, 42). The Mission Design Lab and the 2023 challenge are reading sources (41, 45, 47) rather than data.
+**Shipped entries:** Design and Develop Science Missions (`missionSegments`, ticket 32, 2026-11-13). The live Resources tab was re-read on 2026-11-13 and matches `resources-tab.txt` word for word: nothing new.
+
+**To finish:** as each of tickets 33–42 ships, add its Resource to `DATASETS` and strings `data.<id>.*` (Real data and Credits show it). Then tick the third item. Planned entries: Design and Develop Science Missions (32, 39), Concept Maturity Levels (33), Mission Viz and GMAT (34, 35), Webb game (36, 42), CubeSat 101 (38, 40), CSA (37, 42). The Mission Design Lab and the 2023 challenge are reading sources (41, 45, 47) rather than data.
 
 **Rechecked (2026-11-12):** The Real data list opens and displays the existing dataset uses and credits. The official Resources work remains pending. [QA report](../qa/2026-11-12/README.md).
 

@@ -89,22 +89,23 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Learn more → links on real things
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
-- [ ] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). Guide, prompts and the card's image slot done; images still to generate
+- [x] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). All three in the game, made from game screenshots, watermarked
 
 ### Judges and submission
 - [ ] Final ticket: check the local launchers once more (automated launcher checks, clean setup, progress, reopening and quitting on Windows, macOS and Linux)
 - [x] Demo Mode: one save per finished Era (ticket 24: Eras 1 and 2, separate from the player Company)
 - [x] NASA data used visibly in the game (see GDD §14)
-- [x] Credits screen (data, audio, sources; team names still a placeholder)
+- [x] Credits screen (data, audio, sources; team: Team Artemis-IV, confirmed 13 Nov)
 - [ ] Ask organisers if the official Space Apps logo may appear, unaltered, on the splash and credits
 - [x] README: how to play and run
-- [ ] Hosted playable link
+- [ ] Hosted playable link (GitHub Pages workflow ready in `.github/workflows/pages.yml`; switch Pages on once the repo is public)
+- [x] Licence (Apache 2.0) and how AI was used, in the README; AI tags in the music files
 - [ ] Submission video
-- [ ] Project page on spaceappschallenge.org
+- [ ] Project page on spaceappschallenge.org (text ready to paste: `docs/submission.md`)
 - [ ] Make the repo public before the deadline
 
 ### Official Resources (approved 2026-11-13, in build order)
-- [ ] Four Segments in the Launch planner and Mission Report (ticket 32)
+- [x] Four Segments in the Launch planner and Mission Report (ticket 32)
 - [ ] Maturity strip and Design Review (ticket 33)
 - [ ] NASA's GMAT trajectories: Syncom 3's transfer and Reference paths in the Space view (ticket 34)
 - [ ] Orbit maths checked against GMAT (ticket 35)
