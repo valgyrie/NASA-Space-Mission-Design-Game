@@ -24,6 +24,7 @@ import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber 
 import { learnMore } from './learnMore';
 import { SITE_SOURCES, SOURCES, VEHICLE_SOURCES } from '../game/sources';
 import { makeDesignReview } from './designReview';
+import { transferPicture } from './transferPicture';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -142,7 +143,8 @@ export function makeLaunchPlanner(
   }
   // How a geostationary orbit is reached, shown when the Contract asks for one.
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
-  choices.append(geoNote, learnMore(SOURCES.orbits, t('sources.orbits')));
+  const geoPath = transferPicture();
+  choices.append(geoNote, geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
   choices.append(el('h4', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
   const siteButtons = new Map<string, HTMLButtonElement>();
   for (const id of LAUNCH_SITE_IDS) {
@@ -268,7 +270,7 @@ export function makeLaunchPlanner(
     for (const [id, b] of siteButtons) b.setAttribute('aria-pressed', String(id === site));
     const orbit = plan.goal.orbit;
     const whole = !!plan.goal.contract.wholeLaunch;
-    geoNote.hidden = orbit !== 'geostationary';
+    geoNote.hidden = geoPath.hidden = orbit !== 'geostationary';
     for (const [id, ui] of vehicleButtons) {
       const status = vehicleStatus(state, id);
       const open = status.open;

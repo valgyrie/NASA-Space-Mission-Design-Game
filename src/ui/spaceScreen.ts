@@ -6,6 +6,7 @@ import { SPEEDUP, type SpaceView } from '../world/spaceView';
 import { contractText, formatDecimal, formatGameDate, formatNumber } from './format';
 import { learnMore, missionLinks } from './learnMore';
 import { SOURCES } from '../game/sources';
+import { REFERENCE_TRAJECTORY_IDS, type ReferenceTrajectoryId, referenceMinutes } from '../world/referenceTrajectory';
 
 /**
  * The Space view: Earth with every Spacecraft the Company has in orbit. A list on the left and a name tag
@@ -95,7 +96,34 @@ export function showSpaceScreen(
   const whole = button('small', t('space.whole'));
   detail.append(name, status, facts, sources, whole);
   const note = el('p', 'space-hint warn', t('space.no3d'));
-  card.append(head, hint, list, empty, detail, learnMore(SOURCES.earth, t('sources.earth')), el('p', 'space-hint', t('data.globe')), note);
+  // Reference Trajectories: real paths computed with NASA's GMAT, to switch on for comparison.
+  const refs = el('section', 'space-refs');
+  const refList = el('ul', 'space-list');
+  const shownRefs = new Set<ReferenceTrajectoryId>();
+  const refButtons = new Map<ReferenceTrajectoryId, HTMLButtonElement>();
+  for (const id of REFERENCE_TRAJECTORY_IDS) {
+    const li = el('li', 'space-ref');
+    const b = button('space-item', '');
+    b.dataset.reference = id;
+    b.setAttribute('aria-pressed', 'false');
+    b.append(el('span', 'space-dot space-ref-dot'), el('span', 'space-item-name', t(`reference.${id}.name`)));
+    b.addEventListener('click', () => {
+      const on = !shownRefs.has(id);
+      if (on) shownRefs.add(id);
+      else shownRefs.delete(id);
+      b.setAttribute('aria-pressed', String(on));
+      view?.showReference(id, on);
+    });
+    refButtons.set(id, b);
+    const days = referenceMinutes(id) / 1_440;
+    li.append(
+      b,
+      el('p', 'space-ref-line', `${t(`reference.${id}.line`)} ${t('reference.time', { days: formatDecimal(days), speedup: formatNumber(SPEEDUP) })}`),
+    );
+    refList.append(li);
+  }
+  refs.append(el('h3', '', t('reference.heading')), el('p', 'space-hint', t('reference.hint')), refList, learnMore(SOURCES.missionViz, t('sources.missionViz')));
+  card.append(head, hint, list, empty, detail, refs, learnMore(SOURCES.earth, t('sources.earth')), el('p', 'space-hint', t('data.globe')), note);
   screen.append(tags, card);
   root.append(screen);
 
@@ -147,6 +175,7 @@ export function showSpaceScreen(
         }
       }
       note.hidden = !viewFailed;
+      refs.hidden = viewFailed;
       sats = satellitesInOrbit(state);
       view?.load(sats);
       // Two Spacecraft from the same Contract are told apart by their Launch date.

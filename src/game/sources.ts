@@ -26,13 +26,15 @@ export const SOURCES = {
   segments: 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf',
   /** Wessen, Borden, Ziemer, Kwok (JPL), AIAA SPACE 2013: the maturity strip and the Design Review (ticket 33). */
   cml: 'https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/44299',
+  /** NASA Mission Viz: GMAT-computed Reference Trajectories (official challenge Resource, ticket 34). */
+  missionViz: 'https://nasa.github.io/mission-viz/',
 };
 
 /**
  * Every real dataset in the game, in the order the Real data list shows them. Each has a name, what it
  * does in LEAP and its credit in strings.ts (`data.<id>.*`). Add the official challenge Resources here.
  */
-export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml'] as const;
+export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml', 'missionViz'] as const;
 export type DatasetId = (typeof DATASET_IDS)[number];
 export const DATASETS: Record<DatasetId, string> = {
   power: 'https://power.larc.nasa.gov/',
@@ -42,6 +44,7 @@ export const DATASETS: Record<DatasetId, string> = {
   nasaImages: 'https://images.nasa.gov/',
   missionSegments: SOURCES.segments,
   cml: SOURCES.cml,
+  missionViz: 'https://github.com/nasa/mission-viz',
 };
 
 /** The challenge LEAP was made for. */
