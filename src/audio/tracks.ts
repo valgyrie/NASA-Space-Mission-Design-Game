@@ -11,6 +11,12 @@ export const loops = (scene: MusicScene) => ['site', 'designer', 'orbit', 'anoma
 export const LOOP_FADE = 3;
 export const AUDIO_KEY = 'leap.audio';
 export const DEFAULT_VOLUME = { music: .5, effects: .7 };
+/**
+ * Bus gains under the volume sliders. Tracks are mastered at −16 LUFS, so music at the default 50% plays at about
+ * −22 LUFS: clear background music. (It was 0.6, about −26 LUFS, too quiet to hear on laptop speakers.)
+ */
+export const MUSIC_GAIN = 1;
+export const EFFECTS_GAIN = .5;
 export type Volume = typeof DEFAULT_VOLUME;
 export function volumeFrom(raw: string | null): Volume {
   try {

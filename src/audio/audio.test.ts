@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
-import { DEFAULT_VOLUME, MUSIC, TRACK_IDS, loops, volumeFrom } from './tracks';
+import { DEFAULT_VOLUME, EFFECTS_GAIN, MUSIC, MUSIC_GAIN, TRACK_IDS, loops, volumeFrom } from './tracks';
 
 describe('audio', () => {
   it('keeps safe defaults for missing or malformed settings, clamps levels and preserves mute', () => {
@@ -9,6 +9,14 @@ describe('audio', () => {
     expect(volumeFrom('{"music":0,"effects":1}')).toEqual({ music: 0, effects: 1 });
     expect(volumeFrom('{"music":-3,"effects":9}')).toEqual({ music: 0, effects: 1 });
     expect(volumeFrom('{"music":"loud","effects":0.4}')).toEqual({ music: .5, effects: .4 });
+  });
+
+  it('plays music at the default volume loud enough to hear (about −22 LUFS), without clipping', () => {
+    // Tracks are mastered at −16 LUFS with peaks ≤ −1 dBTP; the bus gain sets what the player hears.
+    const lufs = -16 + 20 * Math.log10(DEFAULT_VOLUME.music * MUSIC_GAIN);
+    expect(lufs).toBeGreaterThanOrEqual(-23);
+    expect(MUSIC_GAIN).toBeLessThanOrEqual(1);
+    expect(EFFECTS_GAIN).toBeLessThanOrEqual(1);
   });
 
   it('uses each received track, alternates the Site pair and keeps stingers and history as one-shots', () => {

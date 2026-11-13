@@ -32,6 +32,14 @@ export function makeAudioControls(): HTMLElement {
     label.append(input, value);
     section.append(label);
   }
+  // Shown only when the browser could not load or decode the music; effects still work then.
+  const problem = document.createElement('p');
+  problem.className = 'note warn';
+  problem.textContent = t('audio.musicFailed');
+  const showProblem = () => { problem.hidden = !audio.musicFailed; };
+  audio.onMusicStatus(showProblem);
+  showProblem();
+  section.append(problem);
   const credits = document.createElement('details');
   const summary = document.createElement('summary');
   summary.textContent = t('audio.credits');

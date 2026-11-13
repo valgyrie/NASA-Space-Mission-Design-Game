@@ -1,4 +1,4 @@
-import { AUDIO_KEY, DEFAULT_VOLUME, LOOP_FADE, MUSIC, type MusicScene, type TrackId, type Volume, loops, volumeFrom } from './tracks';
+import { AUDIO_KEY, DEFAULT_VOLUME, EFFECTS_GAIN, LOOP_FADE, MUSIC, MUSIC_GAIN, type MusicScene, type TrackId, type Volume, loops, volumeFrom } from './tracks';
 
 export type Effect = 'click' | 'build' | 'launch' | 'alarm' | 'reward' | 'countdown';
 
@@ -56,7 +56,18 @@ class Sound {
   private installed = false;
   private begun = false;
   private volume = { ...DEFAULT_VOLUME };
+  private failed = false;
+  private statusListeners = new Set<() => void>();
   get settings(): Volume { return { ...this.volume }; }
+  /** The last music track could not be loaded or decoded; the next click or key tries again. */
+  get musicFailed(): boolean { return this.failed; }
+  /** Run `fn` whenever musicFailed changes. */
+  onMusicStatus(fn: () => void): void { this.statusListeners.add(fn); }
+  private setFailed(failed: boolean): void {
+    if (this.failed === failed) return;
+    this.failed = failed;
+    for (const fn of this.statusListeners) fn();
+  }
 
   init(): void {
     if (this.installed) return;
@@ -105,8 +116,8 @@ class Sound {
   }
   private applyVolume(): void {
     if (!this.context) return;
-    this.musicBus?.gain.setTargetAtTime(this.volume.music * .6, this.context.currentTime, .02);
-    this.effectsBus?.gain.setTargetAtTime(this.volume.effects * .5, this.context.currentTime, .02);
+    this.musicBus?.gain.setTargetAtTime(this.volume.music * MUSIC_GAIN, this.context.currentTime, .02);
+    this.effectsBus?.gain.setTargetAtTime(this.volume.effects * EFFECTS_GAIN, this.context.currentTime, .02);
   }
   effect(kind: Effect): void {
     if (this.context?.state === 'running' && this.effectsBus && this.volume.effects > 0 && !document.hidden) synth(this.context, this.effectsBus, kind);
@@ -167,6 +178,7 @@ class Sound {
     const start = async (index: number, at?: number): Promise<void> => {
       try {
         const buffer = await this.load(ids[index % ids.length]!);
+        this.setFailed(false);
         if (token !== this.generation || this.context?.state !== 'running' || document.hidden) return;
         const time = Math.max(at ?? 0, this.context.currentTime + .03);
         const loop = loops(scene);
@@ -193,9 +205,14 @@ class Sound {
           void this.load(ids[(index + 1) % ids.length]!).catch(() => {});
           this.timer = window.setTimeout(() => { this.timer = 0; void start(index + 1, next); }, Math.max(0, (next - this.context.currentTime - 3) * 1000));
         }
-      } catch {
+      } catch (error) {
         // Failed or stale requests must neither keep the previous screen playing nor interrupt a newer one.
-        if (token === this.generation) this.fadeOut(.4);
+        if (token !== this.generation) return;
+        this.fadeOut(.4);
+        // Say so in the sound settings, and try again on the next click or key instead of staying silent.
+        this.setFailed(true);
+        this.begun = false;
+        console.warn('LEAP music could not play:', error);
       }
     };
     void start(0);
