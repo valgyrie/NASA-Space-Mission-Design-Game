@@ -2576,6 +2576,38 @@ button.space-item[aria-pressed='true'] .space-ref-dot {
   line-height: 1.45;
 }
 
+/* Like the real one (ticket 36): the player's Spacecraft beside the real one. */
+.report-real p {
+  margin: 0 0 8px;
+  line-height: 1.45;
+}
+
+.report-real-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0 0 8px;
+  font-size: 0.95em;
+}
+
+.report-real-table th,
+.report-real-table td {
+  padding: 5px 8px;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.report-real-table thead th {
+  color: var(--muted);
+  font-weight: 600;
+}
+
+.report-real-table tbody th {
+  color: var(--muted);
+  font-weight: 400;
+  width: 34%;
+}
+
 .archive-backdrop {
   z-index: 3;
 }

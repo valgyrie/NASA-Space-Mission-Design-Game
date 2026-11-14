@@ -14,6 +14,7 @@ import { makePatch } from './patch';
 import { type MissionSegment, bySegment, findingSegment } from '../game/segments';
 import { SOURCES } from '../game/sources';
 import { learnMore } from './learnMore';
+import { likeTheRealOne } from './likeTheRealOne';
 
 /** The Mission Patch a report earned, and whether it is the Company's first. */
 export interface EarnedPatch {
@@ -167,6 +168,30 @@ function anomalyWhy(a: Anomaly): string {
   }
 }
 
+/** The "Like the real one" section: a line on who the real one is, a two-column table, one comparing line. */
+function realSection(report: MissionReport): HTMLElement[] {
+  const c = likeTheRealOne(report);
+  const intro = el('p', 'report-real-intro', t(c.sameMission ? 'report.real.introMilestone' : 'report.real.introFree', { name: c.name }));
+  intro.append(' ', learnMore(c.craft.learnMore, c.name));
+  const table = el('table', 'report-real-table');
+  const head = el('tr', '');
+  head.append(el('th', '', t('report.real.what')), el('th', '', t('report.real.yours')), el('th', '', c.name));
+  for (const th of head.children) th.setAttribute('scope', 'col');
+  const rows = c.rows.map((r) => {
+    const tr = el('tr', '');
+    const label = el('th', '', r.label);
+    label.setAttribute('scope', 'row');
+    tr.append(label, el('td', '', r.yours), el('td', '', r.real));
+    return tr;
+  });
+  const thead = el('thead', '');
+  thead.append(head);
+  const tbody = el('tbody', '');
+  tbody.append(...rows);
+  table.append(thead, tbody);
+  return [intro, table, el('p', 'report-real-line', c.line)];
+}
+
 /** The Mission Report: the outcome, each requirement with the reason it was or wasn't met, and the reward. */
 export function showMissionReport(
   root: HTMLElement,
@@ -200,6 +225,9 @@ export function showMissionReport(
   const patchArt = el('div', 'report-patch-art');
   const patchText = el('p', '');
   patchBox.append(patchArt, patchText);
+  // Like the real one (ticket 36): the player's Spacecraft beside the real one, last thing in the report.
+  const realHeading = el('h3', '', t('report.real.heading'));
+  const real = el('div', 'report-real');
   const close = el('button', 'report-close', t('report.close'));
   close.type = 'button';
   // A Spacecraft that reached orbit is still up there: the Space view shows it.
@@ -207,7 +235,7 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, buttons);
+  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, realHeading, real, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
@@ -260,6 +288,7 @@ export function showMissionReport(
       patchHeading.hidden = patchBox.hidden = !earned;
       patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, company.name, company.logo)] : []));
       patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';
+      real.replaceChildren(...realSection(report));
       shown = report;
       seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);
       backdrop.hidden = false;
