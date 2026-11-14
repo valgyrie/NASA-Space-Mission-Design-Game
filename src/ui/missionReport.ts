@@ -246,6 +246,8 @@ export function showMissionReport(
   const heading = el('h2', '', t('report.heading'));
   heading.id = 'report-heading';
   const subtitle = el('p', 'report-subtitle');
+  // Who needed the Data and why (ticket 42): generated Contracts only.
+  const need = el('p', 'report-need');
   const sources = el('div', '');
   const outcome = el('p', 'report-outcome');
   const why = el('h3', '', t('report.why'));
@@ -276,7 +278,7 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, teamHeading, teamBox, patchHeading, patchBox, realHeading, real, buttons);
+  panel.append(heading, subtitle, need, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, teamHeading, teamBox, patchHeading, patchBox, realHeading, real, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
@@ -291,6 +293,8 @@ export function showMissionReport(
         site: t(`launchSite.${report.site}.short`),
         date: formatGameDate(report.launchDay),
       });
+      need.textContent = contractText(report.contract, 'need');
+      need.hidden = !need.textContent;
       outcome.textContent = t(report.success ? 'report.success' : 'report.failure', { contract });
       outcome.classList.toggle('ok', report.success);
       const line = (l: ReportLine) => {

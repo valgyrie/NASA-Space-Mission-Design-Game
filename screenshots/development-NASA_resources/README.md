@@ -53,3 +53,11 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [ticket-41-review-signed-1024.png](features%20and%20game/ticket-41-review-signed-1024.png) | The same at 1024×768 | Same |
 | [ticket-41-report-tiros-1-1280.png](features%20and%20game/ticket-41-report-tiros-1-1280.png) | Mission Report: each role's part with its player | Same → shipped → a real flight from the game modules, shown through the dev report handle |
 | [ticket-41-report-tiros-1-1024.png](features%20and%20game/ticket-41-report-tiros-1-1024.png) | The same at 1024×768 | Same |
+| [ticket-42-board-need-1280.png](features%20and%20game/ticket-42-board-need-1280.png) | Contracts board: each generated Contract says who needs the Data ("A satellite builder wants to know how much shielding the electronics need.") | Local fixture: Free Play save (Sydney, Easy, $20M) written with the game modules → Continue → HQ and Assembly Hall placed through the dev page → Contracts |
+| [ticket-42-board-question-1280.png](features%20and%20game/ticket-42-board-question-1280.png) | "Choose a question" card with four questions | Same, scrolled down |
+| [ticket-42-board-question-1024.png](features%20and%20game/ticket-42-board-question-1024.png) | The same at 1024×768; the panel now ends above the two-row Build menu | Same |
+| [ticket-42-board-village-line-1280.png](features%20and%20game/ticket-42-board-village-line-1280.png) | Active question Contract "Village line": question, who needs it, requirements, why this orbit | Same → "Can a mountain village call a doctor at any hour?" |
+| [ticket-42-designer-greyed-1280.png](features%20and%20game/ticket-42-designer-greyed-1280.png) | Mission Designer: no engine, Radiation Detector and TV Camera greyed out, each with one line why | Same → Mission Designer |
+| [ticket-42-designer-greyed-1024.png](features%20and%20game/ticket-42-designer-greyed-1024.png) | The same at 1024×768 | Same |
+| [ticket-42-report-need-1280.png](features%20and%20game/ticket-42-report-need-1280.png) | Mission Report: the need line under the title | Same → transponder and Main Engine → shipped → a real flight from the game modules, shown through the dev report handle |
+| [ticket-42-report-need-1024.png](features%20and%20game/ticket-42-report-need-1024.png) | The same at 1024×768 | Same |

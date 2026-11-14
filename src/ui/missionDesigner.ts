@@ -19,6 +19,7 @@ import {
   isComplete,
   UNLOCKED_BY,
   isSlotShown,
+  cannotAnswer,
   isUnlocked,
   optionEra,
   missionGoal,
@@ -35,7 +36,7 @@ import { recordTestRun } from '../game/maturity';
 import { makeTestRunScreen } from './testRun';
 import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
-import { t } from '../strings';
+import { type StringKey, t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
 import { missionLinks } from './learnMore';
 import { contractText, formatDecimal, formatMoney, formatNumber } from './format';
@@ -239,6 +240,7 @@ export function showMissionDesigner(
     locked: HTMLElement | null;
     eraLock: HTMLElement | null;
     hall: HTMLElement | null;
+    why: HTMLElement;
   }[] = [];
   for (const slot of SLOTS) {
     const row = el('div', 'slot');
@@ -263,7 +265,11 @@ export function showMissionDesigner(
       // A Bus the Assembly Hall can't take yet can still be picked and tested, but not shipped.
       const hall = slot === 'bus' ? el('span', 'option-locked', t('designer.needsHall', { level: hallLevelFor(o.id as BusId) })) : null;
       if (hall) b.append(hall);
-      optionUi.push({ o, b, stats, locked, eraLock, hall });
+      // A question Contract greys out what can't answer its question, with one line why.
+      const why = el('span', 'option-locked');
+      why.hidden = true;
+      b.append(why);
+      optionUi.push({ o, b, stats, locked, eraLock, hall, why });
       b.addEventListener('click', () => {
         if ((!team || mayChange(state, SLOT_ROLE[slot])) && choose(state.design, o.id, state)) changed();
       });
@@ -390,10 +396,14 @@ export function showMissionDesigner(
     sources.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
 
     const players = team ? state.team?.players : undefined;
-    for (const { o, b, stats, locked, eraLock, hall } of optionUi) {
+    const asked = check.goal.contract;
+    for (const { o, b, stats, locked, eraLock, hall, why } of optionUi) {
       const open = isUnlocked(state, o.id);
+      const cannot = check.goal.status === 'accepted' && cannotAnswer(asked, o.id);
+      why.hidden = !cannot;
+      why.textContent = cannot ? t(`question.${asked.question}.no.${o.id}` as StringKey) : '';
       // In Team Mode a slot answers only to its role's player.
-      b.disabled = !open || (!!players && !mayChange(state, SLOT_ROLE[o.slot]));
+      b.disabled = !open || cannot || (!!players && !mayChange(state, SLOT_ROLE[o.slot]));
       if (locked) locked.hidden = open;
       if (eraLock) eraLock.hidden = open;
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);

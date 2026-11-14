@@ -679,6 +679,18 @@ button.trade.blocked {
   padding-left: 16px;
 }
 
+.question-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+button.question {
+  text-align: left;
+  padding: 6px 10px;
+}
+
 button.accept {
   margin-top: 8px;
   padding: 5px 16px;
@@ -1480,6 +1492,11 @@ button.launch-button {
   color: var(--muted);
 }
 
+.report-need {
+  margin: 0 0 6px;
+  font-style: italic;
+}
+
 .report-outcome {
   margin: 16px 0 0;
   font-size: 22px;
@@ -1607,12 +1624,13 @@ button.report-close {
   cursor: pointer;
 }
 
-/* Left-side panels open below the HUD, wherever its bottom is (set by hud.ts). */
+/* Left-side panels open below the HUD, wherever its bottom is (set by hud.ts), and end above the Build menu,
+   which wraps onto two rows on narrow screens (buildMenu.ts sets its top). */
 .market,
 .contracts,
 .tracker {
   top: var(--hud-bottom, 150px);
-  max-height: calc(100vh - var(--hud-bottom, 150px) - 100px);
+  max-height: calc(min(100vh - 100px, var(--build-menu-top, 100vh) - 12px) - var(--hud-bottom, 150px));
 }
 
 /* ---- Mission tracker ---- */
