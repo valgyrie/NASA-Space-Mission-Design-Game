@@ -48,7 +48,7 @@ The game opens at [http://localhost:5173](http://localhost:5173).
 
 ### Play
 
-**Title:** choose **Let’s go** to open the main menu over a live Site. **Learn more →** links beside real missions, rockets and science open their sources in a new tab.
+**Title:** the LEAP logo and the main menu share one screen, with a rocket lifting off behind them (one of the five Launch Vehicles, a different one each time). **Learn more →** links beside real missions, rockets and science open their sources in a new tab.
 
 **Main menu:** Continue your Company, or start one if you have no save. **Demo Mode** offers Era 1 (Explorer 1) and Era 2 (Telstar 1), with working buildings, Parts and a prepared design. Open the Mission Designer to try a Test Run or ship. Your own Company is kept; selecting an Era starts the demo afresh. Use **Main menu** in the pause menu to return.
 

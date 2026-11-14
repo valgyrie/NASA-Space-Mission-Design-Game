@@ -6,6 +6,14 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 
 | Screenshot | What it shows | How to open it |
 |---|---|---|
+| [title-menu-pad-thor-delta-1280.png](features%20and%20game/title-menu-pad-thor-delta-1280.png) | Title and main menu in one screen; Thor-Delta waiting on the pad behind it | Open the game (1280×800) |
+| [title-menu-liftoff-delta-d-1280.png](features%20and%20game/title-menu-liftoff-delta-d-1280.png) | Delta D lifting off with its three boosters, beside the buttons | Same, a few seconds after liftoff |
+| [title-menu-liftoff-falcon-9-1280.png](features%20and%20game/title-menu-liftoff-falcon-9-1280.png) | Falcon 9 climbing | Same |
+| [title-menu-liftoff-thor-able-1280.png](features%20and%20game/title-menu-liftoff-thor-able-1280.png) | Thor-Able climbing | Same |
+| [title-menu-1024.png](features%20and%20game/title-menu-1024.png) | The menu at 1024×768, Delta D on the pad | Open the game (1024×768) |
+| [title-menu-demo-1024.png](features%20and%20game/title-menu-demo-1024.png) | Demo Mode sheet in place of the buttons | Main menu → Demo Mode |
+| [title-menu-sound-1024.png](features%20and%20game/title-menu-sound-1024.png) | Sound sheet from the speaker icon | Main menu → speaker icon |
+| [title-menu-credits-1024.png](features%20and%20game/title-menu-credits-1024.png) | Credits sheet, scrolling | Main menu → Credits |
 | [hq-floating-logo-1280.png](features%20and%20game/hq-floating-logo-1280.png) | Bug: one of the flag's logos floated above the HQ roof, and the wall logo hung off its board | Demo Mode → Era 1, camera close to the HQ |
 | [hq-floating-logo-1280_solved.png](features%20and%20game/hq-floating-logo-1280_solved.png) | Fixed: both logos on the flag, the wall logo centred on its board | Same |
 | [folds-designer-1280.png](features%20and%20game/folds-designer-1280.png) | Mission Designer folds: each slot's idea in one line, Power's arrow opened to show why | Demo Mode → Era 1 → Mission Designer → press the arrow under Power |

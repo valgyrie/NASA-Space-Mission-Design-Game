@@ -5,12 +5,12 @@ import { generateSite } from './site/site';
 import { siteClimateFor } from './game/places';
 import { t } from './strings';
 import { createDemo, demoStorage, type DemoEra } from './game/demo';
-import { showMainMenu } from './ui/mainMenu';
+import { type MainMenu, showMainMenu } from './ui/mainMenu';
 import { showNewCompany } from './ui/newCompany';
 import { World } from './world/world';
 import { preloadBuildingModels } from './world/buildingModels';
 import { showOnline } from './ui/online';
-import { showTitleScreen } from './ui/titleScreen';
+import { TitleLaunch } from './world/titleLaunch';
 import { addOwnedPlots } from './game/plots';
 import { showLoading } from './ui/loading';
 
@@ -53,8 +53,32 @@ world.onFrame((seconds) => {
   world.animateBuildings(reducedMotion.matches ? 0 : Math.min(seconds, 0.1));
 });
 
+// Behind the main menu, a random rocket lifts off; without WebGL (or too slow for it) the Site stays instead.
+let titleLaunch: TitleLaunch | null = null;
+let menu: MainMenu | null = null;
+function showTitleLaunch(): void {
+  if (!titleLaunch) {
+    try {
+      titleLaunch = new TitleLaunch(saved?.company.logo, reducedMotion.matches, (vehicle) => menu?.setRocket(vehicle), () => hideTitleLaunch());
+    } catch {
+      return;
+    }
+    root.prepend(titleLaunch.element);
+    titleLaunch.start();
+  }
+  world.hidden = true;
+}
+function hideTitleLaunch(): void {
+  titleLaunch?.destroy();
+  titleLaunch = null;
+  menu?.setRocket(null);
+  world.hidden = false;
+}
+
 async function startGame(game: SaveData, options?: { storage: SaveStorage; demoEra: DemoEra }): Promise<void> {
   titlePreview = false;
+  menu = null;
+  hideTitleLaunch();
   const done = showLoading(root, world);
   const playing = import('./playSite');
   // Let the rendered shot paint before generating the Site; never hold a completed load for a tip.
@@ -72,6 +96,8 @@ async function startGame(game: SaveData, options?: { storage: SaveStorage; demoE
 }
 function startNew(): void {
   titlePreview = false;
+  menu = null;
+  hideTitleLaunch();
   showNewCompany(root, {
     onBack: () => { previewCompany(); mainMenu(); },
     onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
@@ -84,7 +110,7 @@ function startNew(): void {
 function mainMenu(): void {
   world.keyboardEnabled = false;
   world.controls.enabled = false;
-  showMainMenu(root, {
+  menu = showMainMenu(root, {
     companyName: saved?.company.name,
     onOnline: () => online.open(),
     onSharedSeed: () => startNew(),
@@ -99,6 +125,7 @@ function mainMenu(): void {
       void startGame(createDemo(era), { storage: demoStorage(localStorage), demoEra: era });
     },
   });
+  showTitleLaunch();
 }
 // Draw the title Site once the building models are in (or after a few seconds), so the simple stand-in models never
 // flash up first; skip it if the player has already moved on to a game or the new-Company screen.
@@ -106,4 +133,4 @@ let titlePreview = true;
 void preloadBuildingModels(4000).then(() => {
   if (titlePreview) previewCompany();
 });
-showTitleScreen(root, mainMenu);
+mainMenu();

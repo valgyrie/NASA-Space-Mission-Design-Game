@@ -34,6 +34,12 @@
 - Round 2, centred showcase (like a game's skin collection screen): the 3D view fills the whole screen; big step title at the top; the chosen option's name in large capitals under the model; a centred row of picture tiles (real renders of each Part or rocket; locked ones dimmed); pager "‹ 3 / 7 ›" with dots; resources / costs bottom-left; the big action button bottom-right.
 - 492 tests and both type checks pass. Browser: Demo Mode Era 1 at 1920×1200, 1600×1000, 1280×800 and 1024×768; no console errors. Screenshots `steps-designer-*`, `steps-planner-*`. Notes: `docs/notes-step-panels-*.md`. Not tried: the Weekly Challenge designer (needs Online).
 
+**Title screen like a classic game menu (14 Nov, night), on branch `claude/starting-menu-ui-redesign-dnzovq`, waiting for the team's approval before merging:**
+- One screen for title and main menu: big LEAP logo with the orbit line, a tilted yellow line that pulses (one of five short real facts or tips: Van Allen belts, before NASA, Telstar's live TV, equator, keep it simple; facts from `docs/research/milestones.md`), a column of wide buttons in the showcase style (dark glass, blue edge, glow), and a bottom row with Sound and Real data as icon buttons. Demo Mode, Credits, Sound and Real data open in one sheet in place of the buttons; Back or Esc returns. The "Let's go" step is gone; the first click or key starts the music.
+- Behind it: a random Launch Vehicle (all five, never the same twice in a row) waits on the pad, lifts off, climbs, fires its upper stages, then fades to the next (`src/world/titleLaunch.ts`, schedule in `src/game/titleShow.ts` with a test). It reuses `LaunchView` unchanged; the Launch show, Launch planner and rocket choice are untouched. The canvas is 150% wide so the rocket stands right of the buttons. Bottom-left names the rocket. Reduced motion: rocket holds on the pad. Too slow (median frame over 1/12 s) or no WebGL: the live Site, as before. Uses the saved Company's logo on the rocket.
+- 495 tests and both type checks pass. Browser: 1280×800 (all five rockets, on the pad and climbing) and 1024×768 (menu, Demo, Sound, Credits sheets). Screenshots `title-menu-*`. Not checked on a real GPU: this container renders in software.
+- Fixtures: the main menu now opens directly; "Let's go → Continue" is now just "Continue".
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
@@ -43,12 +49,13 @@
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
 
-**Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). Free Play fixture: on the dev page, import `/src/game/siteState.ts` and `/src/save/save.ts`, write a Free Play save to `localStorage`, reload, Let's go → Continue, then place HQ and Assembly Hall with `placeHQ`/`placeAssemblyHall` on `window.leap.state`. Campaign fixtures: Demo Mode Era 1, then set `window.leap.state`.
+**Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). Free Play fixture: on the dev page, import `/src/game/siteState.ts` and `/src/save/save.ts`, write a Free Play save to `localStorage`, reload, Continue, then place HQ and Assembly Hall with `placeHQ`/`placeAssemblyHall` on `window.leap.state`. Campaign fixtures: Demo Mode Era 1, then set `window.leap.state`.
 
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
 
+- 2026-11-14: Title and main menu merged into one screen like a classic game menu, over a random rocket Launch (five Launch Vehicles). Launch show untouched. Tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Folds (short line + arrow) in the Mission Designer and Launch planner, an equator tip for the Launch Site, and the HQ's floating logo fixed. 492 tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Realistic graphics, session 3: land, water, sky and the ten Blender buildings finished and reviewed in screenshots; Spacecraft and Earth started. 476 tests and type checks pass. Handoff with agent prompts in `docs/graphics-overhaul/HANDOFF.md`.
 - 2026-11-14: Music fix: tracks are now MP3s saved as `<id>.music`, because download managers (e.g. Internet Download Manager) grabbed every `.mp3` request, so the game had no music and kept re-requesting. A track that fails stays silent until reload. 463 tests and type checks pass; browser check: one request per track, a blocked track is not retried.

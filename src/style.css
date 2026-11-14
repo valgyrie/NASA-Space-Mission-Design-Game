@@ -3033,44 +3033,215 @@ button.upgrade {
   height: 28px;
 }
 
-/* Main menu and Demo Mode use the same panels as the rest of the game. */
-.title-screen, .main-menu {
-  left: max(24px, 6vw);
-  transform: translateY(-50%);
+/* Title and main menu in one screen over a Launch: wordmark on top, a column of wide buttons, small corner lines. */
+.title-launch {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  background: #000;
 }
-.dialog.title-screen {
-  width: min(440px, calc(100vw - 48px));
-  gap: 18px;
-  padding: 32px;
+/* Wider than the screen and cut off on the right, so the rocket stands beside the buttons, not behind them. */
+.title-launch-canvas { display: block; width: 150%; height: 100%; }
+@media (max-width: 900px) { .title-launch-canvas { width: 100%; } }
+.title-launch-fade {
+  position: absolute;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+}
+.title-launch-fade.cut { animation: title-cut 0.45s ease-out; }
+@keyframes title-cut { from { opacity: 0.85; } to { opacity: 0; } }
+.main-menu {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: clamp(24px, 7vh, 72px) 16px 48px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  /* Darker at the top and bottom so the white text reads over a bright sky. */
+  background:
+    linear-gradient(to bottom, rgba(4, 8, 16, 0.55), rgba(4, 8, 16, 0) 38%, rgba(4, 8, 16, 0) 62%, rgba(4, 8, 16, 0.6)),
+    radial-gradient(ellipse at 50% 62%, rgba(4, 8, 16, 0.35), rgba(4, 8, 16, 0) 60%);
+  pointer-events: none;
+}
+.main-menu > * { pointer-events: auto; }
+.main-menu-title {
+  position: relative;
   text-align: center;
+  margin-bottom: clamp(20px, 6vh, 56px);
+  text-shadow: 0 3px 18px rgba(0, 0, 0, 0.75);
 }
-.title-screen .title-logo {
+.main-menu .title-logo {
   position: relative;
   isolation: isolate;
-  margin: 18px 0;
-  font-size: clamp(56px, 8vw, 88px);
+  margin: 0;
+  padding: 0 0.3em;
+  font-size: clamp(76px, 12vw, 150px);
   font-weight: 850;
-  line-height: 1.2;
-  letter-spacing: 0.06em;
+  line-height: 1.05;
+  letter-spacing: 0.14em;
+  text-indent: 0.14em;
+  color: #fff;
+  text-shadow: 0 3px 0 #2d5c94, 0 8px 26px rgba(0, 0, 0, 0.7);
 }
 /* An original rising orbit around the wordmark; no real organisation's insignia. */
 .title-logo::before {
   content: '';
   position: absolute;
-  inset: -12px 0;
+  inset: -10px -4px;
   z-index: -1;
-  border: 2px solid #7cbafa;
+  border: 3px solid #7cbafa;
   border-left-color: transparent;
   border-bottom-color: transparent;
   border-radius: 50%;
-  transform: rotate(-19deg);
+  transform: rotate(-17deg);
 }
-.title-screen > p { margin: 0; }
-.title-screen button { margin-top: 12px; }
-.main-menu .main-menu-actions > button:not(.primary) {
-  background: #1f2c40;
+.main-menu-subtitle {
+  margin: 6px 0 0;
+  font-size: clamp(14px, 1.6vw, 19px);
+  font-weight: 700;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+}
+.main-menu-acronym {
+  margin: 6px 0 0;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  color: #c7d6ea;
+}
+/* The tilted line beside the wordmark, gently pulsing. */
+.main-menu-splash {
+  position: absolute;
+  left: 82%;
+  top: 46%;
+  width: max-content;
+  margin: 0;
+  max-width: min(420px, 30vw);
+  font-size: clamp(13px, 1.5vw, 18px);
+  font-weight: 800;
+  line-height: 1.2;
+  color: #f2c14e;
+  text-shadow: 0 2px 0 #3b2a05, 0 0 14px rgba(0, 0, 0, 0.6);
+  transform: rotate(-14deg);
+  transform-origin: left center;
+  animation: splash-pulse 0.9s ease-in-out infinite alternate;
+  pointer-events: none;
+}
+@keyframes splash-pulse {
+  from { transform: rotate(-14deg) scale(1); }
+  to { transform: rotate(-14deg) scale(1.07); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .main-menu-splash { animation: none; }
+}
+.main-menu-middle {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+.main-menu-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.main-menu-actions[hidden], .main-menu-sheet[hidden] { display: none; }
+.main-menu-row .menu-button { white-space: nowrap; }
+.main-menu-row {
+  display: flex;
+  gap: 10px;
+}
+.main-menu-row .menu-button:not(.menu-icon) { flex: 1 1 auto; }
+.menu-icon { flex: none; }
+.menu-button {
+  font: inherit;
+  font-size: 16px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  padding: 12px 14px;
+  min-height: 48px;
   color: var(--text);
-  border: 1px solid var(--panel-edge);
+  background: rgba(10, 17, 30, 0.74);
+  border: 1px solid rgba(140, 170, 210, 0.38);
+  border-radius: 8px;
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.menu-button:hover, .menu-button:focus-visible {
+  background: rgba(30, 50, 80, 0.88);
+  border-color: var(--accent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.menu-button.primary {
+  font-size: 19px;
+  font-weight: 750;
+  min-height: 58px;
+  background: rgba(14, 30, 54, 0.86);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+.menu-button.primary:hover, .menu-button.primary:focus-visible { background: rgba(33, 62, 100, 0.92); }
+.menu-icon {
+  width: 48px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+}
+.menu-icon svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.main-menu-sheet {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 20px 22px;
+  box-sizing: border-box;
+  max-height: calc(100vh - 340px);
+  min-height: 200px;
+  overflow-y: auto;
+  background: rgba(10, 17, 30, 0.9);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
+.main-menu-sheet h2 {
+  margin: 0 0 2px;
+  font-size: 15px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+}
+.main-menu-sheet .note { margin: 0; font-size: 13px; color: var(--muted); }
+.main-menu-era { display: flex; flex-direction: column; gap: 6px; }
+.main-menu-sheet .menu-button:last-child { margin-top: 4px; }
+.main-menu-sheet .audio-controls, .main-menu-sheet .data-credits { margin: 0; }
+.main-menu-sheet .audio-controls input[type='range'] { width: 100%; min-width: 0; accent-color: var(--accent); }
+.main-menu-sheet legend { display: none; }
+.main-menu-corner {
+  position: fixed;
+  bottom: 10px;
+  margin: 0;
+  font-size: 13px;
+  color: #d6e2f2;
+  text-shadow: 0 1px 6px #000;
+  pointer-events: none;
+}
+.main-menu-corner[hidden] { display: none; }
+.main-menu-rocket { left: 14px; letter-spacing: 0.06em; }
+.main-menu-event { right: 14px; }
+@media (max-height: 720px) {
+  .main-menu .title-logo { font-size: clamp(64px, 10vw, 110px); }
+  .main-menu-acronym { display: none; }
 }
 .learn-more {
   display: inline-block;
@@ -3109,30 +3280,11 @@ button.upgrade {
 .loading-card p { margin: 0; color: var(--muted); }
 .sourced-tip { margin: 10px 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 @media (max-width: 700px) {
-  .title-screen, .main-menu { left: 50%; transform: translate(-50%, -50%); }
   .designer-head { flex-wrap: wrap; gap: 8px; }
   .designer-body { display: flex; flex-direction: column; overflow-y: auto; }
   .designer-slots, .designer-resources { overflow-y: visible; }
   .designer-view { min-height: 260px; flex-shrink: 0; }
   .planner-grid { grid-template-columns: 1fr; }
-}
-.main-menu-actions {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-.main-menu-actions[hidden] {
-  display: none;
-}
-.main-menu {
-  width: min(440px, calc(100vw - 32px));
-  max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  gap: 14px;
-}
-.main-menu h2 {
-  margin: 0;
-  font-size: 18px;
 }
 .main-menu button {
   overflow-wrap: anywhere;
