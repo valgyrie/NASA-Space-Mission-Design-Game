@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EARTH_KM, type Satellite, orbitMinutes, orbitPosition } from '../game/space';
 import { buildEarth } from './earthMesh';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
@@ -97,8 +98,13 @@ export class SpaceView {
     (this.stars.material as THREE.PointsMaterial).depthWrite = false;
     this.scene.add(this.stars, this.earth.earth);
     this.earth.spin(THREE.MathUtils.degToRad(80));
-    this.scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x0a0f18, 0.5));
-    const sun = new THREE.DirectionalLight(0xfff2dc, 2.8);
+    // Hard sunlight and deep shadows; a faint blue Earth-shine fill and a dim reflection so foil and metal read.
+    this.scene.add(new THREE.HemisphereLight(0x05070c, 0x3a5d94, 0.45));
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environmentIntensity = 0.25;
+    pmrem.dispose();
+    const sun = new THREE.DirectionalLight(0xfff4e6, 3.4);
     sun.position.set(60, 20, 50);
     this.scene.add(sun);
 

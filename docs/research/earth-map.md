@@ -39,3 +39,22 @@ The land is coloured with **NASA Blue Marble: Next Generation** (MODIS, 2004 mon
 - **Processing:** `scripts/build_blue_marble.py` averages every pixel inside each 1° cell, keeps only cells that are land on the Natural Earth map, and reduces them to one 52-colour palette (median cut) so each cell is one letter: `src/world/blueMarble.ts`, about 23 KB. The globe blends cells as before, so coasts stay rounded. Natural Earth still decides land, sea and the land type of Sites; Blue Marble only sets colours.
 - **What it looks like:** true colours are darker than the old game palette (the Amazon is a deep olive, not bright green); deserts, ice and the green belts read clearly in the Mission Designer.
 - The old surface colours (`LAND_COLOUR` in `earthTexture.ts`) stay as a fallback for any land cell without a Blue Marble colour (none today).
+
+## Photographic globe (2026-11-14)
+
+The globe now shows photographs; the 1° map above still decides land, sea and Site land types (gameplay), and is
+drawn as the fallback while the photographs load or if they fail.
+
+- `scripts/build_earth_textures.py` (run inside Blender: `blender -b --factory-startup -P scripts/build_earth_textures.py`)
+  fetches NASA GIBS WMTS tiles, EPSG:4326, level 3 (10 × 5 tiles of 512 px, 0.0703125° a pixel, so 5,120 px span
+  360°), and writes `public/textures/earth/`:
+  - `colour.jpg`: Blue Marble: Next Generation, area-averaged to 4096 × 2048.
+  - `clouds.jpg`: real clouds of 10 September 2024 (Hurricane Francine in the Gulf of Mexico): VIIRS corrected
+    reflectance from Suomi NPP and NOAA-20 averaged (each fills the other's gaps between swaths), counted as cloud
+    where a pixel is grey-white and brighter than Blue Marble's cloud-free ground; faded beyond 58° of latitude,
+    where sea ice looks like cloud.
+  - `water.png`: OpenStreetMap land/water map (sea and lakes) for the Sun's glint.
+  - `lights.jpg`: VIIRS Black Marble 2016 city lights.
+- Pictures start at 180°W; the game's sphere starts at 90°W, so the shader shifts them by a quarter turn.
+- Credits: Blue Marble and Black Marble "NASA Earth Observatory"; the GIBS acknowledgement; the water map needs
+  "© OpenStreetMap contributors" (ODbL). Sources: [GIBS API docs](https://nasa-gibs.github.io/gibs-api-docs/).

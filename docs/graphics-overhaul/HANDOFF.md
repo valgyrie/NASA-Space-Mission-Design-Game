@@ -45,19 +45,39 @@ so another session can go on. The **final** look still needs the team's go-ahead
 |---|---|---|---|
 | 1 | Terrain, water, sky, lighting | **Done** (reviewed in screenshots). Small rough edges only | `notes-terrain.md` |
 | 2 | Buildings in Blender | **Done** (reviewed). Draco GLB 8.9 MB, every building under 30k triangles | `notes-buildings.md` |
-| 4 | Spacecraft, Earth, space views | **Started in session 3, may be cut off.** Read `notes-space.md` if it exists; else `git status`/`git diff` and screenshots | `notes-space.md` |
+| 4 | Spacecraft, Earth, space views | **Mostly done** (reviewed: Mission Designer and orbit scene). Left-overs listed below | `notes-space.md` |
 | 3 | Rockets and the Launch scene | Not started | |
 | 5 | Trees, rocks, Shipping truck | Not started (streams 1 and 2 are done, so it can start) | |
 | 6 | Credits, docs, tests, screenshots | Not started | |
 | 7 | Play-test, fixes, ask the team | Not started | |
+
+### Stream 4 left-overs (give these to an agent with the stream-4 files)
+
+Done: photographic Earth (NASA Blue Marble, one real day of clouds, city lights, water-only glint, thin blue rim,
+fallback to the old picture), new star field with a Milky Way, Spacecraft materials (foil, solar cells with a cell
+grid, brushed metal, paint) and studio lighting. After shots: `.leap/shots/out/sp/designer2.png`, `orbit.png`.
+
+- **Licence, before the final merge:** `public/textures/earth/water.png` comes from the GIBS layer
+  `OSM_Land_Water_Map` (OpenStreetMap, **ODbL**, not public domain). Either credit "© OpenStreetMap contributors"
+  in the game, `src/game/sources.ts` and the README, or rebuild the mask from the Natural Earth land data the
+  game already has (public domain) and drop the OSM file. Black Marble (`lights.jpg`) needs "NASA Earth
+  Observatory" in the Credits.
+- **Not checked on screen:** the Space view after a Launch (orbit line, Reference paths), the globe picker (no tone
+  mapping there, so the Earth may be dim), Era 1 designs, and the Part options Small Bus, Large Bus, TV Camera and
+  Main Engine.
+- The sun glint was a big white blob in `sp/orbit.png`; the agent toned it down afterwards but did not re-shoot.
+- Antennas keep their old whip and slot shapes; faint swath seams in the clouds near the equator; faded Antarctic
+  sea ice in the cloud picture.
+- The Spacecraft on top of the rocket in the Launch view still looked flat: check it with stream 3.
+- Stream 3 can call `buildEarth(...).setSun(dir)` to light the Earth independently of its scene lights.
 
 ### What to do first
 
 1. `git status` and `git log --oneline -8`. Uncommitted changes are from an agent that was cut off (most likely
    stream 4). Run the checks, look at the game, and keep or finish them: do not throw them away unseen.
 2. Start the dev server and take the screenshots below. Compare with the "what the orchestrator saw" lists.
-3. Run two Opus agents at a time: finish **stream 4** (if `notes-space.md` lists things left) together with
-   **stream 3**; then **stream 5**; then **stream 6**; then the play-test (stream 7).
+3. Run two Opus agents at a time: **stream 3** together with the **stream 4 left-overs** (or stream 5); then
+   **stream 5**; then **stream 6**; then the play-test (stream 7).
 4. After each agent reports: look at its screenshots yourself, commit, and push the branch.
 5. Show the team before/after screenshots and **ask before the final merge into `main`**.
 

@@ -1,44 +1,56 @@
 import * as THREE from 'three';
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { type Design } from '../game/spacecraft';
-import { PRODUCT_COLOUR, mat } from './buildingParts';
+import { PRODUCT_COLOUR } from './buildingParts';
+import { SC, dressSpacecraftMaterials } from './spacecraftMaterials';
 
 /**
- * A low-poly model of the Spacecraft on the Mission Designer's table, built from the design.
+ * The Spacecraft on the Mission Designer's table, built from the design, dressed like flight hardware in a
+ * clean room: gold and silver foil blankets, solar cells, brushed and anodised aluminium, white thermal paint.
  * It stands upright along y: Battery section at the bottom, Bus in the middle, Payload in the nose.
  * Shape loosely follows Explorer 1 (a slim striped cylinder with four whip antennas), not a copy of it.
  * Every Part adds small details (rings, bolts, cables, vents) so it reads like real hardware up close.
  */
 
 const S = {
-  hull: mat(0xd9dde3, { metalness: 0.25, roughness: 0.4 }),
-  hullDark: mat(0x2b2f36, { metalness: 0.3, roughness: 0.6 }),
-  steel: mat(0x8d96a3, { metalness: 0.25, roughness: 0.35 }),
-  bolt: mat(0xb9c0c9, { metalness: 0.25, roughness: 0.3 }),
-  gold: mat(0xe0b040, { metalness: 0.25, roughness: 0.4, emissive: 0x3a2a05, emissiveIntensity: 0.5 }),
-  goldPale: mat(0xedcb6a, { metalness: 0.2, roughness: 0.5, emissive: 0x3a2a05, emissiveIntensity: 0.5 }),
-  radiator: mat(0xf4f5f7, { roughness: 0.5 }),
-  deck: mat(0x3a414c, { metalness: 0.25, roughness: 0.5 }),
-  battery: mat(PRODUCT_COLOUR.batteryPlant, { roughness: 0.6 }),
-  cellCap: mat(0x5a5f68, { metalness: 0.25, roughness: 0.4 }),
-  cable: mat(0xc0392b, { roughness: 0.7 }),
-  cableBlack: mat(0x1d2026, { roughness: 0.8 }),
-  solar: mat(PRODUCT_COLOUR.solarFab, { metalness: 0.25, roughness: 0.25 }),
-  solarLine: mat(0x15244f, { roughness: 0.5 }),
-  antenna: mat(0xe8eaee, { metalness: 0.25, roughness: 0.3 }),
-  slot: mat(0x6b5a3a, { roughness: 0.8 }),
-  payload: mat(PRODUCT_COLOUR.electronicsLab, { roughness: 0.55 }),
-  sensor: mat(0xf2f4f7, { roughness: 0.3 }),
-  glass: mat(0xbfe6ff, { roughness: 0.1, metalness: 0.2, transparent: true, opacity: 0.6 }),
-  tube: mat(0xd9572b, { roughness: 0.5, emissive: 0x6a1a05, emissiveIntensity: 0.4 }),
-  nozzle: mat(0x4a4f57, { metalness: 0.25, roughness: 0.4 }),
+  hull: SC.aluminium,
+  hullDark: SC.anodised,
+  steel: SC.aluminium,
+  bolt: SC.polished,
+  gold: SC.goldFoil,
+  goldPale: SC.goldPale,
+  silver: SC.silverFoil,
+  radiator: SC.whitePaint,
+  stripe: SC.blackPaint,
+  deck: SC.deck,
+  battery: new THREE.MeshStandardMaterial({ color: new THREE.Color(PRODUCT_COLOUR.batteryPlant).multiplyScalar(0.8), metalness: 0.3, roughness: 0.45 }),
+  cellCap: SC.polished,
+  cable: SC.harness,
+  cableBlack: SC.cableBlack,
+  solar: SC.solar,
+  solarBack: SC.panelBack,
+  antenna: SC.whip,
+  slot: SC.fibreglass,
+  payload: SC.silverFoil,
+  sensor: SC.whitePaint,
+  glass: SC.lens,
+  tube: SC.tube,
+  nozzle: SC.bell,
+  throat: SC.throat,
   ghost: new THREE.MeshBasicMaterial({ color: 0x9fb0c6, wireframe: true, transparent: true, opacity: 0.35 }),
 };
 
 const SIDES = 8;
-const ROUND = 20;
+const ROUND = 48;
 
 const cylinder = (rTop: number, rBottom: number, h: number, sides = SIDES) =>
   new THREE.CylinderGeometry(rTop, rBottom, h, sides);
+
+/** A box with softly rounded edges (real panels and blankets never have knife-sharp corners). */
+function box(w: number, h: number, d: number): THREE.BufferGeometry {
+  const r = Math.min(w, h, d) * 0.3;
+  return r < 0.002 ? new THREE.BoxGeometry(w, h, d) : new RoundedBoxGeometry(w, h, d, 2, r);
+}
 
 function mesh(geometry: THREE.BufferGeometry, material: THREE.Material, y = 0): THREE.Mesh {
   const m = new THREE.Mesh(geometry, material);
@@ -60,7 +72,7 @@ function ring(radius: number, y: number, material: THREE.Material, height = 0.03
 
 /** Small bolts evenly round a circle. */
 function bolts(g: THREE.Group, radius: number, y: number, count: number, size = 0.014, cx = 0, cz = 0): void {
-  const geo = new THREE.SphereGeometry(size, 5, 3);
+  const geo = new THREE.SphereGeometry(size, 10, 6);
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2;
     g.add(at(geo, S.bolt, cx + Math.sin(a) * radius, y, cz + Math.cos(a) * radius));
@@ -70,7 +82,7 @@ function bolts(g: THREE.Group, radius: number, y: number, count: number, size = 
 /** A straight rod from a to b. */
 function rod(a: THREE.Vector3, b: THREE.Vector3, radius: number, material: THREE.Material): THREE.Mesh {
   const length = a.distanceTo(b);
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, 6), material);
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, 10), material);
   m.position.copy(a).add(b).multiplyScalar(0.5);
   m.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize());
   return m;
@@ -100,18 +112,18 @@ const BUS_SHAPE: Record<'smallBus' | 'mediumBus' | 'largeBus', BusShape> = {
 function addSmallBus(g: THREE.Group, b: BusShape): void {
   const r = b.radius;
   g.add(mesh(cylinder(r, r, b.height, ROUND), S.hull));
-  for (const y of [-0.3, 0, 0.3]) g.add(ring(r + 0.004, y, S.hullDark, 0.1));
+  for (const y of [-0.3, 0, 0.3]) g.add(ring(r + 0.004, y, S.stripe, 0.1));
   for (const y of [-b.height / 2, b.height / 2]) {
     g.add(ring(r + 0.015, y, S.steel, 0.035));
     bolts(g, r + 0.02, y, 16, 0.011);
   }
   // Vertical seams where the skin panels join.
-  const seam = new THREE.BoxGeometry(0.012, b.height * 0.96, 0.01);
+  const seam = box(0.012, b.height * 0.96, 0.01);
   for (let i = 0; i < 4; i++) g.add(onSide(seam, S.steel, r + 0.004, (i / 4) * Math.PI * 2 + Math.PI / 8, 0));
   // An access hatch with four screws.
   const hatchA = Math.PI * 0.75;
-  g.add(onSide(new THREE.BoxGeometry(0.13, 0.13, 0.012), S.steel, r + 0.006, hatchA, 0.15));
-  const screw = new THREE.SphereGeometry(0.008, 4, 3);
+  g.add(onSide(box(0.13, 0.13, 0.012), S.steel, r + 0.006, hatchA, 0.15));
+  const screw = new THREE.SphereGeometry(0.008, 8, 5);
   for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
     const s = onSide(screw, S.bolt, r + 0.014, hatchA, 0.15 + dy * 0.05);
     s.position.x += Math.cos(hatchA) * dx * 0.05;
@@ -137,17 +149,17 @@ function addMediumBus(g: THREE.Group, b: BusShape): void {
     const a = ((i + 0.5) / SIDES) * Math.PI * 2;
     if (i % 4 === 1) {
       // Radiator: a white panel with fins that sheds heat into space.
-      g.add(onSide(new THREE.BoxGeometry(faceW * 0.9, b.height * 0.86, 0.02), S.radiator, apothem, a, 0));
-      const fin = new THREE.BoxGeometry(faceW * 0.84, 0.012, 0.012);
+      g.add(onSide(box(faceW * 0.9, b.height * 0.86, 0.02), S.radiator, apothem, a, 0));
+      const fin = box(faceW * 0.84, 0.012, 0.012);
       for (let k = -3; k <= 3; k++) g.add(onSide(fin, S.steel, apothem + 0.014, a, k * 0.12));
     } else {
       // Foil blankets: two shades, slightly crumpled into a lower and an upper sheet.
-      g.add(onSide(new THREE.BoxGeometry(faceW * 0.94, b.height * 0.47, 0.02), i % 2 ? S.gold : S.goldPale, apothem, a, -b.height * 0.24));
-      g.add(onSide(new THREE.BoxGeometry(faceW * 0.92, b.height * 0.47, 0.024), i % 2 ? S.goldPale : S.gold, apothem, a, b.height * 0.24));
+      g.add(onSide(box(faceW * 0.94, b.height * 0.47, 0.02), i % 2 ? S.gold : S.goldPale, apothem, a, -b.height * 0.24));
+      g.add(onSide(box(faceW * 0.92, b.height * 0.47, 0.024), i % 2 ? S.goldPale : S.gold, apothem, a, b.height * 0.24));
     }
   }
   // Rails on every corner.
-  const rail = new THREE.BoxGeometry(0.035, b.height * 1.02, 0.035);
+  const rail = box(0.035, b.height * 1.02, 0.035);
   for (let i = 0; i < SIDES; i++) {
     const a = (i / SIDES) * Math.PI * 2;
     g.add(onSide(rail, S.steel, r, a, 0));
@@ -156,7 +168,7 @@ function addMediumBus(g: THREE.Group, b: BusShape): void {
   // Top deck: connectors and a cable bundle.
   const top = b.height / 2 + 0.03;
   for (const [x, z] of [[0.3, 0.1], [-0.25, 0.2], [0.05, -0.32]] as const) {
-    g.add(at(new THREE.BoxGeometry(0.1, 0.05, 0.07), S.hullDark, x, top, z));
+    g.add(at(box(0.1, 0.05, 0.07), S.hullDark, x, top, z));
   }
   g.add(rod(new THREE.Vector3(0.3, top + 0.02, 0.1), new THREE.Vector3(-0.25, top + 0.02, 0.2), 0.012, S.cableBlack));
   // Handling lugs used when lifting it in the hall.
@@ -174,14 +186,14 @@ function addMediumBus(g: THREE.Group, b: BusShape): void {
 function addLargeBus(g: THREE.Group, b: BusShape): void {
   const r = b.radius;
   g.add(mesh(cylinder(r, r, b.height, ROUND), S.radiator));
-  for (const y of [-b.height * 0.3, b.height * 0.3]) g.add(ring(r + 0.004, y, S.hullDark, 0.08));
+  for (const y of [-b.height * 0.3, b.height * 0.3]) g.add(ring(r + 0.004, y, S.stripe, 0.08));
   for (const y of [-b.height / 2, b.height / 2]) {
     g.add(ring(r + 0.02, y, S.steel, 0.05));
     bolts(g, r + 0.025, y, 24, 0.012);
   }
   // Access panels with handles round the middle.
-  const panel = new THREE.BoxGeometry(0.2, 0.22, 0.012);
-  const handle = new THREE.BoxGeometry(0.08, 0.012, 0.02);
+  const panel = box(0.2, 0.22, 0.012);
+  const handle = box(0.08, 0.012, 0.02);
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
     g.add(onSide(panel, S.steel, r + 0.006, a, 0));
@@ -191,7 +203,7 @@ function addLargeBus(g: THREE.Group, b: BusShape): void {
   const top = b.height / 2 + 0.03;
   g.add(mesh(cylinder(r * 0.94, r * 0.94, 0.02, ROUND), S.gold, top));
   for (const [x, z] of [[0.4, 0.2], [-0.35, 0.3], [0.1, -0.5]] as const) {
-    g.add(at(new THREE.BoxGeometry(0.12, 0.05, 0.08), S.hullDark, x, top + 0.03, z));
+    g.add(at(box(0.12, 0.05, 0.08), S.hullDark, x, top + 0.03, z));
   }
   g.add(rod(new THREE.Vector3(0.4, top + 0.05, 0.2), new THREE.Vector3(-0.35, top + 0.05, 0.3), 0.014, S.cableBlack));
 }
@@ -253,15 +265,23 @@ function addSolarCells(g: THREE.Group, bus: BusShape): void {
   const apothem = octagon ? bus.radius * Math.cos(Math.PI / faces) + 0.03 : bus.radius + 0.014;
   const faceW = 2 * apothem * Math.tan(Math.PI / faces) * 0.86;
   const h = bus.height * 0.62;
-  const across = new THREE.BoxGeometry(faceW, 0.008, 0.006);
-  const down = new THREE.BoxGeometry(0.008, h, 0.006);
-  const frame = new THREE.BoxGeometry(faceW + 0.03, h + 0.03, 0.012);
+  const frame = box(faceW + 0.03, h + 0.03, 0.012);
+  // A plain box so the cell picture covers the outer face exactly; the other faces are the panel's back.
+  const panel = new THREE.BoxGeometry(faceW, h, 0.016);
+  const faceMaterials = [S.solarBack, S.solarBack, S.solarBack, S.solarBack, S.solar, S.solarBack];
+  const corner = new THREE.CylinderGeometry(0.008, 0.008, 0.01, 10);
   for (let i = 0; i < faces; i++) {
     const a = ((i + 0.5) / faces) * Math.PI * 2;
     g.add(onSide(frame, S.steel, apothem - 0.004, a, 0));
-    g.add(onSide(new THREE.BoxGeometry(faceW, h, 0.016), S.solar, apothem, a, 0));
-    for (let k = 1; k < 5; k++) g.add(onSide(across, S.solarLine, apothem + 0.01, a, -h / 2 + (k * h) / 5));
-    g.add(onSide(down, S.solarLine, apothem + 0.01, a, 0));
+    g.add(onSide(panel, faceMaterials as unknown as THREE.Material, apothem, a, 0));
+    // Fasteners at the panel's corners.
+    for (const [dx, dy] of [[-1, -1], [1, -1], [-1, 1], [1, 1]] as const) {
+      const f = onSide(corner, S.bolt, apothem + 0.004, a, (dy * (h + 0.015)) / 2);
+      f.position.x += Math.cos(a) * dx * (faceW + 0.015) * 0.5;
+      f.position.z -= Math.sin(a) * dx * (faceW + 0.015) * 0.5;
+      f.rotateX(Math.PI / 2);
+      g.add(f);
+    }
   }
 }
 
@@ -273,12 +293,12 @@ function addSimpleAntenna(g: THREE.Group, bus: BusShape, below: number, lowPower
   const count = lowPower ? 2 : 4;
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + Math.PI / 4;
-    const mount = onSide(new THREE.BoxGeometry(0.06, 0.06, 0.04), S.steel, mountR, a, y);
+    const mount = onSide(box(0.06, 0.06, 0.04), S.steel, mountR, a, y);
     g.add(mount);
     const whip = new THREE.Group();
     whip.add(mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.06, 6), S.hullDark, 0.03)); // hinge spring
-    whip.add(mesh(new THREE.CylinderGeometry(0.007, 0.012, length, 5), S.antenna, length / 2 + 0.06));
-    whip.add(mesh(new THREE.SphereGeometry(0.022, 6, 4), S.antenna, length + 0.06));
+    whip.add(mesh(new THREE.CylinderGeometry(0.007, 0.012, length, 10), S.antenna, length / 2 + 0.06));
+    whip.add(mesh(new THREE.SphereGeometry(0.022, 12, 8), S.antenna, length + 0.06));
     whip.position.set(Math.sin(a) * (mountR + 0.02), y, Math.cos(a) * (mountR + 0.02));
     // Point outwards and a little down.
     whip.rotation.set(0, a, 0);
@@ -286,7 +306,7 @@ function addSimpleAntenna(g: THREE.Group, bus: BusShape, below: number, lowPower
     g.add(whip);
   }
   // Slot antennas: two long windows in the side of the Bus.
-  const slotGeo = new THREE.BoxGeometry(0.04, bus.height * 0.5, 0.012);
+  const slotGeo = box(0.04, bus.height * 0.5, 0.012);
   const radius = bus.sides === SIDES ? bus.radius * Math.cos(Math.PI / SIDES) + 0.03 : bus.radius + 0.006;
   for (const a of [Math.PI / 2, -Math.PI / 2]) g.add(onSide(slotGeo, S.slot, radius, a, -0.05));
 }
@@ -299,7 +319,7 @@ function addSpin(g: THREE.Group, bus: BusShape): void {
     const arm = new THREE.Vector3(Math.sin(a) * r, y, Math.cos(a) * r);
     const end = new THREE.Vector3(Math.sin(a) * (r + 0.1), y, Math.cos(a) * (r + 0.1));
     g.add(rod(arm, end, 0.01, S.steel));
-    g.add(at(new THREE.SphereGeometry(0.035, 8, 6), S.steel, end.x, end.y, end.z));
+    g.add(at(new THREE.SphereGeometry(0.035, 16, 10), S.steel, end.x, end.y, end.z));
   }
   for (const a of [Math.PI / 2, -Math.PI / 2]) {
     const n = new THREE.Mesh(new THREE.ConeGeometry(0.03, 0.08, 8, 1, true), S.nozzle);
@@ -318,7 +338,7 @@ function addRadiationDetector(g: THREE.Group, bus: BusShape): void {
   g.add(ring(r + 0.01, base + 0.015, S.steel, 0.03));
   g.add(mesh(cylinder(r, r, 0.3, ROUND), S.payload, base + 0.18));
   // Vent slits and a dark band.
-  const vent = new THREE.BoxGeometry(0.06, 0.008, 0.01);
+  const vent = box(0.06, 0.008, 0.01);
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2;
     for (let k = 0; k < 3; k++) g.add(onSide(vent, S.hullDark, r + 0.002, a, base + 0.1 + k * 0.025));
@@ -326,15 +346,15 @@ function addRadiationDetector(g: THREE.Group, bus: BusShape): void {
   g.add(ring(r + 0.004, base + 0.29, S.hullDark, 0.03));
   // Window with the Geiger tube behind it.
   const windowA = Math.PI * 0.25;
-  g.add(onSide(new THREE.BoxGeometry(0.12, 0.09, 0.012), S.steel, r + 0.004, windowA, base + 0.21));
+  g.add(onSide(box(0.12, 0.09, 0.012), S.steel, r + 0.004, windowA, base + 0.21));
   const tube = onSide(new THREE.CylinderGeometry(0.018, 0.018, 0.1, 8), S.tube, r + 0.012, windowA, base + 0.21);
   tube.rotateZ(Math.PI / 2);
   g.add(tube);
-  g.add(onSide(new THREE.BoxGeometry(0.11, 0.08, 0.008), S.glass, r + 0.02, windowA, base + 0.21));
+  g.add(onSide(box(0.11, 0.08, 0.008), S.glass, r + 0.02, windowA, base + 0.21));
   // Nose cone with a dark tip and a small temperature probe.
   g.add(mesh(cylinder(r * 0.3, r, 0.35, ROUND), S.sensor, base + 0.33 + 0.175));
   g.add(ring(r * 0.66, base + 0.5, S.hullDark, 0.02));
-  g.add(mesh(new THREE.SphereGeometry(r * 0.3, 10, 6), S.hullDark, base + 0.68));
+  g.add(mesh(new THREE.SphereGeometry(r * 0.3, 24, 12), S.hullDark, base + 0.68));
   g.add(rod(new THREE.Vector3(r * 0.2, base + 0.72, 0), new THREE.Vector3(r * 0.2, base + 0.86, 0), 0.006, S.antenna));
 }
 
@@ -348,7 +368,7 @@ function addTvCamera(g: THREE.Group, bus: BusShape): void {
   g.add(mesh(cylinder(r, r, 0.04, ROUND), S.deck, base + 0.02));
   g.add(ring(r + 0.01, base + 0.045, S.steel, 0.012));
   // Electronics and tape recorder: a box with a reel window.
-  g.add(at(new THREE.BoxGeometry(r * 0.7, 0.14, r * 0.5), S.payload, -r * 0.1, base + 0.11, -r * 0.35));
+  g.add(at(box(r * 0.7, 0.14, r * 0.5), S.payload, -r * 0.1, base + 0.11, -r * 0.35));
   for (const x of [-0.07, 0.05]) {
     const reel = at(new THREE.CylinderGeometry(0.04, 0.04, 0.01, 12), S.hullDark, -r * 0.1 + x, base + 0.12, -r * 0.35 + r * 0.25 + 0.006);
     reel.rotation.x = Math.PI / 2;
@@ -381,21 +401,21 @@ function addTransponder(g: THREE.Group, bus: BusShape): void {
   g.add(ring(r + 0.01, base + 0.045, S.steel, 0.012));
   // Receivers and amplifier tubes: two boxes with gold covers.
   for (const [x, z] of [[-r * 0.45, -r * 0.3], [r * 0.45, -r * 0.3]] as const) {
-    g.add(at(new THREE.BoxGeometry(r * 0.5, 0.12, r * 0.4), S.payload, x, base + 0.1, z));
-    g.add(at(new THREE.BoxGeometry(r * 0.52, 0.015, r * 0.42), S.gold, x, base + 0.165, z));
+    g.add(at(box(r * 0.5, 0.12, r * 0.4), S.payload, x, base + 0.1, z));
+    g.add(at(box(r * 0.52, 0.015, r * 0.42), S.gold, x, base + 0.165, z));
   }
   // The mast with two belts of microwave antennas.
   const mastR = 0.09;
   g.add(mesh(cylinder(mastR, mastR, 0.5, 12), S.hull, base + 0.04 + 0.25));
-  const cavity = new THREE.BoxGeometry(0.05, 0.05, 0.03);
+  const cavity = box(0.05, 0.05, 0.03);
   for (const y of [base + 0.2, base + 0.32]) {
     g.add(ring(mastR + 0.012, y - 0.04, S.steel, 0.012, 12));
     for (let i = 0; i < 12; i++) g.add(onSide(cavity, i % 2 ? S.hullDark : S.gold, mastR + 0.015, (i / 12) * Math.PI * 2, y));
   }
   // Slotted command antenna on top, and cables down to the boxes.
   g.add(mesh(cylinder(0.025, 0.025, 0.3, 8), S.antenna, base + 0.54 + 0.15));
-  for (let k = 0; k < 4; k++) g.add(at(new THREE.BoxGeometry(0.052, 0.04, 0.01), S.slot, 0, base + 0.6 + k * 0.06, 0.026));
-  g.add(mesh(new THREE.SphereGeometry(0.03, 8, 6), S.antenna, base + 0.86));
+  for (let k = 0; k < 4; k++) g.add(at(box(0.052, 0.04, 0.01), S.slot, 0, base + 0.6 + k * 0.06, 0.026));
+  g.add(mesh(new THREE.SphereGeometry(0.03, 16, 10), S.antenna, base + 0.86));
   g.add(rod(new THREE.Vector3(-r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.12, -mastR), 0.008, S.cable));
   g.add(rod(new THREE.Vector3(r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.1, -mastR), 0.008, S.cableBlack));
 }
@@ -407,11 +427,24 @@ function addTransponder(g: THREE.Group, bus: BusShape): void {
 function addMainEngine(g: THREE.Group, bus: BusShape, below: number): void {
   const y = -bus.height / 2 - below;
   const caseR = Math.min(bus.radius * 0.5, 0.32);
-  g.add(at(new THREE.SphereGeometry(caseR, 14, 8, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), S.hullDark, 0, y, 0));
-  g.add(ring(caseR * 0.55, y - caseR * 0.92, S.steel, 0.04, 14));
+  // Motor case: a titanium sphere half, wrapped in silver foil.
+  g.add(at(new THREE.SphereGeometry(caseR, 40, 20, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), S.silver, 0, y, 0));
+  g.add(ring(caseR * 0.55, y - caseR * 0.92, S.steel, 0.04, 32));
   const bellTop = y - caseR * 0.95;
-  g.add(mesh(new THREE.CylinderGeometry(caseR * 0.3, caseR * 0.75, 0.4, 16, 1, true), S.nozzle, bellTop - 0.2));
-  g.add(ring(caseR * 0.76, bellTop - 0.4, S.steel, 0.02, 16));
+  // Bell nozzle: a curved (Rao-like) profile from the narrow throat out to the wide exit, dark inside.
+  const throatR = caseR * 0.22;
+  const exitR = caseR * 0.78;
+  const length = 0.42;
+  const profile: THREE.Vector2[] = [];
+  for (let k = 0; k <= 16; k++) {
+    const t = k / 16;
+    profile.push(new THREE.Vector2(throatR + (exitR - throatR) * Math.pow(t, 0.62), -t * length));
+  }
+  const bell = new THREE.LatheGeometry(profile, 48);
+  g.add(mesh(bell, S.nozzle, bellTop));
+  g.add(mesh(bell, S.throat, bellTop));
+  g.add(mesh(new THREE.TorusGeometry(exitR, 0.008, 8, 48).rotateX(Math.PI / 2), S.steel, bellTop - length));
+  g.add(mesh(new THREE.TorusGeometry(throatR * 1.15, 0.012, 8, 32).rotateX(Math.PI / 2), S.steel, bellTop));
   // Two small jets for pointing and steering, on arms.
   for (const a of [0, Math.PI]) {
     const x = Math.sin(a) * (caseR + 0.12);
@@ -432,6 +465,7 @@ function addAdapter(g: THREE.Group, bus: BusShape, below: number): void {
 
 /** Build the model for a design. Empty slots leave gaps; with no Bus a faint outline shows where it goes. */
 export function buildSpacecraft(design: Design): THREE.Group {
+  dressSpacecraftMaterials();
   const g = new THREE.Group();
   g.name = 'spacecraft';
   const bus = addBus(g, design.bus as keyof typeof BUS_SHAPE | null);

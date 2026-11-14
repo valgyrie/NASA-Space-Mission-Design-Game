@@ -1,8 +1,10 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import type { Design } from '../game/spacecraft';
 import { buildEarth } from './earthMesh';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
+import { makeStars } from './stars';
 
 /** Turns per second of a spin-stabilised Spacecraft on the table (slowed right down from Explorer 1's 750 rpm). */
 const SPIN_TURNS_PER_SECOND = 0.6;
@@ -10,22 +12,8 @@ const SPIN_TURNS_PER_SECOND = 0.6;
 /** Seconds after the player lets go before the camera starts drifting round again. */
 const IDLE_SECONDS = 4;
 
-/** A fixed field of stars on a sphere of `radius`, so the sky looks the same every time. */
-export function makeStars(radius = 150): THREE.Points {
-  const positions: number[] = [];
-  // A fixed pattern, so the sky looks the same every time.
-  let seed = 7;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
-  for (let i = 0; i < 600; i++) {
-    const theta = rand() * Math.PI * 2;
-    const phi = Math.acos(2 * rand() - 1);
-    const r = radius;
-    positions.push(r * Math.sin(phi) * Math.cos(theta), r * Math.cos(phi), r * Math.sin(phi) * Math.sin(theta));
-  }
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-  return new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0xcfd9ff, size: 1.6, sizeAttenuation: false }));
-}
+/** The star field (kept exported from here: the Launch view and Space view import it from this module). */
+export { makeStars };
 
 /**
  * Earth at its true apparent size as seen from 13,000 km up: its disc spans about 38° of sky
@@ -45,6 +33,8 @@ const EARTH_TILT = -0.3;
 const START_LONGITUDE = THREE.MathUtils.degToRad(80);
 /** Radians per second the surface turns: slow and calm, west to east like the real Earth. */
 const EARTH_TURN = 0.012;
+/** Where the Sun is for the backdrop Earth, in the camera's frame (x right, y up, z towards the viewer). */
+const EARTH_SUN = new THREE.Vector3(-0.75, 0.35, 0.3);
 
 /** The Mission Designer's 3D view: the Spacecraft against the stars. Drag to turn, wheel to zoom. */
 export class SpacecraftView {
@@ -66,7 +56,12 @@ export class SpacecraftView {
   constructor() {
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.scene.background = new THREE.Color(0x0a1220);
+    this.scene.background = new THREE.Color(0x010204);
+    // A soft studio room reflected in the metal and foil, so they read as metal and not grey plastic.
+    const pmrem = new THREE.PMREMGenerator(this.renderer);
+    this.scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+    this.scene.environmentIntensity = 0.55;
+    pmrem.dispose();
     const placed = new THREE.Group();
     placed.position.set(0, -EARTH_DISTANCE * Math.sin(EARTH_BELOW), -EARTH_DISTANCE * Math.cos(EARTH_BELOW));
     placed.rotation.x = EARTH_TILT;
@@ -74,12 +69,13 @@ export class SpacecraftView {
     this.earth.spin(START_LONGITUDE);
     this.earthPivot.add(placed);
     this.scene.add(makeStars(), this.earthPivot);
-    this.scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2f3a, 1.3));
-    const sun = new THREE.DirectionalLight(0xfff2dc, 2.4);
+    // Key light: the Sun, crisp and slightly warm. Fill: blue Earth-shine from below. Rim: a cool edge light.
+    const sun = new THREE.DirectionalLight(0xfff4e6, 3.2);
     sun.position.set(-3, 4, 3);
-    const rim = new THREE.DirectionalLight(0x7fb2ff, 1.2);
+    const earthShine = new THREE.HemisphereLight(0x1a2233, 0x4f79b8, 0.9);
+    const rim = new THREE.DirectionalLight(0x9cc4ff, 1.4);
     rim.position.set(3, 1, -4);
-    this.scene.add(sun, rim);
+    this.scene.add(sun, earthShine, rim);
 
     this.camera.position.set(3.6, 1.6, 3.6);
     this.controls = new OrbitControls(this.camera, this.canvas);
@@ -120,6 +116,8 @@ export class SpacecraftView {
       if (this.model && this.spinning) this.model.rotation.y += seconds * SPIN_TURNS_PER_SECOND * Math.PI * 2;
       this.controls.update(seconds);
       this.earthPivot.quaternion.copy(this.camera.quaternion);
+      // The backdrop Earth is lit from the upper left of the view, so the day/night line shows on its right.
+      this.earth.setSun(EARTH_SUN.clone().applyQuaternion(this.camera.quaternion));
       this.renderer.render(this.scene, this.camera);
       requestAnimationFrame(frame);
     };

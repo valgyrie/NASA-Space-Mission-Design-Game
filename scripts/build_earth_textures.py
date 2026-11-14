@@ -149,14 +149,18 @@ def main() -> None:
         lowest = day.min(axis=2)
         spread = day.max(axis=2) - lowest
         # White and grey, brighter than the cloud-free ground below: that is cloud. Coloured or dark is ground.
-        cover = (lowest - base * 0.85 - 0.06) / 0.62 - np.maximum(spread - 0.12, 0) * 2.2
+        cover = (lowest - base * 1.1 - 0.2) / 0.6 - np.maximum(spread - 0.1, 0) * 3.0
         cover = np.clip(cover, 0, 1)
         has_data = luminance(day) > 0.012
         covers.append(np.where(has_data, cover, np.nan))
     stack = np.stack(covers)
     cloud = np.nanmean(stack, axis=0)
     cloud = np.nan_to_num(cloud, nan=0.0)
-    cloud = np.clip(cloud, 0, 1) ** 0.85
+    cloud = np.clip(cloud, 0, 1) ** 1.25
+    # Sea ice round Antarctica and in the Arctic is as white as cloud and not in Blue Marble: fade the polar belts.
+    lat = 90 - (np.arange(cloud.shape[0]) + 0.5) * 180 / cloud.shape[0]
+    polar = np.clip((np.abs(lat) - 58) / 14, 0, 1)
+    cloud *= (1 - 0.75 * polar)[:, None]
     save(shrink(cloud, 4096), OUT / 'clouds.jpg', 82)
 
     water = layer('water')
