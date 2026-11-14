@@ -34,7 +34,7 @@ export const SOURCES = {
  * Every real dataset in the game, in the order the Real data list shows them. Each has a name, what it
  * does in LEAP and its credit in strings.ts (`data.<id>.*`). Add the official challenge Resources here.
  */
-export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml', 'missionViz'] as const;
+export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml', 'missionViz', 'webbGame'] as const;
 export type DatasetId = (typeof DATASET_IDS)[number];
 export const DATASETS: Record<DatasetId, string> = {
   power: 'https://power.larc.nasa.gov/',
@@ -45,6 +45,8 @@ export const DATASETS: Record<DatasetId, string> = {
   missionSegments: SOURCES.segments,
   cml: SOURCES.cml,
   missionViz: 'https://github.com/nasa/mission-viz',
+  /** NASA Goddard's Webb game: its ending shows the real satellite most like yours (ticket 36). */
+  webbGame: 'https://science.nasa.gov/mission/webb/game-build-it-yourself/',
 };
 
 /** The challenge LEAP was made for. */

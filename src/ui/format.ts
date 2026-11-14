@@ -34,6 +34,16 @@ export function formatGameDate(day: number): string {
   return dateFormat.format(new Date(START_DATE_UTC + Math.floor(day) * 86_400_000));
 }
 
+const realDayFormat = new Intl.DateTimeFormat(locale, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const realMonthFormat = new Intl.DateTimeFormat(locale, { month: 'long', year: 'numeric', timeZone: 'UTC' });
+
+/** A real calendar date: "23 May 1958" from `1958-05-23`, or "April 1969" from `1969-04` when only the month is known. */
+export function formatRealDate(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(Date.UTC(year!, month! - 1, day ?? 1));
+  return (day === undefined ? realMonthFormat : realDayFormat).format(date);
+}
+
 /** "2,000" */
 export function formatNumber(n: number): string {
   return kgFormat.format(n);

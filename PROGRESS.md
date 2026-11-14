@@ -4,27 +4,28 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 30–35 built (32, 33 and 34 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 35 built on branch `claude/awesome-darwin-s5j2s6` from `main` at **2afca4b** and merged into `main`. 406 tests and both type checks pass.
+**State:** tickets 01–26 and 30–36 built (32, 33 and 34 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 36 built on branch `claude/nifty-meitner-20wr0d` from `main` at **73d1335** (scheduled run, no team member present) and merged into `main`. 417 tests and both type checks pass.
 
-**Done this session (13 Nov): ticket 35, LEAP's orbit maths checked against GMAT.**
-- Test `src/game/space.gmat.test.ts`: LEAP's `orbitMinutes`/`orbitPosition` against all 155 points of GMAT's long-ellipse run. Distance from Earth's centre 0.31% on average, 1.24% at worst; lap 66.72 h against GMAT's 66.68 h; geostationary 42,157 km against GMAT's 42,165 km. Details in the ticket's **Built** section and `docs/research/official-resources.md`.
-- Source reader moved to `src/world/missionVizSource.ts` (Node only, tests only), shared with ticket 34's tests.
-- Real data, Mission Viz entry: new line `data.missionViz.check` ("within 0.3% … 1.2% at worst"), drawn by `src/ui/dataCredits.ts`. The test fails if the line's numbers drift from the result.
-- Screenshots `ticket-35-*` in `screenshots/development-NASA_resources/features and game/`.
+**Done this session (14 Nov): ticket 36, Like the real one.**
+- Every Mission Report now ends with the player's Spacecraft beside a real one: Mass at launch, Power, How long it worked, and one comparing line ("Yours is 2.5 kg lighter. Explorer 1 also ran on batteries alone. They lasted until 23 May 1958."). Learn more → on the real one.
+- Campaign: Explorer 1, TIROS-1, Telstar 1, Syncom 3. Free Play: SAMPEX (radiation survey), NOAA-18 (weather watch), TDRS-1 (orbital relay). Figures with a source each in `src/game/realCraft.ts`; notes in `docs/research/like-the-real-one.md`.
+- Shown for failed Missions too; Syncom 3 compared at launch (68 kg fuelled). Both were open points in the ticket.
+- Real data: Webb game entry (ticket 27's planned entry). Screenshots `ticket-36-*`.
 
 **Next:**
-1. Team: test tickets 32, 33 and 34. Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
-2. Ticket 36 (Like the real one), then 37–39 in the order in `docs/tickets/README.md`.
+1. Team: test tickets 32, 33, 34 and 36. Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
+2. Ticket 37 (Alouette 1 card), then 38–39 in the order in `docs/tickets/README.md`.
 3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
 
 **Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). To capture game scenes for art: Demo Mode, hide `#ui`, move `window.leap.world.camera` (dev server only); `window.leap.launchShow.play(...)` plays any rocket.
 
-**Suggested skills:** `/grill-with-docs` if ticket 36 raises design questions; `/handoff` at the end.
+**Suggested skills:** `/grill-with-docs` if ticket 37 raises design questions; `/handoff` at the end.
 
 ## Log
 
+- 2026-11-14: Ticket 36 built: Like the real one at the end of every Mission Report (mass, Power, how long it worked, one comparing line); seven real Spacecraft with a source per figure; Webb game in Real data. 417 tests, type checks and browser checks (1280×800, 1024×768; Campaign, Free Play, a failed Mission) pass.
 - 2026-11-13: Ticket 35 built: repo test compares LEAP's Kepler code with GMAT's long ellipse (0.31% mean, 1.24% worst distance; lap 0.07%; GEO radius 0.02%); one line in Real data. 406 tests, type checks and browser checks (1280×800, 1024×768) pass.
 - 2026-11-13: Ticket 34 built: GMAT Reference Trajectories from NASA Mission Viz baked to 18 KB; transfer picture in the Launch planner; Reference paths (transfer, long ellipse, Earth → Moon with the Moon) in the Space view; Mission Viz in Real data. 401 tests, type checks and browser checks (1280×800, 1024×768) pass.
 - 2026-11-13: Ticket 33 built: maturity strip (JPL's four Concept Maturity Levels) and the Design Review (35% margins, 80% green) replacing the planner's warnings; tested designs saved without a version bump; CML paper in Real data. Merged main's ticket 32. 385 tests, type checks and browser checks (Explorer 1, TIROS-1, Syncom 3; 1280×800 and 1024×768) pass.
