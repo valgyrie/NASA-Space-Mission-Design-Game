@@ -6,6 +6,7 @@ import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { type GroundTestId, chosenGroundTests, groundTestCost, groundTestDays, testedKinds } from './groundTests';
 import { awardMission } from './history';
+import { type RoleId, type TeamPlayer, waitingFor } from './team';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
 import type { TechId } from './research';
@@ -62,6 +63,8 @@ export interface Mission {
   insurance: Insurance | null;
   /** Ground Tests done before Shipping (ticket 40). Missing in older saves: none. */
   groundTests?: GroundTestId[];
+  /** The players who signed it off in Team Mode (ticket 41). Missing: built by one player. */
+  team?: TeamPlayer[];
 }
 
 /** Launch Insurance: paid when shipping; pays back `payout` if the Mission fails. */
@@ -80,7 +83,9 @@ export type PlanProblem =
   | { kind: 'cantReach' }
   | Extract<DesignProblem, { kind: 'busFull' | 'hallTooSmall' }>
   | { kind: 'missingParts'; parts: Part[] }
-  | { kind: 'money'; short: number };
+  | { kind: 'money'; short: number }
+  /** Team Mode: these roles have not signed their lines of the Design Review. */
+  | { kind: 'unsigned'; roles: RoleId[] };
 
 /** Everything the Launch planner shows: costs, days and anything that blocks shipping. */
 export interface LaunchPlan {
@@ -185,6 +190,23 @@ export function planLaunch(
 }
 
 /**
+ * The plan as it ships. In Team Mode it also waits for every role to sign the Design Review.
+ * (`planLaunch` leaves that out: the Design Review is worked out from it.)
+ */
+export function shipPlan(
+  state: SiteState,
+  design: Design,
+  vehicle: LaunchVehicleId = state.vehicle,
+  site: LaunchSiteId = state.launchSite,
+  insurance = 0,
+): LaunchPlan {
+  const plan = planLaunch(state, design, vehicle, site, insurance);
+  const roles = design === state.design ? waitingFor(state) : [];
+  if (roles.length === 0) return plan;
+  return { ...plan, problems: [...plan.problems, { kind: 'unsigned', roles }], ok: false };
+}
+
+/**
  * A free Test Run of the design, as if it shipped today: same Launch day and deadline as the plan.
  * It needs no Contract, Parts or money, so the player can test before buying anything.
  */
@@ -259,7 +281,7 @@ export function shipMission(
 ): LaunchPlan {
   const quote = insure ? insuranceQuote(state, seed, design, vehicle, site) : null;
   const insurance = quote?.ok ? { price: quote.price, payout: quote.payout } : null;
-  const plan = planLaunch(state, design, vehicle, site, insurance?.price ?? 0);
+  const plan = shipPlan(state, design, vehicle, site, insurance?.price ?? 0);
   if (!plan.ok) return plan;
   state.money -= plan.total + plan.insurance;
   // The best Parts in the Warehouse go: the Marks the plan was worked out with.
@@ -278,7 +300,10 @@ export function shipMission(
     readyDay: plan.readyDay,
     insurance,
     groundTests: [...plan.groundTests],
+    ...(state.team ? { team: state.team.players.map((p) => ({ ...p })) } : {}),
   };
+  // The next design starts unsigned.
+  if (state.team) state.team.signed = {};
   return plan;
 }
 
@@ -375,6 +400,8 @@ export interface MissionReport {
   insurancePaid: number;
   /** How much the Company's Ground Stations multiplied its antenna (1: borrowed stations). Missing in older saves. */
   ground?: number;
+  /** The players who signed it off in Team Mode (ticket 41). Missing: built by one player. */
+  team?: TeamPlayer[];
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -424,6 +451,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
     anomaly,
     insurancePaid,
     ground: m.ground,
+    ...(m.team ? { team: m.team } : {}),
   };
   state.reports.push(report);
   state.mission = null;

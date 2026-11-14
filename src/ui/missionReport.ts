@@ -17,6 +17,8 @@ import { SOURCES } from '../game/sources';
 import { learnMore } from './learnMore';
 import { likeTheRealOne } from './likeTheRealOne';
 import { sourcedTip } from './sourcedTip';
+import { ROLE_IDS, type RoleId, roleHolder, rolePart } from '../game/team';
+import { TEAM_COLOUR_CSS, ownerText } from './teamBar';
 
 /** The Mission Patch a report earned, and whether it is the Company's first. */
 export interface EarnedPatch {
@@ -183,6 +185,27 @@ function anomalyWhy(a: Anomaly): string {
   }
 }
 
+/** One role's part in a Mission flown in Team Mode: who, their colour, and the finding that was theirs. */
+export interface TeamLine {
+  role: RoleId;
+  player: number;
+  ok: boolean;
+  text: string;
+}
+
+/** Each role's part ("Power · Ada: Power lasted all 78 days…"). Empty for a Mission built by one player. */
+export function teamLines(report: MissionReport): TeamLine[] {
+  const players = report.team;
+  if (!players) return [];
+  const flown = reachedOrbit(report.findings);
+  return ROLE_IDS.flatMap((role) => {
+    const f = rolePart(report, role);
+    if (!f) return [];
+    const text = t('report.team.line', { who: ownerText(players, role), text: findingText(f, flown || f.kind === 'orbit') });
+    return [{ role, player: roleHolder(players.length, role), ok: f.ok, text }];
+  });
+}
+
 /** The "Like the real one" section: a line on who the real one is, a two-column table, one comparing line. */
 function realSection(report: MissionReport): HTMLElement[] {
   const c = likeTheRealOne(report);
@@ -234,6 +257,9 @@ export function showMissionReport(
   const anomalyHeading = el('h3', '', t('report.anomaly'));
   const anomaly = el('div', 'report-anomaly');
   const reward = el('p', 'report-reward');
+  // Team Mode (ticket 41): each role's part.
+  const teamHeading = el('h3', '', t('report.team'));
+  const teamBox = el('div', 'report-team');
   // A successful Mission earns a Mission Patch, shown here and kept in the History Archive.
   const patchHeading = el('h3', '', t('report.patch'));
   const patchBox = el('div', 'report-patch');
@@ -250,7 +276,7 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, patchHeading, patchBox, realHeading, real, buttons);
+  panel.append(heading, subtitle, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, teamHeading, teamBox, patchHeading, patchBox, realHeading, real, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
@@ -301,6 +327,19 @@ export function showMissionReport(
       }
       else reward.textContent = t('report.tooLate');
       if (report.insurancePaid > 0) reward.textContent += ` ${t('report.insurance', { money: formatMoney(report.insurancePaid) })}`;
+      const team = teamLines(report);
+      teamHeading.hidden = teamBox.hidden = team.length === 0;
+      const teamList = el('ul', 'report-team-lines');
+      teamList.append(
+        ...team.map((l) => {
+          const li = el('li', l.ok ? 'ok' : 'short');
+          li.dataset.role = l.role;
+          li.style.setProperty('--team-colour', TEAM_COLOUR_CSS[report.team![l.player]!.colour]);
+          li.append(el('span', 'team-dot'), el('span', '', l.text));
+          return li;
+        }),
+      );
+      teamBox.replaceChildren(el('p', 'report-team-intro', t('report.team.intro')), teamList);
       patchHeading.hidden = patchBox.hidden = !earned;
       patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, company.name, company.logo)] : []));
       patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';

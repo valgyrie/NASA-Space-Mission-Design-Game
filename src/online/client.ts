@@ -2,6 +2,7 @@ import type { Design } from '../game/spacecraft';
 import type { WeeklyResult } from '../game/weekly';
 import { type Account, type Leader, type Metric, formatCode, normalizeCode, readFreePlaySave } from './model';
 import { type SaveData, type SaveStorage } from '../save/save';
+import { withoutPlayerNames } from '../game/team';
 
 // Public project address; private database credentials exist only inside the Supabase function.
 export const ONLINE_URL = 'https://oyslhxxgxtqhgpfivwcb.supabase.co/functions/v1/leap-online';
@@ -71,7 +72,9 @@ export class OnlineClient {
 
   async save(game: SaveData): Promise<void> {
     if (!readFreePlaySave(game)) throw new OnlineError('invalidSave');
-    this.account = await this.request<Account>({ action: 'save', code: this.code, revision: this.account?.revision, save: game });
+    // Team Mode's player names never leave the computer.
+    const save: SaveData = { ...game, state: withoutPlayerNames(game.state) };
+    this.account = await this.request<Account>({ action: 'save', code: this.code, revision: this.account?.revision, save });
   }
 
   async load(): Promise<SaveData> {
