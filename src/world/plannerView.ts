@@ -14,7 +14,9 @@ import { type RocketModel, buildRocket, disposeRocket } from './rocketMesh';
  * The Launch planner's 3D view: the chosen Launch Vehicle with the player's Spacecraft on top, standing on its pad
  * at the chosen Launch Site, in the same sky and light as the Launch show. Drag to turn, wheel to zoom. Each step
  * of the planner eases the camera to what it is about (`frame`). It stops drawing by itself once its canvas is
- * hidden, so the planner only has to call `start` when it is shown.
+ * hidden, so the planner only has to call `start` when it is shown. The view fills the planner behind its text;
+ * `setSafeArea` says how much of the top and bottom the text covers, and the subject is framed in the space between.
+ * It also renders small pictures of each Launch Vehicle for the planner's tiles (`vehicleThumbnail`).
  */
 
 /** What a planner step looks at. */
@@ -31,12 +33,16 @@ const STAND = 1.8;
 const IDLE_SECONDS = 5;
 /** Seconds the camera takes to ease to a step's view. */
 const EASE_SECONDS = 1.4;
-/** Where the ground-station dish stands, west of the pad (on the camera's side). Metres. */
-const DISH_AT = new THREE.Vector3(-62, 0, 52);
+/** Where the ground-station dish stands, north-west of the pad, off to the side of the usual view. Metres. */
+const DISH_AT = new THREE.Vector3(-95, 0, -20);
 /** Wallops Island's pads stand right by the beach: the site moves this far east, towards the sea. */
 const SITE_EAST: Record<LaunchSiteId, number> = { capeCanaveral: 0, wallops: 170 };
 /** The camera's usual heading: from the west-south-west, like the Launch show's pad camera. */
 const HEADING = Math.atan2(-42, 34);
+/** Size of a Launch Vehicle tile picture, in CSS pixels. */
+const THUMB = 128;
+/** The tiles' backdrop behind a rocket picture (linear colour, under this exposure). */
+const THUMB_BACKGROUND = 0x2a4a75;
 
 interface View {
   target: THREE.Vector3;
@@ -82,6 +88,13 @@ export class PlannerView {
   /** The player has turned or zoomed since the last step change: resizing then keeps their view. */
   private moved = false;
   private readonly resize = new ResizeObserver(() => this.fit());
+  /** CSS pixels of the view covered by the planner's title (top) and its tiles, cards and buttons (bottom). */
+  private safe = { top: 0, bottom: 0 };
+  /** Rocket pictures for the tiles: made one per frame while drawing, kept by design and vehicle. */
+  private readonly thumbs = new Map<string, Promise<string>>();
+  private readonly thumbQueue: { vehicle: LaunchVehicleId; design: Design; logo: CompanyLogo; done(url: string): void }[] = [];
+  private readonly thumbScene = new THREE.Scene();
+  private readonly thumbCamera = new THREE.PerspectiveCamera(24, 1, 0.5, 600);
 
   constructor() {
     // Throws where WebGL is missing; the planner then goes without its view.
@@ -112,6 +125,13 @@ export class PlannerView {
     sc.far = 400;
     this.sun = sun;
     this.scene.add(sun, sun.target);
+    // The tiles' little studio: the same sky light and sun, a plain backdrop.
+    this.thumbScene.environment = this.scene.environment;
+    this.thumbScene.environmentIntensity = this.scene.environmentIntensity;
+    this.thumbScene.background = new THREE.Color(THUMB_BACKGROUND);
+    const thumbSun = new THREE.DirectionalLight(this.sky.sunColour, SUN_INTENSITY);
+    thumbSun.position.copy(SUN).multiplyScalar(100);
+    this.thumbScene.add(thumbSun);
 
     this.controls = new OrbitControls(this.camera, this.canvas);
     this.controls.enablePan = false;
@@ -167,6 +187,29 @@ export class PlannerView {
     this.frame(this.shot, true);
   }
 
+  /** How much of the view the planner's text covers at the top and bottom (CSS pixels): the subject is framed between. */
+  setSafeArea(top: number, bottom: number): void {
+    const next = { top: Math.max(0, Math.round(top)), bottom: Math.max(0, Math.round(bottom)) };
+    if (Math.abs(next.top - this.safe.top) < 2 && Math.abs(next.bottom - this.safe.bottom) < 2) return;
+    this.safe = next;
+    this.offset();
+    this.reframe();
+  }
+
+  /**
+   * A picture of this Launch Vehicle with this design on top, for a tile (a data URL). Made while the view draws,
+   * one per frame, and kept, so asking again is free.
+   */
+  vehicleThumbnail(vehicle: LaunchVehicleId, design: Design, logo: CompanyLogo = DEFAULT_LOGO): Promise<string> {
+    const key = `${vehicle}|${JSON.stringify(design)}|${JSON.stringify(logo)}`;
+    let made = this.thumbs.get(key);
+    if (!made) {
+      made = new Promise<string>((done) => this.thumbQueue.push({ vehicle, design: { ...design }, logo, done }));
+      this.thumbs.set(key, made);
+    }
+    return made;
+  }
+
   /** Ease the camera to what a planner step is about. */
   frame(shot: PlannerShot, force = false): void {
     if (shot === this.shot && !force) return;
@@ -215,6 +258,8 @@ export class PlannerView {
 
   private draw(seconds: number): void {
     this.fit();
+    const thumb = this.thumbQueue.shift();
+    if (thumb) thumb.done(this.renderThumbnail(thumb.vehicle, thumb.design, thumb.logo));
     this.idle += seconds;
     if (this.ease) {
       this.ease.t += seconds / EASE_SECONDS;
@@ -250,6 +295,43 @@ export class PlannerView {
     this.renderer.render(this.scene, this.camera);
   }
 
+  /**
+   * Draw one rocket into a corner of the canvas and copy it out before the frame is drawn over it (the drawing
+   * buffer can still be read in the same task).
+   */
+  private renderThumbnail(vehicle: LaunchVehicleId, design: Design, logo: CompanyLogo): string {
+    const ratio = this.renderer.getPixelRatio();
+    const css = Math.min(THUMB, this.canvas.clientWidth, this.canvas.clientHeight);
+    const px = Math.floor(css * ratio);
+    if (px < 16) return '';
+    const rocket = buildRocket(design, vehicle, logo);
+    this.thumbScene.add(rocket.root);
+    const box = new THREE.Box3().setFromObject(rocket.root);
+    const centre = box.getCenter(new THREE.Vector3());
+    const height = box.getSize(new THREE.Vector3()).y;
+    const distance = (height * 0.56) / Math.tan(THREE.MathUtils.degToRad(this.thumbCamera.fov / 2));
+    const up = THREE.MathUtils.degToRad(8);
+    this.thumbCamera.position.set(
+      centre.x + Math.sin(HEADING) * Math.cos(up) * distance,
+      centre.y + Math.sin(up) * distance,
+      centre.z + Math.cos(HEADING) * Math.cos(up) * distance,
+    );
+    this.thumbCamera.lookAt(centre);
+    const size = this.renderer.getSize(new THREE.Vector2());
+    this.renderer.setScissorTest(true);
+    this.renderer.setScissor(0, 0, css, css);
+    this.renderer.setViewport(0, 0, css, css);
+    this.renderer.render(this.thumbScene, this.thumbCamera);
+    const out = document.createElement('canvas');
+    out.width = out.height = px;
+    out.getContext('2d')?.drawImage(this.canvas, 0, this.canvas.height - px, px, px, 0, 0, px, px);
+    this.renderer.setScissorTest(false);
+    this.renderer.setViewport(0, 0, size.x, size.y);
+    rocket.root.removeFromParent();
+    disposeRocket(rocket.root);
+    return out.toDataURL('image/webp', 0.85);
+  }
+
   /** Cold oxygen vapour drifting off the fuelled rocket, as on a real pad before liftoff. */
   private vent(seconds: number): void {
     if (!this.rocket || Math.random() > seconds * 8) return;
@@ -265,11 +347,14 @@ export class PlannerView {
     const x = this.site.position.x;
     const h = this.rocketHeight;
     const half = THREE.MathUtils.degToRad(this.camera.fov / 2);
-    // Far enough back that this height fills most of the view (or this width, on a narrow view).
-    const fitting = (height: number) => (height / 2 / Math.tan(half)) * Math.max(1, 1.6 / Math.max(this.camera.aspect, 0.3));
+    // The share of the view's height left between the planner's title and its tiles.
+    const viewHeight = Math.max(1, this.canvas.clientHeight);
+    const free = Math.max(0.3, (viewHeight - this.safe.top - this.safe.bottom) / viewHeight);
+    // Far enough back that this height fills the free space.
+    const fitting = (height: number) => height / 2 / Math.tan(half) / free;
     switch (this.shot) {
       case 'vehicle':
-        return { target: new THREE.Vector3(x, STAND + h * 0.5, 0), radius: fitting(h * 1.42), theta: HEADING, phi: THREE.MathUtils.degToRad(84) };
+        return { target: new THREE.Vector3(x, STAND + h * 0.5, 0), radius: fitting(h * 1.25), theta: HEADING, phi: THREE.MathUtils.degToRad(84) };
       case 'spacecraft': {
         const box = this.rocket ? new THREE.Box3().setFromObject(this.rocket.spacecraft) : null;
         const centre = box && !box.isEmpty() ? box.getCenter(new THREE.Vector3()) : new THREE.Vector3(x, STAND + h - 1, 0);
@@ -279,12 +364,12 @@ export class PlannerView {
       case 'ground': {
         const dish = DISH_AT.clone().setX(DISH_AT.x + x);
         const target = dish.clone().lerp(new THREE.Vector3(x, 0, 0), 0.35).setY(9);
-        return { target, radius: 82, theta: HEADING - 0.25, phi: THREE.MathUtils.degToRad(76) };
+        return { target, radius: 90, theta: HEADING, phi: THREE.MathUtils.degToRad(76) };
       }
       case 'site':
         return { target: new THREE.Vector3(x + 25, 6, 0), radius: 210, theta: HEADING - 0.15, phi: THREE.MathUtils.degToRad(66) };
       case 'sky':
-        return { target: new THREE.Vector3(x, STAND + h * 1.25, 0), radius: h * 2.6 + 20, theta: HEADING + 0.2, phi: THREE.MathUtils.degToRad(104) };
+        return { target: new THREE.Vector3(x, STAND + h * 0.95, 0), radius: h * 2.4 + 20, theta: HEADING + 0.2, phi: THREE.MathUtils.degToRad(100) };
       case 'overview':
         return { target: new THREE.Vector3(x, STAND + h * 0.42, 0), radius: fitting(h * 1.7), theta: HEADING + 0.5, phi: THREE.MathUtils.degToRad(80) };
     }
@@ -327,8 +412,19 @@ export class PlannerView {
     if (size.x === w && size.y === h) return;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
-    this.camera.updateProjectionMatrix();
-    // The distance that frames a step depends on the view's shape.
+    this.offset();
+    this.reframe();
+  }
+
+  /** Shift the picture so the middle of the view sits in the middle of the free space. */
+  private offset(): void {
+    const { clientWidth: w, clientHeight: h } = this.canvas;
+    if (w === 0 || h === 0) return;
+    this.camera.setViewOffset(w, h, 0, (this.safe.bottom - this.safe.top) / 2, w, h);
+  }
+
+  /** The distance that frames a step depends on the view's shape; keep the player's own view if they moved it. */
+  private reframe(): void {
     if (this.moved) return;
     if (this.ease) this.ease.to = this.goal();
     else this.place(this.goal());

@@ -21,3 +21,16 @@
 ## Left
 - Weekly Challenge variant not tried in the browser (needs Online); code path unchanged apart from layout.
 - No Blender prop added (a work stand makes no sense floating over Earth).
+
+## Round 2: showcase layout (done)
+- Plan: 3D view fills the body behind everything (model lifted above the middle with a view offset); top centre the
+  slot name big + hint fold; under the model the picked option's name in spaced capitals + stats + rule; square
+  thumbnail tiles (offscreen renders, src/world/spacecraftThumbnails.ts, cached data URLs); pager "‹ 3 / 7 ›" with
+  dots; resources card bottom-left (collapsible); stock/Buy + big outlined "Plan the Launch →" bottom-right; Check page
+  shows warnings/status/Buy all/folds in the tile area. Tutorial guide moves to the view's top-left.
+- Done: missionDesigner.ts rebuilt as the showcase; new src/world/spacecraftThumbnails.ts (one hidden renderer,
+  cached PNG data URLs, framed on the slot's Part); SpacecraftView.setStage(lift, room) fits the Spacecraft between the
+  title and the tiles; CSS block replaced; strings designer.page*, designer.lockIcon, designer.check{Ready,ToFix,Empty}.
+- Tested at 1920×1200, 1600×1000, 1280×800, 1024×768 (empty, assembly, hover on a locked tile, Check, Team Mode,
+  tutorial guide). 492 tests and type checks pass.
+- Left: Weekly Challenge not tried in the browser (needs Online).

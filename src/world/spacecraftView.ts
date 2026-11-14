@@ -81,6 +81,9 @@ export class SpacecraftView {
   private arrivals: Arrival[] = [];
   /** The camera's distance easing towards one that frames the whole Spacecraft. */
   private framing: { from: number; to: number; t: number } | null = null;
+  /** How far above the middle the Spacecraft sits, and how much of the view's height it may fill (see `setStage`). */
+  private lift = 0;
+  private room = 0.8;
   private readonly calm = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   constructor() {
@@ -182,7 +185,7 @@ export class SpacecraftView {
     const sphere = new THREE.Box3().setFromObject(this.model).getBoundingSphere(new THREE.Sphere());
     const half = THREE.MathUtils.degToRad(this.camera.fov / 2);
     const fitHalf = Math.min(half, Math.atan(Math.tan(half) * Math.max(this.camera.aspect, 0.1)));
-    const to = THREE.MathUtils.clamp((sphere.radius / Math.sin(fitHalf)) * 1.2, 2.4, this.controls.maxDistance);
+    const to = THREE.MathUtils.clamp(sphere.radius / Math.sin(fitHalf) / this.room, 2.4, this.controls.maxDistance);
     const from = this.camera.position.distanceTo(this.controls.target);
     if (snap || this.calm) {
       this.camera.position.sub(this.controls.target).setLength(to).add(this.controls.target);
@@ -208,6 +211,17 @@ export class SpacecraftView {
       this.camera.position.sub(this.controls.target).setLength(f.from + (f.to - f.from) * e).add(this.controls.target);
       if (f.t >= 1) this.framing = null;
     }
+  }
+
+  /**
+   * Where the Spacecraft sits when the view is a backdrop behind other things: `lift` moves it up by that
+   * fraction of the view's height, and it is framed to fill about `room` of the height.
+   */
+  setStage(lift: number, room: number): void {
+    this.lift = lift;
+    this.room = room;
+    this.fit();
+    this.frame(true);
   }
 
   /** Start drawing (when the Mission Designer opens). */
@@ -254,6 +268,9 @@ export class SpacecraftView {
     if (w === 0 || h === 0) return;
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
+    // Look a little below the Spacecraft, so it shows above the middle of the view.
+    if (this.lift) this.camera.setViewOffset(w, h, 0, h * this.lift, w, h);
+    else this.camera.clearViewOffset();
     this.camera.updateProjectionMatrix();
   }
 }

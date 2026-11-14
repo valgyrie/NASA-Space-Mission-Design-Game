@@ -4,6 +4,7 @@ import { type TradeResult, buy, buyPrice } from '../game/market';
 import { type SiteState, bestMark, partMass, partsByMark } from '../game/siteState';
 import { type BusId, hallLevelFor, hallTakes } from '../game/upgrades';
 import {
+  type Design,
   type DesignCheck,
   type DesignProblem,
   type Gauge,
@@ -39,6 +40,7 @@ import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
 import { type StringKey, t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
+import { spacecraftPicture } from '../world/spacecraftThumbnails';
 import { missionLinks } from './learnMore';
 import { fold } from './fold';
 import { contractText, formatDecimal, formatMoney, formatNumber } from './format';
@@ -207,10 +209,16 @@ export function gaugeLayout(g: Gauge): { fill: number; target: number } {
 /** A step of the Mission Designer: one slot at a time, then the Check. */
 type Step = Slot | 'check';
 
+/** The design a tile pictures: the current one with this option in its slot (and a Small Bus to hold it, if none yet). */
+function tileDesign(design: Design, o: SpacecraftOption): Design {
+  return { ...design, bus: design.bus ?? 'smallBus', [o.slot]: o.id } as Design;
+}
+
 /**
- * The Mission Designer: the Spacecraft on top, put together Part by Part, with the six resource bars over its
- * corner; underneath, one slot at a time (a step each), then a Check of the whole design. Parts come from the
- * Warehouse or are bought here on the spot. `onChange` runs after every change worth saving.
+ * The Mission Designer, laid out like a showcase: the Spacecraft large in the middle over the whole screen, the
+ * slot's name on top, the picked option's name under the Spacecraft, then one picture tile per option and a pager
+ * through the slots, ending with a Check of the whole design. Resources sit bottom-left, "Plan the Launch →"
+ * bottom-right. Parts come from the Warehouse or are bought here on the spot. `onChange` runs after every change worth saving.
  */
 export function showMissionDesigner(
   root: HTMLElement,
@@ -254,89 +262,93 @@ export function showMissionDesigner(
   });
   head.append(heading, goal, paused, ...(team ? [team.toggle] : []), close);
 
-  // The step bar: one step per slot, then the Check; "Plan the Launch →" always at its right end.
-  const stepList = el('ol', 'designer-steplist');
-  stepList.setAttribute('aria-label', t('designer.steps'));
-  const tabs = new Map<Step, { item: HTMLLIElement; tab: HTMLButtonElement; tick: HTMLElement }>();
-  const addTab = (s: Step) => {
-    const item = el('li', 'designer-steptab-item');
-    const tab = button('designer-steptab', '');
-    tab.dataset.step = s;
-    const tick = el('span', 'designer-steptab-tick');
-    tab.append(tick, el('span', 'designer-steptab-name', stepName(s)));
-    tab.addEventListener('click', () => goTo(s));
-    item.append(tab);
-    stepList.append(item);
-    tabs.set(s, { item, tab, tick });
-  };
+  // Top centre: the slot's name, big, with its one-line hint and "why" fold.
+  const titleBox = el('div', 'designer-title');
+  const title = el('h3', 'designer-title-name');
+  const hintBox = el('div', 'designer-title-hint');
+  titleBox.append(title, hintBox);
 
-  // One panel per slot; only the current step's is shown.
-  const stepBody = el('div', 'designer-step');
-  const slotRows = new Map<
-    Slot,
-    { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement; chip: ReturnType<typeof makeRoleChip>; notYours: HTMLElement }
-  >();
-  const optionUi: {
+  // Under the Spacecraft: the picked option's name, its numbers, a thin rule, the tiles and the pager.
+  const showcase = el('div', 'designer-showcase');
+  const pickedName = el('p', 'designer-picked-name');
+  const pickedStats = el('p', 'designer-picked-stats');
+  const tilesBox = el('div', 'designer-tiles-box');
+  const tileNote = el('p', 'designer-tile-note');
+  tileNote.setAttribute('aria-live', 'polite');
+
+  // Bottom-right: the Warehouse line for the picked Part, the Market's answer, and the big button.
+  const actions = el('div', 'designer-actions');
+  const stockBox = el('div', 'designer-stock-box');
+  const problem = el('p', 'side-problem');
+  problem.setAttribute('aria-live', 'polite');
+
+  type Tile = {
     o: SpacecraftOption;
     b: HTMLButtonElement;
-    stats: HTMLElement;
-    locked: HTMLElement | null;
-    eraLock: HTMLElement | null;
-    hall: HTMLElement | null;
-    why: HTMLElement;
-  }[] = [];
+    img: HTMLImageElement;
+    stats: string;
+    reasons: string[];
+    blocked: boolean;
+  };
+  const slotRows = new Map<
+    Slot,
+    { row: HTMLElement; hint: HTMLElement; tiles: Tile[]; stock: HTMLElement; chip: ReturnType<typeof makeRoleChip>; notYours: HTMLElement }
+  >();
+  const tileUi: Tile[] = [];
+  /** The tile under the pointer or keyboard focus: its name, numbers and reasons show instead of the picked one's. */
+  let previewing: Tile | null = null;
+  /** The last check of the design, for the Check page's big line. */
+  let checked: DesignCheck | null = null;
+  const preview = (tile: Tile | null) => {
+    previewing = tile;
+    showPicked();
+  };
+
   for (const slot of SLOTS) {
-    addTab(slot);
-    const row = el('div', 'slot');
-    row.dataset.slot = slot;
-    const label = el('div', 'slot-head');
+    const hint = el('div', 'designer-slot-hint');
     const chip = makeRoleChip(SLOT_ROLE[slot]);
-    label.append(el('span', 'slot-name', t(`slot.${slot}`)), chip.root);
     // The idea in one line; the arrow opens why it matters.
     const slotWhy = fold(t(`slot.${slot}.hint`), t(`slot.${slot}.why`));
     slotWhy.classList.add('slot-why');
-    const choices = el('div', 'slot-options');
-    const options = new Map<string, HTMLButtonElement>();
+    hint.append(slotWhy, chip.root);
+    hintBox.append(hint);
+    const row = el('div', 'slot designer-tiles');
+    row.dataset.slot = slot;
+    const tiles: Tile[] = [];
     for (const o of optionsFor(slot, state.difficulty)) {
       if (hooks.challenge && !hooks.challenge.allows(o.id)) continue;
-      const b = button('option', '');
+      const b = button('option-tile', '');
       b.dataset.option = o.id;
-      const stats = el('span', 'option-stats');
-      b.append(el('span', 'option-name', optionName(o)), stats);
-      const card = UNLOCKED_BY[o.id];
-      const locked = card ? el('span', 'option-locked', t('designer.locked', { card: t(`history.${card}.title`) })) : null;
-      if (locked) b.append(locked);
-      // A Part of a later Era is shown locked, so the player sees what is coming.
-      const era = optionEra(o.id);
-      const eraLock = era > 1 ? el('span', 'option-locked', t('designer.lockedEra', { era })) : null;
-      if (eraLock) b.append(eraLock);
-      // A Bus the Assembly Hall can't take yet can still be picked and tested, but not shipped.
-      const hall = slot === 'bus' ? el('span', 'option-locked', t('designer.needsHall', { level: hallLevelFor(o.id as BusId) })) : null;
-      if (hall) b.append(hall);
-      // A question Contract greys out what can't answer its question, with one line why.
-      const why = el('span', 'option-locked');
-      why.hidden = true;
-      b.append(why);
-      optionUi.push({ o, b, stats, locked, eraLock, hall, why });
-      // Picking does not move on: the player sees the Part arrive and the bars react, then presses Next.
+      const img = el('img', 'option-tile-img');
+      img.alt = '';
+      img.draggable = false;
+      b.append(img, el('span', 'option-tile-name', optionName(o)), el('span', 'option-tile-lock', t('designer.lockIcon')), el('span', 'option-tile-mark', t('designer.stepTick')));
+      const tile: Tile = { o, b, img, stats: '', reasons: [], blocked: false };
+      // Picking does not move on: the player sees the Part arrive and the bars react, then turns the page.
       b.addEventListener('click', () => {
+        if (tile.blocked || b.getAttribute('aria-disabled') === 'true') return;
         if ((!team || mayChange(state, SLOT_ROLE[slot])) && choose(state.design, o.id, state)) changed();
       });
-      choices.append(b);
-      options.set(o.id, b);
+      b.addEventListener('pointerenter', () => preview(tile));
+      b.addEventListener('pointerleave', () => previewing === tile && preview(null));
+      b.addEventListener('focus', () => preview(tile));
+      b.addEventListener('blur', () => previewing === tile && preview(null));
+      row.append(b);
+      tiles.push(tile);
+      tileUi.push(tile);
     }
-    const stock = el('div', 'slot-stock');
     const notYours = el('p', 'team-not-yours');
-    row.append(label, slotWhy, choices, notYours, stock);
-    stepBody.append(row);
-    slotRows.set(slot, { row, options, stock, chip, notYours });
+    row.append(notYours);
+    tilesBox.append(row);
+    const stock = el('div', 'slot-stock');
+    stockBox.append(stock);
+    slotRows.set(slot, { row, hint, tiles, stock, chip, notYours });
   }
-  addTab('check');
 
-  // The Check: what is still short, the buy-everything button, the mode and the reading links.
+  // The Check page: what is still short, the buy-everything button, the mode and the reading links.
+  const checkHint = el('p', 'designer-slot-hint designer-check-hint', t('designer.checkHint'));
+  hintBox.append(checkHint);
   const checkBox = el('div', 'designer-check');
-  const checkHead = el('div', 'slot-head');
-  checkHead.append(el('span', 'slot-name', t('designer.checkHeading')));
   const warnings = el('ul', 'designer-warnings');
   warnings.setAttribute('aria-live', 'polite');
   const status = el('p', 'designer-status');
@@ -345,18 +357,31 @@ export function showMissionDesigner(
   const sources = fold(t('fold.sources'), sourceLinks);
   const folds = el('div', 'designer-check-folds');
   folds.append(fold(t('designer.mode', { mode: t(`mode.${state.difficulty}`) }), t(`designer.${state.difficulty}.note`)), sources);
-  checkBox.append(checkHead, el('p', 'designer-check-hint', t('designer.checkHint')), warnings, status, buyAll, folds);
-  stepBody.append(checkBox);
+  checkBox.append(warnings, status, buyAll, folds);
 
-  // Back / Next under the panel, with the Market's answer between them.
-  const stepNav = el('div', 'designer-stepnav');
-  const back = button('small designer-step-back', t('designer.stepBack'));
-  const forward = button('small designer-step-next', '');
-  const problem = el('p', 'side-problem');
-  problem.setAttribute('aria-live', 'polite');
-  stepNav.append(back, problem, forward);
+  // The pager: ‹ 3 / 7 · Power ›, with one dot per page (ticked when its slot is filled).
+  const pager = el('div', 'designer-pager');
+  const back = button('designer-page designer-page-back', t('designer.pagePrev'));
+  const forward = button('designer-page designer-page-next', t('designer.pageNext'));
+  const pageLabel = el('span', 'designer-page-label');
+  const dots = el('ol', 'designer-dots');
+  dots.setAttribute('aria-label', t('designer.steps'));
+  const dotUi = new Map<Step, { item: HTMLLIElement; dot: HTMLButtonElement }>();
+  for (const s of [...SLOTS, 'check'] as Step[]) {
+    const item = el('li', '');
+    const dot = button('designer-dot', '');
+    dot.dataset.step = s;
+    dot.addEventListener('click', () => goTo(s));
+    item.append(dot);
+    dots.append(item);
+    dotUi.set(s, { item, dot });
+  }
+  const pagerRow = el('div', 'designer-pager-row');
+  pagerRow.append(back, pageLabel, forward);
+  pager.append(pagerRow, dots);
+  showcase.append(pickedName, pickedStats, el('hr', 'designer-rule'), tilesBox, checkBox, tileNote, pager);
 
-  // Plan the Launch (or the Weekly Challenge's submit and Test Run) at the step bar's right end.
+  // Plan the Launch (or the Weekly Challenge's submit and Test Run), always in view.
   const next = button('designer-next', t(hooks.challenge ? 'weekly.submit' : 'designer.next'));
   const challengeTest = button('small designer-challenge-test', t('testRun.heading'));
   challengeTest.hidden = !hooks.challenge;
@@ -366,20 +391,17 @@ export function showMissionDesigner(
   });
   next.title = t(hooks.challenge ? 'weekly.submit' : 'designer.nextName');
   next.dataset.tutorial = 'designer-next';
-  const stepBar = el('div', 'designer-stepbar');
-  const actions = el('div', 'designer-stepbar-actions');
-  actions.append(challengeTest, next);
-  stepBar.append(stepList, actions);
+  actions.append(stockBox, problem, challengeTest, next);
 
-  const deck = el('section', 'designer-deck');
-  deck.append(stepBar, stepBody, stepNav);
-
-  // 3D view on top, with the resource bars in a small card over its corner.
-  const viewBox = el('section', 'designer-view');
-  const view = new SpacecraftView();
-  const viewEmpty = el('p', 'designer-view-empty', t('designer.emptyView'));
+  // Bottom-left: the six resource bars, in a card that folds away to its heading.
   const resBox = el('aside', 'designer-resources');
-  resBox.append(el('h3', '', t('designer.resources')));
+  const resToggle = button('designer-resources-toggle', t('designer.resources'));
+  resToggle.setAttribute('aria-expanded', 'true');
+  resToggle.addEventListener('click', () => {
+    const open = resBox.classList.toggle('collapsed');
+    resToggle.setAttribute('aria-expanded', String(!open));
+  });
+  resBox.append(resToggle);
   const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; short: HTMLElement; text: HTMLElement }>();
   for (const r of RESOURCES) {
     const row = el('div', 'gauge');
@@ -394,16 +416,17 @@ export function showMissionDesigner(
     resBox.append(row);
     gauges.set(r, { row, fill, target, short, text });
   }
-  viewBox.append(
-    view.canvas,
-    viewEmpty,
-    el('p', 'designer-view-hint designer-view-credit', t('data.globe')),
-    el('p', 'designer-view-hint', t('designer.dragHint')),
-    resBox,
-  );
+
+  // The 3D view fills the whole area behind everything else.
+  const viewBox = el('section', 'designer-view');
+  const view = new SpacecraftView();
+  const viewEmpty = el('p', 'designer-view-empty', t('designer.emptyView'));
+  const small = el('div', 'designer-view-small');
+  small.append(el('p', 'designer-view-hint', t('designer.dragHint')), el('p', 'designer-view-hint', t('data.globe')));
+  viewBox.append(view.canvas, viewEmpty, small);
 
   const body = el('div', 'designer-body');
-  body.append(viewBox, deck);
+  body.append(viewBox, titleBox, showcase, resBox, actions);
 
   // JPL's Concept Maturity Levels for the Contract on the table; the Weekly Challenge has its own score instead.
   const strip = makeMaturityStrip();
@@ -430,14 +453,24 @@ export function showMissionDesigner(
   const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
   panel.append(head, ...(team ? [team.root] : []), strip.root, body, planner.root, testRun.root);
 
-  // The low tutorial guide sits over the 3D view, above the step panel, so it never covers the options.
-  const placeGuide = () => {
+  /**
+   * Fit the Spacecraft into the open space between the title and the tiles, and keep the low tutorial guide on
+   * the left, clear of the tiles and the button.
+   */
+  const placeStage = () => {
     const open = !backdrop.hidden && !body.hidden;
     document.body.classList.toggle('designer-steps-open', open);
-    if (open) document.body.style.setProperty('--designer-deck', `${Math.max(0, window.innerHeight - deck.getBoundingClientRect().top)}px`);
+    if (!open) return;
+    const area = body.getBoundingClientRect();
+    if (area.height <= 0) return;
+    const top = titleBox.getBoundingClientRect().bottom - area.top;
+    const bottom = showcase.getBoundingClientRect().top - area.top;
+    const free = Math.max(bottom - top, area.height * 0.25);
+    view.setStage(0.5 - (top + free / 2) / area.height, (free / area.height) * 0.8);
+    document.body.style.setProperty('--designer-top', `${Math.round(area.top)}px`);
   };
-  const deckSize = new ResizeObserver(placeGuide);
-  deckSize.observe(deck);
+  const bodySize = new ResizeObserver(placeStage);
+  bodySize.observe(body);
 
   const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
   let shown: keyof typeof headings = 'design';
@@ -462,25 +495,24 @@ export function showMissionDesigner(
       view.stop();
       if (which === 'planner') planner.render();
     }
-    placeGuide();
+    placeStage();
   };
   next.addEventListener('click', () => {
     if (hooks.challenge) { hooks.challenge.attempt({ ...state.design }); api.close(); }
     else showView('planner');
   });
 
-  // Steps
+  // Pages
   let step: Step = 'bus';
-  /** The steps on show: slots of this Era with something to pick (respecting the Weekly Challenge's catalogue), then the Check. */
-  const steps = (): Step[] => [...SLOTS.filter((s) => isSlotShown(state, s) && slotRows.get(s)!.options.size > 0), 'check'];
-  function stepName(s: Step): string {
-    return s === 'check' ? t('designer.check') : t(`slot.${s}`);
-  }
+  /** The pages on show: slots of this Era with something to pick (respecting the Weekly Challenge's catalogue), then the Check. */
+  const steps = (): Step[] => [...SLOTS.filter((s) => isSlotShown(state, s) && slotRows.get(s)!.tiles.length > 0), 'check'];
+  const stepName = (s: Step): string => (s === 'check' ? t('designer.check') : t(`slot.${s}`));
   const goTo = (s: Step) => {
     step = s;
+    previewing = null;
     problem.textContent = '';
+    tileNote.textContent = '';
     render();
-    stepBody.scrollTop = 0;
   };
   /** Where to start: the first slot still empty, or the Check when the design is complete. */
   const firstStep = (): Step => steps().find((s) => s !== 'check' && state.design[s] === null) ?? 'check';
@@ -493,6 +525,28 @@ export function showMissionDesigner(
     goTo(list[Math.min(list.length - 1, list.indexOf(step) + 1)]!);
   });
 
+  /** The name area: the hovered or focused tile's option, else the picked one (or the Check's heading). */
+  const showPicked = () => {
+    pickedName.classList.toggle('previewing', !!previewing);
+    if (step === 'check') {
+      const c = checked;
+      pickedName.textContent = !c ? '' : c.ready
+        ? t('designer.checkReady')
+        : c.problems.length > 0
+          ? t('designer.checkToFix', { count: formatNumber(c.problems.length) })
+          : t('designer.checkEmpty');
+      pickedStats.textContent = '';
+      tileNote.textContent = '';
+      return;
+    }
+    const pickedId = state.design[step];
+    const tile = previewing ?? slotRows.get(step)!.tiles.find((x) => x.o.id === pickedId) ?? null;
+    pickedName.classList.toggle('empty', !tile);
+    pickedName.textContent = tile ? optionName(tile.o) : t('designer.pick');
+    pickedStats.textContent = tile ? tile.stats : '';
+    tileNote.textContent = previewing ? previewing.reasons.join(t('stat.join')) : '';
+  };
+
   const report = (result: TradeResult) => {
     problem.textContent = result.ok ? '' : t(`market.problem.${result.problem}`);
     if (result.ok) hooks.onChange();
@@ -502,44 +556,67 @@ export function showMissionDesigner(
 
   const render = () => {
     const check = checkDesign(state, state.design);
+    checked = check;
     if (!hooks.challenge) strip.render(state);
     const contract = contractText(check.goal.contract.id);
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
     sourceLinks.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
 
-    const players = team ? state.team?.players : undefined;
-    const asked = check.goal.contract;
-    for (const { o, b, stats, locked, eraLock, hall, why } of optionUi) {
-      const open = isUnlocked(state, o.id);
-      const cannot = check.goal.status === 'accepted' && cannotAnswer(asked, o.id);
-      why.hidden = !cannot;
-      why.textContent = cannot ? t(`question.${asked.question}.no.${o.id}` as StringKey) : '';
-      // In Team Mode a slot answers only to its role's player.
-      b.disabled = !open || cannot || (!!players && !mayChange(state, SLOT_ROLE[o.slot]));
-      if (locked) locked.hidden = open;
-      if (eraLock) eraLock.hidden = open;
-      if (hall) hall.hidden = hallTakes(state, o.id as BusId);
-      stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
-    }
-
     const list = steps();
     if (!list.includes(step)) step = list[0]!;
+    const players = team ? state.team?.players : undefined;
+    const asked = check.goal.contract;
+    for (const tile of tileUi) {
+      const { o, b, img } = tile;
+      const open = isUnlocked(state, o.id);
+      const cannot = check.goal.status === 'accepted' && cannotAnswer(asked, o.id);
+      const reasons: string[] = [];
+      const card = UNLOCKED_BY[o.id];
+      if (!open && card) reasons.push(t('designer.locked', { card: t(`history.${card}.title`) }));
+      const era = optionEra(o.id);
+      // A Part of a later Era is shown locked, so the player sees what is coming.
+      if (!open && era > 1) reasons.push(t('designer.lockedEra', { era }));
+      // A Bus the Assembly Hall can't take yet can still be picked and tested, but not shipped.
+      const hall = o.slot === 'bus' && !hallTakes(state, o.id as BusId);
+      if (hall) reasons.push(t('designer.needsHall', { level: hallLevelFor(o.id as BusId) }));
+      // A question Contract greys out what can't answer its question, with one line why.
+      if (cannot) reasons.push(t(`question.${asked.question}.no.${o.id}` as StringKey));
+      tile.reasons = reasons;
+      tile.blocked = !open || cannot;
+      // In Team Mode a slot answers only to its role's player.
+      const notMine = !!players && !mayChange(state, SLOT_ROLE[o.slot]);
+      b.setAttribute('aria-disabled', String(tile.blocked || notMine));
+      b.classList.toggle('locked', tile.blocked);
+      b.classList.toggle('warn', hall && !tile.blocked);
+      tile.stats = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
+      const picked = state.design[o.slot] === o.id;
+      b.setAttribute('aria-pressed', String(picked));
+      b.title = [optionName(o), tile.stats, ...reasons].join('\n');
+      // Pictures are drawn only for the page on show, once per design (cached).
+      if (o.slot === step) {
+        const d = tileDesign(state.design, o);
+        const key = JSON.stringify(d);
+        if (img.dataset.key !== key) {
+          img.dataset.key = key;
+          img.src = spacecraftPicture(d, o.slot);
+        }
+      }
+    }
+
     for (const slot of SLOTS) {
-      const { row, options, stock, chip, notYours } = slotRows.get(slot)!;
+      const { row, hint, stock, chip, notYours } = slotRows.get(slot)!;
       const role = SLOT_ROLE[slot];
       chip.render(players ? state : {});
       row.dataset.role = players ? role : '';
       row.style.setProperty('--team-colour', chip.root.style.getPropertyValue('--team-colour'));
       notYours.hidden = !players || mayChange(state, role);
       notYours.textContent = players ? notYoursText(players, role) : '';
-      // Only the current step's panel shows; Propulsion's step joins in Era 2.
+      // Only the current page's slot shows.
       row.hidden = slot !== step;
-      const tab = tabs.get(slot)!;
-      tab.tab.dataset.role = players ? role : '';
-      tab.tab.style.setProperty('--team-colour', chip.root.style.getPropertyValue('--team-colour'));
+      hint.hidden = slot !== step;
+      stock.hidden = slot !== step;
       const picked = state.design[slot];
-      for (const [id, b] of options) b.setAttribute('aria-pressed', String(id === picked));
       stock.replaceChildren();
       stock.classList.toggle('empty', !picked);
       if (!picked) {
@@ -558,31 +635,41 @@ export function showMissionDesigner(
         if (!hooks.challenge) stock.append(b);
       }
     }
+    checkHint.hidden = step !== 'check';
     checkBox.hidden = step !== 'check';
+    tilesBox.hidden = step === 'check';
+    showcase.dataset.page = step;
+    title.textContent = stepName(step);
+    showPicked();
 
-    // The step bar: a tick for every slot filled; the Check ticks once the design is ready.
+    // The pager and its dots: a tick for every slot filled; the Check's dot ticks once the design is ready.
     let n = 0;
-    for (const [s, { item, tab, tick }] of tabs) {
+    for (const [s, { item, dot }] of dotUi) {
       const on = list.includes(s);
       item.hidden = !on;
       if (!on) continue;
       n++;
       const done = s === 'check' ? check.ready : state.design[s] !== null;
       const warn = s === 'check' && !done && check.problems.length > 0;
-      tab.dataset.state = done ? 'done' : warn ? 'warn' : 'todo';
-      tick.textContent = done ? t('designer.stepTick') : warn ? t('designer.stepWarn') : formatNumber(n);
-      tab.title = warn
+      dot.dataset.state = done ? 'done' : warn ? 'warn' : 'todo';
+      dot.title = warn
         ? t('designer.stepProblems', { step: stepName(s), count: check.problems.length })
         : t(done ? 'designer.stepPicked' : 'designer.stepToDo', { step: stepName(s) });
-      if (s === step) tab.setAttribute('aria-current', 'step');
-      else tab.removeAttribute('aria-current');
+      dot.setAttribute('aria-label', `${formatNumber(n)} · ${dot.title}`);
+      if (s === step) dot.setAttribute('aria-current', 'step');
+      else dot.removeAttribute('aria-current');
     }
     const at = list.indexOf(step);
+    pageLabel.textContent = t('designer.page', { n: formatNumber(at + 1), total: formatNumber(list.length), step: stepName(step) });
     back.disabled = at <= 0;
-    forward.hidden = step === 'check';
+    forward.disabled = at >= list.length - 1;
+    const before = list[at - 1];
     const after = list[at + 1];
-    if (after) forward.textContent = t('designer.stepNext', { step: stepName(after) });
-    // Once this slot is picked, Next is the button to press.
+    back.title = before ? t('designer.stepPrev', { step: stepName(before) }) : '';
+    forward.title = after ? t('designer.stepNext', { step: stepName(after) }) : '';
+    back.setAttribute('aria-label', back.title || stepName(step));
+    forward.setAttribute('aria-label', forward.title || stepName(step));
+    // Once this slot is picked, the next page is the thing to press.
     forward.classList.toggle('designer-step-ready', step !== 'check' && state.design[step] !== null);
 
     view.show(state.design);
@@ -609,6 +696,7 @@ export function showMissionDesigner(
       ui.text.hidden = g.status === 'waiting';
       ui.row.title = sentence;
     }
+    resBox.dataset.short = String(RESOURCES.some((r) => check.gauges[r].status === 'short'));
 
     warnings.replaceChildren(...check.problems.map((p) => el('li', '', problemText(p, check))));
     status.textContent = check.ready
@@ -641,6 +729,7 @@ export function showMissionDesigner(
       if (hooks.logo) planner.setLogo?.(hooks.logo());
       // Each visit starts at the first empty slot and puts the Spacecraft together in front of the player.
       step = firstStep();
+      previewing = null;
       view.assemble();
       showView('design');
       close.focus();
@@ -652,12 +741,12 @@ export function showMissionDesigner(
       view.stop();
       testRun.stop();
       team?.closeSetup();
-      placeGuide();
+      placeStage();
       hooks.onClose();
     },
     destroy() {
       api.close();
-      deckSize.disconnect();
+      bodySize.disconnect();
       view.dispose();
       planner.dispose?.();
       backdrop.remove();

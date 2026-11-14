@@ -1,24 +1,24 @@
 # Notes: Launch planner step panels (agent working file)
 
-## Layout (built)
-- Top, 60% of the planner (52% under 820 px tall): PlannerView (src/world/plannerView.ts), the chosen Launch
-  Vehicle with the Spacecraft on the Launch show's pad, sky and ground. Drag/zoom, no pan, idle auto-rotate.
-  Each step eases the camera: User/Review overview, Space the Spacecraft, Ground the tracking station,
-  Launch Vehicle the whole rocket, Launch Site the pad from high up, Costs the sky. Wallops moves the pad 170 m
-  east (nearer the sea). Vapour vents off the rocket.
-- Ground step's dish: the Site's existing Blender Ground Station model (buildings.glb, `useModel`), at full size.
-  No new .glb was needed.
-- Below: "← Back to the design" + step bar (✓ visited, ! has a problem), one panel at a time with Back / Next.
-- Footer bar, always visible: total vs money, problem count (→ Review), Test Run, Ship.
-- The view is built on the first render() while shown, starts in render(), stops itself when its canvas is
-  hidden or detached (checkVisibility each frame).
+## Round 2: showcase layout (built)
+- PlannerView (src/world/plannerView.ts) fills the whole planner behind the text. `setSafeArea(top, bottom)` tells
+  it how much the title and the bottom row cover; a camera view offset centres the subject in the free space,
+  and the framing distance uses the free height. Per-step camera moves kept.
+- Title top centre: step name big (spaced capitals), Segment + hint small, then the step's folds (vehicle:
+  geo note/fold, reading links; site: equator tip + fold, reading links; user: four-Segments fold).
+- Launch Vehicle / Launch Site: chosen name in large capitals, key numbers on one line, a rule, square tiles.
+  Rocket tiles: pictures rendered by the view (`vehicleThumbnail`, one per frame into a canvas corner, copied
+  out, cached by vehicle+design+logo). Closed rockets: grey, lock, reason in a hover/focus tip (still focusable,
+  aria-disabled). "Too heavy" / "Can't reach" tags. Site tiles: an SVG globe with the equator and the site's
+  latitude, "Best" tag on the one nearest the equator.
+- Info steps: one or two translucent cards at the bottom centre. Costs: insurance card + timeline/weather card
+  (the cost rows live in the bottom-left totals panel).
+- Pager under the middle: ‹ n / 7 · name ›, plus dots (green = seen and fine, orange = has a problem).
+- Bottom-left: running costs, total vs money, problem count (→ Review). Bottom-right: Test Run, then Ship as
+  the big outlined button. Low tutorial guide moves above them (CSS :has rule, --planner-actions set in JS).
+- Ground Station (the Site's Blender model) moved to (-95, 0, -20): clear of the gantry and the usual view.
+- Tested 1920x1200, 1600x1000, 1280x800, 1024x768 (no page scroll), Era 1 and Era 2 (Delta D, Wallops,
+  closed-tile tip), Test Run and back. Anchors: planner-tests, planner-testrun, planner-ship, design-review.
 
-## Done
-- launchPlanner.ts, plannerView.ts, CSS block "Launch planner: step panels" at the end of style.css,
-  planner.* strings, GDD Segments bullet, CHECKLIST sub-line. Type check and tests pass.
-- Browser-tested at 1920x1200, 1280x800, 1024x768 (panel scrolls inside at the small sizes), Era 1 and Era 2
-  (Wallops, Delta D swap, Test Run and back, close stops drawing). Shots: screenshots/development-NASA_resources/steps-planner-*.png.
-
-## Left (designer side, owned by the Mission Designer agent)
-- Call `planner.setLogo?.(game.company.logo)` so the rocket carries the Company logo (default logo until then).
-- Call `planner.dispose?.()` in the designer's destroy() to free the planner's WebGL context (Weekly Challenge).
+## Left
+- Nothing for the designer side: setLogo and dispose are wired (logo hook) by the coordinator.
