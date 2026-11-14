@@ -19,6 +19,8 @@
 
 **Realistic graphics, session 3 (14 Nov, evening):** the land, water and sky are finished (clear view, no texture grid, real sand and beaches, ore-stained Deposits with rocks, a sea that no longer repeats, ground graded round buildings) and so are the buildings (own materials per building, dirt and baked shading, ore heaps, soft smoke, star signs, waving flag; model file 8.9 MB). 476 tests and the type checks pass. The Earth is now NASA photographs with real clouds and city lights, the stars have a Milky Way, and the Spacecraft has foil, solar-cell and metal materials (a few checks and one licence point are left, listed in the handoff); rockets and the Launch scene, trees and the truck, the Credits entries and the play-test are not started. Start at "Session 3: START HERE" in `docs/graphics-overhaul/HANDOFF.md`: state, this machine's set-up and the prompts for each remaining agent. The finished look still needs the team's go-ahead before its final merge.
 
+**Realistic graphics, session 4 (14 Nov, later):** on a second PC. Rockets and the Launch scene, and trees, rocks and the Shipping truck, were being built by two agents when usage ran low; their work so far is committed as a checkpoint that passes the checks but has not been reviewed on screen. The Spacecraft, Earth and stars came in from the first PC (left-overs and one licence point are in the handoff). Start at "Session 4" in `docs/graphics-overhaul/HANDOFF.md`: state, both PCs' set-up and the prompts to re-run.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**

@@ -4,6 +4,11 @@ import { type ShowMoment, stageTimes } from '../game/ascent';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
 import { buildEarth } from './earthMesh';
+import { type SkyEnvironment, createSkyEnvironment } from './environment';
+import { type LaunchGround, buildLaunchGround } from './launchGround';
+import { buildLaunchPad } from './launchPad';
+import { PLUME_LIQUID, PLUME_SOLID, advancePlumes, buildPlume, disposePlume } from './launchPlume';
+import { LaunchSmoke, type SmokeLight } from './launchSmoke';
 import { JUNO, type RocketModel, buildRocket, disposeRocket } from './rocketMesh';
 import { makeStars } from './spacecraftView';
 
@@ -26,6 +31,14 @@ const LAP_SECONDS = 6;
 const SPIN_TURNS = 1.6;
 /** Cape Canaveral, roughly: what Earth shows below the upper stages. Degrees. */
 const BELOW = { lat: 28.5, lon: -80.6 };
+/** Toward the sun on the pad: a morning sun high behind the watching camera (it stands west-south-west). */
+const PAD_SUN = new THREE.Vector3(-0.32, 0.62, 0.72).normalize();
+/** Picture brightness and light on the pad, as on the Site (world.ts), so the two look alike. */
+const PAD_EXPOSURE = 0.34;
+const PAD_SUN_INTENSITY = 12;
+const PAD_SKY_LIGHT = 0.62;
+/** The space shots were tuned for this exposure. */
+const SPACE_EXPOSURE = 1;
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -67,165 +80,9 @@ function pathAt(path: PathPoint[], t: number): PathPoint {
   return { x: a.x + (b.x - a.x) * f, y: a.y + (b.y - a.y) * f, lean: a.lean + (b.lean - a.lean) * f, speed: a.speed + (b.speed - a.speed) * f };
 }
 
-// ---- Exhaust ----
-
-const FLAME_OUTER = new THREE.MeshBasicMaterial({ color: 0xff9a3c, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
-const FLAME_INNER = new THREE.MeshBasicMaterial({ color: 0xfff1b8, transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
-
-/** A flame pointing down from y = 0, `length` long. Scale it to flicker. */
-function flame(radius: number, length: number): THREE.Group {
-  const g = new THREE.Group();
-  const outer = new THREE.Mesh(new THREE.ConeGeometry(radius, length, 10, 1, true), FLAME_OUTER);
-  outer.rotation.x = Math.PI;
-  outer.position.y = -length / 2;
-  const inner = new THREE.Mesh(new THREE.ConeGeometry(radius * 0.55, length * 0.55, 8, 1, true), FLAME_INNER);
-  inner.rotation.x = Math.PI;
-  inner.position.y = -length * 0.275;
-  g.add(outer, inner);
-  g.visible = false;
-  return g;
-}
-
-interface Puff {
-  mesh: THREE.Mesh;
-  velocity: THREE.Vector3;
-  age: number;
-  life: number;
-  from: number;
-  to: number;
-}
-
-const PUFFS = 220;
-
-/** Smoke from the first stage: a pool of soft grey blobs that grow and fade where they were left. */
-class Smoke {
-  readonly group = new THREE.Group();
-  private readonly puffs: Puff[] = [];
-  private next = 0;
-
-  constructor() {
-    const geometry = new THREE.IcosahedronGeometry(1, 1);
-    for (let i = 0; i < PUFFS; i++) {
-      const material = new THREE.MeshLambertMaterial({ color: 0xece8e1, transparent: true, opacity: 0, depthWrite: false, flatShading: true });
-      const mesh = new THREE.Mesh(geometry, material);
-      mesh.visible = false;
-      this.group.add(mesh);
-      this.puffs.push({ mesh, velocity: new THREE.Vector3(), age: 0, life: 1, from: 1, to: 1 });
-    }
-  }
-
-  emit(at: THREE.Vector3, velocity: THREE.Vector3, life: number, from: number, to: number): void {
-    const p = this.puffs[this.next]!;
-    this.next = (this.next + 1) % PUFFS;
-    p.mesh.position.copy(at);
-    p.mesh.rotation.set(Math.random() * 6, Math.random() * 6, 0);
-    p.velocity.copy(velocity);
-    p.age = 0;
-    p.life = life;
-    p.from = from;
-    p.to = to;
-    p.mesh.visible = true;
-  }
-
-  update(dt: number): void {
-    for (const p of this.puffs) {
-      if (!p.mesh.visible) continue;
-      p.age += dt;
-      if (p.age >= p.life) {
-        p.mesh.visible = false;
-        continue;
-      }
-      const k = p.age / p.life;
-      p.mesh.position.addScaledVector(p.velocity, dt);
-      p.velocity.multiplyScalar(Math.max(0, 1 - dt * 0.8));
-      p.mesh.scale.setScalar(p.from + (p.to - p.from) * Math.sqrt(k));
-      (p.mesh.material as THREE.MeshLambertMaterial).opacity = 0.8 * (1 - k) * Math.min(1, k * 8);
-    }
-  }
-
-  clear(): void {
-    for (const p of this.puffs) p.mesh.visible = false;
-  }
-}
+// ---- Exhaust: launchPlume.ts and launchSmoke.ts ----
 
 // ---- The pad ----
-
-function buildGround(): THREE.Group {
-  const g = new THREE.Group();
-  const radius = 400_000;
-  const coast = 350;
-  // A local patch of Earth's sphere, tangent to the pad. Subdivide radially too: a single flat fan
-  // would leave a straight floor under the chase camera. Shared world coordinates keep the coast joined.
-  const curved = (geometry: THREE.BufferGeometry, x: number) => {
-    geometry.rotateX(-Math.PI / 2);
-    geometry.translate(x, 0, 0);
-    const positions = geometry.getAttribute('position');
-    const earthM = EARTH_KM * 1_000;
-    for (let i = 0; i < positions.count; i++) {
-      const distanceSq = positions.getX(i) ** 2 + positions.getZ(i) ** 2;
-      positions.setY(i, Math.sqrt(earthM ** 2 - distanceSq) - earthM);
-    }
-    geometry.computeVertexNormals();
-    return geometry;
-  };
-  const half = (from: number, colour: number, x: number) => {
-    const geometry = curved(new THREE.RingGeometry(0, radius, 96, 64, from, Math.PI), x);
-    const m = new THREE.Mesh(geometry, new THREE.MeshLambertMaterial({ color: colour }));
-    return m;
-  };
-  // Land to the west, a beach, the Atlantic to the east. The pieces meet without overlapping.
-  const land = half(Math.PI / 2, 0x7d8f5a, coast);
-  const sea = half(-Math.PI / 2, 0x235f96, coast + 60);
-  const beach = new THREE.Mesh(curved(new THREE.PlaneGeometry(60, radius * 2, 1, 128), coast + 30), new THREE.MeshLambertMaterial({ color: 0xe2d3a4 }));
-  g.add(land, beach, sea);
-
-  const concrete = new THREE.MeshLambertMaterial({ color: 0xb3ada2, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
-  const sand = new THREE.MeshLambertMaterial({ color: 0xcdbb8a, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  const apron = new THREE.Mesh(new THREE.CircleGeometry(70, 24), sand);
-  apron.rotation.x = -Math.PI / 2;
-  const slab = new THREE.Mesh(new THREE.BoxGeometry(26, 0.6, 26), concrete);
-  slab.position.y = 0.3;
-  const road = new THREE.Mesh(new THREE.PlaneGeometry(8, 400), concrete);
-  road.rotation.x = -Math.PI / 2;
-  road.position.set(-30, 0.02, -200);
-  g.add(apron, slab, road);
-
-  // Launch stand under the rocket and a service mast beside it.
-  const steel = new THREE.MeshStandardMaterial({ color: 0xc0472f, roughness: 0.7, flatShading: true });
-  const grey = new THREE.MeshStandardMaterial({ color: 0x7c838c, roughness: 0.6, flatShading: true });
-  const stand = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.8, 1.2, 12, 1, true), grey);
-  stand.position.y = 1.2;
-  g.add(stand);
-  const mast = new THREE.Group();
-  const beam = (w: number, h: number, d: number, x: number, y: number, z: number) => {
-    const m = new THREE.Mesh(new THREE.BoxGeometry(w, h, d), steel);
-    m.position.set(x, y, z);
-    mast.add(m);
-  };
-  for (const [x, z] of [
-    [0, 0],
-    [2.4, 0],
-    [0, 2.4],
-    [2.4, 2.4],
-  ] as const) {
-    beam(0.25, 24, 0.25, x, 12.6, z);
-  }
-  for (let y = 3; y <= 24; y += 3) {
-    beam(2.6, 0.18, 0.18, 1.2, y, 0);
-    beam(2.6, 0.18, 0.18, 1.2, y, 2.4);
-    beam(0.18, 0.18, 2.6, 0, y, 1.2);
-    beam(0.18, 0.18, 2.6, 2.4, y, 1.2);
-  }
-  for (const y of [9, 16, 20]) beam(3.2, 0.2, 0.3, 4.2, y, 1.2);
-  mast.position.set(-7.6, 0, -1.2);
-  g.add(mast);
-
-  // The blockhouse, a low dome back from the pad.
-  const dome = new THREE.Mesh(new THREE.SphereGeometry(9, 14, 6, 0, Math.PI * 2, 0, Math.PI / 2), grey);
-  dome.position.set(-110, 0, 60);
-  g.add(dome);
-  return g;
-}
 
 // ---- The view ----
 
@@ -236,9 +93,15 @@ export class LaunchView {
   private readonly pad = new THREE.Scene();
   private readonly padCamera = new THREE.PerspectiveCamera(45, 1, 0.5, 300_000);
   private readonly padStars = makeStars(140);
-  private readonly smoke = new Smoke();
+  private readonly smoke = new LaunchSmoke(900);
+  private readonly smokeLight: SmokeLight = { sunDirection: PAD_SUN.clone(), sun: new THREE.Color(), sky: new THREE.Color(0.7, 0.8, 1.0) };
   private readonly fog = new THREE.Fog(0x9cc8ee, 3_000, 60_000);
-  private readonly sky = new THREE.Color();
+  private readonly skyEnv: SkyEnvironment;
+  /** The sky's colours on the ground, so the climb can darken them and come back for the next Launch. */
+  private readonly skyBase: { zenith: THREE.Color; mid: THREE.Color; horizon: THREE.Color; coverage: number; fog: THREE.Color };
+  private readonly ground: LaunchGround;
+  private readonly padSun: THREE.DirectionalLight;
+  private envIntensity = 1;
 
   private readonly space = new THREE.Scene();
   private readonly spaceCamera = new THREE.PerspectiveCamera(40, 1, 0.1, 20_000);
@@ -256,6 +119,7 @@ export class LaunchView {
   private orbitDistance = 112;
 
   private climbing: RocketModel | null = null;
+  private vehicle: LaunchVehicleId = 'juno1';
   private upper: RocketModel | null = null;
   private flames: THREE.Group[][] = [];
   private upperFlames: THREE.Group[][] = [];
@@ -270,22 +134,46 @@ export class LaunchView {
     this.renderer = new THREE.WebGLRenderer({ canvas: this.canvas, antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = PAD_EXPOSURE;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    // Pad: Florida sky, low sun from the east.
+    // Pad: the same sky, sun and haze as the Site, a morning sun behind the watching camera.
     this.pad.fog = this.fog;
-    this.pad.background = this.sky;
-    this.pad.add(buildGround(), this.smoke.group);
-    this.pad.add(new THREE.HemisphereLight(0xdcecff, 0x5b6a45, 1.4));
-    const sun = new THREE.DirectionalLight(0xfff0d8, 2.2);
-    sun.position.set(40, 60, 30);
-    this.pad.add(sun);
-    // Stars draw first and everything else over them; they brighten as the sky darkens.
+    this.skyEnv = createSkyEnvironment(this.renderer, this.pad, { sunDirection: PAD_SUN });
+    const skyU = (this.skyEnv.sky.material as THREE.ShaderMaterial).uniforms;
+    this.skyBase = {
+      zenith: (skyU.uZenith!.value as THREE.Color).clone(),
+      mid: (skyU.uMid!.value as THREE.Color).clone(),
+      horizon: (skyU.uHorizon!.value as THREE.Color).clone(),
+      coverage: skyU.uCoverage!.value as number,
+      fog: this.fog.color.clone(),
+    };
+    this.ground = buildLaunchGround(this.skyEnv.uniforms);
+    this.pad.add(this.ground.mesh, buildLaunchPad(31).group, this.smoke.mesh);
+    this.smokeLight.sun.copy(this.skyEnv.sunColour).multiplyScalar(3.4);
+    this.envIntensity = PAD_SKY_LIGHT / Math.max(this.skyEnv.skyLight, 0.05);
+    this.pad.environmentIntensity = this.envIntensity;
+    const sun = new THREE.DirectionalLight(this.skyEnv.sunColour, PAD_SUN_INTENSITY);
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(4096, 4096);
+    sun.shadow.bias = -0.0003;
+    sun.shadow.normalBias = 0.03;
+    const sc = sun.shadow.camera;
+    sc.left = sc.bottom = -70;
+    sc.right = sc.top = 70;
+    sc.near = 1;
+    sc.far = 400;
+    this.padSun = sun;
+    this.pad.add(sun, sun.target);
+    // Stars draw just after the sky dome and everything else over them; they brighten as the sky darkens.
     const starMaterial = this.padStars.material as THREE.PointsMaterial;
     starMaterial.fog = false;
     starMaterial.blending = THREE.AdditiveBlending;
+    starMaterial.transparent = false;
     starMaterial.depthTest = false;
     starMaterial.depthWrite = false;
-    this.padStars.renderOrder = -1;
+    this.padStars.renderOrder = -0.5;
     this.pad.add(this.padStars);
 
     // Space: Earth's curve under the upper stages, Cape Canaveral below.
@@ -331,7 +219,13 @@ export class LaunchView {
 
     this.climbing = buildRocket(design, vehicle, logo);
     this.climbing.root.position.y = 1.8;
-    this.flames = this.climbing.stages.map((s, i) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? 9 : 1.2)));
+    this.vehicle = vehicle;
+    this.flames = this.climbing.stages.map((s, i) =>
+      s.nozzles.map((n, k) => this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? (k === 0 || vehicle === 'falcon9' ? 9 : 7) : 1.2, i === 0 ? k > 0 && vehicle !== 'falcon9' : s.nozzleRadius <= 0.1)),
+    );
+    this.climbing.root.traverse((o) => {
+      if (o instanceof THREE.Mesh && !(o.material as THREE.Material).transparent) o.castShadow = o.receiveShadow = true;
+    });
     this.pad.add(this.climbing.root);
 
     // The upper stages again for the space shot, lying along +x (flying east) without the first stage.
@@ -342,7 +236,7 @@ export class LaunchView {
     this.upper.root.scale.setScalar(fit);
     this.upper.root.rotation.z = -Math.PI / 2;
     this.upper.root.position.x = -this.upper.upperBase * fit;
-    this.upperFlames = this.upper.stages.map((s) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius * 1.4, 1.6)));
+    this.upperFlames = this.upper.stages.map((s) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius * 1.4, 1.6, s.nozzleRadius <= 0.1)));
     this.space.add(this.upper.root);
 
     // The orbit: Earth's centre at one focus, drawn to scale.
@@ -379,6 +273,9 @@ export class LaunchView {
     for (const model of [this.climbing, this.upper]) {
       if (!model) continue;
       model.root.removeFromParent();
+      model.root.traverse((o) => {
+        if (o.name === 'plume') disposePlume(o);
+      });
       disposeRocket(model.root);
     }
     this.climbing = null;
@@ -395,6 +292,7 @@ export class LaunchView {
     this.fit();
     const phase = m.segment.phase;
     this.spin += dt * SPIN_TURNS * Math.PI * 2;
+    advancePlumes(dt);
     let shot: Shot;
     if (phase === 'mission' || phase === 'end' || (phase === 'orbit' && m.fraction >= CUT_TO_ORBIT)) shot = 'orbit';
     else if (
@@ -409,14 +307,15 @@ export class LaunchView {
     // A Spacecraft stuck in its transfer orbit (no main engine) doesn't fall: it drifts on with its last stage.
     const lost = phase === 'lost' && !m.segment.stuck;
     const after = phase === 'orbit' || phase === 'lost';
+    this.renderer.toneMappingExposure = shot === 'pad' ? PAD_EXPOSURE : SPACE_EXPOSURE;
     if (shot === 'pad') this.drawPad(lost ? m.segment.from : m.value, dt, lost ? m.fraction : 0);
     else if (shot === 'space') this.drawSpace(after ? m.segment.from + m.fraction * m.segment.playS * 2 : m.value, lost ? m.fraction : 0, dt, lost && m.segment.stage !== undefined);
     else this.drawOrbit(dt, powered);
     return shot;
   }
 
-  private addFlame(parent: THREE.Object3D, at: THREE.Vector3, radius: number, length: number): THREE.Group {
-    const f = flame(radius, length);
+  private addFlame(parent: THREE.Object3D, at: THREE.Vector3, radius: number, length: number, solid = false): THREE.Group {
+    const f = buildPlume(radius, length, solid ? PLUME_SOLID : PLUME_LIQUID);
     f.position.copy(at);
     parent.add(f);
     return f;
@@ -439,7 +338,7 @@ export class LaunchView {
     for (const f of flames) {
       f.visible = on;
       // Thinner air lets the plume grow longer; it widens a little.
-      if (on) f.scale.set(1 + (stretch - 1) * 0.25, (0.85 + Math.random() * 0.3) * stretch, 1 + (stretch - 1) * 0.25);
+      if (on) f.scale.set(1 + (stretch - 1) * 0.6, (0.93 + Math.random() * 0.14) * stretch, 1 + (stretch - 1) * 0.6);
     }
   }
 
@@ -464,34 +363,11 @@ export class LaunchView {
     first.rotation.x = back * 0.002;
     first.visible = back < 2_000;
 
-    // Smoke along the path while the first stage burns, spread over the pad at liftoff.
-    if (burn && t > -0.5 && alt < 12_000) {
-      const t0 = this.lastT > -Infinity && this.lastT < t ? Math.max(0, this.lastT) : t;
-      const from = pathAt(this.path, t0);
-      const steps = Math.min(6, Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / (4 + p.speed * 0.04))));
-      const down = new THREE.Vector3(-Math.sin(p.lean), -Math.cos(p.lean), 0);
-      for (let i = 1; i <= steps; i++) {
-        const q = pathAt(this.path, t0 + ((t - t0) * i) / steps);
-        const at = new THREE.Vector3(q.x, 1.8 + q.y, 0).addScaledVector(down, 2);
-        if (alt < 40) {
-          const a = Math.random() * Math.PI * 2;
-          const v = new THREE.Vector3(Math.cos(a) * 14, 1 + Math.random() * 3, Math.sin(a) * 14);
-          this.smoke.emit(at.clone().setY(1.5), v, 6, 2, 9 + Math.random() * 4);
-        }
-        const v = down.clone().multiplyScalar(6).add(new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).multiplyScalar(3));
-        const size = Math.min(6, 1.2 + q.speed * 0.02);
-        this.smoke.emit(at, v, 5, size, size * 3);
-      }
-    }
-    this.smoke.update(dt);
+    if (falling === 0) this.exhaust(t, p, alt, burn, dt);
     this.lastT = t;
 
     // The sky darkens as it climbs; haze stays on the ground.
-    const high = smooth(1_500, 32_000, alt);
-    this.sky.setHex(0x8cc4f0).lerp(new THREE.Color(0x03060f), high);
-    this.fog.color.setHex(0x9cc8ee).lerp(new THREE.Color(0x4f7fb4), high);
-    this.fog.near = 3_000 + alt;
-    this.fog.far = Math.min(90_000, 60_000 + alt * 1.5);
+    this.climbSky(alt, dt);
     const stars = smooth(12_000, 40_000, alt);
     this.padStars.visible = stars > 0.05;
     (this.padStars.material as THREE.PointsMaterial).color.setHex(0xcfd9ff).multiplyScalar(stars);
@@ -500,16 +376,106 @@ export class LaunchView {
     // Watch the middle of the rocket, then the part still flying once the first stage has gone.
     const along = 11 + 7.5 * smooth(150, 175, t);
     const centre = new THREE.Vector3(p.x, 1.8 + p.y, 0).add(new THREE.Vector3(Math.sin(p.lean), Math.cos(p.lean), 0).multiplyScalar(along));
-    const ground = new THREE.Vector3(-42 + Math.min(0, t) * 0.6, 3, 34);
+    // Before liftoff, close by the pad; from liftoff, a tracking camera further back that sees the ground cloud.
+    const ground = t < 0 ? new THREE.Vector3(-42 + t * 0.6, 5, 34) : new THREE.Vector3(-150, 8, 125);
     // From below while it climbs, then from above to watch the first stage fall away.
     const above = smooth(130, 175, t);
     const closer = 1 - 0.35 * smooth(160, 190, t);
     const chase = centre.clone().add(new THREE.Vector3(-24 + above * 4, -6 + above * 16, 30 - above * 4).multiplyScalar(closer));
-    const w = smooth(4, 18, t);
+    const w = smooth(9, 24, t);
+    const fov = t < 0 ? 45 : 30 + 15 * w;
+    if (this.padCamera.fov !== fov) {
+      this.padCamera.fov = fov;
+      this.padCamera.updateProjectionMatrix();
+    }
     this.padCamera.position.lerpVectors(ground, chase, w);
     this.padCamera.lookAt(t < 0 ? new THREE.Vector3(0, 12, 0) : centre);
     this.padStars.position.copy(this.padCamera.position);
+    this.padCamera.updateMatrixWorld();
+    this.smoke.update(dt, this.padCamera, this.smokeLight);
+    this.skyEnv.update(this.padCamera, dt);
+    // Sharp shadows round the pad while the camera is near the ground.
+    this.padSun.castShadow = alt < 600;
+    this.padSun.target.position.set(0, 10, 0);
+    this.padSun.position.copy(PAD_SUN).multiplyScalar(200).add(this.padSun.target.position);
     this.renderer.render(this.pad, this.padCamera);
+  }
+
+  /**
+   * Smoke and steam: vapour venting on the pad before liftoff, the ground cloud billowing out of the flame trench
+   * at liftoff, and the exhaust trail left in the air, thinning to a contrail high up.
+   */
+  private exhaust(t: number, p: PathPoint, alt: number, burn: boolean, dt: number): void {
+    const rnd = () => Math.random() - 0.5;
+    // Before liftoff: cold oxygen vapour drifting off the tank and falling away.
+    if (t < 0 && Math.random() < dt * 12) {
+      const a = Math.random() * Math.PI * 2;
+      const y = 6 + Math.random() * 6;
+      const at = new THREE.Vector3(Math.sin(a) * 1.3, y, Math.cos(a) * 1.3);
+      this.smoke.emit(at, new THREE.Vector3(Math.sin(a) * 1.2 + 0.6, -0.8, Math.cos(a) * 1.2), 3.5, 0.6, 3.2, { opacity: 0.55, drag: 0.4 });
+    }
+    if (!burn || t < -0.5) return;
+    const down = new THREE.Vector3(-Math.sin(p.lean), -Math.cos(p.lean), 0);
+    // At liftoff the exhaust hits the flame deflector and rolls out of both ends of the trench as a huge cloud.
+    if (alt < 80) {
+      const n = Math.round(dt * 90 * (1 - alt / 80)) + (Math.random() < 0.5 ? 1 : 0);
+      for (let i = 0; i < n; i++) {
+        const side = Math.random() < 0.5 ? 1 : -1;
+        const at = new THREE.Vector3(rnd() * 6, 1.2 + Math.random() * 2, side * (10 + Math.random() * 4));
+        const v = new THREE.Vector3(rnd() * 14, 3 + Math.random() * 6, side * (22 + Math.random() * 20));
+        this.smoke.emit(at, v, 14 + Math.random() * 8, 9, 34 + Math.random() * 16, { heat: 0.5, lift: 1.6, drag: 0.3, opacity: 0.95 });
+      }
+      // And it spreads round the base of the rocket.
+      if (Math.random() < dt * 40) {
+        const a = Math.random() * Math.PI * 2;
+        const v = new THREE.Vector3(Math.cos(a) * 12, 1 + Math.random() * 3, Math.sin(a) * 12);
+        this.smoke.emit(new THREE.Vector3(0, 3, 0), v, 12, 7, 24, { heat: 0.8, lift: 1.2, drag: 0.45 });
+      }
+    }
+    // The trail: puffs left along the path just behind the flame, growing and drifting.
+    const t0 = this.lastT > -Infinity && this.lastT < t ? Math.max(0, this.lastT) : t;
+    const from = pathAt(this.path, t0);
+    const steps = Math.min(16, Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / (1.6 + p.speed * 0.02))));
+    const thin = 1 - smooth(6_000, 30_000, alt);
+    if (alt > 45_000) return;
+    for (let i = 1; i <= steps; i++) {
+      const q = pathAt(this.path, t0 + ((t - t0) * i) / steps);
+      const at = new THREE.Vector3(q.x, 1.8 + q.y, 0).addScaledVector(down, 9 + Math.random() * 4).add(new THREE.Vector3(rnd(), rnd(), rnd()).multiplyScalar(2.5));
+      const v = down.clone().multiplyScalar(5).add(new THREE.Vector3(rnd(), rnd(), rnd()).multiplyScalar(2.5));
+      const size = Math.min(16, 5 + q.speed * 0.045);
+      const solid = this.vehicle === 'deltaD';
+      this.smoke.emit(at, v, 10 + Math.random() * 4, size, size * (solid ? 3.4 : 2.6), {
+        heat: alt < 3_000 ? 0.9 : 0.4,
+        opacity: (solid ? 1 : 0.9) * (0.3 + 0.7 * thin),
+        drag: 0.25,
+      });
+    }
+  }
+
+  /**
+   * The sky as the rocket climbs: the blue overhead deepens to black first (less air above), the horizon keeps a
+   * pale blue band longest, the clouds drop away below, and the haze thins.
+   */
+  private climbSky(alt: number, dt: number): void {
+    const u = (this.skyEnv.sky.material as THREE.ShaderMaterial).uniforms;
+    const b = this.skyBase;
+    // Fraction of the air still above: about 1/e every 8 km.
+    const air = Math.exp(-alt / 8_000);
+    const black = new THREE.Color(0, 0, 0);
+    (u.uZenith!.value as THREE.Color).copy(b.zenith).lerp(black, 1 - air ** 0.7);
+    (u.uMid!.value as THREE.Color).copy(b.mid).lerp(b.zenith, 1 - air).lerp(black, (1 - air) ** 1.5 * 0.92);
+    (u.uHorizon!.value as THREE.Color).copy(b.horizon).lerp(b.mid, smooth(2_000, 40_000, alt) * 0.6);
+    u.uCoverage!.value = b.coverage * (1 - smooth(1_500, 4_500, alt));
+    const high = smooth(1_500, 32_000, alt);
+    this.fog.color.copy(b.fog).lerp(new THREE.Color(0x7aa6d8), high);
+    // Haze lies low: looking down from high up, the ground shows through.
+    this.fog.near = 3_000 + alt * 3;
+    this.fog.far = Math.min(900_000, 60_000 + alt * 12);
+    this.padCamera.near = alt > 2_000 ? 2 : 0.5;
+    this.padCamera.far = alt > 2_000 ? 2_000_000 : 300_000;
+    this.padCamera.updateProjectionMatrix();
+    this.pad.environmentIntensity = this.envIntensity * (0.55 + 0.45 * air);
+    this.ground.animate(dt);
   }
 
   /** High up: the upper stages fire one after another. `failed`: a stage failed, so no flame burns. */

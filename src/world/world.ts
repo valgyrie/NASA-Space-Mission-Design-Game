@@ -34,6 +34,7 @@ import { buildMine } from './mineMesh';
 import type { Design } from '../game/spacecraft';
 import { type ShippingRoute, extendRoute, shippingRoute } from './shippingRoute';
 import { ShippingView } from './shippingView';
+import { vegetationLayer } from './vegetation';
 
 /** How close the camera comes when it follows the Shipping truck. */
 const FOLLOW_DISTANCE = 26;
@@ -164,6 +165,7 @@ export class World {
     window.addEventListener('resize', () => this.resize());
     this.resize();
     this.listenToKeys();
+    this.addScenery(vegetationLayer());
   }
 
   /** WASD / arrows move, Q/E turn, R/F tilt, +/- zoom, H goes back to the whole-Site view. */

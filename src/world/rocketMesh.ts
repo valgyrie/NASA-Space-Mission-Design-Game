@@ -3,26 +3,33 @@ import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { logoTexture } from './logoTexture';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
-import { mat } from './buildingParts';
+import { bellProfile, latheGeometry } from './rocketLathe';
+import { paint } from './rocketPaint';
 import { buildSpacecraft } from './spacecraftMesh';
 
 /**
- * A low-poly Juno I, in metres, standing on its base along +y. Shape from docs/research/launch-vehicles.md:
- * 21.2 m tall; a Redstone-based first stage; on top, a spinning tub with an outer ring of 11 small solid
- * motors (stage 2) round a cluster of 3 (stage 3), then 1 more (stage 4) under the Spacecraft.
- * Painted black and white like the real rocket.
+ * The Launch Vehicles in metres, standing on their bases along +y, built from smooth lathed profiles with painted
+ * metal (rocketPaint.ts). Shapes from docs/research/launch-vehicles.md. Every body part's geometry is placed in its
+ * stage's own coordinates (no offsets on the meshes), so the paint's weld rings and soot line up along a stage.
+ *
+ * Juno I: 21.2 m; a Redstone-based first stage; on top, a spinning tub with an outer ring of 11 small solid
+ * motors (stage 2) round a cluster of 3 (stage 3), then 1 more (stage 4) under the Spacecraft. Black and white.
  */
 
 const R = {
-  white: mat(0xeeeee8, { roughness: 0.55 }),
-  black: mat(0x1c1f24, { roughness: 0.6 }),
-  steel: mat(0x9aa3ad, { metalness: 0.3, roughness: 0.4 }),
-  dark: mat(0x3a3f47, { metalness: 0.25, roughness: 0.5 }),
-  motor: mat(0x6f7782, { metalness: 0.3, roughness: 0.45 }),
-  nozzle: mat(0x2b2f36, { metalness: 0.3, roughness: 0.4 }),
+  white: paint(0xdedbd2, { roughness: 0.42, rings: 2.4, seams: 8, grime: 0.9, soot: 0.75, sootTop: 2.4 }),
+  black: paint(0x18191b, { roughness: 0.48, rings: 2.4, seams: 8, grime: 0.35 }),
+  alu: paint(0xc3c7cc, { metalness: 0.9, roughness: 0.32, grime: 0.3, brushed: true }),
+  steel: paint(0x8e949b, { metalness: 0.8, roughness: 0.4, rings: 0.6, grime: 0.45 }),
+  dark: paint(0x3d3f43, { metalness: 0.65, roughness: 0.5, grime: 0.5, soot: 0.6, sootTop: 1.2 }),
+  motor: paint(0x80858b, { metalness: 0.6, roughness: 0.42, rings: 0.35, grime: 0.4 }),
+  bellOut: paint(0x2b2826, { metalness: 0.7, roughness: 0.55, grime: 0.7 }),
+  bellIn: paint(0x161412, { metalness: 0.4, roughness: 0.8, grime: 0.6 }),
+  carbon: paint(0x141516, { roughness: 0.62, grime: 0.25, seams: 4 }),
+  octaweb: paint(0x4a4c50, { metalness: 0.55, roughness: 0.6, grime: 0.6, soot: 0.8, sootTop: 1.4 }),
 };
 
-const SIDES = 16;
+const SIDES = 64;
 
 /** Heights along the rocket, in metres from its base. */
 export const JUNO = {
@@ -36,24 +43,64 @@ export const JUNO = {
   tubRadius: 0.42,
 };
 
-function cyl(rTop: number, rBottom: number, h: number, material: THREE.Material, y: number, sides = SIDES): THREE.Mesh {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(rTop, rBottom, h, sides), material);
-  m.position.y = y + h / 2;
-  return m;
+type Profile = [number, number][];
+
+function lathe(profile: Profile, material: THREE.Material, segments = SIDES, phiStart = 0, phiLength = Math.PI * 2): THREE.Mesh {
+  return new THREE.Mesh(latheGeometry(profile, segments, 35, phiStart, phiLength), material);
+}
+
+/** A closed cylinder (or frustum) from y0 to y1. */
+function tube(r0: number, r1: number, y0: number, y1: number, material: THREE.Material, segments = SIDES): THREE.Mesh {
+  return lathe([[0, y0], [r0, y0], [r1, y1], [0, y1]], material, segments);
+}
+
+/** A thin painted band standing just proud of the body. */
+function band(r: number, y0: number, y1: number, material: THREE.Material): THREE.Mesh {
+  const o = r * 1.004 + 0.002;
+  return lathe([[r * 0.99, y0], [o, y0], [o, y1], [r * 0.99, y1]], material);
 }
 
 /** A quarter of a band round the body, for the roll pattern. */
 function quarter(r: number, h: number, y: number, start: number, material: THREE.Material): THREE.Mesh {
-  const m = new THREE.Mesh(new THREE.CylinderGeometry(r * 1.004, r * 1.004, h, 8, 1, true, start, Math.PI / 2), material);
-  m.position.y = y + h / 2;
-  return m;
+  const o = r * 1.003 + 0.001;
+  return lathe([[o, y], [o, y + h]], material, 18, start, Math.PI / 2);
 }
 
-/** One small solid motor: a tube with a nozzle, base at y = 0. */
+/** A cable raceway running up the side of a tank, at angle `a` (radians round from +z). */
+function raceway(r: number, y0: number, y1: number, a: number, material: THREE.Material, width = 0.13): THREE.Mesh {
+  const shape = new THREE.Shape();
+  const w = width / 2;
+  shape.moveTo(-w, 0);
+  shape.lineTo(-w * 0.8, 0.05);
+  shape.quadraticCurveTo(0, 0.075, w * 0.8, 0.05);
+  shape.lineTo(w, 0);
+  shape.lineTo(-w, 0);
+  const g = new THREE.ExtrudeGeometry(shape, { depth: y1 - y0, bevelEnabled: false, curveSegments: 6 });
+  g.rotateX(-Math.PI / 2);
+  g.translate(0, y0, r - 0.01);
+  g.rotateY(a);
+  return new THREE.Mesh(g, material);
+}
+
+/** An engine bell, throat at `y`, exit `length` below; dark outside, sooty inside. */
+function bell(throat: number, exit: number, length: number, y: number, x = 0, z = 0): THREE.Group {
+  const g = new THREE.Group();
+  const profile = bellProfile(throat, exit, length, Math.max(0.006, exit * 0.04));
+  const outer = lathe(profile, R.bellOut, 40);
+  // The same shape a hair inside, dark, so the throat reads as a deep hole.
+  const inner = lathe(bellProfile(throat * 0.97, exit * 0.985, length * 0.995, 0.001).slice(1, 12), R.bellIn, 40);
+  g.add(outer, inner);
+  // Throat collar and a bit of the turbopump plumbing above it.
+  g.add(tube(throat * 1.25, throat * 1.1, 0, throat * 1.2, R.dark, 24));
+  g.position.set(x, y, z);
+  return g;
+}
+
+/** One small solid motor (a scaled-down Sergeant): a tube with a nozzle, base at y = 0. */
 function motor(length: number, radius: number): THREE.Group {
   const g = new THREE.Group();
-  g.add(cyl(radius, radius, length, R.motor, 0.12, 8));
-  g.add(cyl(radius * 0.55, radius * 0.85, 0.12, R.nozzle, 0, 8));
+  g.add(lathe([[0, 0.1], [radius * 0.92, 0.1], [radius, 0.13], [radius, length + 0.07], [radius * 0.85, length + 0.12], [0, length + 0.12]], R.motor, 20));
+  g.add(lathe(bellProfile(radius * 0.35, radius * 0.7, 0.1, 0.006).map(([r, y]) => [r, y + 0.1] as [number, number]), R.bellOut, 16));
   return g;
 }
 
@@ -78,11 +125,26 @@ export interface RocketModel {
   upperLength: number;
 }
 
+/** A swept tail fin with rounded edges, its root against a body of radius `r`. */
+function finGeometry(r: number, span: number, rootChord: number, tipChord: number, sweep: number, thick: number): THREE.BufferGeometry {
+  const fin = new THREE.Shape();
+  fin.moveTo(0, 0);
+  fin.lineTo(span, sweep * 0.25);
+  fin.lineTo(span, sweep * 0.25 + tipChord);
+  fin.lineTo(0, rootChord);
+  fin.closePath();
+  const g = new THREE.ExtrudeGeometry(fin, { depth: thick, bevelEnabled: true, bevelThickness: thick * 0.45, bevelSize: thick * 0.45, bevelSegments: 2, curveSegments: 1 });
+  g.translate(r - thick, 0, -thick / 2);
+  g.computeVertexNormals();
+  return g;
+}
+
 function firstStage(): StageModel {
   const g = new THREE.Group();
   const r = JUNO.radius;
-  g.add(cyl(r, r, JUNO.firstStageTop - 1.2, R.white, 1.2));
-  g.add(cyl(r, r * 0.92, 1.2, R.dark, 0));
+  // Tail unit: slightly flared skirt with the engine inside, then the long tank section.
+  g.add(lathe([[r * 0.7, 0], [r * 0.95, 0], [r, 0.25], [r, 1.2], [r * 0.99, 1.22]], R.dark));
+  g.add(lathe([[r * 0.99, 1.2], [r, 1.24], [r, JUNO.firstStageTop], [r * 0.98, JUNO.firstStageTop + 0.01]], R.white));
   // Roll pattern: black quarters, offset between bands.
   for (const [y, start] of [
     [9.5, 0],
@@ -92,27 +154,28 @@ function firstStage(): StageModel {
   ] as const) {
     g.add(quarter(r, 1.4, y, start, R.black));
   }
-  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, JUNO.firstStageTop - 0.1));
-  // Four fins, black, at the tail.
-  const fin = new THREE.Shape();
-  fin.moveTo(0, 0);
-  fin.lineTo(1.25, 0);
-  fin.lineTo(1.25, 0.9);
-  fin.lineTo(0, 3.1);
-  fin.closePath();
-  const finGeo = new THREE.ExtrudeGeometry(fin, { depth: 0.08, bevelEnabled: false });
-  finGeo.translate(r * 0.9, 0, -0.04);
+  g.add(band(r, JUNO.firstStageTop - 0.12, JUNO.firstStageTop + 0.02, R.black));
+  g.add(raceway(r, 1.3, JUNO.firstStageTop - 0.2, Math.PI * 0.75, R.white));
+  // Four fins with their air rudders, black, at the tail.
+  const finGeo = finGeometry(r, 1.2, 3.0, 0.95, 2.1, 0.07);
+  const rudderGeo = new THREE.BoxGeometry(0.06, 0.55, 0.42);
+  rudderGeo.translate(r + 1.0, 0.35, 0);
   for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2 + Math.PI / 4;
     const f = new THREE.Mesh(finGeo, R.black);
-    f.rotation.y = (i * Math.PI) / 2 + Math.PI / 4;
+    f.rotation.y = a;
     g.add(f);
+    const rudder = new THREE.Mesh(rudderGeo, R.dark);
+    rudder.rotation.y = a + Math.PI / 2;
+    g.add(rudder);
   }
-  // Instrument section and the cone up to the tub.
-  g.add(cyl(r, r, JUNO.instrumentTop - JUNO.firstStageTop, R.white, JUNO.firstStageTop));
+  // Instrument section, with its own pattern, then the cone up to the tub.
+  g.add(lathe([[r * 0.98, JUNO.firstStageTop], [r, JUNO.firstStageTop + 0.02], [r, JUNO.instrumentTop], [r * 0.98, JUNO.instrumentTop + 0.01]], R.white));
   g.add(quarter(r, 0.8, JUNO.firstStageTop + 0.5, Math.PI / 4, R.black));
   g.add(quarter(r, 0.8, JUNO.firstStageTop + 0.5, Math.PI * 1.25, R.black));
-  g.add(cyl(JUNO.tubRadius + 0.05, r, JUNO.coneTop - JUNO.instrumentTop, R.steel, JUNO.instrumentTop));
-  g.add(cyl(r * 0.55, r * 0.75, 0.35, R.nozzle, -0.3));
+  g.add(lathe([[r * 0.95, JUNO.instrumentTop], [r, JUNO.instrumentTop + 0.02], [JUNO.tubRadius + 0.05, JUNO.coneTop], [0, JUNO.coneTop]], R.alu));
+  // The A-7 engine, its bell ending just below the skirt.
+  g.add(bell(0.2, r * 0.55, 0.85, 0.55));
   return { group: g, nozzles: [new THREE.Vector3(0, -0.3, 0)], nozzleRadius: r * 0.55 };
 }
 
@@ -167,24 +230,39 @@ export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1', 
 function buildFalcon(design: Design): RocketModel {
   const root = new THREE.Group();
   root.name = 'rocket';
+  const r = 0.74;
   const first = new THREE.Group();
-  first.add(cyl(0.74, 0.74, 16, R.white, 0.6));
-  first.add(cyl(0.74, 0.74, 1.6, R.black, 16.6));
-  first.add(cyl(0.74, 0.74, 0.6, R.dark, 0));
+  // Octaweb and engine skirt, the long white tank, then the black interstage with folded grid fins.
+  first.add(lathe([[r * 0.8, 0], [r * 0.98, 0], [r, 0.08], [r, 0.6], [r * 0.99, 0.62]], R.octaweb));
+  first.add(lathe([[r * 0.99, 0.6], [r, 0.62], [r, 16.6], [r * 0.99, 16.61]], R.white));
+  first.add(lathe([[r * 0.99, 16.6], [r * 1.003, 16.62], [r * 1.003, 18.2], [r * 0.95, 18.22]], R.carbon));
+  first.add(raceway(r, 0.7, 16.5, Math.PI * 0.5, R.white, 0.16));
+  // Landing legs folded flat against the tank, and grid fins folded against the interstage.
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + (i * Math.PI) / 2;
+    const leg = new THREE.Mesh(new THREE.BoxGeometry(0.26, 4.2, 0.08), R.carbon);
+    leg.geometry.translate(0, 2.4, r + 0.03);
+    leg.rotation.y = a;
+    first.add(leg);
+    const fin = new THREE.Mesh(new THREE.BoxGeometry(0.42, 0.5, 0.06), R.dark);
+    fin.geometry.translate(0, 17.6, r + 0.05);
+    fin.rotation.y = a + Math.PI / 4;
+    first.add(fin);
+  }
   const nozzles: THREE.Vector3[] = [];
   for (let i = 0; i < 9; i++) {
     const angle = i * Math.PI / 4;
     const x = i === 8 ? 0 : Math.cos(angle) * 0.47;
     const z = i === 8 ? 0 : Math.sin(angle) * 0.47;
-    const nozzle = cyl(0.1, 0.18, 0.45, R.nozzle, -0.25, 8);
-    nozzle.position.set(x, nozzle.position.y, z);
-    first.add(nozzle);
+    first.add(bell(0.06, 0.15, 0.42, 0.17, x, z));
     nozzles.push(new THREE.Vector3(x, -0.25, z));
   }
   const second = new THREE.Group();
-  second.add(cyl(0.74, 0.74, 6, R.white, 18.2));
-  second.add(cyl(0.28, 0.56, 0.8, R.nozzle, 17.4));
-  second.add(cyl(0.5, 0.74, 1.4, R.steel, 24.2));
+  second.add(lathe([[r * 0.9, 18.2], [r, 18.25], [r, 24.2], [r * 0.99, 24.21]], R.white));
+  second.add(band(r, 23.6, 23.75, R.carbon));
+  second.add(bell(0.1, 0.56, 0.8, 18.2));
+  // Payload adapter: a short aluminium cone up to the Spacecraft.
+  second.add(lathe([[r * 0.99, 24.2], [r * 0.97, 24.25], [0.5, 25.4], [0.48, 25.6], [0, 25.6]], R.alu));
   const spinner = new THREE.Group();
   spinner.position.y = 25.6;
   const spacecraft = spacecraftOnTop(design, 2.4);
@@ -214,10 +292,7 @@ function buildJuno(design: Design): RocketModel {
   const stage2 = cluster(11, JUNO.tubRadius - 0.08, 0, tubLength - 0.2);
   // Bands that hold the ring together go with stage 2.
   for (const y of [0.25, tubLength - 0.15]) {
-    const band = new THREE.Mesh(new THREE.TorusGeometry(JUNO.tubRadius - 0.02, 0.025, 4, 22), R.dark);
-    band.rotation.x = Math.PI / 2;
-    band.position.y = y;
-    stage2.group.add(band);
+    stage2.group.add(lathe([[JUNO.tubRadius - 0.05, y - 0.03], [JUNO.tubRadius, y - 0.03], [JUNO.tubRadius, y + 0.03], [JUNO.tubRadius - 0.05, y + 0.03]], R.steel, 40));
   }
   const stage3 = cluster(3, 0.1, 0.1, tubLength - 0.3);
   const stage4 = cluster(1, 0, tubLength, JUNO.stage4Top - JUNO.tubTop - 0.12);
@@ -239,7 +314,7 @@ function buildJuno(design: Design): RocketModel {
 }
 
 /**
- * A low-poly Thor-Able, in metres: 27 m tall (docs/research/launch-vehicles.md). A wide white Thor first stage
+ * Thor-Able, in metres: 27 m tall (docs/research/launch-vehicles.md). A wide white Thor first stage
  * that narrows towards the top, with a black roll pattern and two small vernier engines by the main one;
  * the slim Able second stage; then the Altair solid third stage on a spin table with the Spacecraft on top.
  * Proportions are approximate.
@@ -281,12 +356,27 @@ function strapOns(g: THREE.Group, nozzles: THREE.Vector3[], count: number): void
     const z = Math.cos(a) * out;
     const booster = new THREE.Group();
     booster.position.set(x, 0, z);
-    booster.add(cyl(r, r, length, R.white, 0.4));
-    booster.add(cyl(r * 1.01, r * 1.01, 0.2, R.black, length * 0.7));
-    const nose = new THREE.Mesh(new THREE.ConeGeometry(r, 1.1, SIDES), R.white);
-    nose.position.y = 0.4 + length + 0.55;
-    booster.add(nose);
-    booster.add(cyl(r * 0.55, r * 0.8, 0.5, R.nozzle, -0.1));
+    // Casing with a pointed ogive nose, black band, and its nozzle.
+    const profile: Profile = [[r * 0.6, 0.3], [r * 0.98, 0.3], [r, 0.4], [r, 0.4 + length]];
+    for (let k = 1; k <= 8; k++) {
+      const t = k / 8;
+      profile.push([r * Math.sqrt(1 - t * t * 0.98), 0.4 + length + 1.3 * t]);
+    }
+    profile.push([0, 0.4 + length + 1.32]);
+    booster.add(lathe(profile, R.white, 40));
+    booster.add(band(r, length * 0.7, length * 0.7 + 0.2, R.black));
+    // Struts to the Thor.
+    for (const y of [0.9, length - 0.3]) {
+      const strut = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.035, 0.5, 8), R.steel);
+      strut.rotation.z = Math.PI / 2;
+      strut.position.y = y;
+      const holder = new THREE.Group();
+      holder.add(strut);
+      holder.rotation.y = a - Math.PI / 2;
+      strut.position.x = -r - 0.05;
+      booster.add(holder);
+    }
+    booster.add(bell(0.1, r * 0.55, 0.45, 0.35));
     g.add(booster);
     nozzles.push(new THREE.Vector3(x, -0.1, z));
   }
@@ -295,9 +385,9 @@ function strapOns(g: THREE.Group, nozzles: THREE.Vector3[], count: number): void
 function thorStage(boosters = 0): StageModel {
   const g = new THREE.Group();
   const r = THOR.radius;
-  g.add(cyl(r, r, THOR.taperFrom - 0.8, R.white, 0.8));
-  g.add(cyl(r, r * 0.95, 0.8, R.dark, 0));
-  g.add(cyl(THOR.topRadius, r, THOR.thorTop - THOR.taperFrom, R.white, THOR.taperFrom));
+  // Engine section (dark, sooty), the long white tanks tapering towards the top, and the interstage.
+  g.add(lathe([[r * 0.8, 0], [r * 0.95, 0], [r, 0.12], [r, 0.8], [r * 0.99, 0.82]], R.dark));
+  g.add(lathe([[r * 0.99, 0.8], [r, 0.82], [r, THOR.taperFrom], [THOR.topRadius, THOR.thorTop], [THOR.topRadius * 0.97, THOR.thorTop + 0.01]], R.white));
   // Roll pattern and a band at the tank joint.
   for (const [y, start] of [
     [3.2, 0],
@@ -307,15 +397,19 @@ function thorStage(boosters = 0): StageModel {
   ] as const) {
     g.add(quarter(r, 1.6, y, start, R.black));
   }
-  g.add(cyl(r * 1.01, r * 1.01, 0.15, R.black, THOR.taperFrom - 0.1));
-  // Interstage up to the Able.
-  g.add(cyl(THOR.ableRadius + 0.04, THOR.topRadius, 0.6, R.steel, THOR.thorTop));
-  // Main engine and two verniers.
-  g.add(cyl(r * 0.45, r * 0.62, 0.6, R.nozzle, -0.55));
+  g.add(band(r, THOR.taperFrom - 0.1, THOR.taperFrom + 0.05, R.black));
+  // Conduits up the side of the tanks.
+  g.add(raceway(r, 0.85, THOR.taperFrom - 0.15, Math.PI * 0.5, R.white, 0.16));
+  g.add(raceway(r, 0.85, THOR.taperFrom - 0.15, Math.PI * 1.5, R.white, 0.16));
+  // Interstage up to the second stage.
+  g.add(lathe([[THOR.topRadius * 0.97, THOR.thorTop], [THOR.topRadius, THOR.thorTop + 0.02], [THOR.ableRadius + 0.04, THOR.thorTop + 0.6], [THOR.ableRadius, THOR.thorTop + 0.61]], R.alu));
+  // Main engine (its bell below the base) and two verniers on the sides.
+  g.add(bell(0.24, r * 0.45, 1.0, 0.45));
+  for (const sx of [-1, 1]) g.add(bell(0.035, 0.08, 0.22, 0.32, sx * (r + 0.06), 0));
   for (const sx of [-1, 1]) {
-    const vernier = cyl(0.08, 0.14, 0.3, R.nozzle, 0.1);
-    vernier.position.x = sx * (r + 0.05);
-    g.add(vernier);
+    const fairing = lathe([[0, 0.25], [0.13, 0.25], [0.14, 0.8], [0, 1.2]], R.dark, 16);
+    fairing.position.x = sx * (r - 0.02);
+    g.add(fairing);
   }
   const nozzles = [new THREE.Vector3(0, -0.55, 0)];
   if (boosters > 0) strapOns(g, nozzles, boosters);
@@ -327,11 +421,13 @@ function ableStage(shape: ThorShape = THOR): StageModel {
   const g = new THREE.Group();
   const r = shape.ableRadius;
   const base = shape.thorTop + 0.6;
-  g.add(cyl(r, r, shape.ableTop - base, R.white, base));
-  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, base + 1.2));
-  g.add(cyl(r * 1.01, r * 1.01, 0.12, R.black, shape.ableTop - 0.5));
-  g.add(cyl(0.12, r * 0.5, 0.35, R.steel, shape.ableTop));
-  g.add(cyl(r * 0.35, r * 0.5, 0.4, R.nozzle, base - 0.4));
+  g.add(lathe([[r * 0.85, base], [r, base + 0.05], [r, shape.ableTop], [r * 0.97, shape.ableTop + 0.01]], R.white, 48));
+  g.add(band(r, base + 1.2, base + 1.32, R.black));
+  g.add(band(r, shape.ableTop - 0.5, shape.ableTop - 0.38, R.black));
+  g.add(raceway(r, base + 0.1, shape.ableTop - 0.1, Math.PI * 0.25, R.white, 0.08));
+  // Spin table on top.
+  g.add(lathe([[r * 0.97, shape.ableTop], [r * 0.9, shape.ableTop + 0.05], [0.16, shape.ableTop + 0.3], [0.12, shape.ableTop + 0.35], [0, shape.ableTop + 0.35]], R.alu, 40));
+  g.add(bell(0.06, r * 0.35, 0.45, base + 0.05));
   return { group: g, nozzles: [new THREE.Vector3(0, base - 0.4, 0)], nozzleRadius: r * 0.35 };
 }
 
@@ -349,9 +445,11 @@ function buildThor(design: Design, shape: ThorShape, boosters: number): RocketMo
   root.add(spinner);
   const third = new THREE.Group();
   const altairLength = shape.altairTop - spinner.position.y;
-  third.add(cyl(0.24, 0.24, altairLength - 0.2, R.motor, 0.2));
-  third.add(cyl(0.25, 0.25, 0.06, R.dark, altairLength - 0.4));
-  third.add(cyl(0.1, 0.16, 0.2, R.nozzle, 0));
+  // The Altair: a round-shouldered glass-fibre motor case.
+  third.add(lathe([[0.1, 0.18], [0.2, 0.2], [0.24, 0.32], [0.24, altairLength - 0.35], [0.2, altairLength - 0.22], [0.08, altairLength - 0.18], [0, altairLength - 0.18]], R.motor, 40));
+  third.add(lathe([[0.2, altairLength - 0.2], [0.25, altairLength - 0.2], [0.25, altairLength - 0.12], [0.2, altairLength - 0.12]], R.dark, 40));
+  third.add(lathe([[0, altairLength - 0.2], [0.1, altairLength - 0.2], [0.12, altairLength], [0, altairLength]], R.alu, 24));
+  third.add(bell(0.05, 0.13, 0.2, 0.2));
   spinner.add(third);
   const spacecraft = spacecraftOnTop(design, shape.top - shape.altairTop);
   spacecraft.position.y = altairLength;

@@ -33,6 +33,98 @@ START HERE" below still holds for everything not listed here.
 - A local `git stash` on this PC holds two agents' unfinished session-2 edits to the land and buildings. Session 3
   replaced that work; the stash is only a safety copy and can be dropped.
 
+### Checkpoint taken in session 4 (usage ran low again)
+
+The team asked again for the work to be saved, the prompts written here, and everything pushed and merged into
+`main`. The commit "Realistic graphics, part 4 checkpoint" holds whatever the stream-3 and stream-5 agents had
+changed at that moment. It passes the type check and tests, but **the orchestrator has not looked at it on
+screen**. Next session:
+
+1. Read `notes-launch.md` and `notes-nature.md`: each lists plan, done, half done and left.
+2. `git status`: anything uncommitted on the second PC was made after the checkpoint by the same two agents.
+3. Take a Site shot, a Shipping shot and a full Launch (steps below), judge them, then re-run the two prompts below
+   with "continue from your notes file; these things are still wrong: …".
+4. Then the stream-4 left-overs, stream 6, stream 7, and ask the team before the final merge.
+
+### Prompts used in session 4 (paste as is on the second PC; on another PC swap the machine facts)
+
+Header, used for both agents (`<N>`, `<name>` and `<notes>` filled in):
+
+```
+You are a coding agent on LEAP, a three.js (r187) + TypeScript + Vite browser game (a space-company tycoon for NASA
+Space Apps 2026). Repo root: C:/Users/user/Pictures/NASA-Space-Mission-Design-Game, branch `realistic-graphics`
+(already checked out). The team wants the old blocky voxel / flat low-poly look replaced by realistic graphics.
+You own stream <N>: <name>.
+
+Read first: AGENTS.md; docs/graphics-overhaul/HANDOFF.md (the "Shared rules to paste at the top of every coding
+agent's prompt" block is binding for you; "Prompt: stream <N>" is your brief; the "Stream <N>" paragraph under
+"What the orchestrator saw in session 3" lists what is wrong now and what you may reuse);
+docs/graphics-overhaul/notes-*.md for the modules you build on.
+
+Machine facts for THIS PC (they override the handoff, whose "This machine" section describes a different computer):
+- Node IS on PATH (v24). From the repo root: `npm run typecheck` and `npx vitest run`. Never run launchers or
+  scripts/leap.test.mjs.
+- Blender 5.3, headless only:
+  "C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" -b --factory-startup -P <script.py> -- <args>
+- A dev server is already running at http://localhost:5173 (Vite, hot reload). Do not start or stop servers.
+- Screenshots: Edge does NOT launch here; always pass Chrome:
+  node .leap/shots/shot.mjs --browser "C:/Program Files/Google/Chrome/Application/chrome.exe" --out .leap/shots/out/<dir> --steps "<steps>"
+  Step syntax: header of scripts/dev/shot.mjs. `.leap/shots/shot2.mjs`, `.leap/ph_models.json` and the `s3/` shots
+  mentioned in the handoff do NOT exist on this PC: take your own "before" shots first. Another agent is editing
+  other files in this checkout at the same time, so the page may hot-reload in the middle of a run: if a shot
+  looks reset, re-run it (or make your own copy of shot.mjs in .leap/shots/ that blocks Vite's hot-reload socket).
+- Do NOT commit, push, stash or switch branches. No new npm dependencies (three's examples/jsm is fine).
+- Usage may run out at any moment: write docs/graphics-overhaul/<notes> early (plan, done, half done, left) and
+  update it after every step; keep the type check, the tests and the game working after every step.
+- Finish: type check and all tests pass; notes file current; final report with what changed, assets (name, author,
+  URL, licence), test results, best before/after screenshot paths, rough edges, and what you need from files you
+  do not own.
+```
+
+Added for **stream 3** (rockets and the Launch scene, notes `notes-launch.md`):
+
+```
+- A whole Launch in Demo Era 2: "wait:2500;click:Let;wait:800;click:Demo;wait:800;click:Era 2;wait:6000;
+  click:Mission Designer;wait:1500;click:Plan the Launch;wait:1200;click:Book Rideshare and ship;wait:1500;
+  click:4×;wait:27000;click:Launch;wait:2500;shot:pad;wait:13000;shot:climb;wait:37000;shot:orbit;log".
+  A faster way to iterate than a 90-second flight is welcome: see how src/ui/launchShow.ts drives launchView.ts and
+  drive it from an `eval:` step, without changing files you do not own.
+- Your files: src/world/rocketMesh.ts, src/world/launchView.ts, new helper modules under src/world/ whose names
+  start with `launch` or `rocket` (plus their tests), scripts/blender/build_launch.py (may import lib.py and
+  parts.py, not edit them), public/models/launch.glb, public/textures/launch/**, docs/art/assets-launch.md,
+  docs/graphics-overhaul/notes-launch.md. Everything else is read-only (src/ui/**, src/game/**, src/site/**,
+  environment.ts, water.ts, buildingModels.ts, earthMesh.ts, world.ts, shippingView.ts…). If you need a change in a
+  file you do not own, describe it in your report instead of making it.
+- Order of work, so a cut-off still leaves a visible gain: (1) sky/environment + pad ground and sea, (2) rockets,
+  (3) exhaust plume, smoke, ground cloud and contrail, (4) tower/gantry and pad structures, (5) climb and space.
+- The "Simple view" fallback in launchShow.ts, stage separation, the spinning tub, the Spacecraft on top and the
+  Company logo decal must keep working exactly as the code contract has them. No real logos or agency markings.
+- (New since session 4 started:) stream 4's Earth is in: `buildEarth(...).setSun(dir)` lights it independently of
+  the scene lights. The Spacecraft on top of the rocket looked flat in the Launch view: check its lighting.
+```
+
+Added for **stream 5** (trees, rocks, props and the Shipping truck, notes `notes-nature.md`):
+
+```
+- Site shots: "wait:2500;click:Let;wait:800;click:Demo;wait:800;click:Era 2;wait:6000;shot:site;hold:f,1500;
+  wait:500;shot:low;wheel:-300*8;wait:800;shot:close;log". Shipping: after Era 2 loads, "click:Mission Designer;
+  wait:1500;click:Plan the Launch;wait:1200;click:Book Rideshare and ship;wait:1500;shot:shipping", then follow
+  the truck. The land without vegetation: .leap/shots/out/s4/site.png, low.png, close.png.
+- Your files: new src/world/vegetation.ts and helper modules beside it (names starting with `vegetation`, `tree`,
+  `scenery` or `truck`, plus their tests), src/world/shippingView.ts, scripts/blender/build_nature.py (may import
+  lib.py and parts.py, not edit them), public/models/nature/**, public/textures/nature/**,
+  docs/art/assets-nature.md, docs/graphics-overhaul/notes-nature.md; in src/world/world.ts and siteMesh.ts ONLY the
+  small hooks needed to register, clear and dispose your scenery layer (say exactly what you changed). Everything
+  else is read-only. Do not change the route in src/world/shippingRoute.ts.
+- ez-tree may only be a build-time tool outside package.json, or make the trees in Blender. Assets CC0/public
+  domain only, each listed in docs/art/assets-nature.md. Shipped nature assets ≤ ~8 MB.
+- Performance is a hard requirement: instanced meshes, far trees thinned, nothing per frame on the CPU beyond a
+  time uniform. Deterministic from the Seed (src/site/random.ts). Never on Deposits, water, building pads or the
+  Shipping route; trees are not raycast targets and must not hide Deposits from the whole-Site view.
+- Order of work: (1) trees and bushes on the temperate Site, convincing from the whole-Site view and close up,
+  (2) climates (desert, snowy, mountainous), (3) the Shipping truck, cargo, dock and road, (4) boulders and clutter.
+```
+
 ## Session 3 (14 Nov, evening): START HERE
 
 A third orchestrator (Claude Fable) continued on `realistic-graphics` and stopped when usage ran low. The team asked
