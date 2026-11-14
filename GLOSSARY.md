@@ -311,7 +311,7 @@ _Avoid_: sandbox (that is a separate mode)
 A Free Play Contract that everyone plays with the same budget and Parts list, ranked on a leaderboard. Every finisher earns the same weekly Mission Patch; the final top three earn podium badges.
 
 **Team Mode**:
-Two to four players sharing one Mission design on one screen, each owning the slots of a role (Mission lead, Power, Communications, Science). The design ships only when every role has signed the Design Review.
+Two to four players sharing one Company on one screen and passing the mouse, each owning the slots of a role (Mission lead, Power, Communications, Science). A design ships only when every role has signed its lines of the Design Review.
 _Avoid_: multiplayer, co-op (that is the online Optional idea), party mode
 
 **Demo Mode**:

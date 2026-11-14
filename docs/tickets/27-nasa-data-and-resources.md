@@ -26,7 +26,7 @@ The Resources tab is due Nov 13. On Nov 12 the build container could not reach s
 
 **Shipped entries:** Design and Develop Science Missions (`missionSegments`, ticket 32, 2026-11-13); JPL Concept Maturity Levels (`cml`, ticket 33, 2026-11-13). The live Resources tab was re-read on 2026-11-13 and matches `resources-tab.txt` word for word: nothing new.
 
-**To finish:** as each of tickets 33–42 ships, add its Resource to `DATASETS` and strings `data.<id>.*` (Real data and Credits show it). Then tick the third item. Planned entries: Design and Develop Science Missions (32, 39), Concept Maturity Levels (33), Mission Viz and GMAT (34, 35), Webb game (36, 42), CubeSat 101 (38, 40), CSA (37, 42). The Mission Design Lab and the 2023 challenge are reading sources (41, 45, 47) rather than data.
+**To finish:** as each of tickets 33–42 ships, add its Resource to `DATASETS` and strings `data.<id>.*` (Real data and Credits show it). Then tick the third item. Planned entries: Design and Develop Science Missions (32, 39), Concept Maturity Levels (33), Mission Viz and GMAT (34, 35), Webb game (36, 42), CubeSat 101 (38, 40), CSA (37, 42). The Mission Design Lab and the 2023 challenge are reading sources (41, 45, 47) rather than data. Ticket 41 links the Mission Design Lab from the Team Mode setup (Learn more →).
 
 **Rechecked (2026-11-12):** The Real data list opens and displays the existing dataset uses and credits. The official Resources work remains pending. [QA report](../qa/2026-11-12/README.md).
 

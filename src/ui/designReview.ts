@@ -9,7 +9,7 @@ import { formatDecimal, formatMoney, formatNumber } from './format';
 import { learnMore } from './learnMore';
 import { sourcedTip } from './sourcedTip';
 import { LINE_ROLE, ROLE_IDS, type RoleId, canSign, isSigned, mayChange, roleHolder, sign, waitingFor } from '../game/team';
-import { TEAM_COLOUR_CSS, notYoursText, ownerText } from './teamBar';
+import { TEAM_COLOUR_CSS, ownerText, playerName } from './teamBar';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -143,11 +143,13 @@ export function makeDesignReview(onSign: () => void = () => {}): { root: HTMLEle
       b.setAttribute('aria-label', t(signed ? 'team.signed' : 'team.signName', { role: t(`team.role.${role}`) }));
       const mine = mayChange(state, role);
       const ready = canSign(state, role);
-      b.disabled = signed || !mine || !ready;
+      b.disabled = !mine || !ready;
+      // Once signed, the word says it; the button comes back when the signature clears.
+      b.hidden = signed;
       b.addEventListener('click', () => {
         if (sign(state, role)) onSign();
       });
-      const why = signed ? '' : !mine ? notYoursText(players, role) : !ready ? t('team.signFill') : '';
+      const why = signed ? '' : !mine ? t('team.passToSign', { player: playerName(players, roleHolder(players.length, role)) }) : !ready ? t('team.signFill') : '';
       item.append(
         el('span', 'team-dot'),
         el('span', 'review-role-name', ownerText(players, role)),
@@ -163,7 +165,8 @@ export function makeDesignReview(onSign: () => void = () => {}): { root: HTMLEle
     // Signing redraws the list: keep the keyboard where it was.
     if (focused) {
       const again = list.querySelector<HTMLButtonElement>(`[data-sign="${focused}"]`);
-      (again && !again.disabled ? again : (list.querySelector<HTMLButtonElement>('[data-sign]:not(:disabled)') ?? summary)).focus();
+      const free = '[data-sign]:not(:disabled):not([hidden])';
+      (again?.matches(free) ? again : (list.querySelector<HTMLButtonElement>(free) ?? summary)).focus();
     }
     const left = waitingFor(state, review);
     waiting.dataset.waiting = String(left.length > 0);

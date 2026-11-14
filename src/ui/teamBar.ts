@@ -13,7 +13,9 @@ import {
   setPlayerName,
   setTeamSize,
 } from '../game/team';
+import { SOURCES } from '../game/sources';
 import { t } from '../strings';
+import { learnMore } from './learnMore';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -131,7 +133,9 @@ export function makeTeamBar(state: SiteState, onChange: () => void): TeamBar {
   problem.setAttribute('aria-live', 'polite');
   const nameHint = el('p', 'side-note', t('team.nameHint'));
   const done = button('small team-done', t('team.done'));
-  setup.append(setupHeading, el('p', 'side-note', t('team.hint')), sizes, playersBox, problem, nameHint, done);
+  const rolesFrom = el('p', 'side-note', t('team.rolesFrom'));
+  rolesFrom.append(' ', learnMore(SOURCES.missionDesignLab, t('sources.missionDesignLab')));
+  setup.append(setupHeading, el('p', 'side-note', t('team.hint')), sizes, playersBox, problem, nameHint, rolesFrom, done);
   root.append(turn, setup);
 
   let open = false;
@@ -175,6 +179,11 @@ export function makeTeamBar(state: SiteState, onChange: () => void): TeamBar {
           renderLive();
           onChange();
         }
+      });
+      // A nickname that was refused is not kept: the field goes back to the one in use.
+      name.addEventListener('blur', () => {
+        name.value = state.team?.players[i]?.name ?? '';
+        problem.textContent = '';
       });
       const colours = el('div', 'team-colours');
       colours.setAttribute('role', 'group');

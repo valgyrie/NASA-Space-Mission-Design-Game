@@ -114,7 +114,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Sourced tips from CubeSat 101 (ticket 38)
 - [x] Tutorial under NASA's six steps (ticket 39)
 - [x] Ground Tests before Shipping (ticket 40)
-- [ ] Team Mode on one screen (ticket 41)
+- [x] Team Mode on one screen (ticket 41)
 
 ## Optional (later)
 
