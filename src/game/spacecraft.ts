@@ -293,6 +293,18 @@ export function groundBoost(state: Pick<SiteState, 'groundStations'>): number {
   return 1 + state.groundStations.reduce((sum, g) => sum + GROUND_STATION_STEP * levelBoost(g.level), 0);
 }
 
+/**
+ * A question Contract greys out the options that can't answer its question: the wrong Payloads, and flying without
+ * a main engine when the orbit needs one. Other Contracts grey out nothing. The reason is `question.<id>.no.<option>`.
+ */
+export function cannotAnswer(contract: Contract, id: OptionId): boolean {
+  if (!contract.question) return false;
+  const { orbit, payload } = contractNeeds(contract);
+  const o = OPTIONS[id];
+  if (o.slot === 'payload') return !!o.payload && o.payload !== payload;
+  return o.slot === 'propulsion' && id !== 'mainEngine' && needsMainEngine(orbit);
+}
+
 /** The Spacecraft carries a main engine: it can climb from a transfer orbit to a geostationary one. */
 export function hasMainEngine(design: Design): boolean {
   return design.propulsion === 'mainEngine';

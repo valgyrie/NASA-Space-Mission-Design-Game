@@ -1,12 +1,19 @@
 import { START_DATE_UTC } from '../game/balance';
-import { t } from '../strings';
+import { type StringKey, t } from '../strings';
 import { contractById, type ContractId, type MilestoneId } from '../game/contracts';
 
 /** One translated name throughout the board, designer, tracker, report, patches and Space view. */
-export function contractText(id: ContractId, field: 'name' | 'client' | 'objective' = 'name'): string {
+export function contractText(id: ContractId, field: 'name' | 'client' | 'objective' | 'need' = 'name'): string {
   const contract = contractById(id);
+  // A question Contract is named after its question and says who asked it.
+  if (contract.question && field !== 'objective') return t(`question.${contract.question}.${field}`);
+  // Generated Contracts name a kind of person and why they need the Data (ticket 42); Milestones have no need line.
+  if (contract.template && contract.need !== undefined && (field === 'client' || field === 'need')) {
+    return t(`contract.${contract.template}.need.${contract.need}.${field === 'need' ? 'line' : 'client'}` as StringKey);
+  }
+  if (field === 'need') return '';
   const key = contract.template ?? id as MilestoneId;
-  return t(`contract.${key}.${field}`, { n: Number(id.slice(5)) + 1 });
+  return t(`contract.${key}.${field}` as StringKey, { n: Number(id.slice(5)) + 1 });
 }
 
 const locale = t('format.locale');

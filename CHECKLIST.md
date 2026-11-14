@@ -132,7 +132,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [ ] Live weather mode (today's real weather)
 - [ ] Visit other Companies' Sites, preset messages, send resources
 - [ ] Cooperative missions (up to 4 players)
-- [ ] Science-first Contracts: who needs the Data, then choose a question (ticket 42)
+- [x] Science-first Contracts: who needs the Data, then choose a question (ticket 42)
 - [ ] Save for GMAT from the Space view (ticket 43)
 - [ ] Rideshares leave on their date (ticket 44)
 - [ ] Save, share and compare designs (ticket 45)

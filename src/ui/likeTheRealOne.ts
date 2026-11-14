@@ -1,3 +1,4 @@
+import { contractById } from '../game/contracts';
 import type { MissionReport } from '../game/mission';
 import { type RealCraft, type RealPower, type RealWorked, realCraftFor } from '../game/realCraft';
 import { spacecraftMass } from '../game/spacecraft';
@@ -111,5 +112,5 @@ export function likeTheRealOne(report: MissionReport): RealComparison {
 }
 
 function contractIsGenerated(report: MissionReport): boolean {
-  return report.contract.startsWith('free-');
+  return contractById(report.contract).kind === 'generated';
 }

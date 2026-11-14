@@ -47,7 +47,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 39 🧪 | [NASA's six steps](39-nasas-six-steps.md) | 13 | The tutorial's eight steps under NASA's six step names. |
 | 40 🧪 | [Ground Tests](40-ground-tests.md) | 12, 33 | Vibration, thermal vacuum and Day in the Life tests: days and money against Anomaly risk. |
 | 41 🧪 | [Team Mode on one screen](41-team-mode.md) | 33 | Two to four players, roles own slots, everyone signs the Design Review before Shipping. |
-| 42 | [Science-first Contracts](42-science-first-contracts.md) _(Optional)_ | 21 | Light: every Free Play Contract says who needs the Data. Full: choose a question first. |
+| 42 🧪 | [Science-first Contracts](42-science-first-contracts.md) _(Optional)_ | 21 | Light: every Free Play Contract says who needs the Data. Full: choose a question first. |
 | 43 | [Open in GMAT](43-open-in-gmat.md) _(Later)_ | 31, 34 | Save a Spacecraft's orbit as a GMAT script; needs a person to test it in GMAT. |
 | 44 | [Rideshares leave on their date](44-rideshares-leave-on-their-date.md) _(Later)_ | 16, 21 | Fixed departure days; miss one and wait. Needs play-testing. |
 | 45 | [Save, share and compare designs](45-save-share-compare-designs.md) _(Later)_ | 07, 23 | Two designs side by side; a design as a short code. |

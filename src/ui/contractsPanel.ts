@@ -9,6 +9,7 @@ import {
   contractById,
   daysLeft,
   deadlineDay,
+  questionOffers,
 } from '../game/contracts';
 import { LAST_ERA, eraOf, milestonesDone } from '../game/eras';
 import { type SiteState, canContinueFreePlay, continueFreePlay } from '../game/siteState';
@@ -97,9 +98,13 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     const deadline = el('span', '');
     if (taken) dueLines.push({ line: deadline, contract: taken });
     else deadline.textContent = t('contracts.deadlineAfter', { days: formatNumber(contract.deadlineDays) });
+    box.append(title);
+    if (contract.question) box.append(field(t('contracts.question'), t(`question.${contract.question}.text`)));
     box.append(
-      title,
-      field(t('contracts.client'), contractText(contract.id, 'client')),
+      // Generated Contracts say who needs the Data and why; Milestones name their real client.
+      contract.kind === 'generated'
+        ? field(t('contracts.need'), contractText(contract.id, 'need'))
+        : field(t('contracts.client'), contractText(contract.id, 'client')),
       field(t('contracts.objective'), contractText(contract.id, 'objective')),
       field(t('contracts.requirements'), requirements),
       field(
@@ -108,6 +113,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       ),
       field(t('contracts.deadline'), deadline),
     );
+    if (contract.question) box.append(field(t('contracts.orbitWhy'), t(`question.${contract.question}.orbit`)));
     box.append(missionLinks(contract.id));
     if (contract.wholeLaunch) box.append(el('p', 'side-note', t('contracts.wholeLaunch')));
     // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
@@ -127,6 +133,34 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     return box;
   };
 
+  /** Free Play's "Choose a question" card: picking a question takes on its Contract. */
+  const questionCard = () => {
+    const box = el('article', 'contract-card question-card');
+    const title = el('div', 'contract-title');
+    title.append(el('h4', '', t('contracts.question.heading')));
+    box.append(title, el('p', 'side-note', t('contracts.question.intro')));
+    const offers = questionOffers(state);
+    if (offers.length === 0) {
+      box.append(el('p', 'side-note', t('contracts.question.busy')));
+      return box;
+    }
+    const list = el('div', 'question-list');
+    for (const id of offers) {
+      const pick = el('button', 'small question', t(`question.${contractById(id).question!}.text`));
+      pick.type = 'button';
+      pick.dataset.question = contractById(id).question;
+      pick.addEventListener('click', () => {
+        const result = acceptContract(state, id);
+        setText(problem, result.ok ? '' : t(`contracts.problem.${result.problem}`));
+        render();
+        if (result.ok) onAccept(id);
+      });
+      list.append(pick);
+    }
+    box.append(list);
+    return box;
+  };
+
   const render = () => {
     shownTaken = `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).length}`;
     dueLines = [];
@@ -141,6 +175,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     if (open.length === 0 && state.contracts.length === 0) body.append(eraLine);
     else if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
     for (const c of open) body.append(card(c));
+    if (state.playMode === 'freePlay') body.append(questionCard());
     if (canContinueFreePlay(state)) {
       body.append(el('p', 'side-note', t('freePlay.continueNote')));
       const next = el('button', 'small', t('freePlay.continue'));

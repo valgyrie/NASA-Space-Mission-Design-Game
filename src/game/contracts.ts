@@ -10,7 +10,8 @@ import { hashText, makeRng, randInt } from '../site/random';
 
 export const CONTRACT_IDS = ['explorer1', 'tiros1', 'telstar1', 'syncom3'] as const;
 export type MilestoneId = (typeof CONTRACT_IDS)[number];
-export type ContractId = MilestoneId | `free-${number}`;
+/** A question Contract's ID names its question and a number, so the same question can be asked again. */
+export type ContractId = MilestoneId | `free-${number}` | `ask-${QuestionId}-${number}`;
 
 /** A Milestone follows real history; Free Play generates work for fictional clients. */
 export type ContractKind = 'milestone' | 'generated';
@@ -54,6 +55,10 @@ export interface Contract {
   wholeLaunch?: boolean;
   /** Success also gives a Plot of land next to the Site, free to choose (ticket 30). */
   plot?: boolean;
+  /** Generated Contracts: which "who needs it" line of their kind they show (strings `contract.<template>.need.<n>`). */
+  need?: number;
+  /** A question Contract: the player picked this question, and it set the orbit, the Payload and the days. */
+  question?: QuestionId;
 }
 
 /**
@@ -135,14 +140,64 @@ export const CONTRACTS: Record<MilestoneId, Contract> = {
   },
 };
 
+/** How many "who needs it" lines each generated Contract kind has in strings.ts. */
+export const NEED_LINES = 4;
+
+/**
+ * Free Play's "Choose a question" Contract: the player picks a question, and the question sets the orbit, the
+ * Payload and the days of Data. Questions use the Payloads LEAP has. Game estimates built on the Milestones they
+ * echo (docs/research/milestones.md): TIROS-1's cloud pictures, Explorer 1's radiation detector, Syncom 3's
+ * geostationary relay. An orbit tilted N degrees passes over latitudes up to N degrees, so sea ice near the poles
+ * needs a steep tilt.
+ */
+export const QUESTION_IDS = ['storms', 'seaIce', 'radiation', 'farCall'] as const;
+export type QuestionId = (typeof QUESTION_IDS)[number];
+
+interface Question {
+  template: 'survey' | 'weather' | 'relay';
+  orbitKm: { low: number; high: number };
+  inclinationDeg: number;
+  days: number;
+  reward: number;
+}
+
+export const QUESTIONS: Record<QuestionId, Question> = {
+  storms: { template: 'weather', orbitKm: { low: 700, high: 700 }, inclinationDeg: 48, days: 60, reward: 1_900_000 },
+  seaIce: { template: 'weather', orbitKm: { low: 800, high: 800 }, inclinationDeg: 82, days: 90, reward: 2_300_000 },
+  // Explorer 1's oval orbit dipped into the inner radiation belt.
+  radiation: { template: 'survey', orbitKm: { low: 360, high: 2_550 }, inclinationDeg: 33, days: 45, reward: 1_200_000 },
+  farCall: { template: 'relay', orbitKm: { low: 35_786, high: 35_786 }, inclinationDeg: 0, days: 90, reward: 3_000_000 },
+};
+
+const QUESTION_ID = new RegExp(`^ask-(${QUESTION_IDS.join('|')})-(0|[1-9]\\d{0,8})$`);
+
 /** Stable IDs keep requirements and rewards identical in the board, flight, reports and saves. */
 export function isContractId(id: unknown): id is ContractId {
   return typeof id === 'string' && ((CONTRACT_IDS as readonly string[]).includes(id) ||
-    (/^free-(0|[1-9]\d{0,8})$/.test(id)));
+    (/^free-(0|[1-9]\d{0,8})$/.test(id)) || QUESTION_ID.test(id));
+}
+
+function questionContract(id: ContractId): Contract {
+  const question = QUESTION_ID.exec(id)![1] as QuestionId;
+  const q = QUESTIONS[question];
+  const payload = ({ survey: 'radiationDetector', weather: 'tvCamera', relay: 'transponder' } as const)[q.template];
+  return {
+    id, kind: 'generated', template: q.template, question, era: 5,
+    requirements: [
+      { kind: 'orbit', orbit: q.template === 'relay' ? 'geostationary' : 'lowEarthOrbit' },
+      { kind: 'payload', payload },
+      { kind: 'dataDays', days: q.days },
+    ],
+    reward: q.reward,
+    deadlineDays: q.days + 240,
+    orbitKm: q.orbitKm,
+    inclinationDeg: q.inclinationDeg,
+  };
 }
 
 /** Game estimates, not real historical Missions. Successive IDs cycle through all three Payloads. */
 export function contractById(id: ContractId): Contract {
+  if (id.startsWith('ask-')) return questionContract(id);
   if (!id.startsWith('free-')) return CONTRACTS[id as MilestoneId];
   const n = Number(id.slice(5));
   const rng = makeRng(hashText(id));
@@ -162,6 +217,8 @@ export function contractById(id: ContractId): Contract {
     deadlineDays: days + 240,
     orbitKm: geo ? { low: 35_786, high: 35_786 } : { low: height, high: height },
     inclinationDeg: geo ? 0 : randInt(rng, 30, 55),
+    // Its own seed, so the line doesn't shift the numbers drawn above.
+    need: hashText(`${id}:need`) % NEED_LINES,
     ...(n % LAND_CONTRACT_EVERY === LAND_CONTRACT_EVERY - 1 ? { plot: true } : {}),
   };
 }
@@ -191,9 +248,21 @@ export function availableContracts(state: SiteState): Contract[] {
   return CONTRACT_IDS.filter((id) => !accepted(state, id) && !state.completed.includes(id) && isOffered(state, id)).map((id) => CONTRACTS[id]);
 }
 
+/** Free Play's question Contracts the player can pick now: each question's next unused number. None while one is active. */
+export function questionOffers(state: SiteState): ContractId[] {
+  if (state.playMode !== 'freePlay') return [];
+  if (state.contracts.some((c) => contractById(c.id).question)) return [];
+  const used = new Set<ContractId>([...state.completed, ...state.contracts.map((c) => c.id)]);
+  return QUESTION_IDS.map((q) => {
+    let n = 0;
+    while (used.has(`ask-${q}-${n}`)) n++;
+    return `ask-${q}-${n}` as ContractId;
+  });
+}
+
 /** A Contract is offered once the Company has reached its Era and the Milestone before it is done. */
 export function isOffered(state: SiteState, id: ContractId): boolean {
-  if (state.playMode === 'freePlay') return availableContracts(state).some((c) => c.id === id);
+  if (state.playMode === 'freePlay') return availableContracts(state).some((c) => c.id === id) || questionOffers(state).includes(id);
   const contract = contractById(id);
   return contract.kind === 'milestone' && eraOf(state) >= contract.era && (!contract.after || state.completed.includes(contract.after));
 }

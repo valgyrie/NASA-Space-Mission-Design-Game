@@ -104,6 +104,10 @@ _Avoid_: quest, job, order
 The Company's attempt to fulfil a Contract or a science goal, from design to Mission Report.
 _Avoid_: flight, run
 
+**Question Contract**:
+A Free Play Contract that starts from a question the player picks, such as "Where are storms forming?". The question sets the orbit, the Payload and the days of Data.
+_Avoid_: science mission, quest
+
 **Milestone**:
 A Campaign Contract based on a real event in space history, such as Explorer 1.
 _Avoid_: story mission, chapter
