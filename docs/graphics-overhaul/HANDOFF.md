@@ -13,9 +13,9 @@ START HERE" below still holds for everything not listed here.
   rocks, Shipping truck), one Opus agent each. Their notes: `notes-launch.md` and `notes-nature.md` (written early
   and updated as they go). If a notes file exists but the work is uncommitted or looks half done, that agent was
   cut off: run the checks, look at the game, then re-run its prompt with what is left.
-- **Stream 4 (Spacecraft, Earth, space views) is NOT being done in session 4.** It was started in session 3 on the
-  other PC and its work was not pushed (only `scripts/build_earth_textures.py` is in the repo). Whoever has that
-  PC should push it; otherwise start stream 4 from its prompt.
+- **Stream 4 (Spacecraft, Earth, space views) is NOT being done in session 4.** Session 3 pushed it from the
+  first PC after this note was written (commit "photographic Earth, new stars, Spacecraft materials and lighting"):
+  it is mostly done. What is left, including one licence point, is under "Stream 4 left-overs" below.
 - **Left after that:** stream 6 (credits, docs), stream 7 (play-test), then ask the team before the final merge.
 - Agent prompts used in session 4: the session-3 header with the "Second PC" facts below instead of its machine
   facts, plus: the owned-files list of the stream, "another agent is editing other files in this checkout", and
