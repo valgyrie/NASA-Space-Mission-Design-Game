@@ -29,6 +29,8 @@ import type { TechId } from '../game/research';
 import type { Difficulty } from '../game/modes';
 import { makeLaunchPlanner } from './launchPlanner';
 import { makeMaturityStrip } from './designReview';
+import { SLOT_ROLE, mayChange } from '../game/team';
+import { makeRoleChip, makeTeamBar, notYoursText } from './teamBar';
 import { recordTestRun } from '../game/maturity';
 import { makeTestRunScreen } from './testRun';
 import { planLaunch, testRunFor } from '../game/mission';
@@ -214,14 +216,22 @@ export function showMissionDesigner(
   const paused = el('span', 'designer-paused', t('designer.paused'));
   const close = button('small designer-close', t(hooks.challenge ? 'weekly.back' : 'designer.close'));
   close.title = t('panel.closeName');
-  head.append(heading, goal, paused, close);
+  // Team Mode (ticket 41): players pass the mouse; not in the Weekly Challenge, which one player enters.
+  const team = hooks.challenge ? null : makeTeamBar(state, () => {
+    hooks.onChange();
+    redraw();
+  });
+  head.append(heading, goal, paused, ...(team ? [team.toggle] : []), close);
 
   // Slots
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
   slotsBox.append(el('p', 'side-note', t('designer.mode', { mode: t(`mode.${state.difficulty}`) })),
     el('p', 'side-note', t(`designer.${state.difficulty}.note`)));
-  const slotRows = new Map<Slot, { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement }>();
+  const slotRows = new Map<
+    Slot,
+    { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement; chip: ReturnType<typeof makeRoleChip>; notYours: HTMLElement }
+  >();
   const optionUi: {
     o: SpacecraftOption;
     b: HTMLButtonElement;
@@ -233,7 +243,8 @@ export function showMissionDesigner(
   for (const slot of SLOTS) {
     const row = el('div', 'slot');
     const label = el('div', 'slot-head');
-    label.append(el('span', 'slot-name', t(`slot.${slot}`)), el('span', 'slot-hint', t(`slot.${slot}.hint`)));
+    const chip = makeRoleChip(SLOT_ROLE[slot]);
+    label.append(el('span', 'slot-name', t(`slot.${slot}`)), chip.root, el('span', 'slot-hint', t(`slot.${slot}.hint`)));
     const choices = el('div', 'slot-options');
     const options = new Map<string, HTMLButtonElement>();
     for (const o of optionsFor(slot, state.difficulty)) {
@@ -254,15 +265,16 @@ export function showMissionDesigner(
       if (hall) b.append(hall);
       optionUi.push({ o, b, stats, locked, eraLock, hall });
       b.addEventListener('click', () => {
-        if (choose(state.design, o.id, state)) changed();
+        if ((!team || mayChange(state, SLOT_ROLE[slot])) && choose(state.design, o.id, state)) changed();
       });
       choices.append(b);
       options.set(o.id, b);
     }
     const stock = el('div', 'slot-stock');
-    row.append(label, choices, stock);
+    const notYours = el('p', 'team-not-yours');
+    row.append(label, choices, notYours, stock);
     slotsBox.append(row);
-    slotRows.set(slot, { row, options, stock });
+    slotRows.set(slot, { row, options, stock, chip, notYours });
   }
 
   // 3D view
@@ -331,10 +343,18 @@ export function showMissionDesigner(
     },
   });
   const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
-  panel.append(head, strip.root, body, planner.root, testRun.root);
+  panel.append(head, ...(team ? [team.root] : []), strip.root, body, planner.root, testRun.root);
 
   const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
+  let shown: keyof typeof headings = 'design';
+  /** Redraw the screen on show after the team changed: who is at the mouse decides what can be changed. */
+  const redraw = () => {
+    if (shown === 'design') render();
+    else if (shown === 'planner') planner.render();
+  };
   const showView = (which: keyof typeof headings) => {
+    shown = which;
+    team?.render();
     body.hidden = which !== 'design';
     planner.root.hidden = which !== 'planner';
     testRun.root.hidden = which !== 'testRun';
@@ -369,16 +389,24 @@ export function showMissionDesigner(
     goal.textContent = t(forKey[check.goal.status], { contract });
     sources.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
 
+    const players = team ? state.team?.players : undefined;
     for (const { o, b, stats, locked, eraLock, hall } of optionUi) {
       const open = isUnlocked(state, o.id);
-      b.disabled = !open;
+      // In Team Mode a slot answers only to its role's player.
+      b.disabled = !open || (!!players && !mayChange(state, SLOT_ROLE[o.slot]));
       if (locked) locked.hidden = open;
       if (eraLock) eraLock.hidden = open;
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);
       stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
     }
     for (const slot of SLOTS) {
-      const { row, options, stock } = slotRows.get(slot)!;
+      const { row, options, stock, chip, notYours } = slotRows.get(slot)!;
+      const role = SLOT_ROLE[slot];
+      chip.render(players ? state : {});
+      row.dataset.role = players ? role : '';
+      row.style.setProperty('--team-colour', chip.root.style.getPropertyValue('--team-colour'));
+      notYours.hidden = !players || mayChange(state, role);
+      notYours.textContent = players ? notYoursText(players, role) : '';
       // Propulsion joins in Era 2; until then it holds "none".
       row.hidden = !isSlotShown(state, slot);
       const picked = state.design[slot];
@@ -459,6 +487,7 @@ export function showMissionDesigner(
       audio.setScene('designer', null);
       view.stop();
       testRun.stop();
+      team?.closeSetup();
       hooks.onClose();
     },
     destroy() {

@@ -6,6 +6,7 @@ import { CONTRACT_IDS, type ContractId, isContractId } from '../game/contracts';
 import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCardFor } from '../game/history';
 import { TECH_IDS, newResearch } from '../game/research';
 import { isGroundTestId } from '../game/groundTests';
+import { isTeam, isTeamPlayers } from '../game/team';
 import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { JPL, START_KINDS } from '../game/places';
@@ -107,7 +108,8 @@ function isMission(value: unknown): boolean {
     isNumber(m.shipDay) &&
     isNumber(m.readyDay) &&
     (m.insurance === null || (isNumber(m.insurance?.price) && isNumber(m.insurance?.payout))) &&
-    isGroundTests(m.groundTests)
+    isGroundTests(m.groundTests) &&
+    (m.team === undefined || isTeamPlayers(m.team))
   );
 }
 
@@ -147,7 +149,8 @@ function isReport(value: unknown): boolean {
     (r.design === null || (isDesign(r.design) && isComplete(r.design!))) &&
     isAnomaly(r.anomaly) &&
     isNumber(r.insurancePaid) &&
-    (r.ground === undefined || isNumber(r.ground))
+    (r.ground === undefined || isNumber(r.ground)) &&
+    (r.team === undefined || isTeamPlayers(r.team))
   );
 }
 
@@ -221,7 +224,8 @@ function isSiteState(value: unknown): value is SiteState {
     isNumber(v.freePlots) &&
     v.freePlots >= 0 &&
     (v.testedDesigns === undefined || isTestedDesigns(v.testedDesigns)) &&
-    isGroundTests(v.groundTests)
+    isGroundTests(v.groundTests) &&
+    (v.team === undefined || isTeam(v.team))
   );
 }
 

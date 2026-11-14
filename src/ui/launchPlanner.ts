@@ -15,7 +15,9 @@ import type { BusId } from '../game/upgrades';
 import { isBuildingOpen } from '../game/eras';
 import type { MissionSegment } from '../game/segments';
 import { dataOf } from '../game/spacecraft';
-import { type LaunchPlan, type PlanProblem, insuranceQuote, planLaunch, shipMission } from '../game/mission';
+import { type LaunchPlan, type PlanProblem, insuranceQuote, shipMission, shipPlan } from '../game/mission';
+import { GROUND_TEST_ROLE, mayChange } from '../game/team';
+import { makeRoleChip } from './teamBar';
 import { adviseLaunch, shippingTo } from '../game/places';
 import { adviceText, weatherText } from './weatherText';
 import type { SiteState } from '../game/siteState';
@@ -79,6 +81,8 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
       return t('planner.problem.missingParts');
     case 'money':
       return t('planner.problem.money', { short: formatMoney(p.short) });
+    case 'unsigned':
+      return t('planner.problem.unsigned', { roles: p.roles.map((r) => t(`team.role.${r}`)).join(t('team.list')) });
   }
 }
 
@@ -110,7 +114,19 @@ export function makeLaunchPlanner(
   // Launch Vehicle and Launch Site
   const choices = el('section', 'planner-card');
   const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
-  choices.append(el('h4', '', t('planner.vehicle')), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
+  // Team Mode: the Launch Vehicle, Launch Site and Launch Insurance are the Mission lead's.
+  const chips: ReturnType<typeof makeRoleChip>[] = [];
+  const chip = (role: Parameters<typeof makeRoleChip>[0]) => {
+    const c = makeRoleChip(role);
+    chips.push(c);
+    return c.root;
+  };
+  const titled = (text: string, role: Parameters<typeof makeRoleChip>[0]) => {
+    const h = el('h4', '', text);
+    h.append(' ', chip(role));
+    return h;
+  };
+  choices.append(titled(t('planner.vehicle'), 'lead'), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
   const vehicleButtons = new Map<
     LaunchVehicleId,
     { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement; price: HTMLElement }
@@ -136,7 +152,7 @@ export function makeLaunchPlanner(
       locked,
     );
     b.addEventListener('click', () => {
-      if (!isVehicleOpen(state, id)) return;
+      if (!isVehicleOpen(state, id) || !mayChange(state, 'lead')) return;
       state.vehicle = id;
       hooks.onVehicle();
       render();
@@ -148,7 +164,7 @@ export function makeLaunchPlanner(
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
   const geoPath = transferPicture();
   choices.append(geoNote, geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
-  choices.append(el('h4', '', t('planner.site')), el('p', 'planner-hint', t('planner.siteHint')));
+  choices.append(titled(t('planner.site'), 'lead'), el('p', 'planner-hint', t('planner.siteHint')));
   const siteButtons = new Map<string, HTMLButtonElement>();
   for (const id of LAUNCH_SITE_IDS) {
     const ls = LAUNCH_SITES[id];
@@ -167,6 +183,7 @@ export function makeLaunchPlanner(
     );
     if (ls.alternate) b.append(el('span', 'option-locked', t('planner.siteAlternate')));
     b.addEventListener('click', () => {
+      if (!mayChange(state, 'lead')) return;
       state.launchSite = id;
       hooks.onVehicle();
       render();
@@ -194,7 +211,7 @@ export function makeLaunchPlanner(
   });
   const insurePrice = el('span', 'planner-insure-price');
   const insureLabel = el('label', 'planner-insure');
-  insureLabel.append(insureBox, el('span', '', t('planner.insurance')), insurePrice);
+  insureLabel.append(insureBox, el('span', '', t('planner.insurance')), insurePrice, chip('lead'));
   const insureLine = el('p', 'planner-hint');
   const lighter = el('p', 'planner-hint', t('planner.lighter'));
   const wholeNote = el('p', 'planner-hint', t('planner.wholeLaunchNote'));
@@ -231,7 +248,7 @@ export function makeLaunchPlanner(
     });
     const label = el('label', 'planner-insure');
     const g = GROUND_TESTS[id];
-    label.append(box, el('span', '', t('planner.groundTests.option', { name: t(`groundTest.${id}`), days: formatNumber(g.days), price: formatMoney(g.cost) })));
+    label.append(box, el('span', '', t('planner.groundTests.option', { name: t(`groundTest.${id}`), days: formatNumber(g.days), price: formatMoney(g.cost) })), chip(GROUND_TEST_ROLE[id]));
     const chance = el('span', 'planner-test-chance');
     const what = el('p', 'planner-hint', t(`groundTest.${id}.what`));
     what.append(' ', learnMore(`${SOURCES.cubesat101}#page=${GROUND_TEST_PAGES[id] + 8}`, t('groundTest.source', { page: GROUND_TEST_PAGES[id] })));
@@ -248,7 +265,10 @@ export function makeLaunchPlanner(
 
   // The Design Review, blockers and the button
   const footer = el('section', 'planner-footer');
-  const review = makeDesignReview();
+  const review = makeDesignReview(() => {
+    hooks.onVehicle();
+    render();
+  });
   const problems = el('ul', 'planner-problems');
   problems.setAttribute('aria-live', 'polite');
   const testRun = button('planner-testrun', t('planner.testRun'));
@@ -296,16 +316,21 @@ export function makeLaunchPlanner(
     const site = state.launchSite;
     const quote = insuranceQuote(state, seed, state.design, vehicle, site);
     const insured = insure && quote.ok;
-    const plan = planLaunch(state, state.design, vehicle, site, insured ? quote.price : 0);
+    const plan = shipPlan(state, state.design, vehicle, site, insured ? quote.price : 0);
+    const lead = mayChange(state, 'lead');
+    for (const c of chips) c.render(state);
     firstLaunch.hidden = state.reports.length > 0;
-    for (const [id, b] of siteButtons) b.setAttribute('aria-pressed', String(id === site));
+    for (const [id, b] of siteButtons) {
+      b.setAttribute('aria-pressed', String(id === site));
+      b.disabled = !lead;
+    }
     const orbit = plan.goal.orbit;
     const whole = !!plan.goal.contract.wholeLaunch;
     geoNote.hidden = geoPath.hidden = orbit !== 'geostationary';
     for (const [id, ui] of vehicleButtons) {
       const status = vehicleStatus(state, id);
       const open = status.open;
-      ui.button.disabled = !open;
+      ui.button.disabled = !open || !lead;
       ui.locked.hidden = open;
       ui.locked.textContent = closedText(status);
       ui.button.setAttribute('aria-pressed', String(id === vehicle));
@@ -344,7 +369,7 @@ export function makeLaunchPlanner(
     row(costRows, t('planner.total'), formatMoney(total), 'total');
     row(costRows, t('planner.money'), formatMoney(state.money), state.money < total ? 'warn' : '');
     const pct = formatNumber(quote.successPercent);
-    insureBox.disabled = !quote.ok;
+    insureBox.disabled = !quote.ok || !lead;
     insureBox.checked = insured;
     insurePrice.textContent = quote.ok ? formatMoney(quote.price) : '';
     insureLine.textContent = quote.ok
@@ -376,6 +401,7 @@ export function makeLaunchPlanner(
       const c = chances.get(id);
       ui.wrap.hidden = !c;
       ui.box.checked = plan.groundTests.includes(id);
+      ui.box.disabled = !mayChange(state, GROUND_TEST_ROLE[id]);
       if (c) {
         ui.chance.textContent = t('planner.groundTests.chance', {
           anomaly: t(`anomaly.${c.kind}.name`),

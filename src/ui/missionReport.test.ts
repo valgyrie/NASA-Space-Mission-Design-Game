@@ -119,3 +119,20 @@ describe('a rocket that failed', () => {
     expect(findingText(worked.findings.find((f) => f.kind === 'time')!)).toMatch(/^Finished on/);
   });
 });
+
+describe('a Mission flown in Team Mode (ticket 41)', () => {
+  it('names each role\'s part with the player who held it', async () => {
+    const { teamLines } = await import('./missionReport');
+    const solo = report(null);
+    expect(teamLines(solo)).toEqual([]);
+    const team: MissionReport = { ...solo, team: [{ name: 'Kit', colour: 'blue' }, { name: '', colour: 'orange' }, { name: 'Ada', colour: 'pink' }] };
+    const lines = teamLines(team);
+    expect(lines.map((l) => l.role)).toEqual(['lead', 'power', 'comms', 'science']);
+    expect(lines.map((l) => l.player)).toEqual([0, 1, 2, 2]);
+    expect(lines[0]!.text).toMatch(/^Mission lead · Kit: Reached /);
+    expect(lines[1]!.text).toMatch(/^Power · Player 2: Power lasted all /);
+    expect(lines[2]!.text).toMatch(/^Communications · Ada: All the Data reached home/);
+    expect(lines[3]!.text).toMatch(/^Science · Ada: Carried a /);
+    expect(lines.every((l) => l.ok)).toBe(true);
+  });
+});

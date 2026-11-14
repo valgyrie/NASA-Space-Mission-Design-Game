@@ -1,4 +1,5 @@
 import type { GroundTestId } from './groundTests';
+import type { Team } from './team';
 import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildingKind } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
@@ -153,6 +154,11 @@ export interface SiteState {
    * Optional like `testedDesigns`, so saves stay v19; missing means none.
    */
   groundTests?: GroundTestId[];
+  /**
+   * Team Mode (ticket 41): the players sharing this Company on one computer. Missing: one player.
+   * Optional like `testedDesigns`, so saves stay v19.
+   */
+  team?: Team;
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;

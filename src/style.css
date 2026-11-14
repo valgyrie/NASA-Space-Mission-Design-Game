@@ -3387,3 +3387,232 @@ button.upgrade {
 .planner-test .planner-hint {
   margin-left: 26px;
 }
+
+/* Team Mode (ticket 41): players pass the mouse; each role has its player's colour. */
+.team-toggle[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+
+.team-bar {
+  padding: 6px 16px;
+  border-bottom: 1px solid var(--panel-edge);
+}
+
+.team-turn {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.team-turn-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+}
+
+.team-turn-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.team-dot {
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--team-colour, var(--muted));
+}
+
+.team-player {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  font: inherit;
+  color: var(--text);
+  background: #1f2c40;
+  border: 1px solid var(--panel-edge);
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.team-player:hover {
+  border-color: var(--team-colour);
+}
+
+.team-player[aria-pressed='true'] {
+  border-color: var(--team-colour);
+  box-shadow: inset 0 0 0 1px var(--team-colour);
+  background: #213654;
+}
+
+.team-player-name {
+  font-weight: 700;
+}
+
+.team-player-roles {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.team-setup {
+  margin-top: 6px;
+  padding: 2px 0 6px;
+  max-width: 760px;
+}
+
+.team-setup h3 {
+  margin-top: 4px;
+}
+
+.team-sizes {
+  display: flex;
+  gap: 6px;
+  margin: 6px 0;
+}
+
+.team-size[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #06101e;
+}
+
+.team-player-row {
+  display: grid;
+  grid-template-columns: 10px 150px auto 1fr;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 0;
+}
+
+.team-name {
+  padding: 4px 8px;
+  font: inherit;
+  color: var(--text);
+  background: #0c1420;
+  border: 1px solid var(--panel-edge);
+  border-radius: 6px;
+}
+
+.team-colours {
+  display: flex;
+  gap: 4px;
+}
+
+.team-swatch {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  background: var(--team-colour);
+  cursor: pointer;
+}
+
+.team-swatch[aria-pressed='true'] {
+  border-color: #06101e;
+  box-shadow: 0 0 0 2px var(--team-colour);
+}
+
+.team-chip {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--team-colour, var(--panel-edge));
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--team-colour, var(--muted));
+  white-space: nowrap;
+}
+
+.team-chip[data-mine='true'] {
+  background: var(--team-colour);
+  color: #06101e;
+}
+
+.slot[data-role]:not([data-role='']) {
+  padding-left: 8px;
+  border-left: 3px solid var(--team-colour);
+}
+
+.team-not-yours {
+  margin: 4px 0 0;
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.review-role {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 5px 8px;
+  border-left: 3px solid var(--team-colour);
+  background: rgba(140, 170, 210, 0.08);
+}
+
+.review-role-name {
+  font-weight: 700;
+}
+
+.review-role-state,
+.review-role-why {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.review-role[data-signed='true'] .review-role-state {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.review-sign:not(:disabled) {
+  border-color: var(--team-colour);
+}
+
+.review-waiting {
+  margin: 8px 0;
+  font-weight: 600;
+}
+
+.review-waiting[data-waiting='true'] {
+  color: var(--warn);
+}
+
+.report-team-lines {
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report-team-lines li {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 3px 0 3px 8px;
+  border-left: 3px solid var(--team-colour);
+  margin-bottom: 4px;
+}
+
+.report-team-intro {
+  margin: 0 0 6px;
+  color: var(--muted);
+}
+
+@media (max-width: 700px) {
+  .team-player-row {
+    grid-template-columns: 10px 1fr auto;
+  }
+
+  .team-player-row .team-player-roles {
+    grid-column: 2 / -1;
+  }
+}

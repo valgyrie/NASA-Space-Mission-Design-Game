@@ -91,6 +91,22 @@ describe('Online basics', () => {
     expect(store.getItem(SAVE_KEY)).toBe('keep this Company');
   });
 
+  it('never uploads Team Mode player names (ticket 41)', async () => {
+    const store = storage();
+    store.setItem(ACCOUNT_KEY, JSON.stringify({ code }));
+    const send = vi.fn<typeof fetch>().mockResolvedValueOnce(new Response(JSON.stringify(account)));
+    const client = new OnlineClient(store, send);
+    const game = createDemo(1);
+    game.state.playMode = 'freePlay';
+    game.state.team = { players: [{ name: 'Kit', colour: 'blue' }, { name: 'Ada', colour: 'pink' }], atMouse: 0, signed: {} };
+    await client.save(game);
+    const sent = String(send.mock.calls[0]![1]!.body);
+    expect(sent).toContain('"colour":"pink"');
+    expect(sent).not.toContain('Kit');
+    expect(sent).not.toContain('Ada');
+    expect(game.state.team.players[0]!.name).toBe('Kit');
+  });
+
   it('rejects damaged downloads and Campaign uploads before replacing a local Company', async () => {
     const store = storage();
     store.setItem(SAVE_KEY, 'keep this Company');
