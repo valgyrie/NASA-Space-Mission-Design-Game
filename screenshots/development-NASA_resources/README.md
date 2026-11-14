@@ -36,3 +36,8 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [ticket-38-panel-report-1280.png](features%20and%20game/ticket-38-panel-report-1280.png) | Real burn-wire advice after Stuck solar panel, p. 16 | Real Telstar 1 flight/report fixture: previously played antenna/eclipses, first panel roll, 65% played score. Normal flight and settlement rules; shown through the dev report handle. |
 | [ticket-38-panel-report-1024.png](features%20and%20game/ticket-38-panel-report-1024.png) | The same at 1024×768 | Same |
 | [ticket-38-scrub-1024.png](features%20and%20game/ticket-38-scrub-1024.png) | Advice to plan extra days, p. 28 | Era 2 Demo, real Cape Canaveral Scrub weather and next-day advisor fixture through the normal Scrub card. |
+| [ticket-39-step-1-1280.png](features%20and%20game/ticket-39-step-1-1280.png) | Tutorial step 1 under "Identify Need & Goals", six-step row (1280×800) | New Company (Historic start) → close the Era 1 card |
+| [ticket-39-step-5-1280.png](features%20and%20game/ticket-39-step-5-1280.png) | Step 5 under "Design": three steps ticked, the fourth lit | Same; Contract accepted in the UI, Mines, Metal Works and slots set through the dev page's `window.leap.state` and game modules |
+| [ticket-39-designer-1024.png](features%20and%20game/ticket-39-designer-1024.png) | The guide low over the Mission Designer at 1024×768 | Same, step 4 → Mission Designer |
+| [ticket-39-end-1280.png](features%20and%20game/ticket-39-end-1280.png) | The last card: all six ticked, the six names, Learn more → slide 10, Close | Same → ship → real Launch, the antenna Anomaly played with the mouse → report and History cards closed |
+| [ticket-39-end-1024.png](features%20and%20game/ticket-39-end-1024.png) | The same at 1024×768 | Same |
