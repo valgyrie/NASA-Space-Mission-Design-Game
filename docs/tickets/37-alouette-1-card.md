@@ -4,14 +4,14 @@
 
 **Blocked by:** 18
 
-**Status:** not started (approved 2026-11-13)
+**Status:** built and browser-checked 2026-11-14 (approved 2026-11-13)
 
-- [ ] A side story card after Telstar 1's "after" card, kept in the History Archive like Vanguard 1
-- [ ] Short true text from the facts below (no more than the other cards), with Learn more → the CSA page
-- [ ] A real photo with a clear credit (CSA or NASA) _(verify the image source and its terms before adding it)_; without a cleared photo the card ships text-only or waits
-- [ ] Facts added to `docs/research/milestones.md` with the source
-- [ ] The CSA page is listed in Credits' reading sources
-- [ ] Text in `src/strings.ts`; history tests updated; browser check after a Telstar 1 success
+- [x] A side story card after Telstar 1's "after" card, kept in the History Archive like Vanguard 1
+- [x] Short true text from the facts below (no more than the other cards), with Learn more → the CSA page
+- [x] A real photo with a clear credit (CSA or NASA) _(verify the image source and its terms before adding it)_; without a cleared photo the card ships text-only or waits
+- [x] Facts added to `docs/research/milestones.md` with the source
+- [x] The CSA page is listed in Credits' reading sources
+- [x] Text in `src/strings.ts`; history tests updated; browser check after a Telstar 1 success
 
 **Facts** (Canadian Space Agency, <https://www.asc-csa.gc.ca/eng/satellites/alouette.asp>):
 - Launched 29 September 1962, from the Pacific Missile Range, California, on a two-stage Thor-Agena rocket.
@@ -29,4 +29,8 @@
 **In the repo for this ticket:** Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md). The Alouette 1 facts and their CSA source are in the note.
 
 **Open points:**
-- Photo: the CSA page shows an Alouette I image (`/images/satellites/alouette-ban-id-155.jpg`); its credit and terms are not stated on the page _(verify)_. A NASA image may be easier to clear.
+- **Resolved:** text-only, as allowed above. The CSA banner has no photo-specific credit or cleared reuse terms; its CSA/NASA credit is for the video. NASA Image and Video Library returned no Alouette images. No photo was copied.
+
+**Validation:** 418 game tests, both type checks; browser at 1280×800 and 1024×768. Real Telstar 1 Shipping and Launch rules, with only the flight animation skipped and any Anomaly settled at a perfect played score: Mission Report → Telstar after card → Alouette. Checked archive/reopen, one saved entry, other cards still show photos, and CSA in Credits. Screenshots: `ticket-37-*` in `screenshots/development-NASA_resources/`. No save version bump.
+
+**Online compatibility, checked 2026-11-14:** local/cloud-validator tests accept the new History ID, but the live `leap-online` v5 bundle does not. A live control save passed; the same save with `alouette1` returned HTTP 400 `invalidSave`. The backend rebuild succeeds, but automatic approval review blocked production deployment (repository work and merging did not explicitly authorize it). Deploy the rebuilt validator with approval before using the new card in cloud saves. No migration or save-version bump is needed. See `supabase/README.md` for the remaining verification and temporary account cleanup.

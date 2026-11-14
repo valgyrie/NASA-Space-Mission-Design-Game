@@ -7,6 +7,7 @@ import type { BusId } from '../game/upgrades';
 import { t } from '../strings';
 import { formatDecimal, formatMoney, formatNumber } from './format';
 import { learnMore } from './learnMore';
+import { sourcedTip } from './sourcedTip';
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -93,7 +94,7 @@ export function makeDesignReview(): { root: HTMLElement; render(state: SiteState
   const intro = el('p', 'planner-hint', t('review.intro'));
   const list = el('ul', 'review-lines');
   const note = el('p', 'planner-hint', t('review.shipAnyway'));
-  root.append(summary, intro, list, note, learnMore(SOURCES.cml, t('sources.cml')));
+  root.append(summary, intro, list, sourcedTip('limits'), note, learnMore(SOURCES.cml, t('sources.cml')));
 
   const render = (state: SiteState) => {
     const review = designReview(state, state.design);

@@ -28,13 +28,15 @@ export const SOURCES = {
   cml: 'https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/44299',
   /** NASA Mission Viz: GMAT-computed Reference Trajectories (official challenge Resource, ticket 34). */
   missionViz: 'https://nasa.github.io/mission-viz/',
+  /** NASA CubeSat Launch Initiative, October 2017: practical advice (ticket 38). */
+  cubesat101: 'https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf',
 };
 
 /**
  * Every real dataset in the game, in the order the Real data list shows them. Each has a name, what it
  * does in LEAP and its credit in strings.ts (`data.<id>.*`). Add the official challenge Resources here.
  */
-export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml', 'missionViz', 'webbGame'] as const;
+export const DATASET_IDS = ['power', 'blueMarble', 'gibs', 'naturalEarth', 'nasaImages', 'missionSegments', 'cml', 'missionViz', 'webbGame', 'cubesat101'] as const;
 export type DatasetId = (typeof DATASET_IDS)[number];
 export const DATASETS: Record<DatasetId, string> = {
   power: 'https://power.larc.nasa.gov/',
@@ -47,6 +49,7 @@ export const DATASETS: Record<DatasetId, string> = {
   missionViz: 'https://github.com/nasa/mission-viz',
   /** NASA Goddard's Webb game: its ending shows the real satellite most like yours (ticket 36). */
   webbGame: 'https://science.nasa.gov/mission/webb/game-build-it-yourself/',
+  cubesat101: SOURCES.cubesat101,
 };
 
 /** The challenge LEAP was made for. */

@@ -26,6 +26,7 @@ import { t } from '../strings';
 import { contractText, formatDays, formatDecimal, formatMoney, formatNumber } from './format';
 import { itemColour, storageText } from './marketPanel';
 import { stockText } from './missionDesigner';
+import { sourcedTip } from './sourcedTip';
 
 export interface BuildingPanel {
   /** Show the building on tile (x, z), or close the panel if nothing stands there. */
@@ -226,7 +227,7 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
   // A Ground Station: how much all of them add to what antennas send.
   const stationBody = () => {
     const about = el('p', 'side-note');
-    body.append(about);
+    body.append(about, sourcedTip('groundStation'));
     refresh = () => setText(about, t('panel.groundStation', { boost: formatDecimal(groundBoost(state)) }));
   };
 

@@ -91,6 +91,26 @@ Page numbers are the printed ones.
 | §6.9.2, pp. 60–61 | vibration and shock: survive launch; vibration testing "is required for all launches" | Ground Tests: Stuck solar panel (40) |
 | §6.9.3, p. 62 | thermal vacuum bakeout (outgassing); TVAC cycling "can help screen for problems caused by the thermal cycling on orbit" | Ground Tests: Survive the eclipse (40), standing for the cycling kind |
 
+### Tips as built (ticket 38, checked 2026-11-14)
+
+Eight plain-word tips, all in `src/strings.ts`; printed pages in `src/game/tips.ts`:
+
+| Tip | Printed page | Shown in LEAP |
+|---|---|---|
+| Keep the design simple | 16, Free advice | Loading |
+| Flight-proven Parts reduce risk | 16, Use familiar components | Loading; describes real satellites, not a Mark bonus |
+| Leave room for parts to fit | 16, Do not design to the limits of the envelope | Loading and Design Review |
+| Keep parts accessible for repairs | 16, Important components should be on the exterior | Loading |
+| Leave extra time to build | 23, §2.11: "Be conservative in planning and pad your build schedule with plenty of margin" | Loading |
+| A heated wire melts a line to free a panel; two separate wires and lines help keep panels shut through launch | 16, Double up on that burn wire | Mission Report after a settled Stuck solar panel |
+| Test the Ground Station early and often | 22, §2.10 | Ground Station panel |
+| Allow extra days for launch-day Scrubs | 28, §2.15 | Scrub card |
+
+- The source PDF was fetched successfully (HTTP 200, 96 pages). Printed pages 16, 22, 23 and 28 are PDF pages 24, 30, 31 and 36. Each tip displays the printed page and links to the right PDF page with `#page=`.
+- **Accuracy:** the burn wire heats a fishing line; the line melts, not the wire. The source recommends two separate burn wires to prevent a premature deployment, not as a promised cure for a stuck panel. That distinction is kept in the report.
+- **Scope choices:** omit "build two" because LEAP has no batch-building discount; omit "the rocket won't wait" until fixed Rideshare departure dates exist (ticket 44). The schedule-margin tip replaces them. The source's envelope advice is about physical fit; LEAP's 35% mass/power/energy checks still come from JPL's CML paper, not CubeSat 101. No balance or failure rules changed.
+- Five loading choices, picked once when loading starts. No reading-time delay. The other three tips appear beside what they explain. CubeSat 101 is now in Real data and Credits.
+
 ## Visualize a Space Mission Using Virtual Reality (2023 challenge)
 
 <https://www.spaceappschallenge.org/2023/challenges/visualize-a-space-mission-using-virtual-reality/>
@@ -103,7 +123,7 @@ Page numbers are the printed ones.
 <https://www.asc-csa.gc.ca/eng/youth-educators/digital-games-and-activities.asp>
 
 - The catalogue lists Tomatosphere Adventure, Mission: Astronaut, Exploring Earth, a RADARSAT Constellation Mission game ("Help a farmer, a captain and a first responder achieve their missions using RADARSAT imagery") and an OSIRIS-REx game.
-- Alouette 1, from CSA's own page <https://www.asc-csa.gc.ca/eng/satellites/alouette.asp>: launched 29 September 1962 from the Pacific Missile Range, California, on a two-stage Thor-Agena; 145 kg; "a near perfect 1000 km orbit"; studied the ionosphere from above; one-year design life, a 10-year mission, over one million images of the ionosphere; Canada "the first nation, after the Russian and American superpowers, to design and build its own artificial Earth satellite". Photo credit and terms not stated on the page _(verify)_.
+- Alouette 1, from CSA's own page <https://www.asc-csa.gc.ca/eng/satellites/alouette.asp>: launched 29 September 1962 from the Pacific Missile Range, California, on a two-stage Thor-Agena; 145 kg; "a near perfect 1000 km orbit"; studied the ionosphere from above; one-year design life, a 10-year mission, over one million images of the ionosphere; Canada "the first nation, after the Russian and American superpowers, to design and build its own artificial Earth satellite". Rechecked 2026-11-14: the banner photo's credit and reuse terms remain unverified; the CSA/NASA credit belongs to the video. Ticket 37 ships text-only; details in `milestones.md`.
 - **Planned in LEAP:** Alouette 1 card (ticket 37), science-first Contracts (42).
 
 ## Source files in the repo

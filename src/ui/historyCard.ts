@@ -17,12 +17,13 @@ function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, te
 }
 
 /** Where a card's photo is served from (public/history/). */
-export function imageUrl(id: HistoryCardId): string {
-  return `${import.meta.env.BASE_URL}${HISTORY_CARDS[id].image}`;
+export function imageUrl(id: HistoryCardId): string | null {
+  const image = HISTORY_CARDS[id].image;
+  return image ? `${import.meta.env.BASE_URL}${image}` : null;
 }
 
 /**
- * A Real History card: a real NASA photo with its credit, a short true story and Learn more →.
+ * A Real History card: a short true story and Learn more →, with a credited photo when cleared.
  * `onOpen` and `onClose` let the Site pause while it is read.
  */
 export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onClose(): void }): HistoryCardDialog {
@@ -64,10 +65,15 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
   const api: HistoryCardDialog = {
     show(id, onDone) {
       const card = HISTORY_CARDS[id];
-      img.src = imageUrl(id);
-      img.alt = t(`history.${id}.caption`);
-      captionText.textContent = t(`history.${id}.caption`);
-      credit.textContent = t(`history.${id}.credit`);
+      const image = imageUrl(id);
+      figure.hidden = !image;
+      panel.classList.toggle('history-text-only', !image);
+      if (image) {
+        img.src = image;
+        img.alt = t(`history.${id}.caption`);
+        captionText.textContent = t(`history.${id}.caption`);
+        credit.textContent = t(`history.${id}.credit`);
+      } else img.removeAttribute('src');
       label.textContent = t('history.label', { when: t(`history.${card.when}`, { year: card.year }) });
       title.textContent = t(`history.${id}.title`);
       text.textContent = t(`history.${id}.text`);

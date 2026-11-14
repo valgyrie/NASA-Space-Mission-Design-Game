@@ -32,10 +32,11 @@ describe('Online basics', () => {
     expect(readFreePlaySave(null)).toBeNull();
   });
 
-  it('accepts a current Free Play save with bought Plots, as the cloud receives it (ticket 22)', () => {
+  it('accepts a current Free Play save with bought Plots and the Alouette side story', () => {
     const game = createDemo(2);
     game.state.playMode = 'freePlay';
     game.state.plots = [[1, 0], [2, 0]];
+    game.state.history.push('telstar1After', 'alouette1');
     const sent = JSON.parse(JSON.stringify(game));
     expect(sent.version).toBe(SAVE_VERSION);
     expect(readFreePlaySave(sent)).toEqual(game);

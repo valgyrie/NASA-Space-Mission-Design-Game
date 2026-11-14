@@ -11,6 +11,14 @@ The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`).
 
 The function uses Supabase's server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; never put the service key in the game, repository or chat. No new npm dependencies are required.
 
+## Pending update: Alouette History card (ticket 37)
+
+The shared save validator now recognizes `alouette1`. This also needs an Edge Function rebuild/deployment for a Campaign continued into Free Play. The local validator test includes the new card, and `npm run build:online` passes.
+
+On 14 Nov 2026, live v5 accepted a control v19 save but returned HTTP 400 `invalidSave` for the same save with `alouette1`. Automatic approval review rejected replacing the production function because the task authorized repository implementation/merging but did not explicitly authorize deployment. The live function remains v5. With explicit production approval, deploy the rebuilt bundle using the existing `verify_jwt = false` configuration, then confirm save and load preserve `alouette1`. No database migration is needed.
+
+The synthetic verification account `Ticket37Check` remains, ID `8255a026-af45-440c-830c-435eb6b096b4` (revision 1, control save only). Its deletion was interrupted; a subsequent read confirmed it still exists. It may appear in leaderboards. With cleanup approval, remove only that ID and nickname, then confirm zero matching records. No weekly submissions were made. Do not delete any other accounts.
+
 ## Data and authentication
 
 - Each account has a random UUID, filtered nickname and SHA-256 hash of a 160-bit random recovery code. The browser keeps the code in `leap.online`, separate from `leap.save` and `leap.demo`. A copied code restores the account on another browser; the player then explicitly loads its Company. No email, password, real name or Supabase Auth identity is required.

@@ -2460,6 +2460,13 @@ button.space-item[aria-pressed='true'] .space-ref-dot {
   font-size: 14px;
 }
 
+.history-card.history-text-only {
+  grid-template-columns: 1fr;
+  width: min(560px, calc(100vw - 32px));
+}
+
+.history-photo[hidden] { display: none; }
+
 .history-photo {
   margin: 0;
   display: flex;
@@ -3045,6 +3052,7 @@ button.upgrade {
 }
 .loading-card h2 { margin: 0 0 8px; font-size: 20px; }
 .loading-card p { margin: 0; color: var(--muted); }
+.sourced-tip { margin: 10px 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
 @media (max-width: 700px) {
   .title-screen, .main-menu { left: 50%; transform: translate(-50%, -50%); }
   .designer-head { flex-wrap: wrap; gap: 8px; }

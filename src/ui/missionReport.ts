@@ -15,6 +15,7 @@ import { type MissionSegment, bySegment, findingSegment } from '../game/segments
 import { SOURCES } from '../game/sources';
 import { learnMore } from './learnMore';
 import { likeTheRealOne } from './likeTheRealOne';
+import { sourcedTip } from './sourcedTip';
 
 /** The Mission Patch a report earned, and whether it is the Company's first. */
 export interface EarnedPatch {
@@ -273,6 +274,7 @@ export function showMissionReport(
       );
       const lines = anomalyLines(report);
       anomaly.replaceChildren(...lines.map((line, i) => el('p', i === 0 ? '' : 'report-anomaly-why', line)));
+      if (lines.length > 0 && report.anomaly?.kind === 'panel') anomaly.append(sourcedTip('panel'));
       anomalyHeading.hidden = anomaly.hidden = lines.length === 0;
       if (report.success) {
         reward.textContent = t('report.reward', { money: formatMoney(report.reward) });

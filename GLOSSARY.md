@@ -260,7 +260,7 @@ A Real History card about a real event next to a Milestone, shown after the Mile
 _Avoid_: bonus card
 
 **Real History card**:
-A short, true story about a real mission, with a real photo and a link to learn more. A Milestone has one before (the real story) and one after (what happened next), and sometimes a side story. A failure story is one too.
+A short, true story about a real mission, with a link to learn more and a credited real photo when its reuse is cleared. A Milestone has one before (the real story) and one after (what happened next), and sometimes a side story. A failure story is one too.
 _Avoid_: lore, fun fact
 
 **History Archive**:

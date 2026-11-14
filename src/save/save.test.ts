@@ -335,7 +335,7 @@ describe('local save', () => {
   it('keeps the History Archive, patches and tutorial progress', () => {
     const storage = memoryStorage();
     const kept = structuredClone(game);
-    kept.state.history.push('explorer1Before');
+    kept.state.history.push('explorer1Before', 'telstar1After', 'alouette1');
     kept.state.patches.push({ contract: 'explorer1', day: 40 });
     kept.state.tutorial = { skipped: true, testRun: true };
     saveGame(storage, kept);

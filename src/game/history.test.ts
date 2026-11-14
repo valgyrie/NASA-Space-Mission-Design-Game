@@ -32,11 +32,27 @@ describe('Real History cards', () => {
     expect(cardsAfter('tiros1')).toEqual(['tiros1After']);
   });
 
-  it('has text, a credited photo and an official NASA Learn more link for every card', () => {
+  it('follows a successful Telstar 1 with Alouette 1 once, keeping it in the Archive', () => {
+    expect(cardsAfter('telstar1')).toEqual(['telstar1After', 'alouette1']);
+    expect(cardsAfter('syncom3')).toEqual(['syncom3After']);
+    const state = flown();
+    const report = { ...state.reports[0]!, contract: 'telstar1' as const };
+    expect(awardMission(state, { ...report, success: false }).cards).not.toContain('alouette1');
+    expect(awardMission(state, report).cards).toEqual(['telstar1After', 'alouette1']);
+    expect(state.history.slice(-2)).toEqual(['telstar1After', 'alouette1']);
+    expect(awardMission(state, report).cards).toEqual([]);
+    expect(HISTORY_CARDS.alouette1.image).toBeUndefined();
+    expect(HISTORY_CARDS.alouette1.learnMore).toBe('https://www.asc-csa.gc.ca/eng/satellites/alouette.asp');
+  });
+
+  it('has text, credits each photo and links every card to an official space agency', () => {
     for (const id of HISTORY_CARD_IDS) {
-      for (const part of ['title', 'text', 'caption', 'credit'] as const) expect(STRINGS[`history.${id}.${part}`]).toBeTruthy();
-      expect(HISTORY_CARDS[id].image).toMatch(/^history\/.+\.jpg$/);
-      expect(HISTORY_CARDS[id].learnMore).toMatch(/^https:\/\/(www|science)\.nasa\.gov\//);
+      for (const part of ['title', 'text'] as const) expect(STRINGS[`history.${id}.${part}`]).toBeTruthy();
+      if (HISTORY_CARDS[id].image) {
+        for (const part of ['caption', 'credit'] as const) expect(STRINGS[`history.${id}.${part}`]).toBeTruthy();
+        expect(HISTORY_CARDS[id].image).toMatch(/^history\/.+\.jpg$/);
+      }
+      expect(HISTORY_CARDS[id].learnMore).toMatch(/^https:\/\/(www\.asc-csa\.gc\.ca|(?:www|science)\.nasa\.gov)\//);
     }
   });
 

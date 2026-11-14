@@ -4,6 +4,7 @@ import { t } from '../strings';
 import { adviceText, scrubText } from './weatherText';
 import { learnMore } from './learnMore';
 import { SOURCES } from '../game/sources';
+import { sourcedTip } from './sourcedTip';
 
 export interface ScrubCard {
   show(site: LaunchSiteId, weather: Weather, advice: LaunchAdvice | null): void;
@@ -33,7 +34,7 @@ export function showScrubCard(root: HTMLElement, hooks: { onOpen(): void; onClos
   const ok = document.createElement('button');
   ok.type = 'button';
   ok.textContent = t('scrub.ok');
-  panel.append(title, why, advice, learnMore(SOURCES.climate, t('sources.climate')), ok);
+  panel.append(title, why, advice, sourcedTip('scrub'), learnMore(SOURCES.climate, t('sources.climate')), ok);
   backdrop.append(panel);
   root.append(backdrop);
   const card: ScrubCard = {

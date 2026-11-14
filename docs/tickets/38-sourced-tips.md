@@ -4,13 +4,13 @@
 
 **Blocked by:** 12, 26
 
-**Status:** not started (approved 2026-11-13)
+**Status:** built and browser-checked 2026-11-14 (approved 2026-11-13)
 
-- [ ] Loading screens pick one tip at random from the list (today there is one: `loading.tip`)
-- [ ] Each tip has a source line or Learn more → CubeSat 101 with the page
-- [ ] Mission Report and panel lines where they fit (table below)
-- [ ] Each tip reworded in plain words for age 10+, the meaning unchanged; quoted text stays exact
-- [ ] Text in `src/strings.ts`; page numbers recorded in `docs/research/official-resources.md`; browser check of the loading screen and the Stuck solar panel report
+- [x] Loading screens pick one tip at random from the list (today there is one: `loading.tip`)
+- [x] Each tip has a source line or Learn more → CubeSat 101 with the page
+- [x] Mission Report and panel lines where they fit (table below)
+- [x] Each tip reworded in plain words for age 10+, the meaning unchanged; quoted text stays exact
+- [x] Text in `src/strings.ts`; page numbers recorded in `docs/research/official-resources.md`; browser check of the loading screen and the Stuck solar panel report
 
 | Tip (plain) | CubeSat 101 says | Where in LEAP | Page |
 |---|---|---|---|
@@ -34,4 +34,6 @@ Page numbers are the printed page numbers in the October 2017 revision.
 
 **In the repo for this ticket:** [`docs/research/sources/cubesat-101.txt`](../research/sources/cubesat-101.txt) (source files, read as data; index in [`sources/README.md`](../research/sources/README.md)). Facts and numbers: [`docs/research/official-resources.md`](../research/official-resources.md).
 
-**Open points:** keep the "build two" tip only if it does not suggest a feature LEAP lacks; drop any tip that needs CubeSat words the player has not met.
+**Choices made (no team member present):** eight tips: five loading choices, three contextual tips (panel, Ground Station, Scrub); the limits tip also appears in Design Review. Omitted "build two" because there is no batch discount; omitted the fixed-departure tip until ticket 44. Added build-schedule margin from printed p. 23 instead. The burn-wire line follows the source: the wire heats a line, which melts; two separate wires and lines help prevent opening too soon. It does not claim this fixes a stuck panel. Physical-fit advice does not change JPL's 35% review rules.
+
+**Validation:** 420 game tests, both type checks, production and online builds pass. Browser at 1280×800 and 1024×768: real loading lifecycle (import held only for the capture), all five choices, source pages, Ground Station, Design Review, Stuck solar panel report, Scrub, Real data and Credits; no page errors. The report uses a real rolled panel Anomaly, settled at 65%; checked that the tip clears for no Anomaly, another kind and an unsettled Anomaly. The tip test checks each cited page against the stored handbook text. Screenshots: `ticket-38-*` in `screenshots/development-NASA_resources/`. No save or balance changes.

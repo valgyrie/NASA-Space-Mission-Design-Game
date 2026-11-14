@@ -19,6 +19,7 @@ export const HISTORY_CARD_IDS = [
   'vanguardTV3',
   'telstar1Before',
   'telstar1After',
+  'alouette1',
   'syncom3Before',
   'syncom3After',
 ] as const;
@@ -34,9 +35,9 @@ export interface HistoryCard {
   when: 'before' | 'after' | 'side' | 'failure';
   /** The real year it happened, shown on the card. */
   year: number;
-  /** A real NASA photo in public/history/, credited on the card. */
-  image: string;
-  /** Learn more →: an official NASA page. */
+  /** A cleared real photo in public/history/, credited on the card; omitted for text-only cards. */
+  image?: string;
+  /** Learn more →: an official space agency page. */
   learnMore: string;
 }
 
@@ -114,6 +115,14 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
     year: 1962,
     image: 'history/andover-horn.jpg',
     learnMore: 'https://www.nasa.gov/history/telstar-opened-era-of-global-satellite-television/',
+  },
+  // CSA facts. Text-only until a photo's credit and reuse terms are verified (ticket 37).
+  alouette1: {
+    id: 'alouette1',
+    contract: 'telstar1',
+    when: 'side',
+    year: 1962,
+    learnMore: 'https://www.asc-csa.gc.ca/eng/satellites/alouette.asp',
   },
   // Photo: NASA image article "The First Geosynchronous Satellite": a Syncom firing its apogee motor.
   syncom3Before: {
