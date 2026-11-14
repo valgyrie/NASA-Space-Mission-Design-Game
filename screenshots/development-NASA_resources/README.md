@@ -6,6 +6,7 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 
 | Screenshot | What it shows | How to open it |
 |---|---|---|
+| [all-screens/](features%20and%20game/all-screens/) | Every screen with a title bar (01–21), and `00-overview.png` with all of them | Menus, then Demo Mode → Era 1 |
 | [title-menu-play-1280.png](features%20and%20game/title-menu-play-1280.png) | Main menu: Play, Demo Mode, Online; speaker, Real data, Credits | Open the game |
 | [companies-list-1280.png](features%20and%20game/companies-list-1280.png) | Your Companies: three saved Companies, the last played selected | Main menu → Play (with saved Companies) |
 | [companies-delete-1280.png](features%20and%20game/companies-delete-1280.png) | Delete asks first | Same → Delete |
