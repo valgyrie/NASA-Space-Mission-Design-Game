@@ -21,8 +21,8 @@ Gameplay must not change: only how things are drawn. `src/site/site.ts` and `src
 
 | # | Stream | Owner files | State on 14 Nov |
 |---|---|---|---|
-| 1 | Terrain, water, sky, lighting | `src/world/terrainMesh.ts`, `siteMesh.ts`, `world.ts`, `camera.ts`, new `ground.ts`, `water.ts`, `environment.ts`, `terrainTextures.ts`, `rocks.ts`, `public/textures/**` | Started; see `notes-terrain.md` |
-| 2 | Buildings built in Blender (GLB) | `scripts/blender/**`, `public/models/**`, `src/world/factoryMesh.ts`, `mineMesh.ts`, `buildingParts.ts`, `buildingModels.ts` | Started; see `notes-buildings.md` |
+| 1 | Terrain, water, sky, lighting | `src/world/terrainMesh.ts`, `siteMesh.ts`, `world.ts`, `camera.ts`, new `ground.ts`, `water.ts`, `environment.ts`, `terrainTextures.ts`, `rocks.ts`, `public/textures/**` | Working checkpoint, polish left; see `notes-terrain.md` |
+| 2 | Buildings built in Blender (GLB) | `scripts/blender/**`, `public/models/**`, `src/world/factoryMesh.ts`, `mineMesh.ts`, `buildingParts.ts`, `buildingModels.ts` | Working checkpoint, polish left; see `notes-buildings.md` |
 | 3 | Rockets and the Launch scene | `src/world/rocketMesh.ts`, `launchView.ts` | Not started; prompt below |
 | 4 | Spacecraft, Earth and space views | `src/world/spacecraftMesh.ts`, `spacecraftView.ts`, `spaceView.ts`, `earthMesh.ts`, `earthTexture.ts`, `globePicker.ts` | Not started; prompt below |
 | 5 | Trees, rocks, props, Shipping truck | new `src/world/vegetation.ts`, `shippingView.ts` | Not started; prompt below |
@@ -30,6 +30,25 @@ Gameplay must not change: only how things are drawn. `src/site/site.ts` and `src
 | 7 | Full play-test, fixes, then ask the team to merge | | Not started |
 
 Streams 1 and 2 must be finished (or continued) before 5; 3 and 4 can run together; 6 runs last.
+
+## State at the checkpoint (14 Nov, commit "Realistic graphics, part 1")
+
+Works: Demo Mode Era 2 loads with smooth textured land, water, a physical sky and all ten Blender buildings.
+Type check, 463 tests and the production build pass. Seen by the orchestrator in screenshots, still to fix:
+
+- **Sky and exposure:** the sky near the horizon is blown out to white at low camera angles; clouds barely show.
+- **Sand and Deposits:** sand areas and Deposit patches read as flat pale blobs from the whole-Site view; Deposits
+  need a clearer ore colour and the sand more texture and a softer edge.
+- **Steep rock walls** where mountains meet water.
+- **Buildings:** a little white and plasticky (more weathering, darker roofs, baked AO would help); smoke is still
+  faceted puffs; level sign and HQ flag are the old ones; Research Lab and HQ may be over 30k triangles.
+- **Not yet checked in the game:** moving parts, the crane during an upgrade, foundations on slopes, the title
+  screen, a Site with many Plots, frame rate on integrated graphics, the placement marker while building.
+- Two 404s in the console on load are older than this work (they appear on `main` too); find and fix if cheap.
+- The in-game Credits and the README have one plain line for the new models and Poly Haven textures
+  (`credits.models` in `src/strings.ts`). Stream 6 should turn it into a proper linked section and keep it in step
+  with `docs/art/assets-*.md` as more assets arrive.
+- Launch scene, rockets, Spacecraft, Earth, trees and the truck are untouched (streams 3–5).
 
 ## Set-up on a fresh machine
 

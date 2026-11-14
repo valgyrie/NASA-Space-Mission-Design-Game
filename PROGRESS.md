@@ -13,6 +13,8 @@
 - Also fixed: left side panels end above the Build menu when it wraps to two rows (1024 px, Free Play). Before, the bottom of the Contracts board was hidden and unclickable.
 - Browser: Free Play fixture at 1280×800 and 1024×768: board, question card, Village line accepted, greyed options (forced click ignored), a real flight and the report. No page errors. Screenshots `ticket-42-*`.
 
+**In progress (14 Nov): realistic graphics.** The team asked for the voxel look to be replaced. Part 1 is in: smooth textured land, water, a physical sky, and all ten buildings as Blender models (`public/models/buildings.glb`, scripts in `scripts/blender/`). Gameplay is unchanged; 463 tests, type checks and the production build pass. Rockets, the Launch scene, Spacecraft, Earth, trees, the truck and the Credits entries for the new assets are still to do. Everything a new session needs, with the prompts for each remaining stream: `docs/graphics-overhaul/HANDOFF.md`. The finished look needs the team's go-ahead before its final merge.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**

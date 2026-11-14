@@ -44,7 +44,7 @@ export function makeCredits(): HTMLElement {
   );
 
   const art = section('credits.art.heading');
-  art.append(paragraph(t('credits.art')));
+  art.append(paragraph(t('credits.art')), paragraph(t('credits.models')));
 
   const audio = section('credits.audio.heading');
   audio.append(paragraph(t('audio.musicCredit')), paragraph(t('audio.effectsCredit')));
