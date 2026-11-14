@@ -14,7 +14,7 @@ Atlas layout (u right, v down, in pixels of the final atlas; the game mirrors th
   (0, 512)-(1024, 768)   conifer branch tier (base on the left, tip on the right)
   (0, 768)-(1024, 1024)  bark (opaque; u around the trunk, v along it)
   (0, 1024)-(256, 1536)  whole spruce from the side (crossed cards)
-  (256, 1024)-(512, 1536) whole pine from the side
+  (256, 1024)-(512, 1536) cactus skin (opaque; ten ribs round the stem, u around it, v along it), drawn in code
 
 Sources (download once into .leap/art-src/nature/dl/<id>/, see docs/art/assets-nature.md):
   LeafSet024 (beech), LeafSet016 (oak), LeafSet019 (needles), Bark012 (bark) from https://ambientcg.com, CC0.
@@ -317,6 +317,43 @@ def conifer_silhouette(sprays_, seed, pine=False, w=512, h=1024):
     return card.finish()
 
 
+def cactus_skin(w=256, h=512, ribs=10):
+    """A columnar cactus's skin, unrolled: ribs with dark grooves, pale spine clusters (areoles) along each ridge,
+    faint growth bands. Ridges sit at u = k / ribs, so it wraps round the stem without a seam."""
+    rng = np.random.default_rng(7)
+    u = (np.arange(w) + 0.5) / w
+    v = (np.arange(h) + 0.5) / h
+    phase = (u * ribs) % 1.0
+    ridge = (0.5 + 0.5 * np.cos(2 * math.pi * phase)) ** 0.8
+    # Grey-green, like a saguaro's waxy skin (not leaf green).
+    groove = np.array([0.18, 0.22, 0.15])
+    top = np.array([0.47, 0.52, 0.39])
+    rgb = groove[None, None] + (top - groove)[None, None] * ridge[None, :, None]
+    # Streaks down the stem and faint growth bands across it.
+    streak = blur(rng.normal(0, 1, (h, w)), 1.5)
+    streak = 1 + 0.06 * streak / max(streak.std(), 1e-6)
+    band = 1 + 0.04 * np.sin(v * 2 * math.pi * 9 + rng.uniform(0, 6))[:, None]
+    rgb = rgb * (streak * band)[..., None]
+    # Areoles: pale felt dots with a few spines, in a row down every ridge.
+    yy, xx = np.mgrid[0:h, 0:w]
+    spacing = 15
+    for k in range(ribs):
+        cx = k * w / ribs
+        for i in range(h // spacing + 1):
+            cy = i * spacing + (k % 2) * spacing / 2 + rng.uniform(-1.5, 1.5)
+            for dx in (-w, 0, w):  # wrap the dots on the seam
+                d = np.hypot(xx - (cx + dx), yy - cy)
+                felt = np.clip(2.2 - d, 0, 1)
+                rgb = rgb * (1 - felt[..., None]) + np.array([0.74, 0.70, 0.58])[None, None] * felt[..., None]
+                for a in rng.uniform(0, 2 * math.pi, 4):
+                    ex, ey = math.cos(a), math.sin(a)
+                    t = (xx - (cx + dx)) * ex + (yy - cy) * ey
+                    off = np.abs(-(xx - (cx + dx)) * ey + (yy - cy) * ex)
+                    spine = np.clip(1 - off, 0, 1) * (t > 1.5) * (t < 6.5) * 0.55
+                    rgb = rgb * (1 - spine[..., None]) + np.array([0.83, 0.80, 0.72])[None, None] * spine[..., None]
+    return np.clip(rgb, 0, 1).astype(np.float32)
+
+
 def bark_strip():
     col = load('Bark012', 'Color')[..., :3]
     return resize(col, 1024, 256)
@@ -340,8 +377,8 @@ def main():
     a[768:1024, :] = 1
     c, m = conifer_silhouette(needles, 4)
     rgb[1024:1536, 0:256], a[1024:1536, 0:256] = c, m
-    c, m = conifer_silhouette(needles, 5, pine=True)
-    rgb[1024:1536, 256:512], a[1024:1536, 256:512] = c, m
+    rgb[1024:1536, 256:512] = cactus_skin()
+    a[1024:1536, 256:512] = 1
     save(rgb, 'foliage_col', 86)
     save(np.clip(a, 0, 1), 'foliage_mask', 90)
 

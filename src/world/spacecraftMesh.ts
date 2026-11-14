@@ -285,30 +285,104 @@ function addSolarCells(g: THREE.Group, bus: BusShape): void {
   }
 }
 
-/** Four whip antennas on hinged mounts, sticking out sideways and down, plus two slot antennas in the skin. */
+/** A coil of wire along +y, from 0 to `length`. */
+class Helix extends THREE.Curve<THREE.Vector3> {
+  private readonly radius: number;
+  private readonly length: number;
+  private readonly turns: number;
+  constructor(radius: number, length: number, turns: number) {
+    super();
+    this.radius = radius;
+    this.length = length;
+    this.turns = turns;
+  }
+  override getPoint(t: number, target = new THREE.Vector3()): THREE.Vector3 {
+    const a = t * this.turns * Math.PI * 2;
+    return target.set(Math.cos(a) * this.radius, t * this.length, Math.sin(a) * this.radius);
+  }
+}
+
+/** Shapes shared by the whips of one Spacecraft (each model owns its own, so freeing one model frees only its own). */
+function whipShapes(length: number) {
+  return {
+    flange: cylinder(0.026, 0.026, 0.01, 24),
+    screw: new THREE.SphereGeometry(0.0045, 8, 5),
+    insulator: cylinder(0.015, 0.018, 0.04, 20),
+    ferrule: cylinder(0.011, 0.011, 0.018, 20),
+    spring: new THREE.TubeGeometry(new Helix(0.0095, 0.05, 8), 96, 0.0023, 5),
+    core: cylinder(0.0055, 0.0055, 0.054, 10),
+    whip: cylinder(0.0026, 0.0045, length, 8),
+    tip: new THREE.SphereGeometry(0.008, 10, 6),
+  };
+}
+
+/** Where the whip starts, measured from the flange on the skin. */
+const WHIP_ROOT = 0.122;
+
+/**
+ * One whip antenna along +y from the skin: a flange screwed to the Spacecraft, a white glass-fibre insulator, a
+ * brass ferrule, the coil spring that let it fold along the rocket's fairing and spring out in orbit, then a thin
+ * tapered steel whip with a small weight on the tip.
+ */
+function whipAntenna(shapes: ReturnType<typeof whipShapes>, length: number): THREE.Group {
+  const w = new THREE.Group();
+  w.add(mesh(shapes.flange, S.steel, 0.005));
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + Math.PI / 4;
+    w.add(at(shapes.screw, S.bolt, Math.sin(a) * 0.019, 0.011, Math.cos(a) * 0.019));
+  }
+  w.add(mesh(shapes.insulator, S.slot, 0.03));
+  w.add(mesh(shapes.ferrule, S.goldPale, 0.059));
+  w.add(mesh(shapes.spring, S.antenna, 0.068));
+  w.add(mesh(shapes.core, S.hullDark, 0.068 + 0.027));
+  w.add(mesh(shapes.whip, S.antenna, WHIP_ROOT + length / 2));
+  w.add(mesh(shapes.tip, S.antenna, WHIP_ROOT + length));
+  return w;
+}
+
+/**
+ * A slot antenna: a narrow window cut in the metal skin (the slot is what radiates), on a stiffening plate, closed
+ * by a glass-fibre cover held by two rows of screws.
+ */
+function addSlotAntenna(g: THREE.Group, radius: number, a: number, y: number, length: number): void {
+  g.add(onSide(box(0.075, length + 0.04, 0.008), S.steel, radius, a, y));
+  g.add(onSide(new THREE.BoxGeometry(0.042, length, 0.01), S.stripe, radius + 0.002, a, y));
+  g.add(onSide(box(0.03, length - 0.014, 0.006), S.slot, radius + 0.005, a, y));
+  const screw = new THREE.SphereGeometry(0.0045, 8, 5);
+  const rows = Math.max(3, Math.round(length / 0.09));
+  for (const dx of [-0.029, 0.029]) {
+    for (let k = 0; k < rows; k++) {
+      const s = onSide(screw, S.bolt, radius + 0.004, a, y + (k / (rows - 1) - 0.5) * (length + 0.012));
+      s.position.x += Math.cos(a) * dx;
+      s.position.z -= Math.sin(a) * dx;
+      g.add(s);
+    }
+  }
+}
+
+/**
+ * Four whip antennas in a cross (a turnstile, like Explorer 1's), sticking out sideways and a little down from
+ * brackets on the lowest section, plus two slot antennas in the skin. Low power: two whips.
+ */
 function addSimpleAntenna(g: THREE.Group, bus: BusShape, below: number, lowPower = false): void {
   const length = lowPower ? 0.65 : 0.9;
   const y = -bus.height / 2 - below * 0.5;
   const mountR = Math.min(bus.radius * 0.92, 0.5) + 0.02;
   const count = lowPower ? 2 : 4;
+  const shapes = whipShapes(length);
+  const bracket = box(0.06, 0.07, 0.03);
   for (let i = 0; i < count; i++) {
     const a = (i / count) * Math.PI * 2 + Math.PI / 4;
-    const mount = onSide(box(0.06, 0.06, 0.04), S.steel, mountR, a, y);
-    g.add(mount);
-    const whip = new THREE.Group();
-    whip.add(mesh(new THREE.CylinderGeometry(0.016, 0.016, 0.06, 6), S.hullDark, 0.03)); // hinge spring
-    whip.add(mesh(new THREE.CylinderGeometry(0.007, 0.012, length, 10), S.antenna, length / 2 + 0.06));
-    whip.add(mesh(new THREE.SphereGeometry(0.022, 12, 8), S.antenna, length + 0.06));
-    whip.position.set(Math.sin(a) * (mountR + 0.02), y, Math.cos(a) * (mountR + 0.02));
+    g.add(onSide(bracket, S.steel, mountR, a, y));
+    const whip = whipAntenna(shapes, length);
+    whip.position.set(Math.sin(a) * (mountR + 0.012), y, Math.cos(a) * (mountR + 0.012));
     // Point outwards and a little down.
     whip.rotation.set(0, a, 0);
     whip.rotateX(Math.PI / 2 + 0.35);
     g.add(whip);
   }
-  // Slot antennas: two long windows in the side of the Bus.
-  const slotGeo = box(0.04, bus.height * 0.5, 0.012);
   const radius = bus.sides === SIDES ? bus.radius * Math.cos(Math.PI / SIDES) + 0.03 : bus.radius + 0.006;
-  for (const a of [Math.PI / 2, -Math.PI / 2]) g.add(onSide(slotGeo, S.slot, radius, a, -0.05));
+  for (const a of [Math.PI / 2, -Math.PI / 2]) addSlotAntenna(g, radius, a, -0.05, bus.height * 0.5);
 }
 
 /** Spin: balance weights on short arms and two small spin-up nozzles pointing sideways. */
@@ -413,9 +487,17 @@ function addTransponder(g: THREE.Group, bus: BusShape): void {
     for (let i = 0; i < 12; i++) g.add(onSide(cavity, i % 2 ? S.hullDark : S.gold, mastR + 0.015, (i / 12) * Math.PI * 2, y));
   }
   // Slotted command antenna on top, and cables down to the boxes.
-  g.add(mesh(cylinder(0.025, 0.025, 0.3, 8), S.antenna, base + 0.54 + 0.15));
-  for (let k = 0; k < 4; k++) g.add(at(box(0.052, 0.04, 0.01), S.slot, 0, base + 0.6 + k * 0.06, 0.026));
-  g.add(mesh(new THREE.SphereGeometry(0.03, 16, 10), S.antenna, base + 0.86));
+  // A slotted cylinder: four rows of narrow lengthwise slots round a polished tube, collars between the rows.
+  g.add(mesh(cylinder(0.025, 0.025, 0.3, 20), S.antenna, base + 0.54 + 0.15));
+  const slit = new THREE.BoxGeometry(0.011, 0.042, 0.006);
+  const collar = cylinder(0.03, 0.03, 0.008, 20);
+  for (let k = 0; k < 4; k++) {
+    const y = base + 0.6 + k * 0.06;
+    for (let i = 0; i < 4; i++) g.add(onSide(slit, S.stripe, 0.024, (i / 4) * Math.PI * 2 + (k % 2) * (Math.PI / 4), y));
+    g.add(mesh(collar, S.steel, y - 0.03));
+  }
+  g.add(mesh(collar, S.steel, base + 0.6 + 3 * 0.06 + 0.03));
+  g.add(mesh(new THREE.SphereGeometry(0.03, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), S.slot, base + 0.84));
   g.add(rod(new THREE.Vector3(-r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.12, -mastR), 0.008, S.cable));
   g.add(rod(new THREE.Vector3(r * 0.45, base + 0.17, -r * 0.1), new THREE.Vector3(0, base + 0.1, -mastR), 0.008, S.cableBlack));
 }

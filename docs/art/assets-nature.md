@@ -1,15 +1,15 @@
 # Nature assets (trees, bushes, boulders, Shipping rig)
 
 Every third-party file used for the trees and bushes. All are CC0 (public domain): no attribution is required, but
-we credit them. The tree, bush, boulder, truck, dock and road shapes are made in code (`src/world/treeModels.ts`,
-`sceneryRocks.ts`, `truckModel.ts`); the road's asphalt is drawn in a canvas at run time.
+we credit them. The tree, bush, cactus, boulder, truck, dock and road shapes are made in code (`src/world/treeModels.ts`,
+`sceneryRocks.ts`, `truckModel.ts`); the road's asphalt and the dock's gravel fill are drawn in a canvas at run time.
 
 ## Shipped files
 
 | File | Made from | Size |
 |---|---|---|
-| `public/textures/nature/foliage_col.jpg` | Leaf cards, needle boughs, conifer silhouettes and bark composed by `scripts/blender/build_nature.py` from the sources below | ≈ 215 KB |
-| `public/textures/nature/foliage_mask.jpg` | Coverage (alpha) of the same atlas | ≈ 205 KB |
+| `public/textures/nature/foliage_col.jpg` | Leaf cards, needle boughs, a spruce silhouette and bark composed by `scripts/blender/build_nature.py` from the sources below; the cactus skin (ribs, spine clusters) is drawn by the same script in code | ≈ 232 KB |
+| `public/textures/nature/foliage_mask.jpg` | Coverage (alpha) of the same atlas | ≈ 173 KB |
 
 ## Sources (downloaded to `.leap/art-src/nature/dl/`, not shipped)
 

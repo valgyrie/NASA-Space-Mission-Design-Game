@@ -52,6 +52,16 @@ describe('vegetation placement', () => {
     expect(conifers).toBeGreaterThan(broad);
   });
 
+  it('grows cacti among the scrub of hot deserts only', () => {
+    const desert = generateSite('trees-desert', { dryness: 0.9, water: 'inland', relief: 0.1 });
+    const d = placeVegetation(buildGround(desert, landOf(desert)), desert);
+    const cacti = d.filter((s) => s.kind === 'cactus').length;
+    const scrub = d.filter((s) => s.kind === 'scrub').length;
+    expect(cacti).toBeGreaterThan(0);
+    expect(cacti).toBeLessThan(scrub);
+    expect(spots.filter((s) => s.kind === 'cactus').length).toBe(0);
+  });
+
   it('has shapes for every kind at both levels of detail', () => {
     for (const kind of TREE_KINDS)
       for (const lod of [0, 1] as const) {

@@ -49,6 +49,15 @@ export const PAD_CLEAR = 0.5;
 const ON_SITE = 0.16;
 /** Tries per patch of land: up to this many trees per tile in a thick wood. */
 const TRIES = 2;
+/** Cacti grow only in climates drier than this, as this share of the scrub there. */
+export const CACTUS_DRYNESS = 0.6;
+const CACTUS_SHARE = 0.22;
+
+/** A number 0–1 fixed by a place (not by the random sequence, so adding a choice does not shift the others). */
+function spotHash(x: number, z: number): number {
+  const n = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+  return n - Math.floor(n);
+}
 
 const smooth = (a: number, b: number, v: number) => {
   const t = Math.min(1, Math.max(0, (v - a) / (b - a)));
@@ -65,6 +74,7 @@ const HEIGHT: Record<TreeKind, [number, number]> = {
   bush: [0.18, 0.34],
   scrub: [0.12, 0.24],
   palm: [1.0, 1.5],
+  cactus: [0.4, 0.85],
 };
 
 /** Is world (x, z) on a tile of the Site? */
@@ -140,6 +150,8 @@ export function placeVegetation(ground: Ground, site: Site): TreeSpot[] {
         // Dry land: scrub; a rare thorn tree; palms by the water in warm places.
         const wet = snow < 0.1 && RING.some(([dx, dz]) => ground.heightAt(x + dx * 2.5, z + dz * 2.5) < WATER_Y);
         kind = wet && rng() < 0.6 ? 'palm' : rng() < 0.8 ? 'scrub' : 'oak';
+        // Hot deserts: some of the scrub is columnar cacti (picked by place, so the rest stays as it was).
+        if (kind === 'scrub' && dry > CACTUS_DRYNESS && snow < 0.1 && spotHash(x, z) < CACTUS_SHARE) kind = 'cactus';
       } else {
         const coniferShare = clamp01(
           0.18 + (terrain === 'hills' ? 0.2 : 0) + (terrain === 'mountain' ? 0.65 : 0) + snow * 0.9 + (groves(x, z) - 0.5) * 1.4,
@@ -159,8 +171,10 @@ export function placeVegetation(ground: Ground, site: Site): TreeSpot[] {
     const g = (0.6 + rng() * 0.18) * (conifer ? 1.08 : 1);
     const yellow = (rng() - 0.5) * 0.12 + dry * 0.18;
     const tint: [number, number, number] = [clamp01(g * (0.92 + yellow)), clamp01(g), clamp01(g * (0.86 - yellow * 0.6 + (conifer ? 0.06 : 0)))];
-    // Dry land: dusty olive and grey-green leaves.
-    if (green < 0.35) {
+    // Dry land: dusty olive and grey-green leaves (cacti keep their own green skin).
+    if (kind === 'cactus') {
+      tint[0] = tint[1] = tint[2] = 0.85 + (g - 0.6) * 0.8;
+    } else if (green < 0.35) {
       const dust = 0.75 + rng() * 0.15;
       tint[0] = clamp01(tint[0] * dust * 1.08);
       tint[1] = clamp01(tint[1] * dust * 0.95);

@@ -3,8 +3,8 @@ import { SEA, cloudPixels, earthPixels } from './earthTexture';
 
 /**
  * The real Earth, seen from space. Photographs from NASA GIBS (Blue Marble: Next Generation for the colours,
- * one real day of VIIRS clouds, OpenStreetMap water for the Sun's glint, VIIRS Black Marble city lights; see
- * scripts/build_earth_textures.py) load in the background. Until they arrive, or if they fail, the globe uses
+ * one real day of VIIRS clouds, VIIRS Black Marble city lights; see scripts/build_earth_textures.py) and a water
+ * mask for the Sun's glint drawn from Natural Earth (scripts/build_earth_water.py) load in the background. Until they arrive, or if they fail, the globe uses
  * the pictures baked from the 1° game map (earthTexture.ts), so it is never blank.
  *
  * Lit by the scene's first DirectionalLight (the Sun): a soft day/night line, glint only on water, clouds with
@@ -232,6 +232,8 @@ function planetMaterial(radius: number, s: Shared, view: View, cloudShift: THREE
           vec2 uv = vUv + vec2(0.25, 0.0);
           albedo = texture2D(colourMap, uv).rgb;
           water = texture2D(waterMap, uv).r;
+          // Ice the mask calls sea (shelf edges that have moved since the photo): white in the photo, so no glint.
+          water *= 1.0 - smoothstep(0.45, 0.75, dot(albedo, vec3(0.3, 0.59, 0.11)));
           // Blue Marble's open sea is nearly black-blue; lift it a touch towards the real deep-ocean colour.
           albedo = mix(albedo, albedo * vec3(0.9, 1.05, 1.25) + vec3(0.0, 0.004, 0.012), water);
         } else {
@@ -254,12 +256,17 @@ function planetMaterial(radius: number, s: Shared, view: View, cloudShift: THREE
         vec3 sunColour = mix(vec3(1.0, 0.55, 0.32), vec3(1.0, 0.97, 0.92), smoothstep(0.0, 0.35, ndl));
         vec3 colour = albedo * sunColour * lit * shade * power;
 
-        // Glint: the Sun mirrored in the sea, only on water and not under cloud.
+        // Glint: the Sun mirrored in the sea, only on water and not under cloud. Waves tilt the surface by about
+        // ten degrees (Cox and Munk's slope statistics), so from orbit it is a wide silvery sheen, not a spot.
         vec3 h = normalize(l + v);
-        float nh = max(dot(n, h), 0.0);
+        float nh = clamp(dot(n, h), 0.05, 1.0);
+        float tan2 = (1.0 - nh * nh) / (nh * nh);
+        const float SLOPES = 0.04;
+        float tilt = exp(-tan2 / SLOPES) / (3.1415927 * SLOPES * nh * nh * nh * nh);
         float fresnel = 0.02 + 0.98 * pow(1.0 - max(dot(h, v), 0.0), 5.0);
-        float glint = (pow(nh, 900.0) * 2.5 + pow(nh, 90.0) * 0.12) * (0.3 + fresnel * 3.0);
-        colour += vec3(1.0, 0.93, 0.8) * glint * water * (1.0 - overhead) * smoothstep(0.0, 0.1, ndl) * power * 0.3;
+        // (Scaled down a little: the photo's sea is darker than real open ocean, so a true-strength sheen looks foggy.)
+        float glint = 3.1415927 * fresnel * tilt / (4.0 * max(ndv, 0.2)) * 0.6;
+        colour += sunColour * glint * water * (1.0 - overhead) * smoothstep(0.0, 0.15, ndl) * shade * power;
 
         // Air seen at a slant: blue haze growing towards the rim on the day side.
         float slant = pow(1.0 - ndv, 2.5);
@@ -351,9 +358,12 @@ function atmosphereMaterial(radius: number, view: View): THREE.ShaderMaterial {
         float density = exp(-max(height, 0.0) * 4.5) * smoothstep(1.0, 0.6, height);
         vec3 l = normalize(sun);
         float day = smoothstep(-0.25, 0.35, dot(normalize(closest), l));
-        // Brighter towards the Sun (forward scattering) and a little warm at the terminator.
+        // Brighter towards the Sun (forward scattering) and a little warm at the terminator, but only where the
+        // terminator is seen from the side: with the Sun behind the eye the whole rim is "terminator", and it would
+        // turn into an orange ring.
         float forward = pow(max(dot(dir, l), 0.0), 6.0);
-        vec3 tint = mix(vec3(1.0, 0.6, 0.35), ${RAYLEIGH}, smoothstep(-0.1, 0.25, dot(normalize(closest), l)));
+        float sunBehind = smoothstep(0.35, 0.8, dot(normalize(eye), l));
+        vec3 tint = mix(vec3(1.0, 0.6, 0.35), ${RAYLEIGH}, max(smoothstep(-0.1, 0.25, dot(normalize(closest), l)), sunBehind));
         vec3 colour = tint * density * day * (0.55 + forward * 1.5) * power * 0.6;
         gl_FragColor = vec4(colour, 1.0);
         #include <tonemapping_fragment>

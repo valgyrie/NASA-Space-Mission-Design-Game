@@ -4,7 +4,7 @@ Build the photographic Earth pictures in public/textures/earth/ from NASA GIBS (
   colour.jpg  4096 x 2048  NASA Blue Marble: Next Generation (layer BlueMarble_NextGeneration)
   clouds.jpg  4096 x 2048  clouds of one real day (VIIRS on Suomi NPP and NOAA-20, corrected reflectance),
                            found by how much whiter each pixel is than Blue Marble's cloud-free picture
-  water.png   2048 x 1024  where the sea and lakes are (layer OSM_Land_Water_Map), for the Sun's glint
+  (water.png, the sea and lakes for the Sun's glint, is drawn from Natural Earth by scripts/build_earth_water.py)
   lights.jpg  2048 x 1024  city lights at night (layer VIIRS_Black_Marble, 2016)
 
 All are plate carree: column 0 is 180 W, row 0 is 90 N. The game's globe shifts them to its own seam.
@@ -37,7 +37,6 @@ LAYERS = {
     'bluemarble': (f'{GIBS}/BlueMarble_NextGeneration/default/500m/{{z}}/{{row}}/{{col}}.jpeg', 3),
     'snpp': (f'{GIBS}/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/{CLOUD_DAY}/250m/{{z}}/{{row}}/{{col}}.jpeg', 3),
     'noaa20': (f'{GIBS}/VIIRS_NOAA20_CorrectedReflectance_TrueColor/default/{CLOUD_DAY}/250m/{{z}}/{{row}}/{{col}}.jpeg', 3),
-    'water': (f'{GIBS}/OSM_Land_Water_Map/default/250m/{{z}}/{{row}}/{{col}}.png', 3),
     'lights': (f'{GIBS}/VIIRS_Black_Marble/default/2016-01-01/500m/{{z}}/{{row}}/{{col}}.png', 2),
 }
 
@@ -162,11 +161,6 @@ def main() -> None:
     polar = np.clip((np.abs(lat) - 58) / 14, 0, 1)
     cloud *= (1 - 0.75 * polar)[:, None]
     save(shrink(cloud, 4096), OUT / 'clouds.jpg', 82)
-
-    water = layer('water')
-    # OSM land/water map: water is the lighter grey, land the darker one.
-    is_water = (luminance(water) > 0.38).astype(np.float32)
-    save(shrink(is_water, 2048), OUT / 'water.png')
 
     lights = layer('lights')
     glow = np.clip(luminance(lights), 0, 1)

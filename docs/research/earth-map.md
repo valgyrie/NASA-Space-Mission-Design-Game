@@ -53,8 +53,27 @@ drawn as the fallback while the photographs load or if they fail.
     reflectance from Suomi NPP and NOAA-20 averaged (each fills the other's gaps between swaths), counted as cloud
     where a pixel is grey-white and brighter than Blue Marble's cloud-free ground; faded beyond 58° of latitude,
     where sea ice looks like cloud.
-  - `water.png`: OpenStreetMap land/water map (sea and lakes) for the Sun's glint.
+  - `water.png`: see "Water mask" below.
   - `lights.jpg`: VIIRS Black Marble 2016 city lights.
 - Pictures start at 180°W; the game's sphere starts at 90°W, so the shader shifts them by a quarter turn.
-- Credits: Blue Marble and Black Marble "NASA Earth Observatory"; the GIBS acknowledgement; the water map needs
-  "© OpenStreetMap contributors" (ODbL). Sources: [GIBS API docs](https://nasa-gibs.github.io/gibs-api-docs/).
+- Credits: Blue Marble and Black Marble "NASA Earth Observatory"; the GIBS acknowledgement. Sources:
+  [GIBS API docs](https://nasa-gibs.github.io/gibs-api-docs/).
+
+## Water mask (2026-11-14, session 5)
+
+Where the Sun's glint may shine and the sea gets its deep-blue tint. The first version used GIBS's
+`OSM_Land_Water_Map` (OpenStreetMap, ODbL, which needs a credit and share-alike); it was replaced by public-domain
+Natural Earth data before the merge, so nothing from OpenStreetMap is shipped.
+
+- `scripts/build_earth_water.py` (NumPy only: `"C:/Program Files/Blender Foundation/Blender 5.3/5.3/python/bin/python.exe" scripts/build_earth_water.py`)
+  downloads Natural Earth 1:10m GeoJSON from [nvkelso/natural-earth-vector](https://github.com/nvkelso/natural-earth-vector/tree/master/geojson)
+  into `.leap/art-src/space/ne/` and rasterises it to 4096 × 2048 (same grid as `colour.jpg`), 4 × 4 samples a
+  pixel, so coasts are smooth greys rather than steps.
+- Water is everything outside `ne_10m_land`, `ne_10m_minor_islands` and `ne_10m_antarctic_ice_shelves_polys`
+  (the ice shelves are white ice in the photo, not sea), plus `ne_10m_lakes` of class Lake and Reservoir. Salt pans
+  ("Alkaline Lake", such as Lake Eyre) count as land: they are mostly dry.
+- Checked against Blue Marble at the coasts of Florida, the Aegean, Indonesia and Norway: the outlines match to
+  about a pixel (≈ 10 km). Ice shelf edges have moved since Blue Marble (2004), so the globe's shader also drops
+  the glint where the photo is ice-white.
+- Licence: "Natural Earth is in the public domain. No permission is needed to use Natural Earth"
+  ([terms of use](https://www.naturalearthdata.com/about/terms-of-use/), checked 2026-11-14).

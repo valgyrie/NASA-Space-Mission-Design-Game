@@ -34,6 +34,9 @@ export class GlobePicker {
   constructor(private readonly canvas: HTMLCanvasElement) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    // The same film curve as the Mission Designer and the Space view, so this Earth looks like theirs (without it
+    // the clouds clip to flat white and the land is dim).
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
     this.scene.add(this.earth.earth);
     this.scene.add(new THREE.HemisphereLight(0xcfe3ff, 0x2a2f3a, 1.4));
     // The Sun sits behind the camera, so the side you look at is always lit.

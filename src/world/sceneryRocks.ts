@@ -99,8 +99,9 @@ export function placeRocks(ground: Ground, site: Site): RockSpot[] {
       if (nearOre) continue;
       const big = rng() < 0.25;
       const size = big ? 0.26 + rng() * 0.26 : 0.1 + rng() * 0.12;
-      const s = 0.42 + rng() * 0.16;
-      const warm = dry * 0.08 + (rng() - 0.5) * 0.05;
+      // A little darker and warmer than the bare rock photo, so they sit in the grass instead of shining like limestone.
+      const s = 0.34 + rng() * 0.14;
+      const warm = 0.03 + dry * 0.08 + (rng() - 0.5) * 0.05;
       spots.push({
         x,
         y: ground.heightAt(x, z) - size * (0.12 + slope * 0.4),

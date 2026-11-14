@@ -7,11 +7,12 @@ import { type Rng, makeRng } from '../site/random';
  * the crown, so it is lit like a soft rounded mass rather than flat cards. World units: 1 = one tile (about 10 m).
  *
  * Every shape has an attribute `wind` (x: how far the wind bends it there, 0 at the foot … 1 at the top; y: 1 on leaf
- * cards, which also flutter) and stands on y = 0, about 1 unit tall (instances scale it).
+ * cards, which also flutter; -1 on a near conifer's whole-tree cards, which fade out when seen from straight above so
+ * they don't show as an "X") and stands on y = 0, about 1 unit tall (instances scale it).
  */
 
-export type TreeKind = 'broadleaf' | 'oak' | 'conifer' | 'pine' | 'bush' | 'scrub' | 'palm';
-export const TREE_KINDS: readonly TreeKind[] = ['broadleaf', 'oak', 'conifer', 'pine', 'bush', 'scrub', 'palm'];
+export type TreeKind = 'broadleaf' | 'oak' | 'conifer' | 'pine' | 'bush' | 'scrub' | 'palm' | 'cactus';
+export const TREE_KINDS: readonly TreeKind[] = ['broadleaf', 'oak', 'conifer', 'pine', 'bush', 'scrub', 'palm', 'cactus'];
 
 /** 0: full detail (on and near the Site), 1: a few big cards (the land around). */
 export type TreeLod = 0 | 1;
@@ -23,7 +24,7 @@ const ATLAS = {
   needles: { x0: 0, y0: 556, x1: 1024, y1: 724 },
   bark: { x0: 0, y0: 772, x1: 1024, y1: 1020 },
   spruce: { x0: 2, y0: 1026, x1: 254, y1: 1536 },
-  pineTree: { x0: 258, y0: 1026, x1: 510, y1: 1536 },
+  cactus: { x0: 260, y0: 1028, x1: 508, y1: 1532 },
 } as const;
 type Region = (typeof ATLAS)[keyof typeof ATLAS];
 
@@ -49,9 +50,12 @@ class Builder {
     return this.pos.length / 3 - 1;
   }
 
-  /** A tapered tube through `path` with a radius per point; bark mapped round and along it. */
-  tube(path: V3[], radius: number[], sides: number, height: number): void {
-    const r = ATLAS.bark;
+  /**
+   * A tapered tube through `path` with a radius per point; bark (or `region`) mapped round and along it, its full
+   * height every `vLength`. `ribs` > 0 fluting round it (a cactus), in the shape and the shading.
+   */
+  tube(path: V3[], radius: number[], sides: number, height: number, region: Region = ATLAS.bark, vLength = 1.2, ribs = 0): void {
+    const r = region;
     const rings: number[][] = [];
     let along = 0;
     for (let i = 0; i < path.length; i++) {
@@ -64,9 +68,12 @@ class Builder {
       for (let k = 0; k <= sides; k++) {
         const a = (k / sides) * Math.PI * 2;
         const n = side.clone().multiplyScalar(Math.cos(a)).addScaledVector(up, Math.sin(a));
-        const at = p.clone().addScaledVector(n, radius[i]!);
+        const flute = ribs > 0 ? 1 + 0.07 * Math.cos(ribs * a) : 1;
+        const at = p.clone().addScaledVector(n, radius[i]! * flute);
         const bend = Math.min(1, Math.max(0, at.y / height)) ** 2;
-        ring.push(this.vertex(at, n, u(r, k / sides), v(r, Math.min(1, along / 1.2)), bend, 0));
+        // Fluted: the normal leans towards the groove on each side of a rib.
+        const shade = ribs > 0 ? n.clone().addScaledVector(side.clone().multiplyScalar(-Math.sin(a)).addScaledVector(up, Math.cos(a)), 0.07 * ribs * Math.sin(ribs * a)).normalize() : n;
+        ring.push(this.vertex(at, shade, u(r, k / sides), v(r, Math.min(1, along / vLength)), bend, 0));
       }
       rings.push(ring);
     }
@@ -84,7 +91,7 @@ class Builder {
    * A card from `base` towards `up` (its length) and `side` (its width), with the given region; `centre` is the
    * middle of the crown: normals lean away from it so the crown is shaded as a whole.
    */
-  card(region: Region, base: V3, up: V3, side: V3, length: number, width: number, centre: V3, height: number, round = 0.75): void {
+  card(region: Region, base: V3, up: V3, side: V3, length: number, width: number, centre: V3, height: number, round = 0.75, leaf = 1): void {
     const corners = [
       [-0.5, 0],
       [0.5, 0],
@@ -98,7 +105,7 @@ class Builder {
       out.y = out.y * 0.8 + 0.25 * Math.max(out.length(), 1e-3);
       const n = out.normalize().multiplyScalar(round).addScaledVector(face, (1 - round) * Math.sign(face.dot(out) || 1)).normalize();
       const bend = Math.min(1, Math.max(0, p.y / height)) ** 2;
-      return this.vertex(p, n, u(region, s + 0.5), v(region, t), bend, 1);
+      return this.vertex(p, n, u(region, s + 0.5), v(region, t), bend, leaf);
     });
     this.index.push(ids[0]!, ids[1]!, ids[2]!, ids[2]!, ids[1]!, ids[3]!);
   }
@@ -176,11 +183,14 @@ function broadleaf(seed: number, lod: TreeLod, oak: boolean): THREE.BufferGeomet
   return b.geometry();
 }
 
-/** Cards standing through the tree's axis, turned evenly: a whole tree drawn from the side, seen from any way round. */
-function crossed(b: Builder, region: Region, cards: number, width: number, height: number, turn: number): void {
+/**
+ * Cards standing through the tree's axis, turned evenly: a whole tree drawn from the side, seen from any way round.
+ * `leaf` -1 marks them to fade when seen from above (see the `wind` attribute).
+ */
+function crossed(b: Builder, region: Region, cards: number, width: number, height: number, turn: number, leaf = 1): void {
   for (let k = 0; k < cards; k++) {
     const a = turn + (k / cards) * Math.PI;
-    b.card(region, V(0, -0.02, 0), V(0, 1, 0), V(Math.cos(a), 0, Math.sin(a)), height, width, V(0, height * 0.4, 0), 1, 0.85);
+    b.card(region, V(0, -0.02, 0), V(0, 1, 0), V(Math.cos(a), 0, Math.sin(a)), height, width, V(0, height * 0.4, 0), 1, 0.85, leaf);
   }
 }
 
@@ -194,7 +204,8 @@ function conifer(seed: number, lod: TreeLod, pine: boolean): THREE.BufferGeometr
   const h = 1;
   const region = ATLAS.spruce;
   // The silhouette is half as wide as tall.
-  crossed(b, region, lod === 0 ? 2 : 3, pine ? 0.36 : 0.5, 1, rng() * Math.PI);
+  // Close up the needle boughs carry the shape from above, so the two crossed cards may fade there.
+  crossed(b, region, lod === 0 ? 2 : 3, pine ? 0.36 : 0.5, 1, rng() * Math.PI, lod === 0 ? -1 : 1);
   if (lod === 1) return b.geometry();
   b.tube([V(0, -0.05, 0), V(0, 0.5, 0), V(0, 0.9, 0)], [0.025, 0.018, 0.006], 5, h);
   const bottom = pine ? 0.2 : 0.12;
@@ -249,6 +260,45 @@ function palm(seed: number, lod: TreeLod): THREE.BufferGeometry {
   return b.geometry();
 }
 
+/** A stem of a cactus from `base` along `path`, rounded off on top. */
+function cactusStem(b: Builder, path: V3[], r: number, lod: TreeLod): void {
+  const tip = path[path.length - 1]!;
+  const dir = tip.clone().sub(path[path.length - 2]!).normalize();
+  const dome = [0.45, 0.8, 0.97].map((t) => tip.clone().addScaledVector(dir, r * Math.sin(t * Math.PI * 0.5) * 0.9));
+  const radii = [...path.map(() => r), ...[0.45, 0.8, 0.97].map((t) => r * Math.cos(t * Math.PI * 0.5) + 0.002)];
+  // Height 50: cacti are stiff, the wind hardly bends them.
+  // Three sides a rib (ridge and two flanks), so the light shows the fluting.
+  b.tube([...path, ...dome], radii, lod === 0 ? 30 : 6, 50, ATLAS.cactus, 1, lod === 0 ? 10 : 0);
+}
+
+/**
+ * A columnar cactus of the hot deserts: a fluted trunk with up to three arms that leave it sideways and turn up,
+ * like a saguaro or a cardón. About 1 unit tall.
+ */
+function cactus(seed: number, lod: TreeLod, variant: number): THREE.BufferGeometry {
+  const rng = makeRng(seed);
+  const b = new Builder();
+  const r = 0.07;
+  cactusStem(b, [0, 0.3, 0.6, 0.9].map((y) => V(0, y - 0.04, 0)), r, lod);
+  // Near the Site only the first two shapes are used: give those arms.
+  const arms = [2, 1, 3][variant % 3]!;
+  for (let k = 0; k < arms; k++) {
+    const a = (k / Math.max(arms, 1)) * Math.PI * 2 + rng() * 1.2;
+    const out = V(Math.cos(a), 0, Math.sin(a));
+    const y = 0.3 + rng() * 0.25;
+    const reach = 0.13 + rng() * 0.05;
+    const up = 0.2 + rng() * 0.22;
+    const path = [
+      out.clone().multiplyScalar(r * 0.3).add(V(0, y, 0)),
+      out.clone().multiplyScalar(reach * 0.75).add(V(0, y + 0.01, 0)),
+      out.clone().multiplyScalar(reach).add(V(0, y + 0.08, 0)),
+      out.clone().multiplyScalar(reach).add(V(0, y + 0.08 + up, 0)),
+    ];
+    cactusStem(b, path, r * 0.72, lod);
+  }
+  return b.geometry();
+}
+
 const cache = new Map<string, THREE.BufferGeometry[]>();
 
 /** How many different shapes each kind has (instances pick one). */
@@ -276,6 +326,8 @@ export function treeGeometries(kind: TreeKind, lod: TreeLod): THREE.BufferGeomet
           return bush(seed, lod, true);
         case 'palm':
           return palm(seed, lod);
+        case 'cactus':
+          return cactus(seed, lod, i);
       }
     });
     cache.set(key, list);

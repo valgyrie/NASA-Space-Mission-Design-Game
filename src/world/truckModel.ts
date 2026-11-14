@@ -257,6 +257,147 @@ export function buildDock(): THREE.Group {
   return g;
 }
 
+/** The dock's slab seen from above (world units): its centre, half its side, and the height where its fill starts. */
+export interface DockSquare {
+  x: number;
+  z: number;
+  half: number;
+  top: number;
+}
+
+/** How steeply the fill round the dock falls away to the land (height per unit across), like a graded pad's edge. */
+export const BERM_GRADE = 0.6;
+/** The fill reaches at most this far out; past it, it drops straight to the land. */
+const BERM_REACH = 3;
+
+/** Height of the dock's fill at (x, z): level with the slab's edge, falling away at `BERM_GRADE` all round. */
+export function bermHeight(d: DockSquare, x: number, z: number): number {
+  const dx = Math.max(Math.abs(x - d.x) - d.half, 0);
+  const dz = Math.max(Math.abs(z - d.z) - d.half, 0);
+  return d.top - BERM_GRADE * Math.hypot(dx, dz);
+}
+
+/** The land with the dock's fill on it: what the road and the truck ride on. */
+export function withBerm(d: DockSquare, ground: (x: number, z: number) => number): (x: number, z: number) => number {
+  return (x, z) => Math.max(ground(x, z), bermHeight(d, x, z));
+}
+
+/**
+ * Where the fill meets the land going out from (x, z) along (ux, uz): the distance, or `BERM_REACH` if the land
+ * falls away faster than the fill all the way.
+ */
+export function bermReach(d: DockSquare, ground: (x: number, z: number) => number, x: number, z: number, ux: number, uz: number): number {
+  const step = 0.05;
+  let before = d.top - ground(x, z);
+  if (before <= 0) return 0;
+  for (let t = step; t <= BERM_REACH; t += step) {
+    const gap = d.top - BERM_GRADE * t - ground(x + ux * t, z + uz * t);
+    if (gap <= 0) return t - step * (gap / (gap - before));
+    before = gap;
+  }
+  return BERM_REACH;
+}
+
+/**
+ * The dock's outline, going round: points on the slab's edge with the way out from it. Straight sides every
+ * `spacing`, and a fan of ways out at each corner so the fill rounds it.
+ */
+export function dockOutline(half: number, spacing = 0.12, fan = 4): { x: number; z: number; ux: number; uz: number }[] {
+  const corners = [[1, 1], [-1, 1], [-1, -1], [1, -1]] as const;
+  const out: { x: number; z: number; ux: number; uz: number }[] = [];
+  const along = Math.max(2, Math.ceil((2 * half) / spacing));
+  for (let c = 0; c < 4; c++) {
+    const [sx, sz] = corners[c];
+    const [nx, nz] = corners[(c + 1) % 4];
+    for (let k = 0; k <= fan; k++) {
+      const a = (Math.PI / 2) * (c + k / fan);
+      out.push({ x: sx * half, z: sz * half, ux: Math.cos(a), uz: Math.sin(a) });
+    }
+    const a = (Math.PI / 2) * (c + 1);
+    for (let k = 1; k < along; k++) {
+      const t = k / along;
+      out.push({ x: (sx + (nx - sx) * t) * half, z: (sz + (nz - sz) * t) * half, ux: Math.cos(a), uz: Math.sin(a) });
+    }
+  }
+  return out;
+}
+
+/** Crushed-stone fill, a little darker and dustier towards its foot. */
+const BERM_TOP = new THREE.Color(0xf4f1ea);
+const BERM_FOOT = new THREE.Color(0xc4baa8);
+
+let gravelTexture: THREE.Texture | null = null;
+
+/** Crushed stone: grey and brown grit with a few larger pebbles; made once in a canvas. */
+function gravel(): THREE.Texture | null {
+  if (gravelTexture || typeof document === 'undefined') return gravelTexture;
+  const c = document.createElement('canvas');
+  c.width = c.height = 128;
+  const x = c.getContext('2d')!;
+  x.fillStyle = '#8c877e';
+  x.fillRect(0, 0, 128, 128);
+  for (let i = 0; i < 3200; i++) {
+    const v = 95 + Math.floor(Math.random() * 90);
+    const warm = Math.random() * 14;
+    x.fillStyle = `rgb(${v + warm},${v + warm * 0.5},${v - 4})`;
+    const r = Math.random() < 0.08 ? 2.5 : 1.2;
+    x.fillRect(Math.random() * 128, Math.random() * 128, r, r);
+  }
+  gravelTexture = new THREE.CanvasTexture(c);
+  gravelTexture.colorSpace = THREE.SRGBColorSpace;
+  gravelTexture.wrapS = gravelTexture.wrapT = THREE.RepeatWrapping;
+  gravelTexture.anisotropy = 8;
+  return gravelTexture;
+}
+
+/**
+ * The fill round the dock, so on sloping land it sits in a graded bank like a building's pad instead of standing
+ * up as a wall: from just under the slab's edge down to where it meets the land (world units).
+ */
+export function buildBerm(d: DockSquare, ground: (x: number, z: number) => number): THREE.Mesh {
+  const outline = dockOutline(d.half);
+  const rows = 6;
+  const pos: number[] = [];
+  const col: number[] = [];
+  const uv: number[] = [];
+  const c = new THREE.Color();
+  for (const p of outline) {
+    const x0 = d.x + p.x;
+    const z0 = d.z + p.z;
+    const reach = bermReach(d, ground, x0, z0, p.ux, p.uz);
+    for (let k = 0; k <= rows; k++) {
+      const t = (reach * k) / rows;
+      const x = x0 + p.ux * t;
+      const z = z0 + p.uz * t;
+      // The last row tucks under the land so no gap shows; the rest follow the bank (never under the land).
+      const y = k === rows ? ground(x, z) - 0.04 : Math.max(d.top - BERM_GRADE * t, ground(x, z) + 0.004);
+      pos.push(x, y, z);
+      uv.push(x * 1.5, z * 1.5);
+      const n = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
+      c.copy(BERM_TOP).lerp(BERM_FOOT, (k / rows) ** 1.5).multiplyScalar(0.92 + 0.16 * (n - Math.floor(n)));
+      col.push(c.r, c.g, c.b);
+    }
+  }
+  const index: number[] = [];
+  const per = rows + 1;
+  for (let i = 0; i < outline.length; i++) {
+    const a = i * per;
+    const b = ((i + 1) % outline.length) * per;
+    for (let k = 0; k < rows; k++) index.push(a + k, a + k + 1, b + k, b + k, a + k + 1, b + k + 1);
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  g.setAttribute('color', new THREE.Float32BufferAttribute(col, 3));
+  g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+  g.setIndex(index);
+  g.computeVertexNormals();
+  const m = new THREE.MeshStandardMaterial({ vertexColors: true, map: gravel(), roughness: 1, side: THREE.DoubleSide });
+  const berm = new THREE.Mesh(g, m);
+  berm.name = 'berm';
+  berm.receiveShadow = true;
+  return berm;
+}
+
 /** Width of the road, world units. */
 export const ROAD_WIDTH = 0.75;
 
@@ -293,9 +434,14 @@ function asphalt(): THREE.Texture | null {
 
 /**
  * A paved road from `a` to `b` (world x/z), draped on the ground (`ground` gives its height), with a soft gravel
- * shoulder. One mesh, drawn just above the ground.
+ * shoulder. One mesh, drawn just above the ground. Pieces where `skip` is true (a building stands there) are left out.
  */
-export function buildRoad(a: { x: number; z: number }, b: { x: number; z: number }, ground: (x: number, z: number) => number): THREE.Mesh {
+export function buildRoad(
+  a: { x: number; z: number },
+  b: { x: number; z: number },
+  ground: (x: number, z: number) => number,
+  skip: (x: number, z: number) => boolean = () => false,
+): THREE.Mesh {
   const length = Math.hypot(b.x - a.x, b.z - a.z);
   const dx = (b.x - a.x) / length;
   const dz = (b.z - a.z) / length;
@@ -317,6 +463,9 @@ export function buildRoad(a: { x: number; z: number }, b: { x: number; z: number
   for (let i = 0; i < steps; i++)
     for (let k = 0; k < n - 1; k++) {
       const p = i * n + k;
+      const mx = (pos[p * 3] + pos[(p + n + 1) * 3]) / 2;
+      const mz = (pos[p * 3 + 2] + pos[(p + n + 1) * 3 + 2]) / 2;
+      if (skip(mx, mz)) continue;
       index.push(p, p + 1, p + n, p + 1, p + n + 1, p + n);
     }
   const g = new THREE.BufferGeometry();

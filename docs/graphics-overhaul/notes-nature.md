@@ -2,13 +2,35 @@
 
 Session 3, 14 Nov 2026. Status: **all four steps done** (first pass); type check and all tests pass (489).
 
+## Session 5 (14 Nov, night): rough edges
+
+Done by the stream-4/5 left-overs agent (see also `notes-space.md`):
+
+- **Dock on a slope:** the slab no longer stands up as a wall. `truckModel.ts` `buildBerm` lays a bank of crushed
+  stone (canvas gravel texture, vertex tint) from just under the slab's edge down to the land at `BERM_GRADE` 0.6,
+  rounded at the corners (`dockOutline`, `bermReach`, `bermHeight`, `withBerm`; tests in `truckModel.test.ts`).
+  The road and the truck ride on `withBerm(...)`, so the road ramps up onto the dock.
+- **Road through buildings:** `ShippingView.layRoad` leaves out road pieces within a building's footprint
+  (+0.15). Buildings are found as the models World tags with `userData.tile` beside the shipping group; the road
+  is laid again when a building is added or removed (numeric key checked in `show`). `shippingRoute.ts` unchanged.
+- Shots: `.leap/shots/out/s5sp/ship/dockclose2.png`, `dockcloser2.png` (before: `.leap/shots/out/s5/ship/dockclose.png`).
+- **Conifer "X" from above:** a near conifer's two crossed whole-tree cards carry `wind.y = -1`; the foliage shader
+  fades them out when seen from straight above (|eye.y| 0.8 → 0.96), where the needle boughs carry the shape. Far
+  (LOD 1) conifers unchanged. Shot: `.leap/shots/out/s5sp/nature/conifer_above.png`, `conifer_near.png`.
+- **Cacti:** new kind `cactus` (appended to `TREE_KINDS`, so other shapes keep their seeds): a fluted columnar
+  cactus (saguaro/cardón-like) with 2, 1 or 3 arms per shape, 10 ribs in the shape and the shading, skin painted
+  by `build_nature.py` into the former pine-silhouette slot (`ATLAS.cactus`, 256–512 × 1024–1536, opaque). In hot
+  deserts (dryness > 0.6, no snow) 22 % of the scrub becomes cacti, picked by a hash of the place (the random
+  sequence of every other tree is unchanged). They hardly sway. Test in `vegetationPlacement.test.ts`.
+- **Boulders** a little darker and warmer (`shade` 0.34–0.48, was 0.42–0.58) so they sit in the grass.
+
 ## Module map
 
 - `scripts/blender/build_nature.py`: Blender used as a Python with NumPy (nothing rendered). Cuts leaves and needle
   sprays out of CC0 ambientCG atlases, lays them out as cards, packs them with a bark strip into one atlas:
   `public/textures/nature/foliage_col.jpg` + `foliage_mask.jpg` (1024 × 1536, ≈ 420 KB together). Layout in the
-  script's docstring; `ATLAS` in `treeModels.ts` mirrors it. The pine silhouette at (256–512, 1024–1536) is unused
-  (pine looked like a lollipop); free for a cactus or a broadleaf silhouette.
+  script's docstring; `ATLAS` in `treeModels.ts` mirrors it. (256–512, 1024–1536) held an unused pine
+  silhouette; since session 5 it holds the cactus skin.
 - `src/world/treeModels.ts`: shapes made in code once, shared by every Site. Kinds: broadleaf (beech), oak,
   conifer (spruce), pine (narrow fir-like spire), bush, scrub, palm. LOD 0 (≈ 300 tris broadleaf, ≈ 100 conifer:
   2 crossed whole-tree cards + 40 bough cards) and LOD 1 (≈ 36 tris broadleaf, 6 tris conifer: 3 crossed cards).
@@ -59,12 +81,12 @@ Session 3, 14 Nov 2026. Status: **all four steps done** (first pass); type check
 
 ## Rough edges / next steps
 
-- The road ignores buildings that stand on its line (the route itself is gameplay and was not changed); it can run
-  over a pad or through a building next to the dock.
-- The dock slab sits at the highest ground under it, so on a slope one side stands up as a low wall (like a
-  building's foundation).
-- Conifer LOD 0 shows its two crossed cards as an "X" when looked at from straight above close up.
+- (Fixed in session 5: road through buildings, dock wall on slopes, conifer "X" from above, no cacti, pale boulders.)
+- The road stops at a building's edge and starts again past it; the truck still drives straight through (the route
+  is gameplay). A road that bends round buildings would need a route change.
+- Where the land rises behind the dock, a little grass can still poke over the slab's back edge (the slab sits at
+  the highest tile centre, not the highest point under its edge).
+- The gravel fill is one colour for every climate (crushed stone reads as man-made fill on grass, sand or snow).
 - Broadleaf crowns in snowy Sites get white tops (reads as snow-laden; bare winter trees would be more accurate).
-- No cacti; no grass tufts or flowers (ground clutter is stones only).
-- Boulders are pale limestone-like; tint `shade` in `sceneryRocks.ts` if they should be darker.
+- No grass tufts or flowers (ground clutter is stones only); no agave (only columnar cacti).
 - Placement takes ≈ 0.3–0.4 s per `build` on the Site (adds to `redrawLand`); could move to a worker if it matters.

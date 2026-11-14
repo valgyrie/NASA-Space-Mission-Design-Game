@@ -64,12 +64,21 @@ function foliageMaterial(snow: number): THREE.MeshStandardMaterial {
 attribute vec2 wind;
 uniform float uWind;
 varying float vLeaf;
-varying float vUp;`,
+varying float vUp;
+varying float vFade;`,
       )
       .replace(
         '#include <begin_vertex>',
         `#include <begin_vertex>
-vLeaf = wind.y;
+vLeaf = abs(wind.y);
+// A near conifer's whole-tree cards (wind.y < 0) fade out when seen from straight above, where they would show
+// edge-on as a thin "X"; its needle boughs carry the shape from there.
+vec4 seenW = vec4(transformed, 1.0);
+#ifdef USE_INSTANCING
+  seenW = instanceMatrix * seenW;
+#endif
+vec3 toEye = normalize(cameraPosition - (modelMatrix * seenW).xyz);
+vFade = wind.y < 0.0 ? 1.0 - smoothstep(0.8, 0.96, abs(toEye.y)) : 1.0;
 vec3 rootW = vec3(0.0);
 #ifdef USE_INSTANCING
   rootW = instanceMatrix[3].xyz;
@@ -80,7 +89,7 @@ float gust = sin(uWind * 0.9 + ph * 0.35) * 0.5 + 0.5;
 float sway = (sin(uWind * 1.7 + ph) * 0.6 + sin(uWind * 2.9 + ph * 1.3) * 0.25) * (0.4 + gust);
 transformed.x += sway * 0.018 * wind.x;
 transformed.z += sway * 0.011 * wind.x;
-transformed += objectNormal * sin(uWind * 7.0 + dot(position, vec3(31.0, 23.0, 17.0)) + ph) * 0.006 * wind.y;
+transformed += objectNormal * sin(uWind * 7.0 + dot(position, vec3(31.0, 23.0, 17.0)) + ph) * 0.006 * vLeaf;
 vUp = normalize(mat3(modelMatrix) * objectNormal).y;`,
       );
     shader.fragmentShader = shader.fragmentShader
@@ -89,7 +98,8 @@ vUp = normalize(mat3(modelMatrix) * objectNormal).y;`,
         `#include <common>
 uniform float uSnow;
 varying float vLeaf;
-varying float vUp;`,
+varying float vUp;
+varying float vFade;`,
       )
       .replace(
         '#include <normal_fragment_begin>',
@@ -101,7 +111,7 @@ varying float vUp;`,
 // Keep thin leaves and needles from fading away in the smaller mipmaps (more coverage the further the mip).
 vec2 texel = vAlphaMapUv * 1024.0;
 float mip = max(0.0, 0.5 * log2(max(dot(dFdx(texel), dFdx(texel)), dot(dFdy(texel), dFdy(texel)))));
-diffuseColor.a *= 1.0 + mip * 0.3;`,
+diffuseColor.a *= (1.0 + mip * 0.3) * vFade;`,
       )
       .replace(
         '#include <color_fragment>',
