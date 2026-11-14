@@ -1,6 +1,8 @@
 import { audio } from './audio/sound';
 import { allBuildings, fitBuildings, mineMaterial, newSiteState, placeAssemblyHall, placeHQ } from './game/siteState';
 import { SAVE_VERSION, loadGame, type SaveData, type SaveStorage } from './save/save';
+import { activeCompany, activeStorage, companyLogo, companyStorage, deleteCompany, listCompanies, loadCompany } from './save/companies';
+import { logoUrl } from './company/logo';
 import { generateSite } from './site/site';
 import { siteClimateFor } from './game/places';
 import { t } from './strings';
@@ -25,15 +27,16 @@ document.title = t('game.title');
 const world = new World(canvas);
 world.start();
 
-const saved = loadGame(localStorage);
-const online = showOnline(root, () => loadGame(localStorage), { onOpen() {}, onClose() {} });
+// Only the small Company list is read here; a Company's save is loaded when it is played (or previewed, then dropped).
+const online = showOnline(root, () => loadGame(activeStorage(localStorage)), { onOpen() {}, onClose() {} });
 let inMenu = true;
 world.keyboardEnabled = false;
 world.controls.enabled = false;
 
 /** Draw a Company without advancing its Game date or writing its save. */
 function previewCompany(): void {
-  const game = saved ? structuredClone(saved) : createDemo(2);
+  const last = activeCompany(localStorage);
+  const game = (last && loadCompany(localStorage, last.id)) ?? createDemo(2);
   const site = generateSite(game.site.seed, siteClimateFor(game.state.place));
   addOwnedPlots(site, game.state);
   placeAssemblyHall(site, game.state);
@@ -59,7 +62,8 @@ let menu: MainMenu | null = null;
 function showTitleLaunch(): void {
   if (!titleLaunch) {
     try {
-      titleLaunch = new TitleLaunch(saved?.company.logo, reducedMotion.matches, (vehicle) => menu?.setRocket(vehicle), () => hideTitleLaunch());
+      const last = activeCompany(localStorage);
+      titleLaunch = new TitleLaunch(last ? companyLogo(localStorage, last) : undefined, reducedMotion.matches, (vehicle) => menu?.setRocket(vehicle), () => hideTitleLaunch());
     } catch {
       return;
     }
@@ -75,7 +79,7 @@ function hideTitleLaunch(): void {
   world.hidden = false;
 }
 
-async function startGame(game: SaveData, options?: { storage: SaveStorage; demoEra: DemoEra }): Promise<void> {
+async function startGame(game: SaveData, options: { storage: SaveStorage; demoEra?: DemoEra }): Promise<void> {
   titlePreview = false;
   menu = null;
   hideTitleLaunch();
@@ -102,8 +106,11 @@ function startNew(): void {
     onBack: () => { previewCompany(); mainMenu(); },
     onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
     onDone: ({ name, logo, seed, place, difficulty, playMode }) => {
-      if (saved && !window.confirm(t('seed.replace'))) { previewCompany(); mainMenu(); return; }
-      void startGame({ version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) });
+      // A new Company gets its own save; the others are kept.
+      void startGame(
+        { version: SAVE_VERSION, company: { name, logo }, site: { seed }, state: newSiteState(place, difficulty, playMode) },
+        { storage: companyStorage(localStorage) },
+      );
     },
   });
 }
@@ -111,15 +118,15 @@ function mainMenu(): void {
   world.keyboardEnabled = false;
   world.controls.enabled = false;
   menu = showMainMenu(root, {
-    companyName: saved?.company.name,
+    companies: listCompanies(localStorage),
+    logoUrl: (entry) => logoUrl(companyLogo(localStorage, entry)),
     onOnline: () => online.open(),
-    onSharedSeed: () => startNew(),
-    onPlay() {
-      if (saved) {
-        void startGame(saved);
-      } else {
-        startNew();
-      }
+    onCreate: () => startNew(),
+    onDelete: (id) => deleteCompany(localStorage, id),
+    onPlay(id) {
+      const game = loadCompany(localStorage, id);
+      if (game) void startGame(game, { storage: companyStorage(localStorage, id) });
+      else { previewCompany(); mainMenu(); }
     },
     onDemo(era) {
       void startGame(createDemo(era), { storage: demoStorage(localStorage), demoEra: era });

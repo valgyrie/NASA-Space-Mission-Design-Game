@@ -3,6 +3,7 @@ import { checkCompanyName, NAME_MAX } from '../company/companyName';
 import { OnlineClient, OnlineError } from '../online/client';
 import { METRICS, formatCode, generateNickname, type Metric } from '../online/model';
 import { type SaveData, saveGame } from '../save/save';
+import { activeStorage } from '../save/companies';
 import { t, type StringKey } from '../strings';
 import { formatMoney, formatNumber } from './format';
 
@@ -116,7 +117,7 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
     const save = button('online.save', () => void run(async () => {
       const latest = current();
       if (!latest || latest.state.playMode !== 'freePlay') throw new OnlineError('invalidSave');
-      if (!saveGame(localStorage, latest)) throw new OnlineError('storage');
+      if (!saveGame(activeStorage(localStorage), latest)) throw new OnlineError('storage');
       await client.save(latest);
       await renderBoard();
     }, 'online.saved'));
@@ -126,7 +127,7 @@ export function showOnline(root: HTMLElement, current: () => SaveData | null, ho
     confirm.hidden = true;
     const replace = button('online.replace', () => void run(async () => {
       const saved = await client.load();
-      if (!saveGame(localStorage, saved)) throw new OnlineError('storage');
+      if (!saveGame(activeStorage(localStorage), saved)) throw new OnlineError('storage');
       hooks.onLoad?.(saved);
       window.location.reload();
     }));

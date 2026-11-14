@@ -6,6 +6,16 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 
 | Screenshot | What it shows | How to open it |
 |---|---|---|
+| [title-menu-play-1280.png](features%20and%20game/title-menu-play-1280.png) | Main menu: Play, Demo Mode, Online; speaker, Real data, Credits | Open the game |
+| [companies-list-1280.png](features%20and%20game/companies-list-1280.png) | Your Companies: three saved Companies, the last played selected | Main menu → Play (with saved Companies) |
+| [companies-delete-1280.png](features%20and%20game/companies-delete-1280.png) | Delete asks first | Same → Delete |
+| [music-and-sounds-1280.png](features%20and%20game/music-and-sounds-1280.png) | Music & Sounds: volumes and the title music | Main menu → speaker button |
+| [create-company-1280.png](features%20and%20game/create-company-1280.png) | Create new Company in the new look | Your Companies → Create new Company (or Play with none saved) |
+| [site-look-before-1280.png](features%20and%20game/site-look-before-1280.png) | Before: the Site's panels and pause menu in the old look | Demo Mode → Era 1, Mine panel, Esc |
+| [site-look-mine-1280.png](features%20and%20game/site-look-mine-1280.png) | After: HUD, top bar, Build menu and a Mine's panel | Demo Mode → Era 1, click a Mine |
+| [site-look-factory-1280.png](features%20and%20game/site-look-factory-1280.png) | After: Metal Works panel, the chosen Part glowing | Same, click the Metal Works |
+| [site-look-market-1280.png](features%20and%20game/site-look-market-1280.png) | After: the Market | Same → Market |
+| [site-look-pause-1280.png](features%20and%20game/site-look-pause-1280.png) | After: the pause menu | Same → Esc |
 | [title-menu-pad-thor-delta-1280.png](features%20and%20game/title-menu-pad-thor-delta-1280.png) | Title and main menu in one screen; Thor-Delta waiting on the pad behind it | Open the game (1280×800) |
 | [title-menu-liftoff-delta-d-1280.png](features%20and%20game/title-menu-liftoff-delta-d-1280.png) | Delta D lifting off with its three boosters, beside the buttons | Same, a few seconds after liftoff |
 | [title-menu-liftoff-falcon-9-1280.png](features%20and%20game/title-menu-liftoff-falcon-9-1280.png) | Falcon 9 climbing | Same |

@@ -1,4 +1,4 @@
-import { AUDIO_KEY, DEFAULT_VOLUME, LOOP_FADE, MUSIC, type MusicScene, type TrackId, type Volume, loops, volumeFrom } from './tracks';
+import { AUDIO_KEY, DEFAULT_VOLUME, LOOP_FADE, MUSIC, type MusicScene, TITLE_TRACK_KEY, type TitleTrack, type TrackId, type Volume, loops, titleTrackFrom, volumeFrom } from './tracks';
 
 export type Effect = 'click' | 'build' | 'launch' | 'alarm' | 'reward' | 'countdown';
 
@@ -58,12 +58,24 @@ class Sound {
   private installed = false;
   private begun = false;
   private volume = { ...DEFAULT_VOLUME };
+  private title: TitleTrack = 'menu-theme';
   get settings(): Volume { return { ...this.volume }; }
+  /** The track the title screen plays; the player picks it in Music & Sounds. */
+  get titleTrack(): TitleTrack { return this.title; }
+  setTitleTrack(id: TitleTrack): void {
+    if (id === this.title) return;
+    this.title = id;
+    try { localStorage.setItem(TITLE_TRACK_KEY, id); } catch { /* still plays for this page */ }
+    if (this.scene === 'menu') this.playScene();
+  }
 
   init(): void {
     if (this.installed) return;
     this.installed = true;
-    try { this.volume = volumeFrom(localStorage.getItem(AUDIO_KEY)); } catch { /* private storage */ }
+    try {
+      this.volume = volumeFrom(localStorage.getItem(AUDIO_KEY));
+      this.title = titleTrackFrom(localStorage.getItem(TITLE_TRACK_KEY));
+    } catch { /* private storage */ }
     const unlock = () => { void this.unlock(); };
     document.addEventListener('pointerdown', unlock, true);
     document.addEventListener('keydown', unlock, true);
@@ -165,7 +177,7 @@ class Sound {
     const scene = this.scene;
     if (!scene || this.volume.music === 0 || this.context?.state !== 'running') { this.fadeOut(.1); return; }
     this.begun = true;
-    const ids: readonly TrackId[] = MUSIC[scene];
+    const ids: readonly TrackId[] = scene === 'menu' ? [this.title] : MUSIC[scene];
     // Keep only this screen's decoded tracks; the browser's HTTP cache handles repeat visits.
     for (const id of this.buffers.keys()) if (!ids.includes(id)) this.buffers.delete(id);
     const start = async (index: number, at?: number): Promise<void> => {

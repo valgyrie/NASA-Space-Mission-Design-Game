@@ -7,7 +7,7 @@ A tycoon game where the player runs a space company, then designs, launches and 
 ### Company and world
 
 **Company**:
-The player's fictional space company, with a name and logo the player chooses.
+The player's fictional space company, with a name and logo the player chooses. One browser can keep several Companies; the player picks one to play.
 _Avoid_: player base, studio
 
 **Site**:

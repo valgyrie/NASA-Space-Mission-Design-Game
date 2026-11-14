@@ -40,6 +40,12 @@
 - 495 tests and both type checks pass. Browser: 1280×800 (all five rockets, on the pad and climbing) and 1024×768 (menu, Demo, Sound, Credits sheets). Screenshots `title-menu-*`. Not checked on a real GPU: this container renders in software.
 - Fixtures: the main menu now opens directly; "Let's go → Continue" is now just "Continue".
 
+**Several Companies, Music & Sounds, Site look (14 Nov, night), same branch, waiting for approval:**
+- **Play** opens *Your Companies* (like a world list): logo, name, mode, difficulty, Game date, Seed, last played; Play this Company, Create new Company (the setup screen: Seed, place, Campaign/Free Play, difficulty), Delete with a question first. `src/save/companies.ts` (tests): each Company in `leap.company.<id>`, a small index `leap.companies` (an uploaded logo under `leap.companyLogo.<id>`, never in the index). Only the index is read at start; a save is loaded only when played. The old single `leap.save` becomes the first Company on first start. Online saves/loads the Company played last. The "replace your Company?" question and the "New Company from a Seed" button are gone (the setup screen has the Seed field).
+- **Music & Sounds** (speaker button): music and effects volume, and the title music, one of seven tracks (`leap.titleMusic`).
+- **Site look:** HUD, top bar, Build menu, side panels (Mine, Factory, Market, Contracts, plots) and the dialogs (pause menu, setup, Online, logo, Era and grant cards) now use the title look: dark glass, blue edges, uppercase headings, blue glow on chosen/hovered buttons. CSS only, at the end of `src/style.css`. The Launch show (its speed buttons included), Scrub card, Mission Designer and Launch planner are untouched.
+- Main menu bottom row: speaker, Real data, Credits.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
@@ -49,12 +55,13 @@
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
 
-**Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). Free Play fixture: on the dev page, import `/src/game/siteState.ts` and `/src/save/save.ts`, write a Free Play save to `localStorage`, reload, Continue, then place HQ and Assembly Hall with `placeHQ`/`placeAssemblyHall` on `window.leap.state`. Campaign fixtures: Demo Mode Era 1, then set `window.leap.state`.
+**Working convention:** as before. New screenshots go in `screenshots/development-NASA_resources/` (README there). Free Play fixture: on the dev page, import `/src/game/siteState.ts` and `/src/save/save.ts`, write a Free Play save to `localStorage`, reload, Play → pick the Company, then place HQ and Assembly Hall with `placeHQ`/`placeAssemblyHall` on `window.leap.state`. Campaign fixtures: Demo Mode Era 1, then set `window.leap.state`.
 
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
 
+- 2026-11-14: Several Companies (Your Companies list, own save each, index only in memory), Music & Sounds with a title-music choice, and the Site panels and dialogs in the title look. Launch show, Mission Designer and Launch planner untouched. Waiting for the team's approval to merge.
 - 2026-11-14: Title and main menu merged into one screen like a classic game menu, over a random rocket Launch (five Launch Vehicles). Launch show untouched. Tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Folds (short line + arrow) in the Mission Designer and Launch planner, an equator tip for the Launch Site, and the HQ's floating logo fixed. 492 tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Realistic graphics, session 3: land, water, sky and the ten Blender buildings finished and reviewed in screenshots; Spacecraft and Earth started. 476 tests and type checks pass. Handoff with agent prompts in `docs/graphics-overhaul/HANDOFF.md`.

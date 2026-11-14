@@ -20,3 +20,10 @@ export function volumeFrom(raw: string | null): Volume {
     return { music: level('music'), effects: level('effects') };
   } catch { return { ...DEFAULT_VOLUME }; }
 }
+/** Tracks the player can pick for the title screen; the first is the default. */
+export const TITLE_TRACKS = ['menu-theme', 'site-calm-a', 'site-calm-b', 'designer-focus', 'launch', 'flight-orbit', 'era-history'] as const satisfies readonly TrackId[];
+export type TitleTrack = (typeof TITLE_TRACKS)[number];
+export const TITLE_TRACK_KEY = 'leap.titleMusic';
+export function titleTrackFrom(raw: string | null): TitleTrack {
+  return TITLE_TRACKS.find((id) => id === raw) ?? TITLE_TRACKS[0];
+}
