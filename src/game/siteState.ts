@@ -1,3 +1,4 @@
+import type { GroundTestId } from './groundTests';
 import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildingKind } from '../economy/part';
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
@@ -147,6 +148,11 @@ export interface SiteState {
    * Optional, so saves stay v19 and the deployed cloud validator still reads them; missing until the first Test Run.
    */
   testedDesigns?: { contract: ContractId; designs: string[] };
+  /**
+   * Ground Tests ticked in the Launch planner (ticket 40); only those that suit the design count.
+   * Optional like `testedDesigns`, so saves stay v19; missing means none.
+   */
+  groundTests?: GroundTestId[];
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;

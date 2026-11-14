@@ -5,6 +5,7 @@ import { ANOMALY_KINDS } from '../game/anomalies';
 import { CONTRACT_IDS, type ContractId, isContractId } from '../game/contracts';
 import { HISTORY_CARD_IDS, type HistoryCardId, type Patch, cardsAfter, historyCardFor } from '../game/history';
 import { TECH_IDS, newResearch } from '../game/research';
+import { isGroundTestId } from '../game/groundTests';
 import { type SiteState, newSiteState, noBetterParts } from '../game/siteState';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
 import { JPL, START_KINDS } from '../game/places';
@@ -85,6 +86,9 @@ function isDesign(value: unknown): boolean {
 
 const isOneOf = (v: unknown, ids: readonly string[]) => (ids as readonly unknown[]).includes(v);
 
+/** Ground Tests (ticket 40): optional, so saves stay v19. */
+const isGroundTests = (v: unknown): boolean => v === undefined || (Array.isArray(v) && v.every(isGroundTestId));
+
 function isMission(value: unknown): boolean {
   if (value === null) return true;
   const m = value as Partial<NonNullable<SiteState['mission']>>;
@@ -102,7 +106,8 @@ function isMission(value: unknown): boolean {
     isNumber(m.startDay) &&
     isNumber(m.shipDay) &&
     isNumber(m.readyDay) &&
-    (m.insurance === null || (isNumber(m.insurance?.price) && isNumber(m.insurance?.payout)))
+    (m.insurance === null || (isNumber(m.insurance?.price) && isNumber(m.insurance?.payout))) &&
+    isGroundTests(m.groundTests)
   );
 }
 
@@ -114,6 +119,7 @@ function isAnomaly(value: unknown): boolean {
     isOneOf(a.kind, ANOMALY_KINDS) &&
     ['day', 'chance', 'sendPerDay', 'dataPerDay', 'missionDays', 'untilDay', 'lostDays', 'cut'].every((k) => isNumber(a[k])) &&
     typeof a.first === 'boolean' &&
+    (a.tested === undefined || typeof a.tested === 'boolean') &&
     (a.solarMark === undefined || isNumber(a.solarMark)) &&
     (a.battery === undefined || isOneOf(a.battery, ['smallBattery', 'mediumBattery', 'largeBattery'])) &&
     (a.lastsDays === undefined || a.lastsDays === null || isNumber(a.lastsDays)) &&
@@ -214,7 +220,8 @@ function isSiteState(value: unknown): value is SiteState {
     v.plots.every((p) => Array.isArray(p) && p.length === 2 && p.every(Number.isInteger) && !(p[0] === 0 && p[1] === 0)) &&
     isNumber(v.freePlots) &&
     v.freePlots >= 0 &&
-    (v.testedDesigns === undefined || isTestedDesigns(v.testedDesigns))
+    (v.testedDesigns === undefined || isTestedDesigns(v.testedDesigns)) &&
+    isGroundTests(v.groundTests)
   );
 }
 

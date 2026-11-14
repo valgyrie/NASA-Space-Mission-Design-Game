@@ -3367,3 +3367,23 @@ button.upgrade {
 .review-line[data-colour='red'] .review-dot { background: #ff6b6b; }
 .review-line[data-colour='red'] .review-colour { color: #ff8a8a; }
 .review-line[data-colour='none'] .review-dot { background: transparent; border: 1px solid var(--muted); }
+
+/* Ground Tests (ticket 40) */
+.planner-test {
+  margin: 8px 0 6px;
+}
+
+.planner-test[hidden] {
+  display: none;
+}
+
+.planner-test-chance {
+  display: block;
+  margin: 0 0 2px 26px;
+  font-size: 0.9em;
+  font-variant-numeric: tabular-nums;
+}
+
+.planner-test .planner-hint {
+  margin-left: 26px;
+}

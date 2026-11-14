@@ -4,6 +4,7 @@ import { INSURANCE } from './balance';
 import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, launchCost, liftFrom } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
+import { type GroundTestId, chosenGroundTests, groundTestCost, groundTestDays, testedKinds } from './groundTests';
 import { awardMission } from './history';
 import { type Flight, type TestRun, realFlight, testRun } from './flight';
 import type { SiteState } from './siteState';
@@ -59,6 +60,8 @@ export interface Mission {
   readyDay: number;
   /** The Launch Insurance bought with it, or null. */
   insurance: Insurance | null;
+  /** Ground Tests done before Shipping (ticket 40). Missing in older saves: none. */
+  groundTests?: GroundTestId[];
 }
 
 /** Launch Insurance: paid when shipping; pays back `payout` if the Mission fails. */
@@ -93,10 +96,15 @@ export interface LaunchPlan {
   /** The client pays for the whole Launch Vehicle, as AT&T did for Telstar 1. */
   wholeLaunch: boolean;
   shipping: number;
-  /** Rideshare and Shipping: what the Mission costs. */
+  /** Ground Tests ticked for this design, and what they add. */
+  groundTests: GroundTestId[];
+  testDays: number;
+  testCost: number;
+  /** Rideshare, Shipping and Ground Tests: what the Mission costs. */
   total: number;
   /** The Launch Insurance price, when it is bought (0 when not). */
   insurance: number;
+  /** Days to put the Spacecraft together, set by its Bus (Ground Tests come on top: `testDays`). */
   assemblyDays: number;
   shippingDays: number;
   /** Game day it would reach the Launch Site if shipped today. */
@@ -125,11 +133,14 @@ export function planLaunch(
   const rideshare = launchCost(vehicle, massKg, wholeLaunch);
   const route = shippingTo(state.place, site);
   const shipping = route.cost;
-  const total = rideshare + shipping;
+  const groundTests = chosenGroundTests(state, design);
+  const testDays = groundTestDays(groundTests);
+  const testCost = groundTestCost(groundTests);
+  const total = rideshare + shipping + testCost;
   const building = assemblyDays(design);
   const shippingDays = route.days;
   const today = Math.floor(state.day);
-  const readyDay = today + building + shippingDays;
+  const readyDay = today + building + testDays + shippingDays;
 
   const problems: PlanProblem[] = [];
   if (!taken) problems.push({ kind: 'noContract' });
@@ -158,6 +169,9 @@ export function planLaunch(
     rideshare,
     wholeLaunch,
     shipping,
+    groundTests,
+    testDays,
+    testCost,
     total,
     insurance,
     assemblyDays: building,
@@ -223,7 +237,7 @@ export function insuranceQuote(
 ): InsuranceQuote {
   const plan = planLaunch(state, design, vehicle, site);
   const { successPercent } = testRunFor(state, seed, design, vehicle, site);
-  const payout = thousands(plan.total * INSURANCE.payoutShare);
+  const payout = thousands((plan.rideshare + plan.shipping) * INSURANCE.payoutShare);
   if (successPercent < INSURANCE.minSuccess * 100) return { ok: false, payout, successPercent };
   const failShare = 1 - successPercent / 100;
   const price = thousands(Math.max(INSURANCE.minShare, failShare * INSURANCE.margin) * payout);
@@ -260,9 +274,10 @@ export function shipMission(
     marks: { ...plan.marks },
     ground: plan.goal.ground,
     startDay,
-    shipDay: startDay + plan.assemblyDays,
+    shipDay: startDay + plan.assemblyDays + plan.testDays,
     readyDay: plan.readyDay,
     insurance,
+    groundTests: [...plan.groundTests],
   };
   return plan;
 }
@@ -392,7 +407,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   const taken = accepted(state, m.contract);
   const flight = realFlight(seed, m, launchDay, taken ? deadlineDay(taken) : null, rocketReliability(state, m.vehicle));
   const { findings, success } = flight;
-  const anomaly = rollAnomaly(state, seed, m, flight, launchDay);
+  const anomaly = rollAnomaly(state, seed, m, flight, launchDay, testedKinds(m.groundTests));
   const reward = success ? completeContract(state, m.contract, !anomaly) : 0;
   // Launch Insurance pays back most of the cost of a failed Mission.
   const insurancePaid = !success && m.insurance ? m.insurance.payout : 0;

@@ -406,6 +406,26 @@ describe('local save', () => {
     expect(loadGame(storage)).toBeNull();
   });
 
+  it('keeps Ground Tests on the Site, the Mission and its Anomaly, still as version 19', () => {
+    const storage = memoryStorage();
+    const busy = structuredClone(game);
+    for (const id of EXPLORER) choose(busy.state.design, id);
+    for (const p of partsNeeded(busy.state.design)) busy.state.parts[p] += 1;
+    acceptContract(busy.state, 'explorer1');
+    busy.state.groundTests = ['dayInTheLife'];
+    expect(shipMission(busy.state, busy.state.design).ok).toBe(true);
+    saveGame(storage, busy);
+    expect(SAVE_VERSION).toBe(19);
+    expect(loadGame(storage)?.state).toEqual(busy.state);
+    busy.state.day = busy.state.mission!.readyDay;
+    launch(busy.state, busy.site.seed);
+    expect(busy.state.reports[0]!.anomaly?.tested).toBe(true);
+    saveGame(storage, busy);
+    expect(loadGame(storage)?.state).toEqual(busy.state);
+    storage.data.set(SAVE_KEY, JSON.stringify({ ...game, state: { ...state, groundTests: ['shakeIt'] } }));
+    expect(loadGame(storage)).toBeNull();
+  });
+
   it('ignores a save with an option in the wrong slot', () => {
     const storage = memoryStorage();
     const odd = { ...game, state: { ...state, design: { ...emptyDesign(), bus: 'largeBattery' } } };

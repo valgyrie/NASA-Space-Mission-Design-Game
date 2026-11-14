@@ -1,5 +1,5 @@
 import { hashText, makeRng, randInt } from '../site/random';
-import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, PANEL_CHANCE } from './balance';
+import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, GROUND_TEST_CHANCE_LEFT, PANEL_CHANCE } from './balance';
 import type { Flight, FlightPlan } from './flight';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
@@ -26,6 +26,11 @@ export interface Anomaly {
   chance: number;
   /** The Company's first of this kind: it had to be played, whatever the chance. */
   first: boolean;
+  /**
+   * Whether its Ground Test was done before Shipping (ticket 40); `chance` is then the lowered one.
+   * Missing when no Ground Test could have been done (older saves).
+   */
+  tested?: boolean;
   /** The design numbers behind the chance: what the antenna sends and what the Payload makes, kB a day. */
   sendPerDay: number;
   dataPerDay: number;
@@ -94,9 +99,18 @@ interface Roll {
  * the design can meet rolls its own chance: Point the antenna always, Stuck solar panel and Survive the eclipse
  * only with Solar Cells. If more than one strikes, a kind the Company has never played comes first (so each new
  * one gets met), then the likeliest: the design's weakest spot.
+ * A kind in `tested` had its Ground Test before Shipping, so its chance is lowered (ticket 40). The first
+ * flight's Point the antenna still comes, tested or not: the tutorial needs it.
  * Same Seed, Contract and Launch day give the same answer.
  */
-export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, flight: Flight, launchDay: number): Anomaly | null {
+export function rollAnomaly(
+  state: SiteState,
+  seed: string,
+  plan: FlightPlan,
+  flight: Flight,
+  launchDay: number,
+  tested: readonly AnomalyKind[] = [],
+): Anomaly | null {
   const inOrbit = flight.findings.find((f) => f.kind === 'orbit')?.ok ?? false;
   const untilDay = Math.floor(Math.min(flight.missionDays, flight.powerOutDay ?? Infinity));
   if (!inOrbit || untilDay < 2) return null;
@@ -106,14 +120,16 @@ export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, fl
   const { sendPerDay, dataPerDay } = comms ?? dataOf(plan.design, plan.tech);
 
   // Point the antenna keeps its own draws, so flights without Solar Cells meet what they always did.
-  const antenna = antennaChance(sendPerDay, dataPerDay);
+  const lowered = (kind: AnomalyKind, chance: number) => (tested.includes(kind) ? chance * GROUND_TEST_CHANCE_LEFT : chance);
+  const antenna = lowered('antenna', antennaChance(sendPerDay, dataPerDay));
   const forced = isMandatory(state, 'antenna');
   const rolls: Roll[] = [{ kind: 'antenna', chance: antenna, struck: rng() < antenna || forced, day: randInt(rng, 1, untilDay - 1), extra: {} }];
 
   if (plan.design.power === 'solarCells') {
     const roll = (kind: AnomalyKind, chance: number, extra: Roll['extra']) => {
       const own = makeRng(hashText(`${seed}|anomaly|${kind}|${plan.contract}|${launchDay}`));
-      rolls.push({ kind, chance, struck: own() < chance, day: randInt(own, 1, untilDay - 1), extra });
+      const c = lowered(kind, chance);
+      rolls.push({ kind, chance: c, struck: own() < c, day: randInt(own, 1, untilDay - 1), extra });
     };
     const solarMark = plan.marks?.power ?? 1;
     roll('panel', panelChance(solarMark), { solarMark });
@@ -137,6 +153,7 @@ export function rollAnomaly(state: SiteState, seed: string, plan: FlightPlan, fl
     day: pick.day,
     chance: pick.chance,
     first: isMandatory(state, pick.kind),
+    tested: tested.includes(pick.kind),
     sendPerDay,
     dataPerDay,
     ...pick.extra,
