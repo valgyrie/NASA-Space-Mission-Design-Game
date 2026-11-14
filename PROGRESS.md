@@ -4,22 +4,19 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 30–38 built (32, 33 and 34 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Tickets 37–38 merged through PR #43 (`main` **7fc797a**), from freshly pulled `main` **c4f5fed**. 420 game tests, both type checks, production and online builds pass.
+**State:** tickets 01–26 and 30–39 built (32, 33, 34, 36 and 39 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 39 built from freshly pulled `main` **1c6bdef** and merged into `main`. 424 game tests and both type checks pass.
 
-**Done this session (14 Nov): tickets 37 and 38.**
-- Alouette 1: "Canada's first satellite", "Also in 1962", after Telstar 1's after card. Kept once in the History Archive and saves; CSA reading link also in Credits. CSA facts rechecked. Text-only as allowed: the banner's photo credit and reuse terms are unverified.
-- Eight CubeSat 101 tips: five random loading choices, plus Stuck solar panel report, Ground Station and Scrub. Physical-fit advice also in Design Review. Printed pages 16/22/23/28 link to PDF pages 24/30/31/36. CubeSat 101 in Real data and Credits. No loading delay.
-- Choices: omit "build two" (no batch discount), omit fixed-departure advice until ticket 44; use build-time margin from p. 23. Preserve the real burn-wire lesson: the line melts; two separate wires and lines reduce premature opening. No new game mechanics or balance changes.
-- Browser: Telstar success → report → after card → Alouette; archive/reopen and save/load; all five loading choices, report tip reset, Ground Station, Design Review, Scrub, source links and Credits. 1280×800 and 1024×768, no page errors. Real game fixtures accelerate the flight animation and hold the loading import only for capture. Screenshots `ticket-37-*` and `ticket-38-*`.
-- Tests: three focused tests added (417 → 420), existing save coverage extended; tip citations checked against the stored handbook. No save version bump. After explicit approval, the prepared backend bundle is deployed as `leap-online` v6 and verified live.
+**Done this session (14 Nov): ticket 39, NASA's six steps.**
+- Ticket 35 was asked for first; it was already merged (PR #41) and its test still passes.
+- The tutorial guide shows NASA's step name above "Step N of 8" and a row of six dots (done ticked, current lit). After the first Mission Report, a last card names all six with Learn more → slide 10 of NASA's slides; Close instead of Skip. It also goes once the next Mission ships. No save change.
+- Mapping kept as the ticket's table (Mines and Metal Works under "Define Concept"); order never goes backwards. Still an open point for the team.
+- Browser: fresh Campaign at 1280×800 and 1024×768, all eight steps, guide inside the Mission Designer, a real Launch with the antenna Anomaly, last card, Close. No page errors. Screenshots `ticket-39-*`.
 
-**Online verification (14 Nov, after user approval):** `leap-online` v6 is active with the existing `verify_jwt = false` recovery-code authentication. Bundle SHA-256 `64a59c339d89e15e2bc7803356d02ba3a51569aeb68a5fb129fc7379b2b359af`, built from the merged PR #43 source. The v5 control save passed while `alouette1` failed (HTTP 400); v6 accepts it (HTTP 200), and direct and Chromium client save/load checks preserve the complete save. Browser recovery on a second client passed, revision 4. No schema migration or save-version bump.
-
-**Cleanup still pending:** the user also approved removing the synthetic verification account `Ticket37Check`, ID `8255a026-af45-440c-830c-435eb6b096b4`. Both renewed Supabase SQL confirmations expired before deletion could execute. A read-only check confirmed one matching record remains (revision 4, synthetic Free Play save with Alouette); it may appear on the leaderboard. No weekly submissions were made. Do not request the same permission again; the missing step is a working Supabase deletion confirmation. Remove only this ID and nickname, then verify zero matches. See `supabase/README.md`.
+**Still pending from the last session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
-1. Team: test tickets 32, 33, 34 and 36. Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
-2. Ticket 39 (NASA’s six steps), then 40–41 in the order in `docs/tickets/README.md`.
+1. Team: test tickets 32, 33, 34, 36 and 39. In 39, decide whether Mines and Metal Works belong under "Define Concept". Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
+2. The rule items in tickets 28 and 29, then 40–41 in the order in `docs/tickets/README.md`.
 3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
@@ -29,6 +26,8 @@
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
+
+- 2026-11-14: Ticket 39 built: the tutorial under NASA's six steps (step name, six-dot row, last card with the slides). 424 tests, type checks and browser checks (1280×800, 1024×768, full tutorial) pass.
 
 - 2026-11-14: With explicit user approval, deployed `leap-online` v6 for Alouette History ID compatibility. Live API and Chromium client recovery/save/load pass. Cleanup of the one synthetic account remains blocked by expired Supabase confirmations, despite approval.
 

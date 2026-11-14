@@ -268,7 +268,7 @@ Where the Company keeps every Real History card it has unlocked, with the patch 
 _Avoid_: codex, library
 
 **Tutorial**:
-The guided first Mission (Explorer 1): one short step at a time from the first Contract to the first Launch.
+The guided first Mission (Explorer 1): one short step at a time from the first Contract to the first Launch, each under one of NASA's six steps to design a mission (Identify Need & Goals, Define Concept, Define Requirements, Design, Build & Verify, Implement).
 _Avoid_: onboarding (in game text)
 
 ### The six mission resources (from the challenge)

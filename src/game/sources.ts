@@ -24,6 +24,8 @@ export const SOURCES = {
   jpl: 'https://en.wikipedia.org/wiki/Jet_Propulsion_Laboratory',
   /** NASA's slides on the four Segments of a science mission (official challenge Resource, ticket 32). */
   segments: 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf',
+  /** The same slides, slide 10: NASA's six steps to design and develop a mission (ticket 39). */
+  sixSteps: 'https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf#page=10',
   /** Wessen, Borden, Ziemer, Kwok (JPL), AIAA SPACE 2013: the maturity strip and the Design Review (ticket 33). */
   cml: 'https://dataverse.jpl.nasa.gov/dataset.xhtml?persistentId=hdl:2014/44299',
   /** NASA Mission Viz: GMAT-computed Reference Trajectories (official challenge Resource, ticket 34). */
