@@ -31,10 +31,53 @@ import { GROUND_TESTS } from '../game/balance';
 import { GROUND_TEST_IDS, GROUND_TEST_PAGES, type GroundTestId, groundTestChances, toggleGroundTest } from '../game/groundTests';
 import { percentText } from './anomalyPanel';
 import { fold } from './fold';
+import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
+import { type PlannerShot, PlannerView } from '../world/plannerView';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
   render(): void;
+  /** Paint the Company's logo on the rocket in the 3D view (the default logo until called). */
+  setLogo?(logo: CompanyLogo): void;
+  /** Release the 3D view and its WebGL context (when the Mission Designer is destroyed). */
+  dispose?(): void;
+}
+
+/** The planner's steps, one panel each, in order: begin with the end in mind, the Launch last. */
+export const PLANNER_STEPS = ['user', 'space', 'ground', 'vehicle', 'site', 'costs', 'review'] as const;
+export type PlannerStep = (typeof PLANNER_STEPS)[number];
+
+/** What the 3D view looks at on each step. */
+const STEP_SHOT: Record<PlannerStep, PlannerShot> = {
+  user: 'overview',
+  space: 'spacecraft',
+  ground: 'ground',
+  vehicle: 'vehicle',
+  site: 'site',
+  costs: 'sky',
+  review: 'overview',
+};
+
+/** Which step each problem belongs to, so the step bar can flag it. */
+export function problemStep(p: PlanProblem): PlannerStep {
+  switch (p.kind) {
+    case 'noContract':
+    case 'underway':
+      return 'user';
+    case 'emptySlots':
+    case 'hallTooSmall':
+    case 'busFull':
+    case 'missingParts':
+      return 'space';
+    case 'vehicleClosed':
+    case 'cantReach':
+    case 'tooHeavy':
+      return 'vehicle';
+    case 'money':
+      return 'costs';
+    case 'unsigned':
+      return 'review';
+  }
 }
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
@@ -96,25 +139,22 @@ function closedText(status: VehicleStatus): string {
 }
 
 /**
- * The Launch planner, shown inside the Mission Designer, under NASA's four Segments: who gets the Data and when
- * (User), the Spacecraft (Space), the dishes that talk to it (Ground), and the Launch Vehicle, Launch Site,
- * costs, Launch Insurance and weather (Launch). Then a free Test Run, then ship.
- * The Design Review sits above the button, so a weak design ships knowingly.
- * The Seed prices the insurance from the same Test Run the player sees.
+ * The Launch planner, shown inside the Mission Designer. On top, a 3D view of the chosen Launch Vehicle with the
+ * Spacecraft on its pad. Below it, one step at a time under NASA's four Segments: who gets the Data and when (User),
+ * the Spacecraft and its Ground Tests (Space), the dishes that talk to it (Ground), then the Launch: Launch Vehicle,
+ * Launch Site, costs with Launch Insurance and weather, and the Design Review. A slim bar at the bottom always shows
+ * the total, the problems, the free Test Run and Ship. The Seed prices the insurance from the same Test Run.
  */
 export function makeLaunchPlanner(
   state: SiteState,
   seed: string,
   hooks: { onBack(): void; onShip(): void; onTestRun(vehicle: LaunchVehicleId): void; onVehicle(): void },
 ): LaunchPlanner {
-  const root = el('div', 'planner');
+  const root = el('div', 'planner planner-steps');
   root.hidden = true;
   const back = button('small planner-back', t('planner.back'));
   back.addEventListener('click', () => hooks.onBack());
 
-  // Launch Vehicle and Launch Site
-  const choices = el('section', 'planner-card');
-  const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
   // Team Mode: the Launch Vehicle, Launch Site and Launch Insurance are the Mission lead's.
   const chips: ReturnType<typeof makeRoleChip>[] = [];
   const chip = (role: Parameters<typeof makeRoleChip>[0]) => {
@@ -122,12 +162,11 @@ export function makeLaunchPlanner(
     chips.push(c);
     return c.root;
   };
-  const titled = (text: string, role: Parameters<typeof makeRoleChip>[0]) => {
-    const h = el('h4', '', text);
-    h.append(' ', chip(role));
-    return h;
-  };
-  choices.append(titled(t('planner.vehicle'), 'lead'), el('p', 'planner-hint', t('planner.vehicleHint')), firstLaunch);
+
+  // Launch Vehicle
+  const vehicleBody = el('div', 'planner-step-cards');
+  const vehicleRow = el('div', 'planner-options');
+  const firstLaunch = el('p', 'planner-hint', t('planner.firstLaunch'));
   const vehicleButtons = new Map<
     LaunchVehicleId,
     { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement; price: HTMLElement }
@@ -159,7 +198,7 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b);
+    vehicleRow.append(b);
     vehicleLinks.push(learnMore(VEHICLE_SOURCES[id], t(`launchVehicle.${id}`)));
     vehicleButtons.set(id, { button: b, fit, locked, lifts, price });
   }
@@ -167,9 +206,10 @@ export function makeLaunchPlanner(
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
   const geoPath = transferPicture();
   const geoFold = fold(t('fold.howItWorks'), geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
-  choices.append(fold(t('fold.sources'), ...vehicleLinks), geoNote, geoFold);
-  choices.append(titled(t('planner.site'), 'lead'), el('p', 'planner-hint', t('planner.siteHint')));
-  // Teach why the equator helps: one line of advice, the reasons behind an arrow (Earth's spin, orbit tilt, Kourou).
+  vehicleBody.append(vehicleRow, firstLaunch, geoNote, geoFold, fold(t('fold.sources'), ...vehicleLinks));
+
+  // Launch Site. Teach why the equator helps: one line of advice, the reasons behind an arrow (Earth's spin, orbit tilt, Kourou).
+  const siteBody = el('div', 'planner-step-cards');
   const spinRow = (id: (typeof LAUNCH_SITE_IDS)[number]) => t('planner.equatorSite', {
     site: t(`launchSite.${id}.short`),
     lat: formatDecimal(LAUNCH_SITES[id].lat),
@@ -185,8 +225,8 @@ export function makeLaunchPlanner(
     t('planner.equatorKourou'),
     learnMore(SOURCES.equator, t('sources.equator')),
   ));
-  choices.append(tip);
   const best = LAUNCH_SITE_IDS.reduce((a, b) => (liftFactor(b) > liftFactor(a) ? b : a));
+  const siteRow = el('div', 'planner-options');
   const siteButtons = new Map<string, HTMLButtonElement>();
   const siteLinks: HTMLElement[] = [];
   for (const id of LAUNCH_SITE_IDS) {
@@ -210,11 +250,11 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b);
+    siteRow.append(b);
     siteLinks.push(learnMore(SITE_SOURCES[id], t(`launchSite.${id}.short`)));
     siteButtons.set(id, b);
   }
-  choices.append(fold(t('fold.sources'), ...siteLinks));
+  siteBody.append(tip, siteRow, fold(t('fold.sources'), ...siteLinks));
 
   // Launch weather and the Launch Window advisor
   const weather = el('section', 'planner-card');
@@ -243,12 +283,20 @@ export function makeLaunchPlanner(
   const timeline = el('section', 'planner-card');
   const timeRows = el('dl', 'planner-rows');
   timeline.append(el('h4', '', t('planner.timeline')), timeRows);
+  const costsBody = el('div', 'planner-step-cards planner-columns');
+  costsBody.append(costs, timeline, weather);
 
   // User segment: who gets the Data, where it goes, and when the Mission ends.
   const user = el('section', 'planner-card');
   const userRows = el('dl', 'planner-rows');
   const labsHint = el('p', 'planner-hint', t('planner.labsHint'));
   user.append(userRows, labsHint);
+  const intro = fold(t('segment.introShort'), t('segment.intro'), learnMore(SOURCES.segments, t('sources.segments')));
+  intro.classList.add('planner-intro');
+  const userBody = el('div', 'planner-step-cards planner-columns');
+  const introCard = el('section', 'planner-card');
+  introCard.append(intro);
+  userBody.append(user, introCard);
   // Space segment: the Spacecraft itself.
   const spacecraft = el('section', 'planner-card');
   const spaceRows = el('dl', 'planner-rows');
@@ -280,46 +328,157 @@ export function makeLaunchPlanner(
     tests.append(wrap);
     testRows.set(id, { wrap, box, chance });
   }
+  const spaceBody = el('div', 'planner-step-cards planner-columns');
+  spaceBody.append(spacecraft, tests);
   // Ground segment: which dishes talk to it, and whether the Data fits through them.
   const ground = el('section', 'planner-card');
   const groundRows = el('dl', 'planner-rows');
   const groundHint = el('p', 'planner-hint');
   ground.append(groundRows, groundHint);
+  const groundBody = el('div', 'planner-step-cards planner-columns');
+  groundBody.append(ground);
 
-  // The Design Review, blockers and the button
-  const footer = el('section', 'planner-footer');
+  // The Design Review and the problems that stop shipping
   const review = makeDesignReview(() => {
     hooks.onVehicle();
     render();
   });
   const problems = el('ul', 'planner-problems');
   problems.setAttribute('aria-live', 'polite');
+  const reviewBody = el('div', 'planner-step-cards');
+  reviewBody.append(review.root, problems);
+
+  // ---- The step panels ----
+  const segmentOf: Record<PlannerStep, MissionSegment> = {
+    user: 'user',
+    space: 'space',
+    ground: 'ground',
+    vehicle: 'launch',
+    site: 'launch',
+    costs: 'launch',
+    review: 'launch',
+  };
+  const stepHead = (step: PlannerStep): HTMLElement[] => {
+    const h = el('h3', 'planner-step-title');
+    const hint = (text: string) => el('p', 'planner-hint planner-step-hint', text);
+    switch (step) {
+      case 'user':
+      case 'space':
+      case 'ground':
+        h.append(t(`segment.${step}`));
+        return [h, hint(t(`segment.${step}.hint`))];
+      case 'vehicle':
+        h.append(el('span', 'planner-step-segment', t('segment.launch')), t('planner.vehicle'), ' ', chip('lead'));
+        return [h, hint(t('planner.vehicleHint'))];
+      case 'site':
+        h.append(el('span', 'planner-step-segment', t('segment.launch')), t('planner.site'), ' ', chip('lead'));
+        return [h, hint(t('planner.siteHint'))];
+      case 'costs':
+        h.append(el('span', 'planner-step-segment', t('segment.launch')), t('planner.step.costs'));
+        return [h, hint(t('planner.costsHint'))];
+      case 'review':
+        h.append(el('span', 'planner-step-segment', t('segment.launch')), t('planner.reviewTitle'));
+        return [h, hint(t('planner.reviewHint'))];
+    }
+  };
+  const bodies: Record<PlannerStep, HTMLElement> = {
+    user: userBody,
+    space: spaceBody,
+    ground: groundBody,
+    vehicle: vehicleBody,
+    site: siteBody,
+    costs: costsBody,
+    review: reviewBody,
+  };
+  let current: PlannerStep = 'user';
+  const visited = new Set<PlannerStep>([current]);
+  const stepBar = el('nav', 'planner-stepbar');
+  stepBar.setAttribute('aria-label', t('planner.stepsLabel'));
+  const stepButtons = new Map<PlannerStep, { button: HTMLButtonElement; mark: HTMLElement }>();
+  const panels = new Map<PlannerStep, HTMLElement>();
+  const panelBox = el('div', 'planner-panel');
+  PLANNER_STEPS.forEach((step, i) => {
+    const b = button('planner-stepbtn', '');
+    b.dataset.step = step;
+    const mark = el('span', 'planner-stepmark');
+    b.append(el('span', 'planner-stepnum', formatNumber(i + 1)), el('span', 'planner-stepname', t(`planner.step.${step}`)), mark);
+    b.addEventListener('click', () => go(step));
+    stepBar.append(b);
+    stepButtons.set(step, { button: b, mark });
+
+    const panel = el('section', `planner-step planner-segment planner-segment-${segmentOf[step]}`);
+    panel.dataset.step = step;
+    panel.dataset.segment = segmentOf[step];
+    const nav = el('div', 'planner-step-nav');
+    const prev = PLANNER_STEPS[i - 1];
+    const next = PLANNER_STEPS[i + 1];
+    if (prev) {
+      const p = button('small planner-step-back', t('planner.stepBack'));
+      p.addEventListener('click', () => go(prev));
+      nav.append(p);
+    }
+    if (next) {
+      const n = button('small planner-step-next', t('planner.stepNext', { step: t(`planner.step.${next}`) }));
+      n.addEventListener('click', () => go(next));
+      nav.append(n);
+    }
+    const head = el('div', 'planner-step-head');
+    head.append(...stepHead(step));
+    panel.append(head, bodies[step], nav);
+    panels.set(step, panel);
+    panelBox.append(panel);
+  });
+  const go = (step: PlannerStep) => {
+    current = step;
+    visited.add(step);
+    // The Design Review opens when its step is reached.
+    if (step === 'review' && review.root instanceof HTMLDetailsElement) review.root.open = true;
+    render();
+    panelBox.scrollTop = 0;
+  };
+
+  // ---- The 3D view, built the first time the planner is shown ----
+  const stage = el('div', 'planner-stage');
+  stage.append(el('p', 'planner-stage-hint', t('designer.dragHint')));
+  let view: PlannerView | null = null;
+  let viewFailed = false;
+  let logo: CompanyLogo = DEFAULT_LOGO;
+  const drawView = () => {
+    if (root.hidden || viewFailed) return;
+    if (!view) {
+      try {
+        view = new PlannerView();
+        view.canvas.setAttribute('aria-label', t('planner.viewLabel'));
+        stage.prepend(view.canvas);
+      } catch (e) {
+        console.warn('No WebGL: the Launch planner goes without its 3D view.', e);
+        viewFailed = true;
+        stage.hidden = true;
+        return;
+      }
+    }
+    view.show(state.design, state.vehicle, logo);
+    view.setSite(state.launchSite);
+    view.frame(STEP_SHOT[current]);
+    view.start();
+  };
+
+  // ---- The bar that is always there: total, problems, Test Run and Ship ----
+  const bar = el('section', 'planner-bar');
+  const barMoney = el('p', 'planner-bar-money');
+  const barProblems = button('small planner-bar-problems', '');
+  barProblems.addEventListener('click', () => go('review'));
   const testRun = button('planner-testrun', t('planner.testRun'));
   testRun.title = t('planner.testRunName');
   testRun.addEventListener('click', () => hooks.onTestRun(state.vehicle));
   const ship = button('planner-ship', '');
   ship.dataset.tutorial = 'planner-ship';
   testRun.dataset.tutorial = 'planner-testrun';
-  footer.append(review.root, problems, testRun, ship);
+  bar.append(barMoney, barProblems, testRun, ship);
 
-  const segment = (id: MissionSegment, ...cards: HTMLElement[]) => {
-    const section = el('section', `planner-segment planner-segment-${id}`);
-    section.dataset.segment = id;
-    const body = el('div', 'planner-segment-cards');
-    body.append(...cards);
-    section.append(el('h3', '', t(`segment.${id}`)), el('p', 'planner-hint', t(`segment.${id}.hint`)), body);
-    return section;
-  };
-  const intro = fold(t('segment.introShort'), t('segment.intro'), learnMore(SOURCES.segments, t('sources.segments')));
-  intro.classList.add('planner-intro');
-  // Begin with the end in mind: the people who use the Data come first, the Launch last.
-  const side = el('div', 'planner-column');
-  side.append(segment('user', user), segment('space', spacecraft, tests), segment('ground', ground));
-  const launchSide = el('div', 'planner-launch');
-  launchSide.append(costs, timeline, weather);
-  const grid = el('div', 'planner-grid');
-  grid.append(side, segment('launch', choices, launchSide));
-  root.append(back, intro, grid, footer);
+  const top = el('div', 'planner-top');
+  top.append(back, stepBar);
+  root.append(stage, top, panelBox, bar);
 
   const row = (rows: HTMLElement, label: string, value: string, className = '') => {
     const dt = el('dt', className, label);
@@ -461,7 +620,40 @@ export function makeLaunchPlanner(
     problems.replaceChildren(...plan.problems.map((p) => el('li', '', planProblemText(p, plan))));
     ship.textContent = t('planner.ship', { price: formatMoney(total) });
     ship.disabled = !plan.ok;
+
+    // The step bar: the current step, a tick on visited steps with nothing wrong, a mark on steps with a problem.
+    const flagged = new Set(plan.problems.map(problemStep));
+    for (const [step, ui] of stepButtons) {
+      const here = step === current;
+      if (here) ui.button.setAttribute('aria-current', 'step');
+      else ui.button.removeAttribute('aria-current');
+      const mark = flagged.has(step) ? 'problem' : visited.has(step) ? 'done' : 'todo';
+      ui.button.dataset.mark = mark;
+      ui.mark.textContent = mark === 'problem' ? t('planner.stepProblem') : mark === 'done' ? t('planner.stepDone') : '';
+    }
+    for (const [step, panel] of panels) panel.hidden = step !== current;
+    barMoney.replaceChildren(
+      el('span', 'planner-bar-label', t('planner.total')),
+      el('strong', '', formatMoney(total)),
+      el('span', 'planner-bar-label', t('planner.money')),
+      el('strong', state.money < total ? 'warn' : '', formatMoney(state.money)),
+    );
+    const count = plan.problems.length;
+    barProblems.hidden = count === 0;
+    barProblems.textContent = t(count === 1 ? 'planner.problemsOne' : 'planner.problemsOther', { count: formatNumber(count) });
+    drawView();
   };
 
-  return { root, render };
+  return {
+    root,
+    render,
+    setLogo(next) {
+      logo = next;
+      if (view && !root.hidden) view.show(state.design, state.vehicle, logo);
+    },
+    dispose() {
+      view?.dispose();
+      view = null;
+    },
+  };
 }

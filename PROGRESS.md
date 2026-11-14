@@ -28,6 +28,11 @@
 - 492 tests and both type checks pass. Browser: Demo Mode Era 1 at 1280×800 and 1024×768 (HQ from two sides, Mission Designer, Launch planner, folds open and closed). Screenshots in `screenshots/development-NASA_resources/` (`hq-floating-logo-*`, `folds-*`, `equator-tip-*`).
 - Next: team approves the look, then merge into `main`. More slots of text could fold later (the Concept Maturity strip, Costs) if the team wants it even calmer.
 
+**Step panels (14 Nov, night), on branch `step-panels`, waiting for the team's approval before merging:** the Mission Designer and Launch planner were too crowded. Both now show a big 3D view on top and one choice at a time underneath, with a step bar.
+- Mission Designer: one slot per step (Bus, Power, … Payload, then Check). The resource bars sit in a small card over the view. Each new Part slides into place, so the Spacecraft is built in front of the player. "Plan the Launch →" is always visible.
+- Launch planner: the chosen rocket with the Spacecraft on its pad (`src/world/plannerView.ts`, reusing the Launch scene builders without changing them). Steps: User, Space, Ground, Launch Vehicle, Launch Site, Costs, Review; the camera frames each one (the Ground step shows the Blender Ground Station dish). A footer always shows the total, Test Run and Ship.
+- 492 tests and both type checks pass. Browser: Demo Mode Era 1 at 1920×1200, 1600×1000, 1280×800 and 1024×768; no console errors. Screenshots `steps-designer-*`, `steps-planner-*`. Notes: `docs/notes-step-panels-*.md`. Not tried: the Weekly Challenge designer (needs Online).
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**

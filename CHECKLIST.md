@@ -89,6 +89,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Music (licensed or generated, credited; ticket 25)
 - [x] Learn more → links on real things
 - [x] Calmer screens: short line + arrow (fold) for explanations and reading links in the Mission Designer and Launch planner (team to judge)
+  - [x] Launch planner in steps: the rocket on its pad in 3D on top, one step panel below, total, Test Run and Ship always in view
+  - [x] Mission Designer in steps: the Spacecraft in 3D on top with the resource card, one slot per step below, then Check; Parts slide into place
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
 - [x] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). All three in the game, made from game screenshots, watermarked

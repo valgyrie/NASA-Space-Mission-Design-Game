@@ -29,6 +29,7 @@ import {
 import type { TechId } from '../game/research';
 import type { Difficulty } from '../game/modes';
 import { makeLaunchPlanner } from './launchPlanner';
+import type { CompanyLogo } from '../company/logo';
 import { makeMaturityStrip } from './designReview';
 import { SLOT_ROLE, mayChange } from '../game/team';
 import { makeRoleChip, makeTeamBar, notYoursText } from './teamBar';
@@ -172,6 +173,29 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
   }
 }
 
+/** The short number on a bar's first line ("3.2 / 8 kg"); the full sentence from `gaugeText` sits under the bar. */
+export function gaugeShort(resource: Resource, g: Gauge): string {
+  if (g.status === 'waiting') return t('gauge.waiting', { slot: t(`slot.${g.waitingFor!}`) });
+  switch (resource) {
+    case 'mass':
+      return g.target <= 0
+        ? t('designer.gaugeShort.massCant', { kg: formatDecimal(g.value) })
+        : t('designer.gaugeShort.mass', { kg: formatDecimal(g.value), max: formatNumber(g.target) });
+    case 'power':
+      return t('designer.gaugeShort.power', { have: formatNumber(g.value), need: formatNumber(g.target) });
+    case 'budget':
+      return t('designer.gaugeShort.budget', { cost: formatMoney(g.value) });
+    case 'data':
+      return g.status === 'ok'
+        ? t('designer.gaugeShort.dataLong', { need: formatNumber(g.target) })
+        : t('designer.gaugeShort.data', { days: formatNumber(Math.floor(g.value)), need: formatNumber(g.target) });
+    case 'communications':
+      return t('designer.gaugeShort.communications', { send: formatNumber(g.value), make: formatNumber(g.target) });
+    case 'time':
+      return t('designer.gaugeShort.time', { days: formatNumber(g.value), left: formatNumber(g.target) });
+  }
+}
+
 /** Where the fill and the target line sit on a bar, as fractions of its width. */
 export function gaugeLayout(g: Gauge): { fill: number; target: number } {
   // A huge surplus (e.g. lots of spare money) still shows the target line in view.
@@ -180,10 +204,13 @@ export function gaugeLayout(g: Gauge): { fill: number; target: number } {
   return { fill: value / scale, target: g.target / scale };
 }
 
+/** A step of the Mission Designer: one slot at a time, then the Check. */
+type Step = Slot | 'check';
+
 /**
- * The Mission Designer: pick one option per slot, watch the Spacecraft take shape and the six
- * resource bars react. Parts come from the Warehouse or are bought here on the spot.
- * `onChange` runs after every change worth saving.
+ * The Mission Designer: the Spacecraft on top, put together Part by Part, with the six resource bars over its
+ * corner; underneath, one slot at a time (a step each), then a Check of the whole design. Parts come from the
+ * Warehouse or are bought here on the spot. `onChange` runs after every change worth saving.
  */
 export function showMissionDesigner(
   root: HTMLElement,
@@ -191,6 +218,8 @@ export function showMissionDesigner(
   seed: string,
   hooks: {
     onOpen(): void; onClose(): void; onChange(): void; onTestRun?(): void;
+    /** The Company's logo, painted on the rocket in the Launch planner. */
+    logo?(): CompanyLogo;
     challenge?: {
       allows(id: SpacecraftOption['id']): boolean;
       launchDay: number;
@@ -225,10 +254,24 @@ export function showMissionDesigner(
   });
   head.append(heading, goal, paused, ...(team ? [team.toggle] : []), close);
 
-  // Slots
-  const slotsBox = el('section', 'designer-slots');
-  slotsBox.append(el('h3', '', t('designer.slots')));
-  slotsBox.append(fold(t('designer.mode', { mode: t(`mode.${state.difficulty}`) }), t(`designer.${state.difficulty}.note`)));
+  // The step bar: one step per slot, then the Check; "Plan the Launch →" always at its right end.
+  const stepList = el('ol', 'designer-steplist');
+  stepList.setAttribute('aria-label', t('designer.steps'));
+  const tabs = new Map<Step, { item: HTMLLIElement; tab: HTMLButtonElement; tick: HTMLElement }>();
+  const addTab = (s: Step) => {
+    const item = el('li', 'designer-steptab-item');
+    const tab = button('designer-steptab', '');
+    tab.dataset.step = s;
+    const tick = el('span', 'designer-steptab-tick');
+    tab.append(tick, el('span', 'designer-steptab-name', stepName(s)));
+    tab.addEventListener('click', () => goTo(s));
+    item.append(tab);
+    stepList.append(item);
+    tabs.set(s, { item, tab, tick });
+  };
+
+  // One panel per slot; only the current step's is shown.
+  const stepBody = el('div', 'designer-step');
   const slotRows = new Map<
     Slot,
     { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement; chip: ReturnType<typeof makeRoleChip>; notYours: HTMLElement }
@@ -243,7 +286,9 @@ export function showMissionDesigner(
     why: HTMLElement;
   }[] = [];
   for (const slot of SLOTS) {
+    addTab(slot);
     const row = el('div', 'slot');
+    row.dataset.slot = slot;
     const label = el('div', 'slot-head');
     const chip = makeRoleChip(SLOT_ROLE[slot]);
     label.append(el('span', 'slot-name', t(`slot.${slot}`)), chip.root);
@@ -273,6 +318,7 @@ export function showMissionDesigner(
       why.hidden = true;
       b.append(why);
       optionUi.push({ o, b, stats, locked, eraLock, hall, why });
+      // Picking does not move on: the player sees the Part arrive and the bars react, then presses Next.
       b.addEventListener('click', () => {
         if ((!team || mayChange(state, SLOT_ROLE[slot])) && choose(state.design, o.id, state)) changed();
       });
@@ -282,42 +328,37 @@ export function showMissionDesigner(
     const stock = el('div', 'slot-stock');
     const notYours = el('p', 'team-not-yours');
     row.append(label, slotWhy, choices, notYours, stock);
-    slotsBox.append(row);
+    stepBody.append(row);
     slotRows.set(slot, { row, options, stock, chip, notYours });
   }
+  addTab('check');
 
-  // 3D view
-  const viewBox = el('section', 'designer-view');
-  const view = new SpacecraftView();
-  const viewEmpty = el('p', 'designer-view-empty', t('designer.emptyView'));
-  viewBox.append(view.canvas, viewEmpty, el('p', 'designer-view-hint designer-view-credit', t('data.globe')), el('p', 'designer-view-hint', t('designer.dragHint')));
-
-  // Resources
-  const resBox = el('section', 'designer-resources');
-  const sourceLinks = el('div', '');
-  const sources = fold(t('fold.sources'), sourceLinks);
-  resBox.append(el('h3', '', t('designer.resources')));
-  const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; text: HTMLElement }>();
-  for (const r of RESOURCES) {
-    const row = el('div', 'gauge');
-    const name = el('span', 'gauge-name', t(`resource.${r}`));
-    const track = el('div', 'gauge-track');
-    const fill = el('div', 'gauge-fill');
-    const target = el('div', 'gauge-target');
-    track.append(fill, target);
-    const text = el('span', 'gauge-text');
-    row.append(name, text, track);
-    resBox.append(row);
-    gauges.set(r, { row, fill, target, text });
-  }
+  // The Check: what is still short, the buy-everything button, the mode and the reading links.
+  const checkBox = el('div', 'designer-check');
+  const checkHead = el('div', 'slot-head');
+  checkHead.append(el('span', 'slot-name', t('designer.checkHeading')));
   const warnings = el('ul', 'designer-warnings');
   warnings.setAttribute('aria-live', 'polite');
   const status = el('p', 'designer-status');
   const buyAll = button('small designer-buy-all', '');
+  const sourceLinks = el('div', '');
+  const sources = fold(t('fold.sources'), sourceLinks);
+  const folds = el('div', 'designer-check-folds');
+  folds.append(fold(t('designer.mode', { mode: t(`mode.${state.difficulty}`) }), t(`designer.${state.difficulty}.note`)), sources);
+  checkBox.append(checkHead, el('p', 'designer-check-hint', t('designer.checkHint')), warnings, status, buyAll, folds);
+  stepBody.append(checkBox);
+
+  // Back / Next under the panel, with the Market's answer between them.
+  const stepNav = el('div', 'designer-stepnav');
+  const back = button('small designer-step-back', t('designer.stepBack'));
+  const forward = button('small designer-step-next', '');
   const problem = el('p', 'side-problem');
   problem.setAttribute('aria-live', 'polite');
+  stepNav.append(back, problem, forward);
+
+  // Plan the Launch (or the Weekly Challenge's submit and Test Run) at the step bar's right end.
   const next = button('designer-next', t(hooks.challenge ? 'weekly.submit' : 'designer.next'));
-  const challengeTest = button('small', t('testRun.heading'));
+  const challengeTest = button('small designer-challenge-test', t('testRun.heading'));
   challengeTest.hidden = !hooks.challenge;
   challengeTest.addEventListener('click', () => {
     showView('testRun');
@@ -325,10 +366,44 @@ export function showMissionDesigner(
   });
   next.title = t(hooks.challenge ? 'weekly.submit' : 'designer.nextName');
   next.dataset.tutorial = 'designer-next';
-  resBox.append(warnings, status, buyAll, problem, challengeTest, next, sources);
+  const stepBar = el('div', 'designer-stepbar');
+  const actions = el('div', 'designer-stepbar-actions');
+  actions.append(challengeTest, next);
+  stepBar.append(stepList, actions);
+
+  const deck = el('section', 'designer-deck');
+  deck.append(stepBar, stepBody, stepNav);
+
+  // 3D view on top, with the resource bars in a small card over its corner.
+  const viewBox = el('section', 'designer-view');
+  const view = new SpacecraftView();
+  const viewEmpty = el('p', 'designer-view-empty', t('designer.emptyView'));
+  const resBox = el('aside', 'designer-resources');
+  resBox.append(el('h3', '', t('designer.resources')));
+  const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; short: HTMLElement; text: HTMLElement }>();
+  for (const r of RESOURCES) {
+    const row = el('div', 'gauge');
+    const name = el('span', 'gauge-name', t(`resource.${r}`));
+    const short = el('span', 'gauge-short');
+    const track = el('div', 'gauge-track');
+    const fill = el('div', 'gauge-fill');
+    const target = el('div', 'gauge-target');
+    track.append(fill, target);
+    const text = el('span', 'gauge-text');
+    row.append(name, short, track, text);
+    resBox.append(row);
+    gauges.set(r, { row, fill, target, short, text });
+  }
+  viewBox.append(
+    view.canvas,
+    viewEmpty,
+    el('p', 'designer-view-hint designer-view-credit', t('data.globe')),
+    el('p', 'designer-view-hint', t('designer.dragHint')),
+    resBox,
+  );
 
   const body = el('div', 'designer-body');
-  body.append(slotsBox, viewBox, resBox);
+  body.append(viewBox, deck);
 
   // JPL's Concept Maturity Levels for the Contract on the table; the Weekly Challenge has its own score instead.
   const strip = makeMaturityStrip();
@@ -355,6 +430,15 @@ export function showMissionDesigner(
   const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
   panel.append(head, ...(team ? [team.root] : []), strip.root, body, planner.root, testRun.root);
 
+  // The low tutorial guide sits over the 3D view, above the step panel, so it never covers the options.
+  const placeGuide = () => {
+    const open = !backdrop.hidden && !body.hidden;
+    document.body.classList.toggle('designer-steps-open', open);
+    if (open) document.body.style.setProperty('--designer-deck', `${Math.max(0, window.innerHeight - deck.getBoundingClientRect().top)}px`);
+  };
+  const deckSize = new ResizeObserver(placeGuide);
+  deckSize.observe(deck);
+
   const headings = { design: 'designer.heading', planner: 'planner.heading', testRun: 'testRun.heading' } as const;
   let shown: keyof typeof headings = 'design';
   /** Redraw the screen on show after the team changed: who is at the mouse decides what can be changed. */
@@ -378,10 +462,35 @@ export function showMissionDesigner(
       view.stop();
       if (which === 'planner') planner.render();
     }
+    placeGuide();
   };
   next.addEventListener('click', () => {
     if (hooks.challenge) { hooks.challenge.attempt({ ...state.design }); api.close(); }
     else showView('planner');
+  });
+
+  // Steps
+  let step: Step = 'bus';
+  /** The steps on show: slots of this Era with something to pick (respecting the Weekly Challenge's catalogue), then the Check. */
+  const steps = (): Step[] => [...SLOTS.filter((s) => isSlotShown(state, s) && slotRows.get(s)!.options.size > 0), 'check'];
+  function stepName(s: Step): string {
+    return s === 'check' ? t('designer.check') : t(`slot.${s}`);
+  }
+  const goTo = (s: Step) => {
+    step = s;
+    problem.textContent = '';
+    render();
+    stepBody.scrollTop = 0;
+  };
+  /** Where to start: the first slot still empty, or the Check when the design is complete. */
+  const firstStep = (): Step => steps().find((s) => s !== 'check' && state.design[s] === null) ?? 'check';
+  back.addEventListener('click', () => {
+    const list = steps();
+    goTo(list[Math.max(0, list.indexOf(step) - 1)]!);
+  });
+  forward.addEventListener('click', () => {
+    const list = steps();
+    goTo(list[Math.min(list.length - 1, list.indexOf(step) + 1)]!);
   });
 
   const report = (result: TradeResult) => {
@@ -413,6 +522,9 @@ export function showMissionDesigner(
       if (hall) hall.hidden = hallTakes(state, o.id as BusId);
       stats.textContent = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
     }
+
+    const list = steps();
+    if (!list.includes(step)) step = list[0]!;
     for (const slot of SLOTS) {
       const { row, options, stock, chip, notYours } = slotRows.get(slot)!;
       const role = SLOT_ROLE[slot];
@@ -421,8 +533,11 @@ export function showMissionDesigner(
       row.style.setProperty('--team-colour', chip.root.style.getPropertyValue('--team-colour'));
       notYours.hidden = !players || mayChange(state, role);
       notYours.textContent = players ? notYoursText(players, role) : '';
-      // Propulsion joins in Era 2; until then it holds "none".
-      row.hidden = !isSlotShown(state, slot);
+      // Only the current step's panel shows; Propulsion's step joins in Era 2.
+      row.hidden = slot !== step;
+      const tab = tabs.get(slot)!;
+      tab.tab.dataset.role = players ? role : '';
+      tab.tab.style.setProperty('--team-colour', chip.root.style.getPropertyValue('--team-colour'));
       const picked = state.design[slot];
       for (const [id, b] of options) b.setAttribute('aria-pressed', String(id === picked));
       stock.replaceChildren();
@@ -443,6 +558,32 @@ export function showMissionDesigner(
         if (!hooks.challenge) stock.append(b);
       }
     }
+    checkBox.hidden = step !== 'check';
+
+    // The step bar: a tick for every slot filled; the Check ticks once the design is ready.
+    let n = 0;
+    for (const [s, { item, tab, tick }] of tabs) {
+      const on = list.includes(s);
+      item.hidden = !on;
+      if (!on) continue;
+      n++;
+      const done = s === 'check' ? check.ready : state.design[s] !== null;
+      const warn = s === 'check' && !done && check.problems.length > 0;
+      tab.dataset.state = done ? 'done' : warn ? 'warn' : 'todo';
+      tick.textContent = done ? t('designer.stepTick') : warn ? t('designer.stepWarn') : formatNumber(n);
+      tab.title = warn
+        ? t('designer.stepProblems', { step: stepName(s), count: check.problems.length })
+        : t(done ? 'designer.stepPicked' : 'designer.stepToDo', { step: stepName(s) });
+      if (s === step) tab.setAttribute('aria-current', 'step');
+      else tab.removeAttribute('aria-current');
+    }
+    const at = list.indexOf(step);
+    back.disabled = at <= 0;
+    forward.hidden = step === 'check';
+    const after = list[at + 1];
+    if (after) forward.textContent = t('designer.stepNext', { step: stepName(after) });
+    // Once this slot is picked, Next is the button to press.
+    forward.classList.toggle('designer-step-ready', step !== 'check' && state.design[step] !== null);
 
     view.show(state.design);
     viewEmpty.hidden = state.design.bus !== null;
@@ -461,7 +602,12 @@ export function showMissionDesigner(
       ui.fill.style.width = `${(g.status === 'waiting' ? 0 : layout.fill) * 100}%`;
       ui.target.style.left = `${layout.target * 100}%`;
       ui.target.hidden = g.status === 'waiting';
-      ui.text.textContent = hooks.challenge && r === 'budget' ? t('weekly.budgetGauge', { cost: formatMoney(g.value), money: formatMoney(state.money) }) : gaugeText(r, g, check, state.money);
+      const sentence = hooks.challenge && r === 'budget' ? t('weekly.budgetGauge', { cost: formatMoney(g.value), money: formatMoney(state.money) }) : gaugeText(r, g, check, state.money);
+      ui.short.textContent = gaugeShort(r, g);
+      // The sentence says it in full; while waiting it would only repeat the short line.
+      ui.text.textContent = sentence;
+      ui.text.hidden = g.status === 'waiting';
+      ui.row.title = sentence;
     }
 
     warnings.replaceChildren(...check.problems.map((p) => el('li', '', problemText(p, check))));
@@ -492,6 +638,10 @@ export function showMissionDesigner(
       audio.setScene('designer', 'designer');
       problem.textContent = '';
       hooks.onOpen();
+      if (hooks.logo) planner.setLogo?.(hooks.logo());
+      // Each visit starts at the first empty slot and puts the Spacecraft together in front of the player.
+      step = firstStep();
+      view.assemble();
       showView('design');
       close.focus();
     },
@@ -502,11 +652,14 @@ export function showMissionDesigner(
       view.stop();
       testRun.stop();
       team?.closeSetup();
+      placeGuide();
       hooks.onClose();
     },
     destroy() {
       api.close();
+      deckSize.disconnect();
       view.dispose();
+      planner.dispose?.();
       backdrop.remove();
     },
     get isOpen() {

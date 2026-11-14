@@ -170,6 +170,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   // The Mission Designer pauses the Site like the menu does, and closes the side panels.
   let speedBeforeDesigner: Speed = 1;
   const designer = showMissionDesigner(ui, state, game.site.seed, {
+    logo: () => game.company.logo,
     onOpen() {
       world.keyboardEnabled = false;
       world.hidden = true;

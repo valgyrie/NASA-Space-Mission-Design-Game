@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
-import { type Design } from '../game/spacecraft';
+import { type Design, type Slot } from '../game/spacecraft';
 import { PRODUCT_COLOUR } from './buildingParts';
 import { SC, dressSpacecraftMaterials } from './spacecraftMaterials';
 
@@ -463,23 +463,41 @@ function addAdapter(g: THREE.Group, bus: BusShape, below: number): void {
   bolts(g, r * 1.16, y - 0.025, 12, 0.012);
 }
 
+/**
+ * Gather what `add` puts into `g` into one group tagged `userData.slot`, so the Mission Designer can move a
+ * slot's Part on its own (the assembly animation). The group sits at the origin: nothing looks different.
+ */
+function partOf<T>(g: THREE.Group, slot: Slot, add: () => T): T {
+  const from = g.children.length;
+  const result = add();
+  const added = g.children.slice(from);
+  if (added.length > 0) {
+    const part = new THREE.Group();
+    part.name = slot;
+    part.userData.slot = slot;
+    part.add(...added);
+    g.add(part);
+  }
+  return result;
+}
+
 /** Build the model for a design. Empty slots leave gaps; with no Bus a faint outline shows where it goes. */
 export function buildSpacecraft(design: Design): THREE.Group {
   dressSpacecraftMaterials();
   const g = new THREE.Group();
   g.name = 'spacecraft';
-  const bus = addBus(g, design.bus as keyof typeof BUS_SHAPE | null);
-  const below = addBattery(g, bus, design.battery);
-  if (design.bus) addAdapter(g, bus, below);
-  if (design.propulsion === 'mainEngine') addMainEngine(g, bus, below);
-  if (design.power === 'solarCells') addSolarCells(g, bus);
+  const bus = partOf(g, 'bus', () => addBus(g, design.bus as keyof typeof BUS_SHAPE | null));
+  const below = partOf(g, 'battery', () => addBattery(g, bus, design.battery));
+  if (design.bus) partOf(g, 'bus', () => addAdapter(g, bus, below));
+  if (design.propulsion === 'mainEngine') partOf(g, 'propulsion', () => addMainEngine(g, bus, below));
+  if (design.power === 'solarCells') partOf(g, 'power', () => addSolarCells(g, bus));
   if (design.comms === 'simpleAntenna' || design.comms === 'lowPowerAntenna') {
-    addSimpleAntenna(g, bus, below, design.comms === 'lowPowerAntenna');
+    partOf(g, 'comms', () => addSimpleAntenna(g, bus, below, design.comms === 'lowPowerAntenna'));
   }
-  if (design.pointing === 'spin') addSpin(g, bus);
-  if (design.payload === 'radiationDetector') addRadiationDetector(g, bus);
-  if (design.payload === 'tvCamera') addTvCamera(g, bus);
-  if (design.payload === 'transponder') addTransponder(g, bus);
+  if (design.pointing === 'spin') partOf(g, 'pointing', () => addSpin(g, bus));
+  if (design.payload === 'radiationDetector') partOf(g, 'payload', () => addRadiationDetector(g, bus));
+  if (design.payload === 'tvCamera') partOf(g, 'payload', () => addTvCamera(g, bus));
+  if (design.payload === 'transponder') partOf(g, 'payload', () => addTransponder(g, bus));
   // Stand the whole stack around its middle so it turns in place.
   const box = new THREE.Box3().setFromObject(g);
   g.position.y = -(box.min.y + box.max.y) / 2;
