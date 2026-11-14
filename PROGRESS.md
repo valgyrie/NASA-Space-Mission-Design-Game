@@ -17,6 +17,8 @@
 
 **Realistic graphics, session 2 (14 Nov, afternoon):** cut short by the usage limit. Two agents were polishing the land and sky (white sky, sand, rock, Deposits, cliffs, ground under buildings) and the buildings (materials, baked shading, smoke, level sign, flag). Their work so far is committed as a checkpoint that passes the checks, but nobody has reviewed how it looks. Start at "Session 2: read this first" in `docs/graphics-overhaul/HANDOFF.md`: it has the state, this machine's set-up (Node on PATH, screenshots need Chrome, no `gh`) and the prompts to re-run.
 
+**Realistic graphics, session 3 (14 Nov, evening):** the land, water and sky are finished (clear view, no texture grid, real sand and beaches, ore-stained Deposits with rocks, a sea that no longer repeats, ground graded round buildings) and so are the buildings (own materials per building, dirt and baked shading, ore heaps, soft smoke, star signs, waving flag; model file 8.9 MB). 476 tests and the type checks pass. The Spacecraft, Earth and space views were started and may be half done; rockets and the Launch scene, trees and the truck, the Credits entries and the play-test are not started. Start at "Session 3: START HERE" in `docs/graphics-overhaul/HANDOFF.md`: state, this machine's set-up and the prompts for each remaining agent. The finished look still needs the team's go-ahead before its final merge.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
@@ -32,6 +34,7 @@
 
 ## Log
 
+- 2026-11-14: Realistic graphics, session 3: land, water, sky and the ten Blender buildings finished and reviewed in screenshots; Spacecraft and Earth started. 476 tests and type checks pass. Handoff with agent prompts in `docs/graphics-overhaul/HANDOFF.md`.
 - 2026-11-14: Music fix: tracks are now MP3s saved as `<id>.music`, because download managers (e.g. Internet Download Manager) grabbed every `.mp3` request, so the game had no music and kept re-requesting. A track that fails stays silent until reload. 463 tests and type checks pass; browser check: one request per track, a blocked track is not retried.
 - 2026-11-14: Ticket 42 built: who needs the Data on every Free Play Contract, a Choose a question card with greying in the Mission Designer, side panels end above a two-row Build menu. 460 tests, type checks and browser checks (Free Play, 1280×800 and 1024×768) pass.
 - 2026-11-14: Ticket 41 built: Team Mode (2–4 players on one computer, roles own slots and planner choices, signing the Design Review, report section, nicknames kept out of cloud saves). 453 tests, type checks and browser checks (TIROS-1, three players, 1280×800 and 1024×768) pass.

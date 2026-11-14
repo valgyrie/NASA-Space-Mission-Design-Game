@@ -48,18 +48,31 @@ export interface ShippingState {
   stage: 'assembling' | 'shipping' | 'ready';
   fraction: number;
 }
-import { STEP, animateSite, buildPlotMarker, buildSiteMesh, clearRocks, groundOf, pressPad, siteBounds, tileCentre } from './siteMesh';
+import { STEP, animateSite, buildPlotMarker, buildSiteMesh, clearRocks, groundOf, pressPad, sceneryOf, siteBounds, tileCentre } from './siteMesh';
 import { type SkyEnvironment, createSkyEnvironment } from './environment';
-import { WATER_Y, padFor } from './ground';
+import { type Ground, type Pad, WATER_Y, padFor } from './ground';
+
+/**
+ * Something drawn on the land of every Site (trees, boulders, props), added with `World.addScenery`. The group it
+ * fills belongs to the Site's land: it is emptied and its meshes, geometries and materials disposed whenever the
+ * land is drawn again (`showSite`, `redrawLand`), so `build` must make fresh objects (or share ones it never lets
+ * be disposed, e.g. by keeping them out of this group).
+ */
+export interface SceneryLayer {
+  /** Fill `into` for the land just drawn; `ground` already has every building's pad pressed in. */
+  build(into: THREE.Group, ground: Ground, site: Site): void;
+  /** A building was placed: take away whatever stands on its pad (`ground.onPad` now includes it). */
+  clearPad?(into: THREE.Group, pad: Pad, ground: Ground): void;
+}
 
 /** Direction the sunlight comes from: low and from the side, so shadows are long and easy to see. */
 const SUN_DIRECTION = new THREE.Vector3(-0.78, 0.5, 0.36).normalize();
 
 /** Brightness of the picture (ACES tone mapping) and of the sun. */
 const EXPOSURE = 0.34;
-const SUN_INTENSITY = 8;
+const SUN_INTENSITY = 12;
 /** How much the sky lights the scene besides the sun: the luminance its light on level ground should have. */
-const SKY_LIGHT = 1.17;
+const SKY_LIGHT = 0.62;
 /** Depth of the box the sun's shadows are drawn in. */
 const SHADOW_DEPTH = 300;
 /** Vertices per tile of the placement marker, so it follows the ground. */
@@ -115,6 +128,7 @@ export class World {
   private readonly sky: SkyEnvironment;
   private readonly fog = new THREE.Fog(0xc8d8e8, 100, 300);
   private readonly frameCallbacks: ((seconds: number) => void)[] = [];
+  private readonly sceneryLayers: SceneryLayer[] = [];
   private readonly raycaster = new THREE.Raycaster();
   private readonly heldKeys = new Set<string>();
   private home: { from: CameraPose; to: CameraPose; t: number } | null = null;
@@ -364,7 +378,23 @@ export class World {
     // A Mission on its way keeps its dock; its road now runs on past any land just bought (ticket 30).
     if (this.route) this.route.route = extendRoute(this.site, this.route.route);
     for (const { x, z } of tiles) for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
+    this.buildScenery();
     this.markPlot(null);
+  }
+
+  /** Draw a kind of scenery on every Site from now on (see `SceneryLayer`). */
+  addScenery(layer: SceneryLayer): void {
+    this.sceneryLayers.push(layer);
+    const group = this.siteGroup && sceneryOf(this.siteGroup);
+    const ground = this.siteGroup && groundOf(this.siteGroup);
+    if (group && ground && this.site) layer.build(group, ground, this.site);
+  }
+
+  private buildScenery(): void {
+    const group = this.siteGroup && sceneryOf(this.siteGroup);
+    const ground = this.siteGroup && groundOf(this.siteGroup);
+    if (!group || !ground || !this.site) return;
+    for (const layer of this.sceneryLayers) layer.build(group, ground, this.site);
   }
 
   /** The Plot under a point on the screen, on the Site or in the full-detail land around it; null over the far haze. */
@@ -487,8 +517,12 @@ export class World {
     this.buildingAt.set(`${x},${z}`, model);
     this.setWorking(x, z, true);
     if (this.siteGroup) {
-      pressPad(this.siteGroup, padFor(this.site, x, z));
+      const pad = padFor(this.site, x, z);
+      pressPad(this.siteGroup, pad);
       for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
+      const group = sceneryOf(this.siteGroup);
+      const ground = groundOf(this.siteGroup);
+      if (group && ground) for (const layer of this.sceneryLayers) layer.clearPad?.(group, pad, ground);
     }
   }
 

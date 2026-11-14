@@ -31,18 +31,22 @@ export const WATER_Y = -0.12;
 /** Full-detail land reaches this many tiles past each edge of the Site: one Plot on every side. */
 export const NEAR_REACH = 64;
 /** Coarse land reaches this far, out to where the haze hides it. */
-export const FAR_REACH = 224;
+export const FAR_REACH = 384;
 /** Tiles between the vertices of the coarse land. */
 export const FAR_STEP = 4;
 /** Above this many vertices the full-detail land uses one vertex per tile instead of four. */
 const MAX_NEAR_VERTICES = 220_000;
 
 /** How far the flat ground of a building pad reaches past its footprint, in tiles, so its foundation sits in it. */
-export const PAD_MARGIN = 0.5;
-/** How far the graded earthworks around a building pad reach beyond that, in tiles. */
+export const PAD_MARGIN = 0.75;
+/** How far the graded earthworks around a building pad reach beyond that at least, in tiles. */
 export const PAD_SKIRT = 2.25;
+/** ... and at most, where the land is far above or below the pad. */
+export const PAD_SKIRT_MAX = 6.5;
+/** Steepest a pad's earthworks may get: height per tile. */
+export const PAD_GRADE = 0.62;
 /** Steepest bank between dry land and the water: height per tile of distance from the water. */
-export const BANK_SLOPE = 1.05;
+export const BANK_SLOPE = 0.62;
 
 /** A flat, level building pad: world x/z from `x0` to `x1` and `z0` to `z1`, at height `y`. */
 export interface Pad {
@@ -88,6 +92,25 @@ export interface Lattice {
   height: Float32Array;
 }
 
+/** One point of the drawn ground, for placing scenery (`Ground.surfaceAt`). */
+export interface GroundSurface {
+  /** World y of the ground (under water: of the bed). */
+  height: number;
+  /** Upward unit normal. */
+  normal: { x: number; y: number; z: number };
+  /** 0 flat … 1 vertical. */
+  slope: number;
+  terrain: Terrain;
+  /** Below the water surface. */
+  water: boolean;
+  /** A Deposit here (Site or a Plot next door), or null. */
+  deposit: RawMaterial | null;
+  /** On a building pad or its flat margin. */
+  pad: boolean;
+  /** On a tile of the Site (where buildings can go). */
+  onSite: boolean;
+}
+
 /** What the ground looks like at each vertex, for the terrain shader. */
 export interface GroundLook {
   /** Per vertex: how much sand, dry soil, rock and snow (0–1 each); grass makes up the rest. */
@@ -96,6 +119,8 @@ export interface GroundLook {
   ore: Float32Array;
   /** Per vertex: 1 on the Site, fading to 0 just outside it. */
   site: Float32Array;
+  /** Per vertex: 1 at the water's edge, fading to 0 a few tiles inland (where a beach may be). */
+  shore: Float32Array;
 }
 
 const smoothstep = (a: number, b: number, v: number) => {
@@ -153,15 +178,15 @@ export function groundMix(terrain: Terrain, level: number, climate: SiteClimate,
     dirt = 0.2;
   } else if (terrain === 'sand') {
     const bare = (1 - beach) * (1 - smoothstep(0.55, 0.9, dry));
-    sand = 1 - 0.55 * bare;
-    dirt = 0.55 * bare;
+    sand = 1 - 0.9 * bare;
+    dirt = 0.4 * bare;
   } else if (terrain === 'grass') {
     dirt = smoothstep(0.3, 0.95, dry) * 0.85;
     sand = smoothstep(0.75, 1, dry) * 0.15;
   } else if (terrain === 'hills') {
     // Grassy hills: rock shows on their steep sides (the shader adds it by slope).
     rock = 0.04;
-    dirt = 0.12 + smoothstep(0.3, 0.95, dry) * 0.45;
+    dirt = 0.04 + smoothstep(0.3, 0.95, dry) * 0.5;
   } else {
     // Rocky highland: bare rock with thin grass and soil between.
     rock = 0.62;
@@ -302,15 +327,32 @@ function keepTrue(h: number, level: number): number {
   return Math.max(WATER_Y + 0.07, Math.min(y + 0.3, Math.max(y - 0.3, h)));
 }
 
+/**
+ * Width in tiles of a pad's graded skirt where the land is `rise` above (or below) the pad: wide enough that the
+ * earthworks are never steeper than PAD_GRADE (a smoothstep's steepest slope is 1.5 × rise / width).
+ */
+export function skirtWidth(rise: number): number {
+  return Math.min(PAD_SKIRT_MAX, Math.max(PAD_SKIRT, (1.5 * Math.abs(rise)) / PAD_GRADE));
+}
+
 /** How far a skirt has gone from its pad's height back to the land, `d` tiles out from the flat margin (0 to 1). */
-export function padGrade(d: number): number {
-  return smoothstep(0, PAD_SKIRT, d);
+export function padGrade(d: number, width = PAD_SKIRT): number {
+  return smoothstep(0, width, d);
 }
 
 /** Keep dry land near the water low enough that its bank is a slope, not a wall (`distance` in tiles, 0 = water). */
 export function bank(h: number, level: number, distance: number): number {
   if (level < 0) return h;
-  return Math.min(h, WATER_Y + 0.12 + BANK_SLOPE * Math.max(distance - 0.5, 0.5));
+  const top = WATER_Y + 0.12 + BANK_SLOPE * Math.max(distance - 0.5, 0.5);
+  // A soft minimum, so the bank rounds over into the land above it instead of breaking at an edge.
+  const k = 0.35;
+  const d = h - top;
+  return d <= -k ? h : d >= k ? top : h - (d + k) ** 2 / (4 * k);
+}
+
+/** 1 at the water's edge, 0 three or four tiles inland: where a beach can be. */
+export function shoreOf(distanceToWater: number): number {
+  return 1 - smoothstep(1, 3.5, distanceToWater);
 }
 
 /** 1 right by the water, 0 a few tiles inland. */
@@ -332,6 +374,8 @@ export class Ground {
   readonly nearMax: number;
   private readonly base: Float32Array;
   private readonly pads: Pad[] = [];
+  /** Tiles of Plots next door, read on demand by `depositAt`. */
+  private readonly nextDoor = new Map<string, ReturnType<typeof plotTiles>>();
 
   constructor(
     readonly site: Site,
@@ -360,10 +404,12 @@ export class Ground {
     const mix = new Float32Array(tn * tn * 4);
     const ore = new Float32Array(tn * tn * 4);
     const onSite = new Float32Array(tn * tn);
+    const shore = new Float32Array(tn * tn);
     const climate = land.climate;
     for (let k = 0; k < tn * tn; k++) {
       mix.set(groundMix(grid.terrain[k]!, grid.level[k]!, climate, beachOf(toWater[k]!)), k * 4);
       onSite[k] = grid.onSite[k]!;
+      shore[k] = shoreOf(toWater[k]!);
     }
     // A Deposit's ore patch spreads a little past its tiles, so it reads from afar; the shader breaks its edge up.
     for (let z = 1; z < tn - 1; z++)
@@ -384,11 +430,12 @@ export class Ground {
       blur(ore, tn, NARROW, 4, c);
     }
     blur(onSite, tn, WIDE);
+    blur(shore, tn, WIDE);
 
     // Near lattice: Catmull-Rom through the tile centres, plus small bumps away from the shore.
     const n = Math.round(span / step) + 1;
     const height = new Float32Array(n * n);
-    const look: GroundLook = { mix: new Float32Array(n * n * 4), ore: new Float32Array(n * n * 4), site: new Float32Array(n * n) };
+    const look: GroundLook = { mix: new Float32Array(n * n * 4), ore: new Float32Array(n * n * 4), site: new Float32Array(n * n), shore: new Float32Array(n * n) };
     const tileIndex = (tx: number, tz: number) => (tz - grid.from) * tn + (tx - grid.from);
     for (let j = 0; j < n; j++) {
       const w = from + j * step; // tile coordinate
@@ -432,6 +479,7 @@ export class Ground {
             b00 * ore[k00 * 4 + c]! + b10 * ore[(k00 + 1) * 4 + c]! + b01 * ore[(k00 + tn) * 4 + c]! + b11 * ore[(k00 + tn + 1) * 4 + c]!;
         }
         look.site[v] = b00 * onSite[k00]! + b10 * onSite[k00 + 1]! + b01 * onSite[k00 + tn]! + b11 * onSite[k00 + tn + 1]!;
+        look.shore[v] = b00 * shore[k00]! + b10 * shore[k00 + 1]! + b01 * shore[k00 + tn]! + b11 * shore[k00 + tn + 1]!;
       }
     }
     this.near = { x0: from + o, z0: from + o, step, n, height };
@@ -463,7 +511,7 @@ export class Ground {
     for (let k = 0; k < n * n; k++) value[k] = levels[k]! < 0 ? waterBed(dist[k]! * FAR_STEP) : levels[k]! * STEP;
     blur(value, n, NARROW);
     const toWater = distanceToLand((k) => levels[k]! >= 0, n);
-    const look: GroundLook = { mix: new Float32Array(n * n * 4), ore: new Float32Array(n * n * 4), site: new Float32Array(n * n) };
+    const look: GroundLook = { mix: new Float32Array(n * n * 4), ore: new Float32Array(n * n * 4), site: new Float32Array(n * n), shore: new Float32Array(n * n) };
     const height = new Float32Array(n * n);
     for (let j = 0; j < n; j++)
       for (let i = 0; i < n; i++) {
@@ -475,6 +523,7 @@ export class Ground {
         if (!inside) h += microRelief(x, z) * 2 * smoothstep(0.1, 0.4, Math.abs(h - WATER_Y));
         height[k] = h;
         look.mix.set(groundMix(terrains[k]!, levels[k]!, this.land.climate, beachOf(toWater[k]! * FAR_STEP)), k * 4);
+        look.shore[k] = shoreOf(toWater[k]! * FAR_STEP);
       }
     for (let c = 0; c < 4; c++) blur(look.mix, n, NARROW, 4, c);
     return { lattice: { x0: from + o, z0: from + o, step: FAR_STEP, n, height }, look };
@@ -533,6 +582,43 @@ export class Ground {
     return this.heightAt(x, z) < WATER_Y;
   }
 
+  /**
+   * The Deposit at world (x, z), if any: on the Site, or on a Plot next door (whose Deposits the ground shows
+   * faintly). Null elsewhere.
+   */
+  depositAt(x: number, z: number): RawMaterial | null {
+    const tx = Math.floor(x + this.site.size / 2);
+    const tz = Math.floor(z + this.site.size / 2);
+    const tile = tileAt(this.site, tx, tz);
+    if (tile) return tile.deposit;
+    const { px, pz } = plotOf(tx, tz);
+    const key = plotKey(px, pz);
+    let tiles = this.nextDoor.get(key);
+    if (!tiles) this.nextDoor.set(key, (tiles = touchesOwned(this.site, px, pz) ? plotTiles(this.site, px, pz, this.land) : []));
+    return tiles[(tz - pz * SITE_SIZE) * SITE_SIZE + (tx - px * SITE_SIZE)]?.deposit ?? null;
+  }
+
+  /** Is world (x, z) on a building pad, or within `margin` tiles of one (its flat margin counts at margin 0)? */
+  onPad(x: number, z: number, margin = 0): boolean {
+    const m = PAD_MARGIN + margin;
+    return this.pads.some((p) => x >= p.x0 - m && x <= p.x1 + m && z >= p.z0 - m && z <= p.z1 + m);
+  }
+
+  /** Everything scenery needs to know about one point of the ground (see notes-terrain.md). */
+  surfaceAt(x: number, z: number): GroundSurface {
+    const normal = this.normalAt(x, z);
+    return {
+      height: this.heightAt(x, z),
+      normal,
+      slope: 1 - normal.y,
+      terrain: this.terrainAt(x, z),
+      water: this.isWater(x, z),
+      deposit: this.depositAt(x, z),
+      pad: this.onPad(x, z),
+      onSite: tileAt(this.site, Math.floor(x + this.site.size / 2), Math.floor(z + this.site.size / 2)) !== undefined,
+    };
+  }
+
   /** The pads pressed into the ground so far. */
   get padList(): readonly Pad[] {
     return this.pads;
@@ -545,7 +631,7 @@ export class Ground {
   addPad(pad: Pad): { i0: number; i1: number; j0: number; j1: number } | null {
     this.pads.push(pad);
     const l = this.near;
-    const reach = PAD_MARGIN + PAD_SKIRT + l.step;
+    const reach = PAD_MARGIN + PAD_SKIRT_MAX + l.step;
     const i0 = Math.max(0, Math.floor((pad.x0 - reach - l.x0) / l.step));
     const i1 = Math.min(l.n - 1, Math.ceil((pad.x1 + reach - l.x0) / l.step));
     const j0 = Math.max(0, Math.floor((pad.z0 - reach - l.z0) / l.step));
@@ -556,8 +642,8 @@ export class Ground {
   }
 
   /**
-   * Recompute the near heights in a range from the land and every pad: graded skirts first, then each pad's flat
-   * margin, then the footprints themselves on top (so a neighbour's margin never tilts a building's own ground).
+   * Recompute the near heights in a range from the land and every pad: each footprint flat at its pad's height; around
+   * it a flat margin, then a skirt as wide as the height difference needs, graded back to the land (`skirtWidth`).
    */
   private reshape(i0: number, i1: number, j0: number, j1: number): void {
     const l = this.near;
@@ -566,14 +652,27 @@ export class Ground {
       for (let i = i0; i <= i1; i++) {
         const x = l.x0 + i * l.step;
         const z = l.z0 + j * l.step;
-        let h = this.base[j * l.n + i]!;
+        const base = this.base[j * l.n + i]!;
+        // The earthworks' height: the pads in reach, nearer ones counting for more (so between two pads at different
+        // heights the ground slopes evenly from one to the other); how much it replaces the land: 1 on a pad's flat
+        // margin, fading out across its skirt.
+        let reach = 0;
+        let sw = 0;
+        let sy = 0;
+        let on: number | null = null;
         for (const p of this.pads) {
-          const d = outside(p, x, z) - PAD_MARGIN;
-          if (d > 0 && d < PAD_SKIRT) h = p.y + (h - p.y) * padGrade(d);
+          const o = outside(p, x, z);
+          if (o === 0) on = p.y;
+          const d = o - PAD_MARGIN;
+          const width = skirtWidth(base - p.y);
+          if (d >= width) continue;
+          const g = d <= 0 ? 1 : 1 - padGrade(d, width);
+          reach = Math.max(reach, g);
+          const w = (g * g) / Math.max(o, 1e-3) ** 3;
+          sw += w;
+          sy += w * p.y;
         }
-        for (const p of this.pads) if (outside(p, x, z) <= PAD_MARGIN + 1e-6) h = p.y;
-        for (const p of this.pads) if (x >= p.x0 && x <= p.x1 && z >= p.z0 && z <= p.z1) h = p.y;
-        l.height[j * l.n + i] = h;
+        l.height[j * l.n + i] = on ?? (sw > 0 ? base + (sy / sw - base) * reach : base);
       }
   }
 }

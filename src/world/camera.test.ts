@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { FAR_REACH } from './ground';
 import {
   FOV_DEGREES,
   ISO_ELEVATION,
@@ -45,7 +46,7 @@ describe('camera', () => {
     for (const d of [10, START_DISTANCE, MAX_DISTANCE]) {
       const { near, far } = hazeFor(d);
       expect(near).toBeGreaterThan(d + 32); // the Site's far edge, seen from straight above its edge
-      expect(far).toBeLessThan(d + 32 + 224); // the end of the drawn land
+      expect(far).toBeLessThan(d + 32 + FAR_REACH); // the end of the drawn land
     }
   });
 

@@ -1,10 +1,146 @@
 # Realistic graphics overhaul: handoff
 
 Written 14 Nov 2026 by the orchestrating agent (Claude Fable) when usage ran low. Another agent continues from here.
-Read this file first, then `notes-terrain.md` and `notes-buildings.md` beside it (written by the two coding agents at
+Read "Session 3: START HERE" first, then `notes-terrain.md`, `notes-buildings.md` and `notes-space.md` beside it (written by the two coding agents at
 their checkpoint; if one is missing, that agent was cut off: inspect its files and screenshots instead).
 
-## Session 2 (14 Nov, afternoon): read this first
+## Session 3 (14 Nov, evening): START HERE
+
+A third orchestrator (Claude Fable) continued on `realistic-graphics` and stopped when usage ran low. The team asked
+for the work to be saved, the prompts for later agents written here, and everything pushed and merged into `main`
+so another session can go on. The **final** look still needs the team's go-ahead before its last merge.
+
+### State of each stream
+
+| # | Stream | State | Notes file |
+|---|---|---|---|
+| 1 | Terrain, water, sky, lighting | **Done** (reviewed in screenshots). Small rough edges only | `notes-terrain.md` |
+| 2 | Buildings in Blender | **Done** (reviewed). Draco GLB 8.9 MB, every building under 30k triangles | `notes-buildings.md` |
+| 4 | Spacecraft, Earth, space views | **Started in session 3, may be cut off.** Read `notes-space.md` if it exists; else `git status`/`git diff` and screenshots | `notes-space.md` |
+| 3 | Rockets and the Launch scene | Not started | |
+| 5 | Trees, rocks, Shipping truck | Not started (streams 1 and 2 are done, so it can start) | |
+| 6 | Credits, docs, tests, screenshots | Not started | |
+| 7 | Play-test, fixes, ask the team | Not started | |
+
+### What to do first
+
+1. `git status` and `git log --oneline -8`. Uncommitted changes are from an agent that was cut off (most likely
+   stream 4). Run the checks, look at the game, and keep or finish them: do not throw them away unseen.
+2. Start the dev server and take the screenshots below. Compare with the "what the orchestrator saw" lists.
+3. Run two Opus agents at a time: finish **stream 4** (if `notes-space.md` lists things left) together with
+   **stream 3**; then **stream 5**; then **stream 6**; then the play-test (stream 7).
+4. After each agent reports: look at its screenshots yourself, commit, and push the branch.
+5. Show the team before/after screenshots and **ask before the final merge into `main`**.
+
+### This machine (the team's Windows 11 PC, repo in `Downloads/Space-apps/`)
+
+The session-2 notes about Node and Chrome further down did not hold here. What is true:
+
+- **Node is not on PATH.** Bash: `export PATH="$PWD/.leap/node:$PATH"` (the launcher's private Node), then
+  `npm run typecheck`, `npx vitest run` (476 tests on 14 Nov evening). The pre-commit hook runs `npm run check`, so
+  commit from a shell with that PATH.
+- **Chrome is not installed; Edge works.** Run `shot.mjs` without `--browser`.
+- **Dev server:** `.claude/launch.json` sits one folder above the repo (`Space-apps/.claude/`), name `leap-dev`;
+  start it with the preview tool. An older dev server may still hold port 5173, so the tool picks **5174**: pass
+  `--url http://localhost:5174/` to `shot.mjs`.
+- `.leap/shots/shot2.mjs` (made by the terrain agent, git-ignored) is `shot.mjs` plus: Vite's hot-reload socket
+  blocked (other agents' edits no longer reload the page mid-shot), HTTP errors logged, an `evalfile:` step.
+  Helpers in `.leap/shots/js/`, `climates.sh`, `sheet.sh`.
+- Blender 5.3 headless: `"C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" -b --factory-startup -P x.py`.
+  Its Python has NumPy and can pack textures; there may be no system Python.
+- `gh` is not installed; `git push` works. Merge: `git push origin realistic-graphics:main` when `main` has not
+  moved, else merge locally and push.
+- Screenshots of session 3 (git-ignored): `.leap/shots/out/s3/` (before), `t3/` and `clim/` (terrain after), `b3/`
+  (buildings after), `sp/` (space, if any).
+
+### Header for every agent prompt (session 3 version)
+
+Start each agent with the Agent tool, `subagent_type: general-purpose`, `model: opus`, two at a time. Paste this
+header, then the stream's brief. It replaces neither the "Shared rules" block further down (the agent must read
+and follow it) nor the stream prompt: it adds this machine's facts.
+
+```
+You are a coding agent on LEAP, a three.js (r187) + TypeScript + Vite browser game (a space-company tycoon for NASA
+Space Apps 2026). Repo root: C:/Users/moham/Downloads/Space-apps/NASA-Space-Mission-Design-Game, branch
+`realistic-graphics`. The team wants the old blocky voxel / flat low-poly look replaced by realistic graphics.
+You own stream <N>: <name>.
+
+Read first: AGENTS.md; docs/graphics-overhaul/HANDOFF.md (the "Shared rules" block is binding for you; "Prompt:
+stream <N>" is your brief); docs/graphics-overhaul/notes-*.md for the modules you build on.
+
+Machine facts (they override the handoff where they differ):
+- Node is NOT on PATH. In Bash: export PATH="/c/Users/moham/Downloads/Space-apps/NASA-Space-Mission-Design-Game/.leap/node:$PATH"
+  then `npm run typecheck` and `npx vitest run`. Never run launchers or scripts/leap.test.mjs.
+- Blender 5.3, headless only: "C:/Program Files/Blender Foundation/Blender 5.3/blender.exe" -b --factory-startup -P <script.py> -- <args>
+- A dev server is already running at http://localhost:5174 (if down, try 5173). Do not start or stop servers.
+- Screenshots: Chrome is not installed; default Edge works, so do NOT pass --browser:
+  .leap/node/node.exe .leap/shots/shot.mjs --url http://localhost:5174/ --out .leap/shots/out/<dir> --steps "<steps>"
+  (`.leap/shots/shot2.mjs` is the same but immune to hot reloads caused by another agent's edits.)
+- Do NOT commit, push, stash or switch branches. No new npm dependencies (three's examples/jsm is fine).
+- Usage may run out at any moment: write docs/graphics-overhaul/notes-<stream>.md early (plan, done, half done,
+  left) and update it after every step; keep the type check, the tests and the game working after every step.
+- Finish: type check and all tests pass; notes file current; final report with what changed, assets (name, author,
+  URL, licence), test results, best before/after screenshot paths, rough edges, and what you need from files you
+  do not own.
+```
+
+### What the orchestrator saw in session 3, per remaining stream (add to the stream's prompt)
+
+**Stream 4 (Spacecraft, Earth, space views).** Before shots: `.leap/shots/out/s3/designer.png`, `orbit.png`.
+- Earth is a cartoon globe: blurry land, flat blue sea, clouds as hard white blobs, a thick bright-blue outline
+  ring instead of an atmosphere, a flat white spot for sun glint, no night side. Wanted: passes for a photo from
+  orbit: Blue Marble colour at 4096×2048 or more, real-looking clouds with soft shadows, glint on water only, thin
+  Rayleigh-blue limb fading to space, soft terminator, optionally city lights.
+- Spacecraft is flat-shaded boxes and prisms in solid colours (mustard panels, plain dark-blue rectangles as solar
+  cells, grey cylinders). Wanted: flight hardware as in a clean-room photo: bevelled geometry, crinkled gold and
+  silver insulation, solar cells with cell grid and busbars, brushed and anodised aluminium, white thermal paint,
+  fasteners, antennas with real shapes, engine bell with a dark throat. Every Part choice must still change the
+  model the same recognisable way, and each design must keep looking like its real counterpart.
+- Studio light and an environment map in the Mission Designer; crisp sun and Earth-shine in space.
+- Stars are uniform white dots: vary brightness and colour, add a faint Milky Way band.
+- Extra files it may own: new helpers under `src/world/` (e.g. `stars.ts`), `scripts/blender/build_spacecraft.py`
+  (may import `lib.py`, not edit it), `public/models/spacecraft.glb`, `public/textures/space/**`,
+  `docs/graphics-overhaul/notes-space.md`. `src/ui/**` is off limits. `buildEarth` and `buildSpacecraft` keep
+  their signatures (the Launch view calls them). Check the globe picker too (new Company → pick a place).
+
+**Stream 3 (rockets and the Launch scene).** Before shots: `.leap/shots/out/s3/pad.png`, `climb.png`.
+- The pad is a flat beige plane with a grey slab, a flat green strip and a flat blue strip for the sea, under a
+  plain light-blue sky. The tower is a red stick frame. The rocket is a faceted grey lathe with black bands. The
+  exhaust is a solid white cone. During the climb there is no smoke, no contrail, and the ground is a pale blue blur.
+- Use `createSkyEnvironment` from `src/world/environment.ts` (see `notes-terrain.md`) so the sky, sun, clouds and
+  reflections match the Site; the water shader in `water.ts` may be reusable for the sea.
+- The stream-2 pipeline (`scripts/blender/lib.py`, Draco GLB, `buildingModels.ts`) can be reused for the pad
+  structures (service tower, blockhouse, lightning masts) in a new `scripts/blender/build_launch.py` and
+  `public/models/launch.glb`. Rockets may also be authored in Blender if stage separation, the spinning tub, the
+  Spacecraft on top and the Company logo decal keep working.
+
+**Stream 5 (trees, rocks, truck).** The land has no vegetation at all, so green hills look bare. Stream 1 left the
+hooks: `Ground.surfaceAt/heightAt/normalAt/slopeAt/terrainAt/isWater/depositAt/onPad`, `SceneryLayer` with
+`world.addScenery(layer)` (`build` runs on `showSite`/`redrawLand`, `clearPad` on `addBuilding`) and the `scenery`
+group (`sceneryOf`). Details in `notes-terrain.md`. Building grounds have shrubs and hedges, no trees: landscape
+trees must look right beside them. Shipping before shot: `.leap/shots/out/s3/shipping.png`.
+
+**Stream 6 (credits, docs).** Besides the stream-6 prompt below:
+- Credits must list, from `docs/art/assets-*.md`: the Poly Haven textures (terrain: Rocky Terrain 02, Aerial Beach
+  01, Aerial Rocks 02, Aerial Ground Rock, Snow Field Aerial; buildings: Box Profile Metal Sheet, Concrete Floor
+  02, Factory Brick, Asphalt 02, Painted Metal Shutter, Painted Plaster Wall, Gravel Floor, Corrugated Iron 02,
+  Worn Corrugated Iron, Rocky Gravel; all CC0), the three.js Draco decoder (Google, Apache 2.0, in
+  `public/models/draco/`), three.js `Sky` and addons (MIT), Inigo Quilez's texture-repetition technique (credit as
+  a courtesy), and whatever streams 3–5 add (NASA Blue Marble / GIBS for the Earth).
+- `index.html` has no favicon: the two 404s in the console are both `/favicon.ico`. Add
+  `<link rel="icon" href="data:,">` or a real icon.
+
+**Rough edges left in streams 1 and 2** (fix in the play-test if they bother the team):
+- Touching buildings with different foundation levels show a vertical step; steep inland cliffs look dark; snow
+  fields are flat white from far; the sea is a deep dark blue from the whole-Site view (`deep` in `water.ts`).
+- Ore colour strength: the 0.16 cap sits in both `terrainMesh.ts` and `rocks.ts`; change them together.
+- From the whole-Site view the three Deposit kinds are hard to tell apart (all read blue-grey) and the buildings
+  look dark: the orchestrator saw this in `t3/site.png`; raise the ore cap or add a clearer cue if the team agrees.
+- Level-sign stars only read close up; shrubs are faceted very close up; pale walls look lighter in the game than
+  in Blender previews.
+- Not profiled on integrated graphics yet.
+
+## Session 2 (14 Nov, afternoon): history
 
 A second orchestrator (Claude Fable) continued on branch `realistic-graphics` and was cut short by the usage limit.
 The team asked for the work in progress to be committed, pushed and merged into `main` so the next session can go on.
@@ -29,20 +165,6 @@ were asked to fix:
 - Buildings are clean bright white with pale roofs, like an untextured maquette; the Mine's ore piles are flat
   orange blobs; smoke is faceted puffs; level signs are the old pole with gold icosahedra.
 - Building foundations stick out over slopes like a table, with the ground falling away under the edge.
-
-### Session 3 (14 Nov, evening)
-
-A third orchestrator (Claude Fable) picked up here. The session-2 notes about "this machine" below did not hold on
-the team's Windows machine in `Downloads/Space-apps`: check before trusting them.
-
-- **Node is not on PATH** there: `export PATH="$PWD/.leap/node:$PATH"` first (the launcher's private Node).
-- **Chrome is not installed; Edge works.** Run `shot.mjs` without `--browser`.
-- **Dev server:** `.claude/launch.json` sits one folder above the repo (`Space-apps/.claude/`), name `leap-dev`. An
-  older dev server may still hold port 5173; the preview tool then picks 5174. Pass `--url http://localhost:5174/`.
-- Seen at the start of session 3 (Demo Era 2): the sky was blue with clouds (good). Still wrong: land washed out by
-  haze, a tiling grid in the rock, blurry sand, Deposits as flat neon patches, a sea that repeats, foundations
-  overhanging slopes, buildings white and plasticky, old smoke puffs and level signs. Streams 1 and 2 were re-run
-  with that list.
 
 ### This machine (session 2's notes: Windows 11, differs from the notes further down)
 

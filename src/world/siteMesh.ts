@@ -3,7 +3,8 @@ import { hashText, makeRng } from '../site/random';
 import { type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotKey, plotTiles, sitePlots, tileAt } from '../site/site';
 import type { SkyUniforms } from './environment';
 import { DEPOSIT_COLOUR, Ground, type Pad, buildGround } from './ground';
-import { boulderGeometry, rockMaterial } from './rocks';
+import { boulderGeometry, oreStone, rockMaterial } from './rocks';
+import { groundTextures } from './terrainTextures';
 import { type LatticeBuffers, latticeBuffers, latticeGeometry, terrainMaterial, updateLatticeBuffers } from './terrainMesh';
 import { type WaterSurface, buildWater } from './water';
 
@@ -52,7 +53,7 @@ export function groundOf(group: THREE.Object3D): Ground | undefined {
 export function buildSiteMesh(site: Site, sky: SkyUniforms, pads: readonly Pad[] = []): THREE.Group {
   const land = landOf(site);
   const ground = buildGround(site, land, pads);
-  const material = terrainMaterial(sky, { climate: land.climate });
+  const material = terrainMaterial(sky, { climate: land.climate, beach: land.water !== 'none' });
 
   const near = latticeBuffers(ground.near, ground.nearLook, true);
   const half = site.size / 2;
@@ -83,7 +84,10 @@ export function buildSiteMesh(site: Site, sky: SkyUniforms, pads: readonly Pad[]
   const water = buildWater(ground, sky, land.water);
   const group = new THREE.Group();
   group.name = 'site';
-  group.add(terrain, ring, farMesh, water.mesh, depositMesh(site, ground), siteBorder(site, ground));
+  // Trees, boulders and other scenery go here (World.addScenery); they are freed with the rest of the group.
+  const scenery = new THREE.Group();
+  scenery.name = 'scenery';
+  group.add(terrain, ring, farMesh, water.mesh, depositMesh(site, ground), siteBorder(site, ground), scenery);
   group.userData.siteLand = { ground, near, water } satisfies SiteLand;
   return group;
 }
@@ -94,6 +98,11 @@ function landMesh(geometry: THREE.BufferGeometry, material: THREE.Material, name
   m.castShadow = true;
   m.receiveShadow = true;
   return m;
+}
+
+/** The group a Site's scenery (trees, boulders, props) is added to, inside a group made by `buildSiteMesh`. */
+export function sceneryOf(group: THREE.Object3D): THREE.Group | undefined {
+  return group.getObjectByName('scenery') as THREE.Group | undefined;
 }
 
 /** Press a building pad into the drawn ground of a Site (flattening it under the building). */
@@ -291,34 +300,29 @@ function depositMesh(site: Site, ground: Ground): THREE.InstancedMesh {
       const tx = px * SITE_SIZE + (i % SITE_SIZE);
       const tz = pz * SITE_SIZE + Math.floor(i / SITE_SIZE);
       const { x, z } = tileCentre(site, tx, tz);
-      // A heap: one or two big blocks of ore and smaller stones scattered around them.
-      const count = 5 + Math.floor(rng() * 3);
-      const cx = x + (rng() - 0.5) * 0.3;
-      const cz = z + (rng() - 0.5) * 0.3;
+      // An outcrop: two or three big blocks of ore close together, and smaller stones scattered around them.
+      const count = 8 + Math.floor(rng() * 4);
+      const bigOnes = 2 + Math.floor(rng() * 2);
+      const cx = x + (rng() - 0.5) * 0.35;
+      const cz = z + (rng() - 0.5) * 0.35;
       for (let k = 0; k < count; k++) {
-        const big = k < 2;
+        const big = k < bigOnes;
         const a = rng() * Math.PI * 2;
-        const d = big ? rng() * 0.18 : 0.15 + rng() * 0.3;
+        const d = big ? 0.05 + rng() * 0.2 : 0.2 + rng() * 0.32;
         rocks.push({
           tile: plotKey(tx, tz),
           x: cx + Math.cos(a) * d,
           z: cz + Math.sin(a) * d,
-          s: big ? 0.2 + rng() * 0.12 : 0.06 + rng() * 0.08,
+          s: big ? 0.2 + rng() * 0.14 : 0.05 + rng() * 0.08,
           r: rng() * Math.PI * 2,
           colour: DEPOSIT_COLOUR[tile.deposit],
-          shade: 0.8 + rng() * 0.35,
+          shade: 0.75 + rng() * 0.4,
         });
       }
     });
   }
-  const mesh = new THREE.InstancedMesh(boulderGeometry(3), rockMaterial(), rocks.length);
-  const colour = new THREE.Color();
-  // Pale ores are toned down to stone, so they read as rock, not ice.
-  rocks.forEach((rock, i) => {
-    colour.setHex(rock.colour);
-    const light = 0.3 * colour.r + 0.59 * colour.g + 0.11 * colour.b;
-    mesh.setColorAt(i, colour.multiplyScalar(rock.shade * Math.min(1, 0.42 / light)));
-  });
+  const mesh = new THREE.InstancedMesh(boulderGeometry(3), rockMaterial(groundTextures().albedo.rock), rocks.length);
+  rocks.forEach((rock, i) => mesh.setColorAt(i, oreStone(rock.colour).multiplyScalar(rock.shade)));
   mesh.name = 'deposits';
   mesh.castShadow = true;
   mesh.receiveShadow = true;

@@ -45,10 +45,10 @@ export function cameraOffset(
 
 /**
  * Where the haze starts and where it hides everything, for a camera this far from what it looks at.
- * The Site stays clear; the scenery fades out well before the drawn land ends.
+ * The Site stays clear; the haze builds up slowly and hides the land just before the drawn land ends.
  */
 export function hazeFor(distance: number): { near: number; far: number } {
-  return { near: distance + 40, far: distance + 190 };
+  return { near: distance + 35, far: distance + 330 };
 }
 
 /** How far past the Site's edge the player can move the view, in tiles: enough to look at the land next door. */

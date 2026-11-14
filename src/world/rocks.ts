@@ -88,7 +88,48 @@ function mergeByPosition(g: THREE.BufferGeometry): THREE.BufferGeometry {
   return out;
 }
 
-/** Rough stone, tinted per instance. */
-export function rockMaterial(): THREE.MeshStandardMaterial {
-  return new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.82, metalness: 0.05 });
+/**
+ * Rough stone, tinted per instance, with the grain of the rock photograph projected on it from three sides
+ * (`detail`: the rock colour map; its brightness, not its colour, is used, so the tint stays the rock's own).
+ */
+export function rockMaterial(detail?: THREE.Texture): THREE.MeshStandardMaterial {
+  const material = new THREE.MeshStandardMaterial({ vertexColors: true, roughness: 0.86, metalness: 0.02 });
+  if (!detail) return material;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.rDetail = { value: detail };
+    shader.vertexShader = shader.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vRockP;\nvarying vec3 vRockN;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvRockP = position * 0.9;\n#ifdef USE_INSTANCING\nvRockP += instanceMatrix[3].xyz * 0.37;\n#endif\nvRockN = normal;');
+    shader.fragmentShader = shader.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform sampler2D rDetail;\nvarying vec3 vRockP;\nvarying vec3 vRockN;')
+      .replace(
+        '#include <color_fragment>',
+        `#include <color_fragment>
+        vec3 bw = pow(abs(normalize(vRockN)), vec3(4.0));
+        bw /= bw.x + bw.y + bw.z;
+        vec3 grain = texture(rDetail, vRockP.yz).rgb * bw.x + texture(rDetail, vRockP.xz + 0.3).rgb * bw.y + texture(rDetail, vRockP.xy + 0.6).rgb * bw.z;
+        vec3 mean = textureLod(rDetail, vec2(0.5), 12.0).rgb;
+        diffuseColor.rgb *= clamp(dot(grain, vec3(0.333)) / max(dot(mean, vec3(0.333)), 0.02), 0.4, 1.7);`,
+      );
+  };
+  material.customProgramCacheKey = () => 'leap-rock';
+  return material;
+}
+
+/**
+ * Linear colour of stone stained by an ore whose colour is `hex` (sRGB, as in DEPOSIT_COLOUR): the ore's hue,
+ * muted, at the brightness of stone, so copper reads rusty, silicon blue-grey and aluminium pale, but none glows.
+ */
+export function oreStone(hex: number): THREE.Color {
+  const lin = new THREE.Color().setHex(hex);
+  const lum = 0.2126 * lin.r + 0.7152 * lin.g + 0.0722 * lin.b;
+  // Muted in sRGB (so orange stays orange, not pink): strong colours, like a blue far from grey, are muted more.
+  const s = [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255];
+  const sl = Math.max(0.3 * s[0]! + 0.59 * s[1]! + 0.11 * s[2]!, 0.01);
+  const dev = s.map((v) => v / sl - 1);
+  const muted = Math.min(0.6, 0.16 / Math.max(...dev.map(Math.abs), 0.01));
+  const hue = dev.map((d) => Math.pow(1 + d * muted, 2.2));
+  const hl = 0.2126 * hue[0]! + 0.7152 * hue[1]! + 0.0722 * hue[2]!;
+  const bright = (0.05 + Math.min(lum, 0.5) * 0.55) / hl;
+  return new THREE.Color(hue[0]! * bright, hue[1]! * bright, hue[2]! * bright);
 }

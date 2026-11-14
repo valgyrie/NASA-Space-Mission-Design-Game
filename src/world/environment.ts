@@ -101,7 +101,7 @@ const FRAGMENT = /* glsl */ `
     float haze = pow(1.0 - up, 14.0 / uHaze);
     colour = mix(colour, uHorizon, haze);
     // Below the horizon: the same haze, a little darker (land normally covers it).
-    if (y < 0.0) colour = uHorizon * mix(1.0, 0.82, smoothstep(0.0, -0.3, y));
+    if (y < 0.0) colour = uHorizon;
 
     // Glow around the sun, brighter near the horizon.
     float cosT = max(dot(d, uSunDir), 0.0);
@@ -231,10 +231,10 @@ export function createSkyEnvironment(renderer: THREE.WebGLRenderer, scene: THREE
 
   // Light from the sky is a little less blue than the sky looks, so white walls stay white in the shade.
   const envUniforms = (envSky.material as THREE.ShaderMaterial).uniforms;
-  for (const name of ['uZenith', 'uMid'] as const) {
+  for (const name of ['uZenith', 'uMid', 'uHorizon'] as const) {
     const c = envUniforms[name]!.value as THREE.Color;
     const grey = 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
-    c.lerp(new THREE.Color(grey, grey, grey), 0.6);
+    c.lerp(new THREE.Color(grey, grey, grey), 0.85);
   }
   const pmrem = new THREE.PMREMGenerator(renderer);
   const envTarget = pmrem.fromScene(envScene, 0.02, 0.1, 5000);
