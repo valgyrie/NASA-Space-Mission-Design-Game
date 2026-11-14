@@ -80,8 +80,9 @@ def research_lab(b):
     # Yard: lawn, trees, benches, bike shelter.
     P.slab(b, 7.2, 14.6, -14.6, 14.6, 'grass', t=0.03)
     P.slab(b, -14.6, 7.2, -14.6, -9.2, 'grass', t=0.03)
-    for (x, y, s) in ((10.5, 9.0, 1), (11.5, -1.5, 2), (-11.5, -12.0, 3), (10.0, -11.5, 4)):
-        P.tree(b, x, y, h=7.5, seed=s)
+    for i, bed in enumerate(((9.0, 13.5, 7.0, 11.0), (9.5, 13.5, -3.0, 0.5), (-13.8, -9.0, -13.6, -10.8),
+                             (8.5, 13.0, -13.2, -10.2))):
+        P.shrub_bed(b, *bed, seed=i + 1)
     for x in (-10.0, 1.5):
         b.span(x - 1.0, x + 1.0, -8.0, -7.5, PAD + 0.42, PAD + 0.5, 'wood', bevel=0.02)
         for s in (-1, 1):
@@ -239,8 +240,8 @@ def hq(b):
     P.slab(b, ex - 1.8, ex + 1.8, -14.6, y0 - 4.4, 'concrete', t=0.05)
     P.hedge(b, -13.8, -6.6, -8.4, -7.4)
     P.hedge(b, -1.4, 5.6, -8.4, -7.4)
-    for (x, y, s) in ((-11.0, -12.0, 1), (2.5, -12.5, 2), (-13.0, 11.5, 3)):
-        P.tree(b, x, y, h=8.0, seed=s)
+    for i, bed in enumerate(((-13.6, -8.4, -13.6, -10.6), (0.4, 5.2, -13.6, -10.8), (-14.2, -11.0, 9.4, 13.8))):
+        P.shrub_bed(b, *bed, seed=i + 5)
     P.slab(b, 6.6, 14.6, -6.5, 14.6, 'asphalt')
     for y in P.frange(-6.0, 13.0, 2.7):
         P.line(b, (9.0, y), (14.0, y))
@@ -309,7 +310,7 @@ def ground_station(b):
     b.cyl(0.55, 2.2, (0, 0, z0 - 0.1), 'whitePaint', segs=24, r2=0.3, node=el)
     # Equipment shelter with a door, a lit window, an air conditioner, a whip antenna and a cable tray.
     hx0, hx1, hy0, hy1 = 7.0, 13.6, -13.4, -8.2
-    roof = P.flat_block(b, hx0, hx1, hy0, hy1, 3.4, wall='cladLight', parapet=0.4, roof='gravelRoof')
+    roof = P.flat_block(b, hx0, hx1, hy0, hy1, 3.4, wall='corrGrey', parapet=0.4, roof='gravelRoof')
     P.door(b, '-y', hy0, 8.6, h=2.1)
     P.window(b, '-y', hy0, 11.6, PAD + 1.8, 1.6, 1.0, glass='windowLit', mullions=2)
     P.window(b, '+x', hx1, -10.8, PAD + 1.8, 1.6, 1.0, mullions=2)

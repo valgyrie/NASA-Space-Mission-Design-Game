@@ -31,17 +31,20 @@ TEX_OUT = os.path.join(ART, 'tex_out')
 #   weathering: strength of the rain streaks and grime blotches baked into the colour map (0 = none).
 PH_SETS = {
     'clad': ('box_profile_metal_sheet', 1024, 'grey', 0.8, 1.0, 0.32),
+    'corr': ('corrugated_iron_02', 1024, 'grey', 1.1, 1.0, 0.25),
+    'rust': ('worn_corrugated_iron', 1024, 'keep', 1.0, 0.85, 0.2),
     'concrete': ('concrete_floor_02', 1024, 'grey', 0.9, 1.0, 0.25),
-    'brick': ('red_brick_03', 1024, 'keep', 1.0, 0.95, 0.15),
+    'brick': ('factory_brick', 1024, 'keep', 1.0, 0.9, 0.15),
     'asphalt': ('asphalt_02', 512, 'keep', 1.0, 1.0, 0.0),
     'shutter': ('painted_metal_shutter', 512, 'grey', 0.8, 1.0, 0.2),
     'plaster': ('painted_plaster_wall', 512, 'grey', 0.8, 1.0, 0.3),
     'gravel': ('gravel_floor', 512, 'grey', 1.0, 1.0, 0.0),
-    'ore': ('gravel_floor', 512, 'grey', 2.2, 1.0, 0.0),
+    'ore': ('rocky_gravel', 1024, 'grey', 1.5, 1.0, 0.0),
 }
 # Roughness remap (G of the ARM map → a + b·G) per set; every set is dielectric (painted, mineral), so the
 # metallic channel is zeroed: the Poly Haven sheet-metal map would otherwise make painted walls mirror the sky.
-ROUGH = {'clad': (0.42, 0.45), 'shutter': (0.4, 0.4), 'plaster': (0.55, 0.4), 'concrete': (0.5, 0.45)}
+ROUGH = {'clad': (0.42, 0.45), 'corr': (0.45, 0.45), 'rust': (0.5, 0.45), 'shutter': (0.4, 0.4), 'plaster': (0.55, 0.4),
+         'concrete': (0.5, 0.45), 'gravel': (0.82, 0.15), 'ore': (0.8, 0.2), 'asphalt': (0.7, 0.25)}
 
 
 def fetch_textures():
@@ -257,7 +260,13 @@ def material(name, colour=(0.8, 0.8, 0.8), rough=0.6, metal=0.0, tex=None, tile=
             L.new(mix.outputs['Result'], bsdf.inputs['Base Color'])
         else:
             L.new(im.outputs['Color'], bsdf.inputs['Base Color'])
-        if alpha_clip:
+        if alpha_clip == 'blend':
+            # Blended (alphaMode BLEND): thin wire mesh fades to a light veil with distance instead of vanishing
+            # as alpha-tested mip levels do. The game keeps such meshes from casting shadows.
+            L.new(im.outputs['Alpha'], bsdf.inputs['Alpha'])
+            m.surface_render_method = 'BLENDED'
+            m.use_backface_culling = False
+        elif alpha_clip:
             # Alpha below 0.5 is cut away: the exporter writes alphaMode MASK.
             rnd = N.new('ShaderNodeMath')
             rnd.operation = 'ROUND'
@@ -311,10 +320,14 @@ def make_materials():
     material('cladRed', (0.2, 0.045, 0.028), tex='clad', tile=2.0)
     material('cladBlue', (0.035, 0.08, 0.19), tex='clad', tile=2.0)
     material('cladGreen', (0.09, 0.15, 0.11), tex='clad', tile=2.0)
-    material('concrete', (0.4, 0.39, 0.37), tex='concrete', tile=3.0)
-    material('concreteDark', (0.23, 0.23, 0.22), tex='concrete', tile=3.0)
+    # Corrugated iron (76 mm pitch) for older sheds, and weathered sheet with flaking paint and rust.
+    material('corrGrey', (0.34, 0.35, 0.34), tex='corr', tile=2.6)
+    material('corrSlate', (0.2, 0.25, 0.3), tex='corr', tile=2.6)
+    material('rust', (1.0, 1.0, 1.0), tex='rust', tile=1.2)
+    material('concrete', (0.33, 0.315, 0.29), tex='concrete', tile=3.0)
+    material('concreteDark', (0.2, 0.195, 0.18), tex='concrete', tile=3.0)
     material('precast', (0.5, 0.47, 0.42), tex='concrete', tile=3.0)
-    material('foundation', (0.33, 0.32, 0.3), tex='concrete', tile=4.0)
+    material('foundation', (0.3, 0.29, 0.27), tex='concrete', tile=4.0)
     material('brick', tex='brick', tile=1.6)
     material('asphalt', (0.7, 0.7, 0.7), tex='asphalt', tile=4.0)
     material('shutter', (0.38, 0.4, 0.42), tex='shutter', tile=2.0)
@@ -324,45 +337,50 @@ def make_materials():
     material('plasterGrey', (0.22, 0.23, 0.24), tex='plaster', tile=2.5)
     material('gravelRoof', (0.16, 0.16, 0.15), tex='gravel', tile=2.0)
     material('dirt', (0.2, 0.16, 0.12), tex='gravel', tile=3.0)
-    material('grass', (0.11, 0.19, 0.05), tex='gravel', tile=2.0)
+    material('grass', (0.07, 0.11, 0.035), tex='gravel', tile=2.0)
     material('hedge', (0.04, 0.1, 0.03), tex='gravel', tile=1.0, rough=0.9)
+    material('shrub', (0.06, 0.11, 0.035), tex='gravel', tile=0.8, rough=0.9)
+    material('shrubDark', (0.03, 0.065, 0.03), tex='gravel', tile=0.8, rough=0.9)
+    material('mulch', (0.1, 0.065, 0.04), tex='gravel', tile=1.5, rough=0.95)
     # Ore heaps: high-contrast gravel with a strong normal map; the game tints it with a muted Deposit colour.
-    material('ore', (1.0, 1.0, 1.0), tex='ore', tile=1.5, normal_strength=2.0)
+    material('ore', (1.0, 1.0, 1.0), tex='ore', tile=1.2, normal_strength=1.6, rough=0.9)
     # Plain painted and bare metals.
     material('steelDark', (0.035, 0.04, 0.045), rough=0.5, metal=0.3)
     material('steelGrey', (0.2, 0.21, 0.22), rough=0.45, metal=0.4)
-    material('galvanised', (0.56, 0.57, 0.58), rough=0.38, metal=1.0)
-    material('aluminium', (0.75, 0.76, 0.77), rough=0.3, metal=1.0)
+    # Weathered galvanised steel and mill-finish aluminium: dull, so they do not mirror the blue sky.
+    material('galvanised', (0.3, 0.31, 0.31), rough=0.6, metal=0.6)
+    material('aluminium', (0.42, 0.43, 0.44), rough=0.5, metal=0.7)
     material('steelYellow', (0.82, 0.5, 0.02), rough=0.45)
     material('steelRed', (0.3, 0.045, 0.025), rough=0.5)
     material('steelBlue', (0.04, 0.12, 0.32), rough=0.45)
-    material('whitePaint', (0.62, 0.62, 0.6), rough=0.45)
+    material('whitePaint', (0.56, 0.56, 0.53), rough=0.5)
     material('hazard', (0.02, 0.02, 0.02), rough=0.6)
-    material('glass', (0.2, 0.25, 0.28), rough=0.06, metal=0.85)
+    material('glass', (0.1, 0.12, 0.14), rough=0.06, metal=0.5)
     material('foil', (0.78, 0.52, 0.14), rough=0.32, metal=1.0)
-    material('skylight', (0.3, 0.33, 0.32), rough=0.3)
+    material('skylight', (0.16, 0.18, 0.17), rough=0.25)
     material('glassDark', (0.03, 0.035, 0.04), rough=0.08, metal=0.7)
-    material('frame', (0.28, 0.29, 0.3), rough=0.35, metal=0.8)
+    material('frame', (0.09, 0.095, 0.1), rough=0.45, metal=0.2)
     material('interior', (0.015, 0.015, 0.016), rough=0.95)
     material('rubber', (0.012, 0.012, 0.012), rough=0.75)
     material('wood', (0.36, 0.23, 0.12), rough=0.8)
     material('woodLight', (0.55, 0.42, 0.26), rough=0.8)
-    material('plastic', (0.7, 0.7, 0.68), rough=0.5)
+    material('plastic', (0.42, 0.42, 0.4), rough=0.55)
     material('lineWhite', (0.75, 0.75, 0.72), rough=0.7)
     material('copperPipe', (0.75, 0.42, 0.25), rough=0.35, metal=1.0)
-    material('fence', (1.0, 1.0, 1.0), tex='fence', tile=0.5, rough=0.4, metal=0.8, alpha_clip=True)
+    material('fence', (0.7, 0.71, 0.7), tex='fence', tile=0.5, rough=0.5, metal=0.6, alpha_clip='blend')
     material('grille', (1.0, 1.0, 1.0), tex='grille', tile=1.0, rough=0.5, metal=0.5)
     material('bark', (0.12, 0.08, 0.05), rough=0.9)
     material('leaves', (0.07, 0.16, 0.04), tex='gravel', tile=1.0, rough=0.85)
     # Lights: emissive, used sparingly.
-    material('lampLit', (1.0, 0.95, 0.85), emit=(1.0, 0.86, 0.62), strength=6.0)
-    material('windowLit', (0.9, 0.75, 0.5), emit=(1.0, 0.78, 0.45), strength=1.6, rough=0.2)
-    material('fire', (1.0, 0.4, 0.1), emit=(1.0, 0.36, 0.05), strength=8.0)
-    material('beacon', (1.0, 0.1, 0.05), emit=(1.0, 0.08, 0.03), strength=4.0)
+    # Lights are daytime-dim: a hint of glow, no bloom.
+    material('lampLit', (1.0, 0.95, 0.85), emit=(1.0, 0.86, 0.62), strength=1.2)
+    material('windowLit', (0.6, 0.5, 0.35), emit=(1.0, 0.78, 0.45), strength=0.35, rough=0.2)
+    material('fire', (1.0, 0.4, 0.1), emit=(1.0, 0.36, 0.05), strength=4.0)
+    material('beacon', (1.0, 0.1, 0.05), emit=(1.0, 0.08, 0.03), strength=1.5)
     # Car paint.
-    for name, c in (('carRed', (0.4, 0.03, 0.02)), ('carBlue', (0.03, 0.1, 0.3)), ('carWhite', (0.75, 0.76, 0.76)),
-                    ('carSilver', (0.4, 0.42, 0.44)), ('carBlack', (0.02, 0.02, 0.025))):
-        material(name, c, rough=0.25, metal=0.5)
+    for name, c in (('carRed', (0.2, 0.03, 0.022)), ('carBlue', (0.025, 0.055, 0.13)), ('carWhite', (0.58, 0.58, 0.56)),
+                    ('carSilver', (0.28, 0.29, 0.3)), ('carBlack', (0.018, 0.018, 0.02))):
+        material(name, c, rough=0.3, metal=0.35)
     # What a building makes: tinted in the game with the Factory's product colour.
     material('product', (1.0, 1.0, 1.0), rough=0.5)
     material('productMetal', (1.0, 1.0, 1.0), rough=0.28, metal=1.0)
@@ -540,6 +558,21 @@ class Builder:
         return self.mesh(bm, mat, loc, (rnd.uniform(0, 3), rnd.uniform(0, 3), rnd.uniform(0, 3)), node, 0, 2, 'box',
                          smooth=90, scale=scale)
 
+    def shrub(self, r, loc, mat, seed=0, node=None):
+        """A clipped shrub: a squat, lumpy dome (noise-displaced icosphere) sitting on the ground at loc."""
+        from mathutils import noise
+        bm = bmesh.new()
+        bmesh.ops.create_icosphere(bm, subdivisions=2, radius=r)
+        off = Vector((seed * 1.7, seed * 2.3, seed * 0.9))
+        for v in bm.verts:
+            d = v.co.normalized()
+            k = 1 + 0.22 * noise.fractal(d * 1.8 + off, 0.6, 2.0, 3) + 0.08 * noise.noise(d * 6 + off)
+            v.co = Vector((v.co.x * k, v.co.y * k, max(-0.1 * r, v.co.z * k * 0.75)))
+        bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+        x, y, z = loc
+        return self.mesh(bm, mat, (x, y, z + r * 0.55), (0, 0, random.Random(seed).uniform(0, 6)), node, 0, 2, 'box',
+                         smooth=90)
+
     def torus(self, R, r, loc, mat, rot=(0, 0, 0), node=None, segs=32, ring_segs=8):
         """A ring of tube radius r round the Z axis."""
         bm = bmesh.new()
@@ -594,32 +627,38 @@ class Builder:
             dist += seg
         return self.mesh(bm, mat, (0, 0, 0), (0, 0, 0), node, 0, 2, 'keep')
 
-    def mound(self, r, h, loc, mat, segs=32, seed=0, node=None, squash=(1, 1)):
-        """A heap of loose material: a rounded cone with a lumpy surface."""
-        rnd = random.Random(seed)
+    def mound(self, r, h, loc, mat, segs=44, seed=0, node=None, squash=(1, 1), rings=14):
+        """A heap of crushed material tipped from above: a cone at the angle of repose with a rounded crest and a
+        spreading toe, its surface broken up by fractal noise (slumps, ridges, lumps)."""
+        from mathutils import noise
         bm = bmesh.new()
-        rings = 10
-        prof = []
+        off = Vector((seed * 7.31, seed * 3.17, seed * 5.53))
+        grid = []
         for i in range(rings + 1):
-            t = i / rings
-            prof.append((r * (1 - t) ** 0.9 * (1 if i < rings else 0), h * (1 - (1 - t) ** 1.6)))
-        verts = [bm.verts.new((rr, 0, z)) for rr, z in prof]
-        edges = [bm.edges.new((verts[i], verts[i + 1])) for i in range(len(verts) - 1)]
-        bmesh.ops.spin(bm, geom=verts + edges, axis=(0, 0, 1), cent=(0, 0, 0), steps=segs, angle=math.tau)
-        bmesh.ops.remove_doubles(bm, verts=bm.verts, dist=1e-5)
-        phases = [rnd.uniform(0, math.tau) for _ in range(6)]
-        for v in bm.verts:
-            if v.co.z < 0.01 or v.co.xy.length < 0.01:
-                continue
-            a = math.atan2(v.co.y, v.co.x)
-            n = (0.08 * math.sin(3 * a + phases[0]) + 0.05 * math.sin(5 * a + phases[1]) + 0.04 * math.sin(9 * a + v.co.z + phases[2])
-                 + 0.03 * math.sin(17 * a + 3 * v.co.z + phases[3]) + rnd.uniform(-0.035, 0.035))
-            k = 1 + n
-            v.co.x *= k * squash[0]
-            v.co.y *= k * squash[1]
-            v.co.z *= 1 + 0.5 * n
+            t = 1 - i / rings  # 1 at the toe, 0 at the crest
+            row = []
+            for j in range(segs if i < rings else 1):
+                a = j / segs * math.tau
+                rr = r * t
+                prof = 0.62 * (1 - t) + 0.38 * (math.cos(math.pi * t) + 1) / 2
+                x, y = math.cos(a) * rr * squash[0], math.sin(a) * rr * squash[1]
+                p = Vector((x / r, y / r, prof)) * 1.6 + off
+                n1 = noise.fractal(p, 0.5, 2.0, 4)
+                n2 = noise.noise(p * 4.0)
+                k = 1 + 0.12 * n1 * (0.3 + t)
+                z = h * prof * (1 + 0.1 * n1) + 0.3 * n2 * min(1.0, 3 * t) * (1 - t)
+                z = max(z, 0.0) if i else 0.0
+                row.append(bm.verts.new((x * k, y * k, z)))
+            grid.append(row)
+        for i in range(rings):
+            a_row, b_row = grid[i], grid[i + 1]
+            for j in range(segs):
+                if len(b_row) == 1:
+                    bm.faces.new((a_row[j], a_row[(j + 1) % segs], b_row[0]))
+                else:
+                    bm.faces.new((a_row[j], a_row[(j + 1) % segs], b_row[(j + 1) % segs], b_row[j]))
         bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
-        return self.mesh(bm, mat, loc, (0, 0, 0), node, 0, 2, 'box', smooth=70)
+        return self.mesh(bm, mat, loc, (0, 0, 0), node, 0, 2, 'box', smooth=80)
 
     def tiled_quad(self, w, h, nu, nv, loc, mat, rot=(0, 0, 0), node=None, thick=0.0):
         """A quad w × h (XY plane, facing +Z) with its texture repeated nu × nv times, optionally a thin slab."""
@@ -799,7 +838,22 @@ def _densify(me, step=2.0, min_area=3.0):
     bm.free()
 
 
-def bake_ao(root, samples=32, distance=4.0, strength=0.95):
+def _dirt(co, wall):
+    """A multiplier (≤ 1) per loop: soft blotches everywhere, plus streaks on walls that run down from above."""
+    from mathutils import noise
+    out = np.ones(len(co), dtype=np.float32)
+    for i, (x, y, z) in enumerate(co):
+        b = noise.fractal(Vector((x / 7.0, y / 7.0, z / 7.0)), 0.6, 2.0, 3)
+        d = 0.09 * max(0.0, b + 0.2)
+        if wall[i]:
+            # Streaks: vary fast along the wall (x + y), slowly in height, strongest high up under ledges.
+            s = noise.noise(Vector(((x + y) / 1.3, z / 9.0, 0.5)))
+            d += 0.08 * max(0.0, s + 0.15)
+        out[i] = 1 - min(0.25, d)
+    return out
+
+
+def bake_ao(root, samples=32, distance=2.5, strength=0.95):
     """Bake ambient occlusion into a vertex colour (COLOR_0, which glTF multiplies into the base colour), and
     darken wall bases with splash grime. The scene ground (z = 0) and the model itself occlude."""
     scene = bpy.context.scene
@@ -848,12 +902,19 @@ def bake_ao(root, samples=32, distance=4.0, strength=0.95):
                 nz[li] = wn.z
         if o is objs[0]:
             print(f'AO {o.name}: raw min {ao.min():.2f} mean {ao.mean():.2f}')
-        ao = 1 - strength * (1 - np.clip(ao, 0, 1))
+        # Soften: the ground bounces light back, so a wall foot is not half black. 0 → 0.3, 0.5 → 0.74, 1 → 1.
+        ao = 0.3 + 0.7 * np.clip(ao, 0, 1) ** 0.75
+        ao = 1 - strength * (1 - ao)
         # Splash grime: walls are darker for the first ~1.5 m above the ground.
         wall = np.abs(nz) < 0.5
         t = np.clip((z - 0.3) / 1.4, 0, 1)
-        grime = np.where(wall, 0.72 + 0.28 * t * t * (3 - 2 * t), 1.0)
-        v = np.clip(ao * grime, 0.08, 1).astype(np.float32)
+        grime = np.where(wall, 0.78 + 0.22 * t * t * (3 - 2 * t), 1.0)
+        # Large, soft dirt patches and run-off streaks in world space (walls get vertical streaks).
+        co = np.empty((n, 3), dtype=np.float32)
+        for li, loop in enumerate(me.loops):
+            co[li] = mw @ me.vertices[loop.vertex_index].co
+        dirt = _dirt(co, wall)
+        v = np.clip(ao * grime * dirt, 0.08, 1).astype(np.float32)
         out = np.stack([v, v, v, np.ones_like(v)], 1)
         col.data.foreach_set('color', out.ravel())
     ground.hide_render = True

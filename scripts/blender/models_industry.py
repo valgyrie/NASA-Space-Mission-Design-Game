@@ -81,8 +81,8 @@ def metal_works(b):
     b.box((0.5, 3.2, 0.25), (fx + 2.7, fy, PAD + 2.75), 'steelDark', bevel=0.04)
     for s in (-1, 1):
         b.span(fx + 2.4, fx + 2.75, fy + s * 1.6 - 0.15, fy + s * 1.6 + 0.15, PAD, PAD + 4.6, 'steelDark', bevel=0.03)
-    b.lathe([(1.8, 0), (1.4, 0.6), (0.55, 1.6), (0.55, 1.7)], (fx, fy, PAD + 5.0), 'steelGrey', segs=24)
-    b.pipe([(fx, fy, PAD + 6.6), (fx, fy, PAD + 8.6), (x1 + 0.2, fy, PAD + 8.6)], 0.5, 'steelGrey', segs=20)
+    b.lathe([(1.8, 0), (1.4, 0.6), (0.55, 1.6), (0.55, 1.7)], (fx, fy, PAD + 5.0), 'rust', segs=24)
+    b.pipe([(fx, fy, PAD + 6.6), (fx, fy, PAD + 8.6), (x1 + 0.2, fy, PAD + 8.6)], 0.5, 'rust', segs=20)
     # Charging skip and slag box beside the furnace.
     b.span(fx - 1.5, fx + 1.5, fy - 5.2, fy - 3.6, PAD, PAD + 1.1, 'steelYellow', bevel=0.06)
     b.span(fx - 1.3, fx + 1.3, fy - 5.0, fy - 3.8, PAD + 1.0, PAD + 1.15, 'productMetal', bevel=0.02)
@@ -197,7 +197,7 @@ def mine(b):
         b.bar(c + d * 2.0 + Vector((0, 0, 1.1)), rope_to + side * off * 0.5, 0.07, 'steelDark', round_=True, segs=6)
     # Ore bin on the front of the headframe and an inclined conveyor gallery out to the stockpile.
     bx, by = sx + 0.5, sy - 5.2
-    b.span(bx - 1.8, bx + 1.8, by - 1.6, by + 1.6, 11.0, 15.0, 'cladGrey', bevel=0.06)
+    b.span(bx - 1.8, bx + 1.8, by - 1.6, by + 1.6, 11.0, 15.0, 'rust', bevel=0.06)
     b.span(bx - 1.9, bx + 1.9, by - 1.7, by + 1.7, 15.0, 15.25, 'steelGrey', bevel=0.04)
     b.lathe([(0.0, 8.8), (0.5, 8.8), (2.2, 11.0)], (bx, by, 0), 'steelGrey', segs=4, smooth=10)
     for (dx, dy) in ((-1.6, -1.4), (1.6, -1.4)):
@@ -216,7 +216,7 @@ def mine(b):
             q = c0.lerp(c1, k / n) + across * s * 0.9
             b.bar(q, q + Vector((0, 0, 1.6)), 0.1, 'steelGrey')
     b.bar(c0 + Vector((0, 0, 0.25)), c1 + Vector((0, 0, 0.25)), 1.3, 'rubber', h=0.12)
-    gal = b.bar(c0 + Vector((0, 0, 1.75)), c1 + Vector((0, 0, 1.75)), 2.2, 'cladGrey', h=0.12, bevel=0.02)
+    gal = b.bar(c0 + Vector((0, 0, 1.75)), c1 + Vector((0, 0, 1.75)), 2.2, 'rust', h=0.12, bevel=0.02)
     mid = c0.lerp(c1, 0.5)
     for s in (-1, 1):
         b.bar((mid.x + across.x * s * 1.0, mid.y + across.y * s * 1.0, PAD), mid + across * s * 1.0, 0.3, 'steelRed')
@@ -229,7 +229,7 @@ def mine(b):
         for i in range(7):
             a = b.rng.uniform(0, math.tau)
             d = pr + b.rng.uniform(0.0, 0.9)
-            r = b.rng.uniform(0.18, 0.42)
+            r = b.rng.uniform(0.12, 0.3)
             qx = max(-14.2, min(14.2, px + math.cos(a) * d))
             qy = max(-14.2, min(14.2, py + math.sin(a) * d))
             b.blob(r, (qx, qy, PAD + r * 0.4), 'ore', seed=k * 10 + i,
@@ -237,7 +237,7 @@ def mine(b):
 
     # Winding house: brick engine house with tall windows and the rope openings high on its gable.
     hx0, hx1, hy0, hy1 = -13.2, -1.8, -13.0, -3.0
-    zr, ze = P.gable_hall(b, hx0, hx1, hy0, hy1, eave=7.5, pitch=24, wall='brick', roof='cladRoof', plinth=0.6,
+    zr, ze = P.gable_hall(b, hx0, hx1, hy0, hy1, eave=7.5, pitch=24, wall='brick', roof='rust', plinth=0.6,
                           skylights=0, trim='steelDark')
     for a in (-11.0, -8.6, -4.2):
         P.window(b, '-y', hy0, a, PAD + 4.0, 1.4, 3.0, frame='steelDark', glass='glassDark', mullions=2, transoms=3)
@@ -264,7 +264,7 @@ def mine(b):
     for wy in (-5.5, -9.4):
         b.prism([(-0.95, 0.0), (0.95, 0.0), (1.15, 1.2), (-1.15, 1.2)], 3.2, (rx, wy, PAD + 0.75), 'steelDark', axis='y',
                 bevel=0.06)
-        b.mound(1.05, 0.55, (rx, wy, PAD + 1.9), 'ore', seed=4, squash=(0.95, 1.45))
+        b.mound(1.0, 0.75, (rx, wy, PAD + 1.85), 'ore', seed=4 + int(wy), squash=(0.95, 1.45), segs=24, rings=6)
         for dy in (-1.0, 1.0):
             for dx in (-0.72, 0.72):
                 b.cyl(0.36, 0.14, (rx + dx * 1.05, wy + dy, PAD + 0.36), 'steelGrey', segs=16,

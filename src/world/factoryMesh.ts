@@ -381,6 +381,62 @@ export function buildAssemblyHall(): THREE.Group {
   return g;
 }
 
+export const FLAG_WIDTH = 0.16;
+const FLAG_HEIGHT = 0.1;
+
+/** How far the flag cloth bulges out of its plane at (x, y) at time t (s): nothing at the pole, ripples run out. */
+export function clothOffset(x: number, y: number, t: number): number {
+  const u = Math.min(1, Math.max(0, x / FLAG_WIDTH));
+  return u * (0.008 * Math.sin(x * 50 - t * 3.0 + y * 10) + 0.003 * Math.sin(x * 120 - t * 5.3 + y * 25));
+}
+
+/**
+ * The HQ flag, named "flag": a blue cloth hanging from its hoist edge (local x = 0, top edge at y = 0) that waves
+ * gently, with the Company logo (meshes named "company-logo" sharing `logo`) on both faces, waving with it.
+ */
+function buildFlag(logo: THREE.MeshBasicMaterial): THREE.Group {
+  const flag = new THREE.Group();
+  flag.name = 'flag';
+  flag.rotation.y = 0.25;
+  const clothGeometry = new THREE.PlaneGeometry(FLAG_WIDTH, FLAG_HEIGHT, 16, 8).translate(FLAG_WIDTH / 2, -FLAG_HEIGHT / 2, 0);
+  const cloth = new THREE.Mesh(
+    clothGeometry,
+    new THREE.MeshStandardMaterial({ color: 0x2f5fa8, roughness: 0.9, side: THREE.DoubleSide }),
+  );
+  cloth.castShadow = true;
+  flag.add(cloth);
+  const waving: { geometry: THREE.BufferGeometry; rest: Float32Array }[] = [
+    { geometry: clothGeometry, rest: Float32Array.from(clothGeometry.attributes.position!.array) },
+  ];
+  for (const side of [-1, 1]) {
+    // Both logos read the right way round: the back one is the front one turned about the flag's middle.
+    const geometry = new THREE.PlaneGeometry(0.075, 0.075, 6, 6).translate(FLAG_WIDTH / 2, -FLAG_HEIGHT / 2, 0.0015);
+    if (side < 0) geometry.rotateY(Math.PI).translate(FLAG_WIDTH, 0, 0);
+    const emblem = new THREE.Mesh(geometry, logo);
+    emblem.name = 'company-logo';
+    flag.add(emblem);
+    waving.push({ geometry, rest: Float32Array.from(geometry.attributes.position!.array) });
+  }
+  let last = -1;
+  cloth.onBeforeRender = () => {
+    const t = performance.now() / 1000;
+    if (Math.abs(t - last) < 1 / 50) return;
+    last = t;
+    for (const { geometry, rest } of waving) {
+      const pos = geometry.attributes.position as THREE.BufferAttribute;
+      for (let i = 0; i < pos.count; i++) {
+        const x = rest[i * 3]!;
+        const y = rest[i * 3 + 1]!;
+        const u = x / FLAG_WIDTH;
+        pos.setXYZ(i, x - u * u * 0.006, y - u * u * 0.004, rest[i * 3 + 2]! + clothOffset(x, y, t));
+      }
+      pos.needsUpdate = true;
+      geometry.computeVertexNormals();
+    }
+  };
+  return flag;
+}
+
 /**
  * HQ: the Company's offices. A two-storey white block with a blue band and a glass front, a taller tower with a
  * rooftop mast, a flagpole with the Company's flag (plain until the logo maker, ticket 19), a lawn with trees, and
@@ -414,18 +470,12 @@ export function buildHQ(): THREE.Group {
   p.add(box(0.22, 0.025, 0.22), M.darkRoof, 0.1, 0.68, -0.28);
   p.bar(v(0.1, 0.69, -0.28), v(0.1, 0.92, -0.28), 0.01, M.steel);
   p.add(new THREE.SphereGeometry(0.014, 6, 4), M.bulb, 0.1, 0.93, -0.28);
-  // Flagpole and flag.
+  // Flagpole and a cloth flag with the Company logo on both faces.
   p.cyl(0.008, 0.56, M.pipe, 0.32, 0.05, 0.28, 6);
   const logo = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
-  const flag = p.add(box(0.16, 0.1, 0.006), colourMat(0x2f5fa8), 0.4, 0.55, 0.28);
-  flag.rotation.y = 0.15;
-  flag.name = 'flag';
-  for (const side of [-1, 1]) {
-    const emblem = new THREE.Mesh(new THREE.PlaneGeometry(0.085, 0.085), logo);
-    emblem.name = 'company-logo';
-    emblem.position.z = side * 0.004;
-    flag.add(emblem);
-  }
+  const flag = buildFlag(logo);
+  flag.position.set(0.33, 0.6, 0.28);
+  g.add(flag);
   const sign = p.add(new THREE.PlaneGeometry(0.1, 0.1), logo, -0.1, 0.33, 0.146);
   sign.name = 'company-logo';
   // Car park on the +x side with two cars.
@@ -435,7 +485,7 @@ export function buildHQ(): THREE.Group {
   p.lamp(-0.42, 0.42);
   // The realistic model keeps the code-made flag and logo, moved onto its flag pole and logo board.
   useModel(g, 'hq', {}, ['flag', 'company-logo'], (model) => {
-    model.getObjectByName('flag')?.position.copy(at(10.5 + 2.7, 12.0, 9.5));
+    model.getObjectByName('flag')?.position.copy(at(10.5 + 0.1, 13.0, 9.5));
     model.getObjectByName('company-logo')?.position.copy(at(-4.0, 10.0, 4.64));
   });
   return g;

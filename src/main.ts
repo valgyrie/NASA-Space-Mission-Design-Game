@@ -8,6 +8,7 @@ import { createDemo, demoStorage, type DemoEra } from './game/demo';
 import { showMainMenu } from './ui/mainMenu';
 import { showNewCompany } from './ui/newCompany';
 import { World } from './world/world';
+import { preloadBuildingModels } from './world/buildingModels';
 import { showOnline } from './ui/online';
 import { showTitleScreen } from './ui/titleScreen';
 import { addOwnedPlots } from './game/plots';
@@ -53,6 +54,7 @@ world.onFrame((seconds) => {
 });
 
 async function startGame(game: SaveData, options?: { storage: SaveStorage; demoEra: DemoEra }): Promise<void> {
+  titlePreview = false;
   const done = showLoading(root, world);
   const playing = import('./playSite');
   // Let the rendered shot paint before generating the Site; never hold a completed load for a tip.
@@ -69,6 +71,7 @@ async function startGame(game: SaveData, options?: { storage: SaveStorage; demoE
   }
 }
 function startNew(): void {
+  titlePreview = false;
   showNewCompany(root, {
     onBack: () => { previewCompany(); mainMenu(); },
     onPreview: (seed, place) => world.showSite(generateSite(seed, siteClimateFor(place))),
@@ -97,5 +100,10 @@ function mainMenu(): void {
     },
   });
 }
-previewCompany();
+// Draw the title Site once the building models are in (or after a few seconds), so the simple stand-in models never
+// flash up first; skip it if the player has already moved on to a game or the new-Company screen.
+let titlePreview = true;
+void preloadBuildingModels(4000).then(() => {
+  if (titlePreview) previewCompany();
+});
 showTitleScreen(root, mainMenu);

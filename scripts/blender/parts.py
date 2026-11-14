@@ -46,9 +46,14 @@ def frot(face):
 # Ground
 # ---------------------------------------------------------------------------------------------
 
-def pad(b, x0=-14.8, x1=14.8, y0=-14.8, y1=14.8, mat='concrete', h=PAD):
-    """The slab the building stands on, with a chamfered edge."""
+def pad(b, x0=-14.8, x1=14.8, y0=-14.8, y1=14.8, mat='concrete', h=PAD, joints=6.0):
+    """The slab the building stands on, with a chamfered edge and sawn expansion joints every `joints` metres."""
     b.span(x0, x1, y0, y1, -0.6, h, mat, bevel=0.12, segs=2)
+    if joints:
+        for x in frange(x0 + joints, x1 - 1.0, joints):
+            b.span(x - 0.03, x + 0.03, y0 + 0.1, y1 - 0.1, h - 0.01, h + 0.006, 'concreteDark', bevel=0)
+        for y in frange(y0 + joints, y1 - 1.0, joints):
+            b.span(x0 + 0.1, x1 - 0.1, y - 0.03, y + 0.03, h - 0.01, h + 0.006, 'concreteDark', bevel=0)
 
 
 def slab(b, x0, x1, y0, y1, mat, z=PAD, t=0.04):
@@ -178,7 +183,7 @@ def window(b, face, p, along, z, w, h, frame='frame', glass='glass', mullions=1,
         zz = z - h / 2 + i * h / (transoms + 1)
         fbox(b, face, p, along, 0.06, zz, w - 0.1, 0.1, 0.06, frame, bevel=0, node=node)
     if sill:
-        fbox(b, face, p, along, 0.12, z - h / 2 - 0.05, w + 0.15, 0.25, 0.08, 'aluminium', bevel=0, node=node)
+        fbox(b, face, p, along, 0.12, z - h / 2 - 0.05, w + 0.15, 0.25, 0.08, 'frame', bevel=0, node=node)
 
 
 def window_band(b, face, p, a0, a1, z, h, pitch=1.5, frame='frame', glass='glass', node=None):
@@ -355,18 +360,60 @@ def drum(b, x, y, z=PAD, mat='steelBlue', node=None):
         b.cyl(0.3, 0.04, (x, y, z + zz), mat, segs=20, node=node)
 
 
+def _interp(pts, x):
+    for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+        if x0 <= x <= x1:
+            t = (x - x0) / (x1 - x0)
+            t = t * t * (3 - 2 * t)
+            return y0 + (y1 - y0) * t
+    return pts[0][1] if x < pts[0][0] else pts[-1][1]
+
+
+def car_body(b, paint, node=None):
+    """A saloon body lofted from cross-sections: rounded plan, tumblehome, a glasshouse with tinted windows
+    (sloped faces above the waist) and a painted roof. 4.7 m long, front towards +x, on the ground at z = 0."""
+    import bmesh
+    top = [(-2.36, 0.72), (-2.25, 0.93), (-1.85, 0.99), (-1.2, 1.4), (0.25, 1.43), (0.95, 0.98), (2.15, 0.84),
+           (2.36, 0.62)]
+    xs = [-2.36, -2.3, -2.15, -1.95, -1.7, -1.45, -1.2, -0.8, -0.4, 0.0, 0.25, 0.5, 0.75, 0.95, 1.3, 1.7, 2.05, 2.25,
+          2.36]
+    bm = bmesh.new()
+    rings = []
+    for x in xs:
+        zt = _interp(top, x)
+        u = abs(x) / 2.36
+        hw = 0.89 * (1 - 0.3 * u ** 8)
+        zb = 0.32 + 0.06 * u ** 6
+        zm = min(0.93, zt - 0.04)
+        k = max(0.0, min(1.0, (zt - 0.97) / 0.4))
+        hu = hw * (1 - 0.2 * k)
+        sec = [(0.0, zb), (hw * 0.9, zb), (hw, zb + 0.14), (hw, zm), (hu, max(zm + 0.01, zt - 0.07)), (hu * 0.8, zt),
+               (0.0, zt + 0.01)]
+        ring = [bm.verts.new((x, yy, zz)) for yy, zz in sec]
+        ring += [bm.verts.new((x, -yy, zz)) for yy, zz in reversed(sec[1:-1])]
+        rings.append(ring)
+    n = len(rings[0])
+    for r0, r1 in zip(rings, rings[1:]):
+        for j in range(n):
+            bm.faces.new((r0[j], r0[(j + 1) % n], r1[(j + 1) % n], r1[j]))
+    bm.faces.new(list(reversed(rings[0])))
+    bm.faces.new(rings[-1])
+    bmesh.ops.recalc_face_normals(bm, faces=bm.faces)
+    for f in bm.faces:
+        c = f.calc_center_median()
+        f.material_index = 1 if c.z > 0.97 and abs(f.normal.z) < 0.9 else 0
+    return b.mesh(bm, [paint, 'glassDark'], (0, 0, 0), (0, 0, 0), node, 0, 2, 'box', smooth=40)
+
+
 def car(b, x, y, rot=0.0, paint='carSilver', z=PAD, node=None):
-    """A saloon car, 4.6 m long, front towards local +x."""
+    """A saloon car, 4.7 m long, front towards local +x."""
     from mathutils import Matrix
-    side = [(-2.3, 0.35), (2.3, 0.35), (2.32, 0.62), (2.2, 0.82), (1.1, 0.95), (-1.9, 0.98), (-2.32, 0.85), (-2.35, 0.5)]
-    green = [(-1.75, 0.94), (0.95, 0.94), (0.3, 1.42), (-1.25, 1.45), (-1.85, 1.0)]
     m = Matrix.Translation((x, y, z)) @ Matrix.Rotation(rot, 4, 'Z')
 
     def put(o):
         o.matrix_basis = m @ o.matrix_basis
-    put(b.prism(side, 1.78, (0, 0, 0), paint, axis='y', bevel=0.12, segs=2, node=node))
-    put(b.prism(green, 1.56, (0, 0, 0), 'glassDark', axis='y', bevel=0.08, segs=2, node=node))
-    put(b.box((1.5, 1.42, 0.05), (-0.48, 0, 1.455), paint, bevel=0.03, node=node))
+    put(car_body(b, paint, node=node))
+    put(b.box((4.5, 1.7, 0.12), (0, 0, 0.3), 'rubber', bevel=0.04, node=node))
     for wx in (-1.45, 1.45):
         for wy in (-0.8, 0.8):
             put(b.cyl(0.33, 0.24, (wx, wy - 0.12, 0.33), 'rubber', segs=20, rot=(math.pi / 2 * (1 if wy < 0 else -1), 0, 0),
@@ -378,29 +425,34 @@ def car(b, x, y, rot=0.0, paint='carSilver', z=PAD, node=None):
         put(b.box((0.05, 0.3, 0.1), (-2.36, wy, 0.75), 'beacon', bevel=0.02, node=node))
 
 
-def tree(b, x, y, h=7.0, seed=0, z=PAD, node=None):
-    """A deciduous tree: trunk, three limbs, and a crown of many irregular leaf clumps."""
+def shrub_bed(b, x0, x1, y0, y1, seed=0, density=0.35, node=None):
+    """A planted bed: bark mulch inside a concrete edging, with low clipped shrubs (no trees: real trees are
+    scattered over the land by the game)."""
     import random
     rnd = random.Random(seed)
-    b.cyl(0.2, h * 0.45, (x, y, z), 'bark', segs=10, r2=0.13, node=node)
-    fork = Vector((x, y, z + h * 0.45))
-    cr = h * 0.3  # crown radius
-    centre = Vector((x, y, z + h * 0.66))
-    for k in range(3):
-        a = k / 3 * math.tau + rnd.uniform(-0.4, 0.4)
-        tip = centre + Vector((math.cos(a) * cr * 0.5, math.sin(a) * cr * 0.5, rnd.uniform(-0.2, 0.6)))
-        b.bar(fork, tip, 0.14, 'bark', round_=True, segs=6, node=node)
-    b.blob(cr * 0.75, centre, 'leaves', seed=seed * 31, node=node, scale=(1, 1, 0.8))
-    for i in range(13):
-        u = rnd.uniform(0, math.tau)
-        v = rnd.uniform(-0.5, 1.0)
-        d = Vector((math.cos(u) * math.sqrt(1 - v * v * 0.6), math.sin(u) * math.sqrt(1 - v * v * 0.6), v * 0.75))
-        p = centre + d * cr * rnd.uniform(0.55, 0.85)
-        b.blob(cr * rnd.uniform(0.3, 0.45), p, 'leaves', seed=seed * 31 + i + 1, node=node)
+    b.span(x0, x1, y0, y1, PAD, PAD + 0.08, 'mulch', bevel=0.02, segs=1, node=node)
+    for (a0, a1, c0, c1) in ((x0 - 0.12, x1 + 0.12, y0 - 0.12, y0), (x0 - 0.12, x1 + 0.12, y1, y1 + 0.12),
+                             (x0 - 0.12, x0, y0, y1), (x1, x1 + 0.12, y0, y1)):
+        b.span(a0, a1, c0, c1, PAD, PAD + 0.16, 'concrete', bevel=0.02, segs=1, node=node)
+    n = max(2, int((x1 - x0) * (y1 - y0) * density))
+    for i in range(n):
+        r = rnd.uniform(0.35, 0.7)
+        px = rnd.uniform(x0 + r * 0.8, x1 - r * 0.8)
+        py = rnd.uniform(y0 + r * 0.8, y1 - r * 0.8)
+        b.shrub(r, (px, py, PAD + 0.05), rnd.choice(('hedge', 'shrub', 'shrubDark')), seed=seed * 101 + i, node=node)
 
 
 def hedge(b, x0, x1, y0, y1, h=1.0, node=None):
-    b.span(x0, x1, y0, y1, PAD, PAD + h, 'hedge', bevel=0.3, segs=3)
+    """A clipped hedge: a row of overlapping lumpy shrubs (so its top and sides are not machine-smooth)."""
+    long_x = (x1 - x0) >= (y1 - y0)
+    length = (x1 - x0) if long_x else (y1 - y0)
+    r = min(x1 - x0, y1 - y0) * 0.55
+    n = max(2, round(length / (r * 1.25)))
+    for i in range(n):
+        t = (i + 0.5) / n
+        px = x0 + (x1 - x0) * t if long_x else (x0 + x1) / 2
+        py = (y0 + y1) / 2 if long_x else y0 + (y1 - y0) * t
+        b.shrub(r, (px, py, PAD - r * 0.1), 'hedge' if i % 3 else 'shrub', seed=int(px * 13 + py * 7) + i, node=node)
 
 
 def fence(b, pts, h=2.2, post=2.5, node=None):

@@ -30,7 +30,21 @@ were asked to fix:
   orange blobs; smoke is faceted puffs; level signs are the old pole with gold icosahedra.
 - Building foundations stick out over slopes like a table, with the ground falling away under the edge.
 
-### This machine (Windows 11, differs from the notes further down)
+### Session 3 (14 Nov, evening)
+
+A third orchestrator (Claude Fable) picked up here. The session-2 notes about "this machine" below did not hold on
+the team's Windows machine in `Downloads/Space-apps`: check before trusting them.
+
+- **Node is not on PATH** there: `export PATH="$PWD/.leap/node:$PATH"` first (the launcher's private Node).
+- **Chrome is not installed; Edge works.** Run `shot.mjs` without `--browser`.
+- **Dev server:** `.claude/launch.json` sits one folder above the repo (`Space-apps/.claude/`), name `leap-dev`. An
+  older dev server may still hold port 5173; the preview tool then picks 5174. Pass `--url http://localhost:5174/`.
+- Seen at the start of session 3 (Demo Era 2): the sky was blue with clouds (good). Still wrong: land washed out by
+  haze, a tiling grid in the rock, blurry sand, Deposits as flat neon patches, a sea that repeats, foundations
+  overhanging slopes, buildings white and plasticky, old smoke puffs and level signs. Streams 1 and 2 were re-run
+  with that list.
+
+### This machine (session 2's notes: Windows 11, differs from the notes further down)
 
 - **Node is on PATH** (v24, `C:\Program Files\nodejs`), and `node_modules` is installed. `npm run typecheck` and
   `npx vitest run` work from the repo root (463 tests on 14 Nov). No need for `.leap/node`.

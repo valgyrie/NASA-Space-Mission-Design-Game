@@ -142,30 +142,128 @@ export function buildingGroup(name: string): THREE.Group {
   return g;
 }
 
-/** Smoke puffs that rise from (x, y, z): a "smoke" group whose children the World animates. */
-export function addSmoke(g: THREE.Group, x: number, y: number, z: number, puffs = 4): void {
+let smokeTexture: THREE.Texture | null | undefined;
+/** A soft, cloudy puff (made once, on first use; null outside a browser). */
+function smokeMap(): THREE.Texture | null {
+  if (smokeTexture !== undefined) return smokeTexture;
+  if (typeof document === 'undefined') return (smokeTexture = null);
+  const size = 128;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return (smokeTexture = null);
+  // Overlapping soft blobs make a cauliflower edge instead of a perfect disc.
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  for (let i = 0; i < 26; i++) {
+    const a = rnd() * Math.PI * 2;
+    const d = rnd() * size * 0.2;
+    const x = size / 2 + Math.cos(a) * d;
+    const y = size / 2 + Math.sin(a) * d;
+    const r = size * (0.14 + rnd() * 0.16);
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, r);
+    const shade = Math.round(205 + rnd() * 40);
+    grad.addColorStop(0, `rgba(${shade},${shade},${shade},0.45)`);
+    grad.addColorStop(1, `rgba(${shade},${shade},${shade},0)`);
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, size, size);
+  }
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  return (smokeTexture = texture);
+}
+
+/** How opaque a puff is at `k` (0 when it leaves the chimney, 1 when it is gone): quick fade in, slow fade out. */
+export function smokeOpacity(k: number): number {
+  const t = Math.min(1, Math.max(0, k));
+  return 0.9 * Math.min(1, t * 6) * (1 - t) ** 1.3;
+}
+
+/**
+ * Smoke puffs that rise from (x, y, z): a "smoke" group whose children the World animates (it sets each puff's
+ * position and scale, 0.5 → 2.1 as the puff rises). Each puff holds a soft camera-facing sprite that fades with
+ * its scale.
+ */
+export function addSmoke(g: THREE.Group, x: number, y: number, z: number, puffs = 5): void {
   const smoke = new THREE.Group();
   smoke.name = 'smoke';
   smoke.position.set(x, y, z);
   for (let i = 0; i < puffs; i++) {
-    const puff = new THREE.Mesh(new THREE.IcosahedronGeometry(0.05, 0), M.smoke);
+    const puff = new THREE.Group();
     puff.userData.phase = i / puffs;
+    const material = new THREE.SpriteMaterial({
+      map: smokeMap(),
+      color: 0xa4a4a0,
+      transparent: true,
+      depthWrite: false,
+      opacity: 0,
+      rotation: i * 1.9,
+    });
+    const sprite = new THREE.Sprite(material);
+    sprite.scale.setScalar(0.22);
+    sprite.onBeforeRender = () => {
+      const k = (puff.scale.x - 0.5) / 1.6;
+      material.opacity = smokeOpacity(k);
+      material.rotation = i * 1.9 + k * 0.8;
+    };
+    puff.add(sprite);
     smoke.add(puff);
   }
   g.add(smoke);
 }
 
+/** A flat five-pointed star of outer radius r, facing +z. */
+function starGeometry(r: number): THREE.BufferGeometry {
+  const shape = new THREE.Shape();
+  for (let i = 0; i < 10; i++) {
+    const a = Math.PI / 2 + (i * Math.PI) / 5;
+    const rr = i % 2 ? r * 0.42 : r;
+    if (i === 0) shape.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+    else shape.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+  }
+  shape.closePath();
+  return new THREE.ExtrudeGeometry(shape, { depth: 0.002, bevelEnabled: false });
+}
+
+const SIGN = {
+  board: new THREE.MeshStandardMaterial({ color: 0x1f3a5c, roughness: 0.55, metalness: 0.1 }),
+  frame: new THREE.MeshStandardMaterial({ color: 0x8a8f94, roughness: 0.45, metalness: 0.7 }),
+  star: new THREE.MeshStandardMaterial({
+    color: 0xf0c048,
+    roughness: 0.35,
+    metalness: 0.6,
+    emissive: 0x6a4500,
+    emissiveIntensity: 0.5,
+  }),
+};
+
 /**
- * A small sign at the front-left corner of a building: one gold star per level. Named "level" so the World
- * can replace it when the level changes.
+ * A small sign board on two posts at the front-left corner of a building, turned to face the start view, with
+ * one gold star per level on both faces. Named "level" so the World can replace it when the level changes.
  */
 export function buildLevelSign(level: number): THREE.Group {
   const g = new THREE.Group();
   g.name = 'level';
   const p = parts(g);
-  const height = 0.1 + level * 0.09;
-  p.add(new THREE.CylinderGeometry(0.009, 0.009, height, 5), M.dark, 0, 0.05 + height / 2, 0);
-  for (let i = 0; i < level; i++) p.add(new THREE.IcosahedronGeometry(0.04, 0), M.gold, 0, 0.15 + i * 0.09, 0);
+  const n = Math.max(1, level);
+  const step = 0.028;
+  const w = 0.03 + n * step;
+  const h = 0.042;
+  const y = 0.075; // board centre above the pad
+  const sign = new THREE.Group();
+  sign.rotation.y = Math.PI / 4;
+  g.add(sign);
+  for (const sx of [-1, 1]) {
+    p.add(new THREE.CylinderGeometry(0.0035, 0.0035, y + h / 2, 8), SIGN.frame, (sx * (w - 0.01)) / 2, (y + h / 2) / 2, 0, sign);
+  }
+  p.add(new THREE.BoxGeometry(w + 0.006, h + 0.006, 0.006), SIGN.frame, 0, y, 0, sign);
+  p.add(new THREE.BoxGeometry(w, h, 0.008), SIGN.board, 0, y, 0, sign);
+  const star = starGeometry(0.0115);
+  for (let i = 0; i < n; i++) {
+    const x = (i - (n - 1) / 2) * step;
+    p.add(star, SIGN.star, x, y, 0.004, sign);
+    p.add(star, SIGN.star, x, y, -0.004, sign).rotation.y = Math.PI;
+  }
   return g;
 }
 

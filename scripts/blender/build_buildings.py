@@ -72,7 +72,21 @@ if not only:
         export_lights=False,
         export_animations=False,
         use_selection=False,
+        # Draco: geometry is ~85 % of the file otherwise. The game decodes it with three's DRACOLoader; its
+        # decoder (from node_modules/three) is copied next to the GLB below.
+        export_draco_mesh_compression_enable=True,
+        export_draco_mesh_compression_level=7,
+        export_draco_position_quantization=14,
+        export_draco_normal_quantization=10,
+        export_draco_texcoord_quantization=12,
+        export_draco_color_quantization=8,
+        export_draco_generic_quantization=12,
     )
+    import shutil
+    draco = os.path.join(lib.ROOT, 'node_modules', 'three', 'examples', 'jsm', 'libs', 'draco', 'gltf')
+    os.makedirs(os.path.join(os.path.dirname(OUT), 'draco'), exist_ok=True)
+    for f in ('draco_decoder.wasm', 'draco_wasm_wrapper.js'):
+        shutil.copyfile(os.path.join(draco, f), os.path.join(os.path.dirname(OUT), 'draco', f))
     print(f'EXPORTED {OUT}: {os.path.getsize(OUT) / 1e6:.2f} MB')
 
 if preview:

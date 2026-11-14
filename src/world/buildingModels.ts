@@ -3,11 +3,12 @@ import * as THREE from 'three';
 /**
  * The realistic building models made in Blender (scripts/blender/build_buildings.py → public/models/buildings.glb).
  * Builders stay synchronous: they return the old code-built model, and `useModel` swaps it for a copy of the
- * Blender model once the file has loaded (at once if it already has). If the file fails to load, the code-built
- * model simply stays.
+ * Blender model once the file has loaded (at once if it already has: main.ts preloads it before the title Site).
+ * If the file fails to load, the code-built model simply stays.
  *
- * The GLB is in metres; a 30 m footprint fills the 0.9-unit model box, so copies are scaled by METRE.
- * Nodes carry their moving-part role in glTF extras (`userData.role`), renamed here to the names the World animates.
+ * The GLB is in metres and Draco-compressed (decoder in public/models/draco/); a 30 m footprint fills the 0.9-unit
+ * model box, so copies are scaled by METRE. Nodes carry their moving-part role in glTF extras (`userData.role`),
+ * renamed here to the names the World animates.
  */
 export const METRE = 0.9 / 30;
 
@@ -24,8 +25,18 @@ let loading: Promise<Map<string, THREE.Object3D> | null> | null = null;
 
 function load(): Promise<Map<string, THREE.Object3D> | null> {
   if (loading) return loading;
-  loading = import('three/examples/jsm/loaders/GLTFLoader.js')
-    .then(({ GLTFLoader }) => new GLTFLoader().loadAsync(import.meta.env.BASE_URL + 'models/buildings.glb'))
+  loading = Promise.all([
+    import('three/examples/jsm/loaders/GLTFLoader.js'),
+    import('three/examples/jsm/loaders/DRACOLoader.js'),
+  ])
+    .then(async ([{ GLTFLoader }, { DRACOLoader }]) => {
+      const draco = new DRACOLoader().setDecoderPath(import.meta.env.BASE_URL + 'models/draco/');
+      try {
+        return await new GLTFLoader().setDRACOLoader(draco).loadAsync(import.meta.env.BASE_URL + 'models/buildings.glb');
+      } finally {
+        draco.dispose();
+      }
+    })
     .then((gltf) => {
       const map = new Map<string, THREE.Object3D>();
       for (const node of [...gltf.scene.children]) {
@@ -33,7 +44,8 @@ function load(): Promise<Map<string, THREE.Object3D> | null> {
           const role = o.userData.role as string | undefined;
           if (role) o.name = role;
           if (o instanceof THREE.Mesh) {
-            o.castShadow = true;
+            // See-through wire mesh (fences) would cast solid shadows.
+            o.castShadow = !(o.material as THREE.Material).transparent;
             o.receiveShadow = true;
           }
         });
@@ -49,14 +61,34 @@ function load(): Promise<Map<string, THREE.Object3D> | null> {
   return loading;
 }
 
+/**
+ * Start loading the models and resolve when they are ready, failed, or `timeout` ms have passed, whichever is
+ * first (so a slow connection never holds the game up; late models still swap in when they arrive).
+ */
+export function preloadBuildingModels(timeout = 5000): Promise<void> {
+  if (typeof window === 'undefined') return Promise.resolve();
+  return Promise.race([load().then(() => undefined), new Promise<void>((r) => setTimeout(r, timeout))]);
+}
+
 /** Children added by the World or by code that a model swap keeps. */
 const KEEP = ['foundation', 'level', 'crane', 'smoke'];
+
+/**
+ * The colour ore heaps take for a Deposit colour: the same hue, but muted and darkened like crushed rock
+ * (the Deposit colours are bright map colours, and the ore texture adds its own grain on top).
+ */
+export function oreTint(hex: number): number {
+  const hsl = { h: 0, s: 0, l: 0 };
+  new THREE.Color(hex).getHSL(hsl);
+  return new THREE.Color().setHSL(hsl.h, hsl.s * 0.45, Math.min(0.5, 0.25 + hsl.l * 0.25)).getHex();
+}
 
 const tinted = new Map<string, THREE.Material>();
 function tintOf(m: THREE.Material, tint: ModelTint): THREE.Material {
   const key = m.name as keyof ModelTint;
-  const hex = tint[key] ?? (key.startsWith('product') ? tint.product : undefined);
+  let hex = tint[key] ?? (key.startsWith('product') ? tint.product : undefined);
   if (hex === undefined || !(m instanceof THREE.MeshStandardMaterial)) return m;
+  if (key === 'ore') hex = oreTint(hex);
   const id = `${m.uuid}:${hex}`;
   let t = tinted.get(id);
   if (!t) {
