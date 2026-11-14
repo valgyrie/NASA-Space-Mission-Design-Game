@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { FactoryKind } from '../economy/part';
 import { RAW_MATERIALS } from '../economy/rawMaterial';
 import { M, PRODUCT_COLOUR, addSmoke, box, buildingGroup, colourMat, gableRoof, parts, v } from './buildingParts';
+import { at, useModel } from './buildingModels';
 import { DEPOSIT_COLOUR } from './siteMesh';
 
 /**
@@ -221,6 +222,10 @@ export function buildFactory(kind: FactoryKind): THREE.Group {
   const p = parts(g);
   p.add(box(0.9, 0.05, 0.9), M.concrete, 0, 0.025, 0);
   BUILDERS[kind](g, p);
+  // The realistic model replaces the code-built one once it has loaded; Metal Works' smoke moves to its chimney.
+  useModel(g, kind, { product: PRODUCT_COLOUR[kind] }, [], (model) => {
+    model.getObjectByName('smoke')?.position.copy(at(-6.5, 32.6, -12.6));
+  });
   return g;
 }
 
@@ -272,6 +277,7 @@ export function buildWarehouse(): THREE.Group {
   p.add(box(0.06, 0.05, 0.06), M.wood, 0, 0.06, -0.085, fork);
   p.add(box(0.05, 0.01, 0.05), colourMat(DEPOSIT_COLOUR.copper), 0, 0.09, -0.085, fork);
   p.lamp(-0.42, 0.42);
+  useModel(g, 'warehouse');
   return g;
 }
 
@@ -318,6 +324,7 @@ export function buildResearchLab(): THREE.Group {
   }
   p.add(box(0.2, 0.03, 0.06), M.wood, -0.25, 0.08, 0.3);
   p.lamp(0.4, -0.4);
+  useModel(g, 'researchLab');
   return g;
 }
 
@@ -370,6 +377,7 @@ export function buildAssemblyHall(): THREE.Group {
   p.bar(v(-0.06, 0.36, 0), v(-0.06, 0.22, 0), 0.004, M.dark, gantry);
   p.add(box(0.03, 0.02, 0.03), M.steel, -0.06, 0.21, 0, gantry);
   p.lamp(0.42, 0.42);
+  useModel(g, 'assemblyHall', { productMetal: PRODUCT_COLOUR.metalWorks, productPV: PRODUCT_COLOUR.solarFab });
   return g;
 }
 
@@ -411,6 +419,7 @@ export function buildHQ(): THREE.Group {
   const logo = new THREE.MeshBasicMaterial({ side: THREE.DoubleSide, transparent: true });
   const flag = p.add(box(0.16, 0.1, 0.006), colourMat(0x2f5fa8), 0.4, 0.55, 0.28);
   flag.rotation.y = 0.15;
+  flag.name = 'flag';
   for (const side of [-1, 1]) {
     const emblem = new THREE.Mesh(new THREE.PlaneGeometry(0.085, 0.085), logo);
     emblem.name = 'company-logo';
@@ -424,6 +433,11 @@ export function buildHQ(): THREE.Group {
   p.add(box(0.07, 0.04, 0.11), colourMat(0xd9583a), 0.29, 0.08, -0.14);
   p.add(box(0.07, 0.04, 0.11), colourMat(0x3b6fb6), 0.38, 0.08, 0.02);
   p.lamp(-0.42, 0.42);
+  // The realistic model keeps the code-made flag and logo, moved onto its flag pole and logo board.
+  useModel(g, 'hq', {}, ['flag', 'company-logo'], (model) => {
+    model.getObjectByName('flag')?.position.copy(at(10.5 + 2.7, 12.0, 9.5));
+    model.getObjectByName('company-logo')?.position.copy(at(-4.0, 10.0, 4.64));
+  });
   return g;
 }
 
@@ -472,5 +486,6 @@ export function buildGroundStation(): THREE.Group {
     p.cyl(0.006, 0.07, M.steel, -0.06 + Math.cos(a) * 0.36, 0.05, -0.06 + Math.sin(a) * 0.36, 4);
   }
   p.lamp(-0.42, 0.42);
+  useModel(g, 'groundStation');
   return g;
 }

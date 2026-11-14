@@ -88,6 +88,7 @@ export const STRINGS = {
   'credits.reading.note': 'Mission facts and numbers are cited in the docs/research folder of the game’s code.',
   'credits.art.heading': 'Illustrations',
   'credits.art': 'Era illustrations are AI-generated (Canva and ChatGPT image tools), from game screenshots and prompts in the game’s docs/art folder. Each has a visible AI-generated mark. They are not photos.',
+  'credits.models': '3D models: made for LEAP in Blender by AI coding agents. Ground and building textures: Poly Haven (CC0), by Rob Tuytel, Amal Kumar and the Poly Haven team: Rocky Terrain 02, Aerial Beach 01, Aerial Rocks 04, Snow Field Aerial, Dirt Aerial 03, Box Profile Metal Sheet, Concrete Floor 02, Red Brick 03, Asphalt 02, Painted Metal Shutter, Painted Plaster Wall, Gravel Floor. Full list in the game’s docs/art folder.',
   'credits.audio.heading': 'Music and sound',
   'credits.software.heading': 'Software',
   'credits.software.three': 'three.js (MIT licence): 3D graphics',

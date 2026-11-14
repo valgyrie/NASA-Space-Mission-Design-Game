@@ -1,44 +1,18 @@
 import * as THREE from 'three';
-import type { RawMaterial } from '../economy/rawMaterial';
 import { hashText, makeRng } from '../site/random';
-import {
-  type Land,
-  type PlotRef,
-  SITE_SIZE,
-  type Site,
-  type Terrain,
-  type Tile,
-  landOf,
-  ownsPlot,
-  plotKey,
-  plotOf,
-  plotTiles,
-  sitePlots,
-  tileAt,
-} from '../site/site';
-import { STEP, WATER, WATER_Y, buildTerrainGeometry, terrainMaterial } from './terrainMesh';
+import { type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotKey, plotTiles, sitePlots, tileAt } from '../site/site';
+import type { SkyUniforms } from './environment';
+import { DEPOSIT_COLOUR, Ground, type Pad, buildGround } from './ground';
+import { boulderGeometry, rockMaterial } from './rocks';
+import { type LatticeBuffers, latticeBuffers, latticeGeometry, terrainMaterial, updateLatticeBuffers } from './terrainMesh';
+import { type WaterSurface, buildWater } from './water';
 
-export { STEP } from './terrainMesh';
-
-export const DEPOSIT_COLOUR: Record<RawMaterial, number> = {
-  aluminium: 0xdfe6ee,
-  copper: 0xd8763a,
-  silicon: 0x7b83eb,
-};
-
-/** Full-detail scenery reaches this many tiles past each edge of the Site: one Plot on every side. */
-const NEAR_REACH = 64;
-/** Coarse scenery (4 × 4 tiles per block) reaches this far, out to where the haze hides it. */
-const FAR_REACH = 224;
-const FAR_BLOCK = 4;
+export { STEP } from './ground';
+export { DEPOSIT_COLOUR } from './ground';
 
 /** World position of the centre of tile (x, z). */
 export function tileCentre(site: Site, x: number, z: number): { x: number; z: number } {
   return { x: x - site.size / 2 + 0.5, z: z - site.size / 2 + 0.5 };
-}
-
-function topY(level: number): number {
-  return level * STEP;
 }
 
 /** Tiles from `min` (included) to `max` (excluded) on each axis that hold every Plot of the Site. */
@@ -54,248 +28,261 @@ export function siteBounds(site: Site): { minX: number; maxX: number; minZ: numb
   };
 }
 
-/** The same as a square, for drawing land: `from` to `to` on both axes. */
-function squareBounds(site: Site): { from: number; to: number } {
-  const b = siteBounds(site);
-  return { from: Math.min(b.minX, b.minZ), to: Math.max(b.maxX, b.maxZ) };
+/** What the drawn land of a Site keeps, so it can change after it is built (pads) and move (water). */
+interface SiteLand {
+  ground: Ground;
+  near: LatticeBuffers;
+  water: WaterSurface;
+}
+
+function siteLand(group: THREE.Object3D): SiteLand | undefined {
+  return group.userData.siteLand as SiteLand | undefined;
+}
+
+/** The drawn ground of a group made by `buildSiteMesh`. */
+export function groundOf(group: THREE.Object3D): Ground | undefined {
+  return siteLand(group)?.ground;
 }
 
 /**
- * Low-poly 3D model of a Site and the land around it out to the horizon.
- * Only the Site itself (named "terrain") can be clicked and built on.
+ * 3D model of a Site and the land around it out to the horizon: smooth ground with photographic materials, water,
+ * Deposit rocks and the Site's border. Only the Site itself (named "terrain") can be clicked and built on; the
+ * full-detail land around it is "scenery-near". Building pads in `pads` are pressed into the ground.
  */
-export function buildSiteMesh(site: Site, hazeColour: number): THREE.Group {
+export function buildSiteMesh(site: Site, sky: SkyUniforms, pads: readonly Pad[] = []): THREE.Group {
   const land = landOf(site);
+  const ground = buildGround(site, land, pads);
+  const material = terrainMaterial(sky, { climate: land.climate });
+
+  const near = latticeBuffers(ground.near, ground.nearLook, true);
+  const half = site.size / 2;
+  const l = ground.near;
+  const cellTile = (i: number, j: number) => ({
+    x: Math.floor(l.x0 + (i + 0.5) * l.step + half),
+    z: Math.floor(l.z0 + (j + 0.5) * l.step + half),
+  });
+  const onSite = (i: number, j: number) => {
+    const t = cellTile(i, j);
+    return tileAt(site, t.x, t.z) !== undefined;
+  };
+  const terrain = landMesh(latticeGeometry(near, onSite, false), material, 'terrain');
+  terrain.raycast = groundRaycast(ground, (x, z) => tileAt(site, x, z) !== undefined);
+  const ring = landMesh(latticeGeometry(near, (i, j) => !onSite(i, j), true), material, 'scenery-near');
+  ring.raycast = groundRaycast(ground, (x, z) => tileAt(site, x, z) === undefined);
+
+  const far = latticeBuffers(ground.far, ground.farLook, false);
+  const f = ground.far;
+  const inNear = (i: number, j: number) => {
+    const x = f.x0 + (i + 0.5) * f.step;
+    const z = f.z0 + (j + 0.5) * f.step;
+    return x > ground.nearMin && x < ground.nearMax && z > ground.nearMin && z < ground.nearMax;
+  };
+  const farMesh = landMesh(latticeGeometry(far, (i, j) => !inNear(i, j), false), material, 'scenery-far');
+  farMesh.castShadow = false;
+
+  const water = buildWater(ground, sky, land.water);
   const group = new THREE.Group();
   group.name = 'site';
-  group.add(
-    siteTerrain(site, land),
-    nearScenery(site, land, hazeColour),
-    farScenery(site, land, hazeColour),
-    waterMesh(site, land),
-    depositMesh(site),
-    siteBorder(site, land),
-  );
+  group.add(terrain, ring, farMesh, water.mesh, depositMesh(site, ground), siteBorder(site, ground));
+  group.userData.siteLand = { ground, near, water } satisfies SiteLand;
   return group;
 }
 
-function mesh(geometry: THREE.BufferGeometry, name: string, castShadow: boolean): THREE.Mesh {
-  const m = new THREE.Mesh(geometry, terrainMaterial());
+function landMesh(geometry: THREE.BufferGeometry, material: THREE.Material, name: string): THREE.Mesh {
+  const m = new THREE.Mesh(geometry, material);
   m.name = name;
-  m.castShadow = castShadow;
+  m.castShadow = true;
   m.receiveShadow = true;
   return m;
 }
 
-/** Snow over a cold Site's land (ticket 16): the colder the real place, the whiter. */
-function snowTint(land: Land, terrain: Terrain): { colour: number; amount: number } | undefined {
-  const snow = land.climate.snow ?? 0;
-  if (snow <= 0 || terrain === 'water') return undefined;
-  return { colour: 0xf1f4f8, amount: Math.min(0.9, snow * (terrain === 'mountain' ? 1 : 0.85)) };
+/** Press a building pad into the drawn ground of a Site (flattening it under the building). */
+export function pressPad(group: THREE.Object3D, pad: Pad): void {
+  const s = siteLand(group);
+  if (!s) return;
+  const changed = s.ground.addPad(pad);
+  if (!changed) return;
+  updateLatticeBuffers(s.near, changed.i0, changed.i1, changed.j0, changed.j1);
+  s.water.refresh();
+  // Rocks next to the pad follow the new ground.
+  const rocks = group.getObjectByName('deposits') as THREE.InstancedMesh | undefined;
+  if (rocks) settleRocks(rocks, s.ground);
 }
 
-function siteTerrain(site: Site, land: Land): THREE.Mesh {
-  const { from, to } = squareBounds(site);
-  const geometry = buildTerrainGeometry({
-    from,
-    to,
-    cellSize: 1,
-    origin: -site.size / 2,
-    cellAt: (x, z) => {
-      const tile = tileAt(site, x, z);
-      if (!tile) return undefined;
-      const tint = tile.deposit ? { colour: DEPOSIT_COLOUR[tile.deposit], amount: 0.55 } : snowTint(land, tile.terrain);
-      return { terrain: tile.terrain, level: tile.level, tint };
-    },
-    levelAt: (x, z) => land.groundAt(x, z).level,
-  });
-  return mesh(geometry, 'terrain', true);
+/** Let the water move. */
+export function animateSite(group: THREE.Object3D, seconds: number): void {
+  siteLand(group)?.water.animate(seconds);
 }
 
 /**
- * Full-detail land in a ring around the Site, a little hazy so the Site stands out. The Deposits of the Plots next
- * door show faintly, so the player can see what buying one would bring.
+ * Picking on the smooth ground without testing every triangle: march along the ray over the height function and
+ * refine the first crossing on land that `accept` takes (tile x, z). Other crossings (a hill in front) are passed
+ * through, like a mesh that isn't there.
  */
-function nearScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
-  const bounds = squareBounds(site);
-  const from = bounds.from - NEAR_REACH;
-  const to = bounds.to + NEAR_REACH;
-  const nextDoor = new Map<string, Tile[]>();
-  const depositAt = (x: number, z: number) => {
-    const { px, pz } = plotOf(x, z);
-    const key = plotKey(px, pz);
-    let tiles = nextDoor.get(key);
-    if (!tiles) nextDoor.set(key, (tiles = touchesOwned(site, px, pz) ? plotTiles(site, px, pz, land) : []));
-    return tiles[(z - pz * SITE_SIZE) * SITE_SIZE + (x - px * SITE_SIZE)]?.deposit ?? null;
+function groundRaycast(ground: Ground, accept: (x: number, z: number) => boolean): THREE.Mesh['raycast'] {
+  const half = ground.site.size / 2;
+  return function (this: THREE.Mesh, raycaster, hits) {
+    const { origin: o, direction: d } = raycaster.ray;
+    let t0 = raycaster.near;
+    let t1 = Math.min(raycaster.far, 1e5);
+    const clip = (p: number, v: number, lo: number, hi: number) => {
+      if (Math.abs(v) < 1e-9) {
+        if (p < lo || p > hi) t1 = -1;
+        return;
+      }
+      const a = (lo - p) / v;
+      const b = (hi - p) / v;
+      t0 = Math.max(t0, Math.min(a, b));
+      t1 = Math.min(t1, Math.max(a, b));
+    };
+    clip(o.x, d.x, ground.nearMin, ground.nearMax);
+    clip(o.z, d.z, ground.nearMin, ground.nearMax);
+    clip(o.y, d.y, -4, 8);
+    if (t1 <= t0) return;
+    const f = (t: number) => o.y + d.y * t - ground.heightAt(o.x + d.x * t, o.z + d.z * t);
+    const dt = Math.min(0.25 / Math.max(Math.hypot(d.x, d.z), 1e-3), 0.25 / Math.max(Math.abs(d.y), 1e-3));
+    let a = t0;
+    let fa = f(a);
+    while (a < t1) {
+      const b = Math.min(t1, a + dt);
+      const fb = f(b);
+      if (fa > 0 && fb <= 0) {
+        let lo = a;
+        let hi = b;
+        for (let k = 0; k < 16; k++) {
+          const m = (lo + hi) / 2;
+          if (f(m) > 0) lo = m;
+          else hi = m;
+        }
+        const point = raycaster.ray.at(hi, new THREE.Vector3());
+        if (accept(Math.floor(point.x + half), Math.floor(point.z + half))) {
+          const n = ground.normalAt(point.x, point.z);
+          hits.push({
+            distance: hi,
+            point,
+            object: this,
+            face: { a: 0, b: 0, c: 0, normal: new THREE.Vector3(n.x, n.y, n.z), materialIndex: 0 },
+            faceIndex: 0,
+          });
+          return;
+        }
+      }
+      a = b;
+      fa = fb;
+    }
   };
-  const geometry = buildTerrainGeometry({
-    from,
-    to,
-    cellSize: 1,
-    origin: -site.size / 2,
-    cellAt: (x, z) => {
-      if (tileAt(site, x, z)) return undefined;
-      const ground = land.groundAt(x, z);
-      const deposit = depositAt(x, z);
-      const tint = deposit ? { colour: DEPOSIT_COLOUR[deposit], amount: 0.4 } : snowTint(land, ground.terrain);
-      return { ...ground, tint };
-    },
-    levelAt: (x, z) => (x >= from && z >= from && x < to && z < to ? land.groundAt(x, z).level : undefined),
-    haze: 0.12,
-    hazeColour,
-  });
-  return mesh(geometry, 'scenery-near', true);
 }
 
-/** Coarse land beyond that, out to the horizon. It sits behind the haze, so detail doesn't matter. */
-function farScenery(site: Site, land: Land, hazeColour: number): THREE.Mesh {
-  const bounds = squareBounds(site);
-  const from = (bounds.from - FAR_REACH) / FAR_BLOCK;
-  const to = (bounds.to + FAR_REACH) / FAR_BLOCK;
-  const holeFrom = (bounds.from - NEAR_REACH) / FAR_BLOCK;
-  const holeTo = (bounds.to + NEAR_REACH) / FAR_BLOCK;
-  const inHole = (bx: number, bz: number) => bx >= holeFrom && bz >= holeFrom && bx < holeTo && bz < holeTo;
-  const blockGround = (bx: number, bz: number) =>
-    land.groundAt(bx * FAR_BLOCK + FAR_BLOCK / 2, bz * FAR_BLOCK + FAR_BLOCK / 2);
-  const geometry = buildTerrainGeometry({
-    from,
-    to,
-    cellSize: FAR_BLOCK,
-    origin: -site.size / 2,
-    cellAt: (bx, bz) => {
-      if (inHole(bx, bz)) return undefined;
-      const ground = blockGround(bx, bz);
-      return { ...ground, tint: snowTint(land, ground.terrain) };
-    },
-    levelAt: (bx, bz) => (bx >= from && bz >= from && bx < to && bz < to ? blockGround(bx, bz).level : undefined),
-    haze: 0.22,
-    hazeColour,
-  });
-  return mesh(geometry, 'scenery-far', false);
-}
-
-function waterMesh(site: Site, land: Land): THREE.Mesh {
-  const { from, to } = squareBounds(site);
-  const size = (to - from + FAR_REACH) * 2 + 400;
-  const geometry = new THREE.PlaneGeometry(size, size);
-  geometry.rotateX(-Math.PI / 2);
-  const middle = (from + to) / 2 - site.size / 2;
-  geometry.translate(middle, 0, middle);
-  const m = new THREE.Mesh(
-    geometry,
-    new THREE.MeshStandardMaterial({ color: WATER, roughness: 0.25, metalness: 0.1, transparent: true, opacity: 0.88 }),
-  );
-  m.name = 'water';
-  m.position.y = WATER_Y;
-  m.receiveShadow = true;
-  m.visible = land.water !== 'none';
-  return m;
-}
-
-/** Does the Plot touch a Plot of the Site (sides and corners count)? */
-function touchesOwned(site: Site, px: number, pz: number): boolean {
-  if (ownsPlot(site, px, pz)) return false;
-  for (let dz = -1; dz <= 1; dz++) for (let dx = -1; dx <= 1; dx++) if (ownsPlot(site, px + dx, pz + dz)) return true;
-  return false;
-}
-
-/**
- * Line segments [ax, y, az, bx, y, bz, …] around the outside of a set of Plots, following the steps of the land.
- * `inSet` says whether a Plot is in the set; `levelAt` gives a tile's height step.
- */
-function outline(
-  plots: PlotRef[],
-  inSet: (px: number, pz: number) => boolean,
-  levelAt: (x: number, z: number) => number,
-  lift: number,
-): number[] {
-  const pts: number[] = [];
+/** Points along the outside edges of a set of Plots, every half tile, as segments [ax, az, bx, bz, …] in world x/z. */
+function outline(plots: PlotRef[], inSet: (px: number, pz: number) => boolean): number[] {
+  const segs: number[] = [];
   const o = -SITE_SIZE / 2;
   const n = SITE_SIZE;
-  const yAt = (x: number, z: number) => Math.max(topY(levelAt(x, z)), 0) + lift;
   for (const { px, pz } of plots) {
-    const x0 = px * n;
-    const z0 = pz * n;
-    // Each side with no Plot of the set beyond it: the tile along it at step i, and the corner line it runs on.
-    const sides: { open: boolean; tile: (i: number) => [number, number]; line: (i: number) => [number, number] }[] = [
-      { open: !inSet(px, pz - 1), tile: (i) => [x0 + i, z0], line: (i) => [x0 + i, z0] },
-      { open: !inSet(px + 1, pz), tile: (i) => [x0 + n - 1, z0 + i], line: (i) => [x0 + n, z0 + i] },
-      { open: !inSet(px, pz + 1), tile: (i) => [x0 + i, z0 + n - 1], line: (i) => [x0 + i, z0 + n] },
-      { open: !inSet(px - 1, pz), tile: (i) => [x0, z0 + i], line: (i) => [x0, z0 + i] },
+    const x0 = px * n + o;
+    const z0 = pz * n + o;
+    const sides: [boolean, number, number, number, number][] = [
+      [!inSet(px, pz - 1), x0, z0, 1, 0],
+      [!inSet(px + 1, pz), x0 + n, z0, 0, 1],
+      [!inSet(px, pz + 1), x0, z0 + n, 1, 0],
+      [!inSet(px - 1, pz), x0, z0, 0, 1],
     ];
-    for (const side of sides) {
-      if (!side.open) continue;
-      for (let i = 0; i < n; i++) {
-        const y = yAt(...side.tile(i));
-        const [ax, az] = side.line(i);
-        const [bx, bz] = side.line(i + 1);
-        pts.push(ax + o, y, az + o, bx + o, y, bz + o);
-        if (i + 1 < n) {
-          const y2 = yAt(...side.tile(i + 1));
-          if (y2 !== y) pts.push(bx + o, y, bz + o, bx + o, y2, bz + o);
-        }
+    for (const [open, sx, sz, dx, dz] of sides) {
+      if (!open) continue;
+      for (let i = 0; i < n * 2; i++) {
+        const a = i / 2;
+        const b = (i + 1) / 2;
+        segs.push(sx + dx * a, sz + dz * a, sx + dx * b, sz + dz * b);
       }
     }
   }
-  return pts;
+  return segs;
 }
 
-function lines(pts: number[], colour: number, opacity: number, name: string): THREE.LineSegments {
-  const geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
-  const line = new THREE.LineSegments(geometry, new THREE.LineBasicMaterial({ color: colour, transparent: true, opacity }));
-  line.name = name;
-  return line;
+/** A flat ribbon `width` wide along each segment, draped on the ground `lift` above it. */
+function ribbon(ground: Ground, segs: number[], width: number, lift: number): THREE.BufferGeometry {
+  const pos: number[] = [];
+  const y = (x: number, z: number) => ground.heightAt(x, z) + lift;
+  for (let k = 0; k < segs.length; k += 4) {
+    const [ax, az, bx, bz] = segs.slice(k, k + 4) as [number, number, number, number];
+    const len = Math.hypot(bx - ax, bz - az) || 1;
+    const nx = (-(bz - az) / len) * (width / 2);
+    const nz = ((bx - ax) / len) * (width / 2);
+    // Overlap the ends a little so corners close.
+    const ex = ((bx - ax) / len) * (width / 2);
+    const ez = ((bz - az) / len) * (width / 2);
+    const p1 = [ax - ex + nx, az - ez + nz];
+    const p2 = [ax - ex - nx, az - ez - nz];
+    const p3 = [bx + ex - nx, bz + ez - nz];
+    const p4 = [bx + ex + nx, bz + ez + nz];
+    const v = (p: number[]) => [p[0]!, y(p[0]!, p[1]!), p[1]!];
+    pos.push(...v(p1), ...v(p2), ...v(p3), ...v(p1), ...v(p3), ...v(p4));
+  }
+  const g = new THREE.BufferGeometry();
+  g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+  return g;
 }
 
-/** A thin line around the Site's edge, following the steps of the land: you can build inside it. */
-function siteBorder(site: Site, land: Land): THREE.LineSegments {
-  const levelAt = (x: number, z: number) => tileAt(site, x, z)?.level ?? land.groundAt(x, z).level;
-  return lines(outline(sitePlots(site), (px, pz) => ownsPlot(site, px, pz), levelAt, 0.04), 0xffffff, 0.7, 'site-border');
+function overlayMaterial(colour: number, opacity: number): THREE.MeshBasicMaterial {
+  return new THREE.MeshBasicMaterial({
+    color: colour,
+    transparent: true,
+    opacity,
+    depthWrite: false,
+    side: THREE.DoubleSide,
+    fog: false,
+    polygonOffset: true,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2,
+  });
+}
+
+/** A thin white line around the Site's edge, lying on the ground: you can build inside it. */
+function siteBorder(site: Site, ground: Ground): THREE.Mesh {
+  const m = new THREE.Mesh(ribbon(ground, outline(sitePlots(site), (px, pz) => ownsPlot(site, px, pz)), 0.16, 0.03), overlayMaterial(0xffffff, 0.75));
+  m.name = 'site-border';
+  m.renderOrder = 3;
+  return m;
 }
 
 /**
  * A highlight for a Plot next door under the pointer: a see-through tint over its land, with a line and a low fence
  * around it, green if it can be bought, grey if not.
  */
-export function buildPlotMarker(land: Land, plot: PlotRef, buyable: boolean): THREE.Group {
+export function buildPlotMarker(ground: Ground, plot: PlotRef, buyable: boolean): THREE.Group {
   const colour = buyable ? 0x5dff8a : 0xb8c2cc;
-  const levelAt = (x: number, z: number) => land.groundAt(x, z).level;
-  const pts = outline([plot], (px, pz) => px === plot.px && pz === plot.pz, levelAt, 0.06);
+  const segs = outline([plot], (px, pz) => px === plot.px && pz === plot.pz);
   const fence: number[] = [];
   const height = 1.2;
-  for (let i = 0; i < pts.length; i += 6) {
-    const [ax, ay, az, bx, by, bz] = pts.slice(i, i + 6) as [number, number, number, number, number, number];
-    if (ay !== by) continue; // a step in the land: the line covers it
+  for (let k = 0; k < segs.length; k += 4) {
+    const [ax, az, bx, bz] = segs.slice(k, k + 4) as [number, number, number, number];
+    const ay = ground.heightAt(ax, az);
+    const by = ground.heightAt(bx, bz);
     fence.push(ax, ay, az, bx, by, bz, bx, by + height, bz, ax, ay, az, bx, by + height, bz, ax, ay + height, az);
   }
-  // One flat square on top of each tile.
-  const tint: number[] = [];
+  // A see-through sheet over the Plot, following the ground every half tile.
   const o = -SITE_SIZE / 2;
-  for (let z = plot.pz * SITE_SIZE; z < (plot.pz + 1) * SITE_SIZE; z++) {
-    for (let x = plot.px * SITE_SIZE; x < (plot.px + 1) * SITE_SIZE; x++) {
-      const y = Math.max(topY(levelAt(x, z)), 0) + 0.05;
-      const [x0, x1, z0, z1] = [x + o, x + 1 + o, z + o, z + 1 + o];
-      tint.push(x0, y, z0, x0, y, z1, x1, y, z1, x0, y, z0, x1, y, z1, x1, y, z0);
-    }
-  }
-  const see = (positions: number[], opacity: number) => {
-    const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    const material = new THREE.MeshBasicMaterial({ color: colour, transparent: true, opacity, side: THREE.DoubleSide, depthWrite: false, fog: false });
-    const m = new THREE.Mesh(geometry, material);
-    m.renderOrder = 1;
-    return m;
-  };
+  const n = SITE_SIZE * 2;
+  const sheet = new THREE.PlaneGeometry(SITE_SIZE, SITE_SIZE, n, n);
+  sheet.rotateX(-Math.PI / 2);
+  sheet.translate(plot.px * SITE_SIZE + o + SITE_SIZE / 2, 0, plot.pz * SITE_SIZE + o + SITE_SIZE / 2);
+  const sp = sheet.attributes.position as THREE.BufferAttribute;
+  for (let k = 0; k < sp.count; k++) sp.setY(k, Math.max(ground.heightAt(sp.getX(k), sp.getZ(k)), -0.12) + 0.04);
+  const fenceGeometry = new THREE.BufferGeometry();
+  fenceGeometry.setAttribute('position', new THREE.Float32BufferAttribute(fence, 3));
+  const line = new THREE.Mesh(ribbon(ground, segs, 0.22, 0.05), overlayMaterial(colour, 1));
+  line.name = 'plot-line';
   const group = new THREE.Group();
   group.name = 'plot-marker';
-  group.add(lines(pts, colour, 1, 'plot-line'), see(fence, 0.4), see(tint, buyable ? 0.3 : 0.2));
+  const parts = [line, new THREE.Mesh(fenceGeometry, overlayMaterial(colour, 0.4)), new THREE.Mesh(sheet, overlayMaterial(colour, buyable ? 0.3 : 0.2))];
+  parts.forEach((p) => (p.renderOrder = 3));
+  group.add(...parts);
   return group;
 }
 
-/** Two or three small rocks on each deposit tile, coloured by Raw Material. */
-function depositMesh(site: Site): THREE.InstancedMesh {
-  const rocks: { tile: string; x: number; y: number; z: number; s: number; r: number; colour: number }[] = [];
+/** Two or three boulders on each Deposit tile, coloured by Raw Material. */
+function depositMesh(site: Site, ground: Ground): THREE.InstancedMesh {
+  const rocks: { tile: string; x: number; z: number; s: number; r: number; colour: number }[] = [];
   for (const { px, pz } of sitePlots(site)) {
     // Each Plot has its own random numbers, so buying one never moves the Home Site's rocks.
     const rng = makeRng(hashText(site.seed + (px === 0 && pz === 0 ? ':rocks' : `:rocks:${px},${pz}`)));
@@ -309,37 +296,50 @@ function depositMesh(site: Site): THREE.InstancedMesh {
         rocks.push({
           tile: plotKey(tx, tz),
           x: x + (rng() - 0.5) * 0.6,
-          y: topY(tile.level),
           z: z + (rng() - 0.5) * 0.6,
-          s: 0.2 + rng() * 0.12,
-          r: rng() * Math.PI,
+          s: 0.16 + rng() * 0.12,
+          r: rng() * Math.PI * 2,
           colour: DEPOSIT_COLOUR[tile.deposit],
         });
       }
     });
   }
-
-  const mesh = new THREE.InstancedMesh(
-    new THREE.DodecahedronGeometry(1, 0),
-    new THREE.MeshStandardMaterial({ flatShading: true, roughness: 0.6, metalness: 0.2 }),
-    rocks.length,
-  );
-  const m = new THREE.Matrix4();
-  const q = new THREE.Quaternion();
+  const mesh = new THREE.InstancedMesh(boulderGeometry(3), rockMaterial(), rocks.length);
   const colour = new THREE.Color();
-  rocks.forEach((rock, i) => {
-    q.setFromEuler(new THREE.Euler(rock.r, rock.r * 1.7, 0));
-    m.compose(new THREE.Vector3(rock.x, rock.y + rock.s * 0.5, rock.z), q, new THREE.Vector3(rock.s, rock.s * 0.8, rock.s));
-    mesh.setMatrixAt(i, m);
-    mesh.setColorAt(i, colour.setHex(rock.colour));
-  });
+  rocks.forEach((rock, i) => mesh.setColorAt(i, colour.setHex(rock.colour)));
   mesh.name = 'deposits';
   mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  mesh.userData.rocks = rocks;
   // Which rocks sit on which tile, so a Mine can clear them away.
   const byTile = new Map<string, number[]>();
   rocks.forEach((rock, i) => byTile.set(rock.tile, [...(byTile.get(rock.tile) ?? []), i]));
   mesh.userData.rocksByTile = byTile;
+  mesh.userData.cleared = new Set<number>();
+  settleRocks(mesh, ground);
   return mesh;
+}
+
+/** Put every Deposit boulder that is not cleared on the ground under it, slightly sunk in. */
+function settleRocks(mesh: THREE.InstancedMesh, ground: Ground): void {
+  const rocks = mesh.userData.rocks as { x: number; z: number; s: number; r: number }[];
+  const cleared = mesh.userData.cleared as Set<number>;
+  const m = new THREE.Matrix4();
+  const q = new THREE.Quaternion();
+  const e = new THREE.Euler();
+  const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
+  rocks.forEach((rock, i) => {
+    if (cleared.has(i)) {
+      mesh.setMatrixAt(i, hidden);
+      return;
+    }
+    q.setFromEuler(e.set((rock.r % 0.3) - 0.15, rock.r, ((rock.r * 3) % 0.3) - 0.15));
+    const y = ground.heightAt(rock.x, rock.z) - rock.s * 0.25;
+    m.compose(new THREE.Vector3(rock.x, y, rock.z), q, new THREE.Vector3(rock.s * (1 + (rock.r % 0.4)), rock.s * 0.9, rock.s));
+    mesh.setMatrixAt(i, m);
+  });
+  mesh.instanceMatrix.needsUpdate = true;
+  mesh.computeBoundingSphere();
 }
 
 /** Hide the Deposit rocks on one tile (a Mine is built there). */
@@ -348,6 +348,10 @@ export function clearRocks(group: THREE.Group, x: number, z: number): void {
   const rocks = (mesh?.userData.rocksByTile as Map<string, number[]> | undefined)?.get(plotKey(x, z));
   if (!mesh || !rocks) return;
   const hidden = new THREE.Matrix4().makeScale(0, 0, 0);
-  for (const i of rocks) mesh.setMatrixAt(i, hidden);
+  const cleared = mesh.userData.cleared as Set<number>;
+  for (const i of rocks) {
+    cleared.add(i);
+    mesh.setMatrixAt(i, hidden);
+  }
   mesh.instanceMatrix.needsUpdate = true;
 }

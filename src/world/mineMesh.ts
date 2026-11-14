@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { M, box, buildingGroup, colourMat, gableRoof, parts, v } from './buildingParts';
+import { useModel } from './buildingModels';
 import { DEPOSIT_COLOUR } from './siteMesh';
 
 /**
@@ -84,5 +85,7 @@ export function buildMine(material: RawMaterial): THREE.Group {
   // Lamp post at the front corner.
   lamp(0.38, 0.38);
 
+  // The realistic model replaces all this once it has loaded (buildingModels.ts).
+  useModel(g, 'mine', { ore: DEPOSIT_COLOUR[material] });
   return g;
 }

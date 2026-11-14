@@ -4,7 +4,7 @@ import { logoTexture } from './logoTexture';
 import { MapControls } from 'three/examples/jsm/controls/MapControls.js';
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
-import { type Land, type PlotRef, SITE_SIZE, type Site, landOf, ownsPlot, plotOf, sitePlots, tileAt } from '../site/site';
+import { type PlotRef, SITE_SIZE, type Site, ownsPlot, plotOf, sitePlots, tileAt } from '../site/site';
 import {
   FOV_DEGREES,
   MAX_DISTANCE,
@@ -48,51 +48,22 @@ export interface ShippingState {
   stage: 'assembling' | 'shipping' | 'ready';
   fraction: number;
 }
-import { STEP, buildPlotMarker, buildSiteMesh, clearRocks, siteBounds, tileCentre } from './siteMesh';
-
-const COLOURS = {
-  /** Pale haze at the horizon; distant land fades into it. */
-  horizon: 0xd3e4ee,
-  zenith: 0x5b97cf,
-  skyLight: 0xd6eaff,
-  groundLight: 0x6b5a45,
-  sun: 0xfff0d6,
-};
+import { STEP, animateSite, buildPlotMarker, buildSiteMesh, clearRocks, groundOf, pressPad, siteBounds, tileCentre } from './siteMesh';
+import { type SkyEnvironment, createSkyEnvironment } from './environment';
+import { WATER_Y, padFor } from './ground';
 
 /** Direction the sunlight comes from: low and from the side, so shadows are long and easy to see. */
 const SUN_DIRECTION = new THREE.Vector3(-0.78, 0.5, 0.36).normalize();
 
-/** A sky dome: pale at the horizon, blue overhead. It follows the camera. */
-function makeSky(): THREE.Mesh {
-  const material = new THREE.ShaderMaterial({
-    side: THREE.BackSide,
-    depthWrite: false,
-    fog: false,
-    uniforms: {
-      horizon: { value: new THREE.Color(COLOURS.horizon) },
-      zenith: { value: new THREE.Color(COLOURS.zenith) },
-    },
-    vertexShader: `
-      varying vec3 vDir;
-      void main() {
-        vDir = normalize(position);
-        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-      }`,
-    fragmentShader: `
-      uniform vec3 horizon;
-      uniform vec3 zenith;
-      varying vec3 vDir;
-      void main() {
-        float t = pow(clamp(vDir.y, 0.0, 1.0), 0.55);
-        gl_FragColor = vec4(mix(horizon, zenith, t), 1.0);
-      }`,
-  });
-  const sky = new THREE.Mesh(new THREE.SphereGeometry(1500, 32, 16), material);
-  sky.name = 'sky';
-  sky.renderOrder = -1;
-  sky.frustumCulled = false;
-  return sky;
-}
+/** Brightness of the picture (ACES tone mapping) and of the sun. */
+const EXPOSURE = 0.3;
+const SUN_INTENSITY = 8;
+/** How much the sky lights the scene besides the sun. */
+const SKY_LIGHT = 0.9;
+/** Depth of the box the sun's shadows are drawn in. */
+const SHADOW_DEPTH = 300;
+/** Vertices per tile of the placement marker, so it follows the ground. */
+const MARKER_DETAIL = 4;
 
 /** Where the camera looks and from which direction and distance. */
 interface CameraPose {
@@ -134,16 +105,15 @@ export class World {
   readonly controls: MapControls;
   private siteGroup: THREE.Group | null = null;
   private site: Site | null = null;
-  private land: Land | null = null;
   private readonly buildings = new THREE.Group();
   /** Building models by the key "x,z" of their middle tile. */
   private readonly buildingAt = new Map<string, THREE.Group>();
-  private readonly marker: THREE.Mesh;
-  private readonly sun = new THREE.DirectionalLight(COLOURS.sun, 2.6);
+  private readonly marker: THREE.Group;
+  private readonly sun = new THREE.DirectionalLight(0xffffff, SUN_INTENSITY);
   /** The Plot next door under the pointer, highlighted (ticket 30). */
   private plotMarker: { key: string; group: THREE.Group } | null = null;
-  private readonly sky = makeSky();
-  private readonly fog = new THREE.Fog(COLOURS.horizon, 100, 300);
+  private readonly sky: SkyEnvironment;
+  private readonly fog = new THREE.Fog(0xc8d8e8, 100, 300);
   private readonly frameCallbacks: ((seconds: number) => void)[] = [];
   private readonly raycaster = new THREE.Raycaster();
   private readonly heldKeys = new Set<string>();
@@ -160,11 +130,11 @@ export class World {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     this.renderer.shadowMap.enabled = true;
-    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    this.renderer.shadowMap.type = THREE.PCFShadowMap;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    this.scene.background = new THREE.Color(COLOURS.horizon);
+    this.renderer.toneMappingExposure = EXPOSURE;
     this.scene.fog = this.fog;
-    this.scene.add(this.sky);
+    this.sky = createSkyEnvironment(this.renderer, this.scene, { sunDirection: SUN_DIRECTION });
 
     this.camera = new THREE.PerspectiveCamera(FOV_DEGREES, window.innerWidth / window.innerHeight, 0.5, 4000);
     const o = cameraOffset(START_AZIMUTH, START_ELEVATION, START_DISTANCE);
@@ -345,30 +315,26 @@ export class World {
     return c;
   }
 
+  /** Sunlight with soft shadows; the sky itself (`scene.environment`) lights the rest. */
   private addLights(): void {
-    this.scene.add(new THREE.HemisphereLight(COLOURS.skyLight, COLOURS.groundLight, 1.15));
-
     const sun = this.sun;
-    sun.position.copy(SUN_DIRECTION).multiplyScalar(120);
+    sun.color.copy(this.sky.sunColour);
+    sun.position.copy(SUN_DIRECTION).multiplyScalar(SHADOW_DEPTH / 2);
     sun.castShadow = true;
     sun.shadow.mapSize.set(4096, 4096);
-    sun.shadow.bias = -0.0004;
-    sun.shadow.normalBias = 0.03;
-    // The shadow covers the Site and a margin around it; the haze takes over beyond that.
+    sun.shadow.bias = -0.00025;
+    sun.shadow.normalBias = 0.035;
+    sun.shadow.radius = 2.5;
     const s = sun.shadow.camera;
-    const reach = SITE_SIZE * 0.85;
-    s.left = s.bottom = -reach;
-    s.right = s.top = reach;
     s.near = 1;
-    s.far = 260;
-    s.updateProjectionMatrix();
+    s.far = SHADOW_DEPTH;
     this.scene.add(sun, sun.target);
+    this.scene.environmentIntensity = SKY_LIGHT;
   }
 
   /** Show a Site, replacing the one on screen. */
   showSite(site: Site): void {
     this.site = site;
-    this.land = landOf(site);
     this.route = null;
     this.redrawLand();
     // Release the old building models' shapes; their materials are shared with the rest of the world (ticket 26).
@@ -389,15 +355,15 @@ export class World {
       this.scene.remove(this.siteGroup);
       disposeAll(this.siteGroup);
     }
-    this.siteGroup = buildSiteMesh(this.site, COLOURS.horizon);
+    const site = this.site;
+    const tiles = [...this.buildingAt.values()].map((model) => model.userData.tile as { x: number; z: number });
+    // The buildings keep their pads: the ground is flattened under them again.
+    this.siteGroup = buildSiteMesh(site, this.sky.uniforms, tiles.map((t) => padFor(site, t.x, t.z)));
     this.scene.add(this.siteGroup);
     this.fitZoomOut();
     // A Mission on its way keeps its dock; its road now runs on past any land just bought (ticket 30).
     if (this.route) this.route.route = extendRoute(this.site, this.route.route);
-    for (const model of this.buildingAt.values()) {
-      const { x, z } = model.userData.tile as { x: number; z: number };
-      for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
-    }
+    for (const { x, z } of tiles) for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
     this.markPlot(null);
   }
 
@@ -424,8 +390,9 @@ export class World {
       disposeAll(this.plotMarker.group);
       this.plotMarker = null;
     }
-    if (!key || !plot || !this.land) return;
-    const group = buildPlotMarker(this.land, plot, buyable);
+    const ground = this.siteGroup && groundOf(this.siteGroup);
+    if (!key || !plot || !ground) return;
+    const group = buildPlotMarker(ground, plot, buyable);
     this.scene.add(group);
     this.plotMarker = { key, group };
   }
@@ -469,13 +436,11 @@ export class World {
     return this.following;
   }
 
-  /** Height of the ground at world point (x, z), inside the Site or out in the land around it. Water counts as 0. */
+  /** Height of the drawn ground at world point (x, z), inside the Site or out in the land around it; water counts at its surface. */
   private groundY(x: number, z: number): number {
-    if (!this.site || !this.land) return 0;
-    const tx = Math.floor(x + this.site.size / 2);
-    const tz = Math.floor(z + this.site.size / 2);
-    const level = tileAt(this.site, tx, tz)?.level ?? this.land.groundAt(tx, tz).level;
-    return Math.max(0, level) * STEP;
+    const ground = this.siteGroup && groundOf(this.siteGroup);
+    if (!ground) return 0;
+    return Math.max(WATER_Y, ground.heightAt(x, z));
   }
 
   /** Keep the camera itself out of the hills: lift it above the highest land under and around it (ticket 01). */
@@ -521,7 +486,10 @@ export class World {
     this.buildings.add(model);
     this.buildingAt.set(`${x},${z}`, model);
     this.setWorking(x, z, true);
-    if (this.siteGroup) for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
+    if (this.siteGroup) {
+      pressPad(this.siteGroup, padFor(this.site, x, z));
+      for (const t of footprint(x, z)) clearRocks(this.siteGroup, t.x, t.z);
+    }
   }
 
   /** Start or stop the moving parts of the building on tile (x, z). Factories move only while they make something. */
@@ -628,9 +596,22 @@ export class World {
       this.marker.visible = false;
       return;
     }
-    const c = tileCentre(this.site, tile.x, tile.z);
-    this.marker.position.set(c.x, foundationLevel(this.site, tile.x, tile.z) * STEP + 0.03, c.z);
-    (this.marker.material as THREE.MeshBasicMaterial).color.setHex(allowed ? 0x5dff8a : 0xff5d5d);
+    const site = this.site;
+    const c = tileCentre(site, tile.x, tile.z);
+    const ground = this.siteGroup && groundOf(this.siteGroup);
+    // Hug the ground (where it is already flattened for a building, that is its pad).
+    const y = (x: number, z: number) => (ground ? Math.max(ground.heightAt(x, z), WATER_Y) : foundationLevel(site, tile.x, tile.z) * STEP);
+    for (const part of this.marker.children as THREE.Mesh[]) {
+      const pos = part.geometry.attributes.position as THREE.BufferAttribute;
+      const flat = part.geometry.userData.flat as Float32Array;
+      for (let k = 0; k < pos.count; k++) {
+        const x = c.x + flat[k * 3]!;
+        const z = c.z + flat[k * 3 + 2]!;
+        pos.setXYZ(k, x, y(x, z) + flat[k * 3 + 1]!, z);
+      }
+      pos.needsUpdate = true;
+      (part.material as THREE.MeshBasicMaterial).color.setHex(allowed ? 0x5dff8a : 0xff5d5d);
+    }
     this.marker.visible = true;
   }
 
@@ -639,16 +620,56 @@ export class World {
     this.frameCallbacks.push(fn);
   }
 
-  private makeMarker(): THREE.Mesh {
-    const geometry = new THREE.PlaneGeometry(FOOTPRINT - 0.06, FOOTPRINT - 0.06);
-    geometry.rotateX(-Math.PI / 2);
-    const marker = new THREE.Mesh(
-      geometry,
-      new THREE.MeshBasicMaterial({ transparent: true, opacity: 0.6, depthWrite: false }),
-    );
-    marker.renderOrder = 1;
-    marker.visible = false;
-    return marker;
+  /** Where a building would go: a see-through sheet over its 3 × 3 tiles and a bright rim, both lying on the ground. */
+  private makeMarker(): THREE.Group {
+    const overlay = (opacity: number) =>
+      new THREE.MeshBasicMaterial({
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        fog: false,
+        side: THREE.DoubleSide,
+        polygonOffset: true,
+        polygonOffsetFactor: -4,
+        polygonOffsetUnits: -4,
+      });
+    const size = FOOTPRINT - 0.04;
+    const steps = FOOTPRINT * MARKER_DETAIL;
+    const sheet = new THREE.PlaneGeometry(size, size, steps, steps);
+    sheet.rotateX(-Math.PI / 2);
+    sheet.translate(0, 0.05, 0);
+    // A rim 0.14 wide just inside the edge: a square ring of small quads.
+    const rim: number[] = [];
+    const h = size / 2;
+    const w = 0.14;
+    for (let side = 0; side < 4; side++) {
+      for (let i = 0; i < steps; i++) {
+        const a = -h + (size * i) / steps;
+        const b = -h + (size * (i + 1)) / steps;
+        const quad = [
+          [a, h],
+          [a, h - w],
+          [b, h - w],
+          [b, h],
+        ].map(([u, v]) => (side === 0 ? [u!, v!] : side === 1 ? [v!, -u!] : side === 2 ? [-u!, -v!] : [-v!, u!]));
+        for (const k of [0, 1, 2, 0, 2, 3]) rim.push(quad[k]![0]!, 0.07, quad[k]![1]!);
+      }
+    }
+    const rimGeometry = new THREE.BufferGeometry();
+    rimGeometry.setAttribute('position', new THREE.Float32BufferAttribute(rim, 3));
+    const group = new THREE.Group();
+    for (const [geometry, opacity] of [
+      [sheet, 0.38],
+      [rimGeometry, 0.95],
+    ] as const) {
+      geometry.userData.flat = (geometry.attributes.position!.array as Float32Array).slice();
+      const m = new THREE.Mesh(geometry, overlay(opacity));
+      m.renderOrder = 4;
+      m.frustumCulled = false;
+      group.add(m);
+    }
+    group.visible = false;
+    return group;
   }
 
   private resize(): void {
@@ -660,15 +681,32 @@ export class World {
     this.fitZoomOut();
   }
 
-  /** Keep the sun's shadows over the Plot the camera looks at, so buildings on every Plot cast them. */
+  /**
+   * Keep the sun's shadows over what the camera looks at: a tighter, sharper shadow map close up, a wider one far
+   * out. The shadow box moves in whole shadow-map texels, so shadow edges don't shimmer as the camera moves.
+   */
   private followSun(): void {
-    if (!this.site) return;
-    const half = this.site.size / 2;
-    const { px, pz } = plotOf(Math.floor(this.controls.target.x + half), Math.floor(this.controls.target.z + half));
-    const at = ownsPlot(this.site, px, pz) ? { x: px * SITE_SIZE, z: pz * SITE_SIZE } : { x: 0, z: 0 };
-    if (this.sun.target.position.x === at.x && this.sun.target.position.z === at.z) return;
-    this.sun.target.position.set(at.x, 0, at.z);
-    this.sun.position.copy(SUN_DIRECTION).multiplyScalar(120).add(this.sun.target.position);
+    const target = this.controls.target;
+    const distance = this.camera.position.distanceTo(target);
+    const reach = Math.min(110, Math.max(14, distance * 0.55));
+    const s = this.sun.shadow.camera;
+    // Change the size in steps, so it doesn't swim while zooming.
+    const size = Math.pow(1.15, Math.ceil(Math.log(reach) / Math.log(1.15)));
+    if (s.right !== size) {
+      s.left = s.bottom = -size;
+      s.right = s.top = size;
+      s.updateProjectionMatrix();
+    }
+    const texel = (2 * size) / this.sun.shadow.mapSize.x;
+    // Snap the look-at point to the texel grid in the sun's view.
+    const back = SUN_DIRECTION.clone().negate();
+    const right = new THREE.Vector3(0, 1, 0).cross(back).normalize();
+    const up = back.clone().cross(right);
+    const u = Math.round(target.dot(right) / texel) * texel;
+    const v = Math.round(target.dot(up) / texel) * texel;
+    const at = right.multiplyScalar(u).add(up.multiplyScalar(v)).add(back.multiplyScalar(target.dot(back)));
+    this.sun.target.position.copy(at);
+    this.sun.position.copy(SUN_DIRECTION).multiplyScalar(SHADOW_DEPTH / 2).add(at);
   }
 
   start(): void {
@@ -685,7 +723,8 @@ export class World {
       const { near, far } = hazeFor(this.camera.position.distanceTo(this.controls.target));
       this.fog.near = near;
       this.fog.far = far;
-      this.sky.position.copy(this.camera.position);
+      this.sky.update(this.camera, seconds);
+      if (this.siteGroup) animateSite(this.siteGroup, Math.min(seconds, 0.1));
       if (!this.hidden) this.renderer.render(this.scene, this.camera);
     });
   }
@@ -694,6 +733,7 @@ export class World {
 /** Free the GPU memory of every mesh and line in a group. */
 function disposeAll(group: THREE.Object3D): void {
   group.traverse((o) => {
+    for (const t of (o.userData.textures as THREE.Texture[] | undefined) ?? []) t.dispose();
     if (o instanceof THREE.Mesh || o instanceof THREE.LineSegments) {
       o.geometry.dispose();
       (o.material as THREE.Material).dispose();
