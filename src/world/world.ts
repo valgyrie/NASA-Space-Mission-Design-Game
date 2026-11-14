@@ -56,10 +56,10 @@ import { WATER_Y, padFor } from './ground';
 const SUN_DIRECTION = new THREE.Vector3(-0.78, 0.5, 0.36).normalize();
 
 /** Brightness of the picture (ACES tone mapping) and of the sun. */
-const EXPOSURE = 0.3;
+const EXPOSURE = 0.34;
 const SUN_INTENSITY = 8;
-/** How much the sky lights the scene besides the sun. */
-const SKY_LIGHT = 0.9;
+/** How much the sky lights the scene besides the sun: the luminance its light on level ground should have. */
+const SKY_LIGHT = 1.17;
 /** Depth of the box the sun's shadows are drawn in. */
 const SHADOW_DEPTH = 300;
 /** Vertices per tile of the placement marker, so it follows the ground. */
@@ -329,7 +329,7 @@ export class World {
     s.near = 1;
     s.far = SHADOW_DEPTH;
     this.scene.add(sun, sun.target);
-    this.scene.environmentIntensity = SKY_LIGHT;
+    this.scene.environmentIntensity = SKY_LIGHT / Math.max(this.sky.skyLight, 0.05);
   }
 
   /** Show a Site, replacing the one on screen. */

@@ -280,9 +280,9 @@ export function buildPlotMarker(ground: Ground, plot: PlotRef, buyable: boolean)
   return group;
 }
 
-/** Two or three boulders on each Deposit tile, coloured by Raw Material. */
+/** A small heap of ore boulders and stones on each Deposit tile, coloured by Raw Material. */
 function depositMesh(site: Site, ground: Ground): THREE.InstancedMesh {
-  const rocks: { tile: string; x: number; z: number; s: number; r: number; colour: number }[] = [];
+  const rocks: { tile: string; x: number; z: number; s: number; r: number; colour: number; shade: number }[] = [];
   for (const { px, pz } of sitePlots(site)) {
     // Each Plot has its own random numbers, so buying one never moves the Home Site's rocks.
     const rng = makeRng(hashText(site.seed + (px === 0 && pz === 0 ? ':rocks' : `:rocks:${px},${pz}`)));
@@ -291,22 +291,34 @@ function depositMesh(site: Site, ground: Ground): THREE.InstancedMesh {
       const tx = px * SITE_SIZE + (i % SITE_SIZE);
       const tz = pz * SITE_SIZE + Math.floor(i / SITE_SIZE);
       const { x, z } = tileCentre(site, tx, tz);
-      const count = 2 + Math.floor(rng() * 2);
+      // A heap: one or two big blocks of ore and smaller stones scattered around them.
+      const count = 5 + Math.floor(rng() * 3);
+      const cx = x + (rng() - 0.5) * 0.3;
+      const cz = z + (rng() - 0.5) * 0.3;
       for (let k = 0; k < count; k++) {
+        const big = k < 2;
+        const a = rng() * Math.PI * 2;
+        const d = big ? rng() * 0.18 : 0.15 + rng() * 0.3;
         rocks.push({
           tile: plotKey(tx, tz),
-          x: x + (rng() - 0.5) * 0.6,
-          z: z + (rng() - 0.5) * 0.6,
-          s: 0.16 + rng() * 0.12,
+          x: cx + Math.cos(a) * d,
+          z: cz + Math.sin(a) * d,
+          s: big ? 0.2 + rng() * 0.12 : 0.06 + rng() * 0.08,
           r: rng() * Math.PI * 2,
           colour: DEPOSIT_COLOUR[tile.deposit],
+          shade: 0.8 + rng() * 0.35,
         });
       }
     });
   }
   const mesh = new THREE.InstancedMesh(boulderGeometry(3), rockMaterial(), rocks.length);
   const colour = new THREE.Color();
-  rocks.forEach((rock, i) => mesh.setColorAt(i, colour.setHex(rock.colour)));
+  // Pale ores are toned down to stone, so they read as rock, not ice.
+  rocks.forEach((rock, i) => {
+    colour.setHex(rock.colour);
+    const light = 0.3 * colour.r + 0.59 * colour.g + 0.11 * colour.b;
+    mesh.setColorAt(i, colour.multiplyScalar(rock.shade * Math.min(1, 0.42 / light)));
+  });
   mesh.name = 'deposits';
   mesh.castShadow = true;
   mesh.receiveShadow = true;

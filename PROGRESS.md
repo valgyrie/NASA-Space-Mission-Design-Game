@@ -15,6 +15,8 @@
 
 **In progress (14 Nov): realistic graphics.** The team asked for the voxel look to be replaced. Part 1 is in: smooth textured land, water, a physical sky, and all ten buildings as Blender models (`public/models/buildings.glb`, scripts in `scripts/blender/`). Gameplay is unchanged; 463 tests, type checks and the production build pass. Rockets, the Launch scene, Spacecraft, Earth, trees, the truck and the Credits entries for the new assets are still to do. Everything a new session needs, with the prompts for each remaining stream: `docs/graphics-overhaul/HANDOFF.md`. The finished look needs the team's go-ahead before its final merge.
 
+**Realistic graphics, session 2 (14 Nov, afternoon):** cut short by the usage limit. Two agents were polishing the land and sky (white sky, sand, rock, Deposits, cliffs, ground under buildings) and the buildings (materials, baked shading, smoke, level sign, flag). Their work so far is committed as a checkpoint that passes the checks, but nobody has reviewed how it looks. Start at "Session 2: read this first" in `docs/graphics-overhaul/HANDOFF.md`: it has the state, this machine's set-up (Node on PATH, screenshots need Chrome, no `gh`) and the prompts to re-run.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**

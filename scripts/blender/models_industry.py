@@ -224,6 +224,16 @@ def mine(b):
     b.mound(5.0, 7.2, (pile.x, pile.y, PAD - 0.1), 'ore', seed=1)
     b.mound(3.2, 3.2, (-1.0, 11.8, PAD - 0.1), 'ore', seed=2, squash=(1.3, 0.8))
     b.mound(4.0, 3.8, (-8.0, 8.0, PAD - 0.1), 'ore', seed=3, squash=(1.1, 0.9))
+    # Lumps that rolled off the heaps.
+    for k, (px, py, pr) in enumerate(((pile.x, pile.y, 5.0), (-1.0, 11.8, 3.6), (-8.0, 8.0, 4.2))):
+        for i in range(7):
+            a = b.rng.uniform(0, math.tau)
+            d = pr + b.rng.uniform(0.0, 0.9)
+            r = b.rng.uniform(0.18, 0.42)
+            qx = max(-14.2, min(14.2, px + math.cos(a) * d))
+            qy = max(-14.2, min(14.2, py + math.sin(a) * d))
+            b.blob(r, (qx, qy, PAD + r * 0.4), 'ore', seed=k * 10 + i,
+                   scale=(1, 1, 0.7))
 
     # Winding house: brick engine house with tall windows and the rope openings high on its gable.
     hx0, hx1, hy0, hy1 = -13.2, -1.8, -13.0, -3.0
@@ -282,7 +292,7 @@ def dish_mesh(b, node, R, depth, mat='whitePaint', segs=40, thickness=0.12):
 def electronics_lab(b):
     P.pad(b)
     x0, x1, y0, y1 = -12.5, 6.5, -4.0, 10.5
-    roof = P.flat_block(b, x0, x1, y0, y1, 11.5, wall='plasterWhite')
+    roof = P.flat_block(b, x0, x1, y0, y1, 11.5, wall='precast')
     # Product-coloured band under the coping, all round.
     for face, p, a0, a1 in (('-y', y0, x0, x1), ('+x', x1, y0, y1)):
         P.fbox(b, face, p, (a0 + a1) / 2, 0.04, PAD + 10.0, a1 - a0 + 0.02, 0.08, 0.7, 'product', bevel=0.02)
@@ -380,7 +390,7 @@ def pv_array(b, cx, cy, z, cols, rows, tilt_deg=20, node=None, frame='aluminium'
 def solar_fab(b):
     P.pad(b)
     x0, x1, y0, y1 = -13.0, 9.0, -3.0, 11.5
-    zr, ze = P.gable_hall(b, x0, x1, y0, y1, eave=7.0, pitch=5, wall='cladWhite', roof='cladLight', skylights=0)
+    zr, ze = P.gable_hall(b, x0, x1, y0, y1, eave=7.0, pitch=5, wall='cladCream', roof='cladRoof', skylights=0)
     P.rollup_door(b, '-y', y0, 3.5, 4.5, 4.8)
     P.door(b, '-y', y0, -10.5)
     P.window_band(b, '-y', y0, -8.5, -0.5, PAD + 3.0, 1.4)
@@ -446,7 +456,7 @@ def tank(b, x, y, r=2.8, h=14.0, band='product'):
 def battery_plant(b):
     P.pad(b)
     x0, x1, y0, y1 = -13.5, 0.5, -10.5, 3.0
-    roof = P.flat_block(b, x0, x1, y0, y1, 9.0, wall='cladLight')
+    roof = P.flat_block(b, x0, x1, y0, y1, 9.0, wall='cladSage')
     for face, p, a0, a1 in (('-y', y0, x0, x1), ('+x', x1, y0, y1), ('+y', y1, x0, x1), ('-x', x0, y0, y1)):
         P.fbox(b, face, p, (a0 + a1) / 2, 0.04, PAD + 7.6, a1 - a0 + 0.02, 0.08, 0.6, 'product', bevel=0.02)
     P.rollup_door(b, '-y', y0, -8.5, 4.0, 4.5)
@@ -526,7 +536,7 @@ def forklift(b, node):
 def warehouse(b):
     P.pad(b)
     x0, x1, y0, y1 = -12.5, 12.5, -3.5, 12.5
-    zr, ze = P.gable_hall(b, x0, x1, y0, y1, eave=8.0, pitch=10, wall='cladLight', roof='cladRed', skylights=4,
+    zr, ze = P.gable_hall(b, x0, x1, y0, y1, eave=8.0, pitch=10, wall='cladSand', roof='cladRed', skylights=4,
                           trim='steelGrey')
     P.slab(b, -4.0, 7.0, -14.6, -3.6, 'asphalt')
     P.rollup_door(b, '-y', y0, 2.0, 4.6, 5.0)

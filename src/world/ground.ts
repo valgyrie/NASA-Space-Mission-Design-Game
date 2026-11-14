@@ -37,8 +37,12 @@ export const FAR_STEP = 4;
 /** Above this many vertices the full-detail land uses one vertex per tile instead of four. */
 const MAX_NEAR_VERTICES = 220_000;
 
-/** How far the graded earthworks around a building pad reach, in tiles. */
-export const PAD_SKIRT = 1.25;
+/** How far the flat ground of a building pad reaches past its footprint, in tiles, so its foundation sits in it. */
+export const PAD_MARGIN = 0.5;
+/** How far the graded earthworks around a building pad reach beyond that, in tiles. */
+export const PAD_SKIRT = 2.25;
+/** Steepest bank between dry land and the water: height per tile of distance from the water. */
+export const BANK_SLOPE = 1.05;
 
 /** A flat, level building pad: world x/z from `x0` to `x1` and `z0` to `z1`, at height `y`. */
 export interface Pad {
@@ -133,8 +137,11 @@ function microRelief(x: number, z: number): number {
   return valueNoise(x, z, 7) * 0.05 + valueNoise(x + 101, z - 57, 2.5) * 0.025;
 }
 
-/** How much sand, dry soil, rock and snow a tile shows; grass is the rest. */
-export function groundMix(terrain: Terrain, level: number, climate: SiteClimate): [number, number, number, number] {
+/**
+ * How much sand, dry soil, rock and snow a tile shows; grass is the rest. `beach` is 1 for sand by the water and 0
+ * far from it: inland sand in a green land is bare, sandy soil rather than a beach.
+ */
+export function groundMix(terrain: Terrain, level: number, climate: SiteClimate, beach = 1): [number, number, number, number] {
   const dry = climate.dryness;
   const snowy = climate.snow ?? 0;
   let sand = 0;
@@ -145,17 +152,20 @@ export function groundMix(terrain: Terrain, level: number, climate: SiteClimate)
     sand = 0.8;
     dirt = 0.2;
   } else if (terrain === 'sand') {
-    sand = 1;
+    const bare = (1 - beach) * (1 - smoothstep(0.55, 0.9, dry));
+    sand = 1 - 0.55 * bare;
+    dirt = 0.55 * bare;
   } else if (terrain === 'grass') {
     dirt = smoothstep(0.3, 0.95, dry) * 0.85;
     sand = smoothstep(0.75, 1, dry) * 0.15;
   } else if (terrain === 'hills') {
-    rock = 0.12;
-    dirt = 0.15 + smoothstep(0.3, 0.95, dry) * 0.45;
+    // Grassy hills: rock shows on their steep sides (the shader adds it by slope).
+    rock = 0.04;
+    dirt = 0.12 + smoothstep(0.3, 0.95, dry) * 0.45;
   } else {
     // Rocky highland: bare rock with thin grass and soil between.
-    rock = 0.72;
-    dirt = 0.12;
+    rock = 0.62;
+    dirt = 0.14;
     if (level >= 9) snow = 1;
   }
   if (terrain !== 'water') snow = Math.max(snow, snowy * (terrain === 'mountain' ? 1 : terrain === 'hills' ? 0.95 : 0.9));
@@ -292,6 +302,22 @@ function keepTrue(h: number, level: number): number {
   return Math.max(WATER_Y + 0.07, Math.min(y + 0.3, Math.max(y - 0.3, h)));
 }
 
+/** How far a skirt has gone from its pad's height back to the land, `d` tiles out from the flat margin (0 to 1). */
+export function padGrade(d: number): number {
+  return smoothstep(0, PAD_SKIRT, d);
+}
+
+/** Keep dry land near the water low enough that its bank is a slope, not a wall (`distance` in tiles, 0 = water). */
+export function bank(h: number, level: number, distance: number): number {
+  if (level < 0) return h;
+  return Math.min(h, WATER_Y + 0.12 + BANK_SLOPE * Math.max(distance - 0.5, 0.5));
+}
+
+/** 1 right by the water, 0 a few tiles inland. */
+export function beachOf(distanceToWater: number): number {
+  return 1 - smoothstep(1.5, 4, distanceToWater);
+}
+
 /**
  * The drawn ground of a Site: full detail over the Site and a Plot around it (`near`), coarse out to the horizon
  * (`far`), with building pads pressed in.
@@ -326,7 +352,9 @@ export class Ground {
     const centre = new Float32Array(tn * tn);
     for (let k = 0; k < tn * tn; k++) centre[k] = grid.level[k]! < 0 ? waterBed(dist[k]!) : grid.level[k]! * STEP;
     blur(centre, tn, WIDE);
-    for (let k = 0; k < tn * tn; k++) centre[k] = keepTrue(centre[k]!, grid.level[k]!);
+    // Distance from each dry tile to the water: the bank there may not rise steeper than BANK_SLOPE.
+    const toWater = distanceToLand((k) => grid.level[k]! >= 0, tn);
+    for (let k = 0; k < tn * tn; k++) centre[k] = bank(keepTrue(centre[k]!, grid.level[k]!), grid.level[k]!, toWater[k]!);
 
     // Looks per tile centre, softened so kinds blend instead of ending at tile edges.
     const mix = new Float32Array(tn * tn * 4);
@@ -334,17 +362,25 @@ export class Ground {
     const onSite = new Float32Array(tn * tn);
     const climate = land.climate;
     for (let k = 0; k < tn * tn; k++) {
-      mix.set(groundMix(grid.terrain[k]!, grid.level[k]!, climate), k * 4);
-      const d = grid.deposit[k];
-      if (d) {
-        const c = DEPOSIT_RGB[d];
-        const a = grid.depositAmount[k]!;
-        ore.set([c[0] * a, c[1] * a, c[2] * a, a], k * 4);
-      }
+      mix.set(groundMix(grid.terrain[k]!, grid.level[k]!, climate, beachOf(toWater[k]!)), k * 4);
       onSite[k] = grid.onSite[k]!;
     }
+    // A Deposit's ore patch spreads a little past its tiles, so it reads from afar; the shader breaks its edge up.
+    for (let z = 1; z < tn - 1; z++)
+      for (let x = 1; x < tn - 1; x++) {
+        const k = z * tn + x;
+        const d = grid.deposit[k];
+        if (!d) continue;
+        const c = DEPOSIT_RGB[d];
+        for (let dz = -1; dz <= 1; dz++)
+          for (let dx = -1; dx <= 1; dx++) {
+            const j = k + dz * tn + dx;
+            const a = grid.depositAmount[k]! * (dx === 0 && dz === 0 ? 1 : dx === 0 || dz === 0 ? 0.6 : 0.4);
+            if (a > ore[j * 4 + 3]!) ore.set([c[0] * a, c[1] * a, c[2] * a, a], j * 4);
+          }
+      }
     for (let c = 0; c < 4; c++) {
-      blur(mix, tn, NARROW, 4, c);
+      blur(mix, tn, WIDE, 4, c);
       blur(ore, tn, NARROW, 4, c);
     }
     blur(onSite, tn, WIDE);
@@ -426,6 +462,7 @@ export class Ground {
     const dist = distanceToLand((k) => levels[k]! < 0, n);
     for (let k = 0; k < n * n; k++) value[k] = levels[k]! < 0 ? waterBed(dist[k]! * FAR_STEP) : levels[k]! * STEP;
     blur(value, n, NARROW);
+    const toWater = distanceToLand((k) => levels[k]! >= 0, n);
     const look: GroundLook = { mix: new Float32Array(n * n * 4), ore: new Float32Array(n * n * 4), site: new Float32Array(n * n) };
     const height = new Float32Array(n * n);
     for (let j = 0; j < n; j++)
@@ -434,10 +471,10 @@ export class Ground {
         const x = from + i * FAR_STEP + o;
         const z = from + j * FAR_STEP + o;
         const inside = x >= this.nearMin && x <= this.nearMax && z >= this.nearMin && z <= this.nearMax;
-        let h = inside ? this.latticeHeight(this.near, x, z) : keepTrue(value[k]!, levels[k]!);
+        let h = inside ? this.latticeHeight(this.near, x, z) : bank(keepTrue(value[k]!, levels[k]!), levels[k]!, toWater[k]! * FAR_STEP);
         if (!inside) h += microRelief(x, z) * 2 * smoothstep(0.1, 0.4, Math.abs(h - WATER_Y));
         height[k] = h;
-        look.mix.set(groundMix(terrains[k]!, levels[k]!, this.land.climate), k * 4);
+        look.mix.set(groundMix(terrains[k]!, levels[k]!, this.land.climate, beachOf(toWater[k]! * FAR_STEP)), k * 4);
       }
     for (let c = 0; c < 4; c++) blur(look.mix, n, NARROW, 4, c);
     return { lattice: { x0: from + o, z0: from + o, step: FAR_STEP, n, height }, look };
@@ -508,7 +545,7 @@ export class Ground {
   addPad(pad: Pad): { i0: number; i1: number; j0: number; j1: number } | null {
     this.pads.push(pad);
     const l = this.near;
-    const reach = PAD_SKIRT + l.step;
+    const reach = PAD_MARGIN + PAD_SKIRT + l.step;
     const i0 = Math.max(0, Math.floor((pad.x0 - reach - l.x0) / l.step));
     const i1 = Math.min(l.n - 1, Math.ceil((pad.x1 + reach - l.x0) / l.step));
     const j0 = Math.max(0, Math.floor((pad.z0 - reach - l.z0) / l.step));
@@ -518,18 +555,23 @@ export class Ground {
     return { i0, i1, j0, j1 };
   }
 
-  /** Recompute the near heights in a range from the land and every pad: skirts first, then the flat pads on top. */
+  /**
+   * Recompute the near heights in a range from the land and every pad: graded skirts first, then each pad's flat
+   * margin, then the footprints themselves on top (so a neighbour's margin never tilts a building's own ground).
+   */
   private reshape(i0: number, i1: number, j0: number, j1: number): void {
     const l = this.near;
+    const outside = (p: Pad, x: number, z: number) => Math.hypot(Math.max(p.x0 - x, 0, x - p.x1), Math.max(p.z0 - z, 0, z - p.z1));
     for (let j = j0; j <= j1; j++)
       for (let i = i0; i <= i1; i++) {
         const x = l.x0 + i * l.step;
         const z = l.z0 + j * l.step;
         let h = this.base[j * l.n + i]!;
         for (const p of this.pads) {
-          const d = Math.hypot(Math.max(p.x0 - x, 0, x - p.x1), Math.max(p.z0 - z, 0, z - p.z1));
-          if (d > 0 && d < PAD_SKIRT) h = p.y + (h - p.y) * smoothstep(0, PAD_SKIRT, d);
+          const d = outside(p, x, z) - PAD_MARGIN;
+          if (d > 0 && d < PAD_SKIRT) h = p.y + (h - p.y) * padGrade(d);
         }
+        for (const p of this.pads) if (outside(p, x, z) <= PAD_MARGIN + 1e-6) h = p.y;
         for (const p of this.pads) if (x >= p.x0 && x <= p.x1 && z >= p.z0 && z <= p.z1) h = p.y;
         l.height[j * l.n + i] = h;
       }

@@ -76,6 +76,8 @@ def _tint(name):
         if not bsdf:
             continue
         sock = bsdf.inputs['Base Color']
+        if sock.is_linked and sock.links[0].from_node.name == 'aoMix':
+            sock = sock.links[0].from_node.inputs['A']
         c = (1, 1, 1, 1)
         if hexc is not None:
             c = tuple(((hexc >> s & 255) / 255) ** 2.2 for s in (16, 8, 0)) + (1,)
@@ -94,10 +96,40 @@ def _tint(name):
             sock.default_value = c
 
 
+def _vertex_colour():
+    """Multiply the baked AO vertex colour into every material's base colour, as glTF viewers (three.js) do."""
+    names = {a.name for me in bpy.data.meshes for a in me.color_attributes}
+    if not names:
+        return
+    name = 'Col' if 'Col' in names else sorted(names)[0]
+    for m in bpy.data.materials:
+        if not m.node_tree or m.name == 'groundMat':
+            continue
+        nt = m.node_tree
+        bsdf = next((n for n in nt.nodes if n.type == 'BSDF_PRINCIPLED'), None)
+        if not bsdf or any(n.type == 'ATTRIBUTE' for n in nt.nodes):
+            continue
+        sock = bsdf.inputs['Base Color']
+        attr = nt.nodes.new('ShaderNodeAttribute')
+        attr.attribute_name = name
+        mix = nt.nodes.new('ShaderNodeMix')
+        mix.name = 'aoMix'
+        mix.data_type = 'RGBA'
+        mix.blend_type = 'MULTIPLY'
+        mix.inputs['Factor'].default_value = 1
+        if sock.is_linked:
+            nt.links.new(sock.links[0].from_socket, mix.inputs['A'])
+        else:
+            mix.inputs['A'].default_value = sock.default_value
+        nt.links.new(attr.outputs['Color'], mix.inputs['B'])
+        nt.links.new(mix.outputs['Result'], sock)
+
+
 def render_all(roots, outdir, views=('site', 'close')):
     """roots: {name: root object}. Renders <outdir>/<name>-<view>.png with only that model visible."""
     scene = bpy.context.scene
     cam = setup_scene(scene)
+    _vertex_colour()
     os.makedirs(outdir, exist_ok=True)
     for name, root in roots.items():
         _tint(name)

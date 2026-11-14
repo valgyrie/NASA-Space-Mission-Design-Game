@@ -25,7 +25,7 @@ ANCHORS = {
 def research_lab(b):
     P.pad(b)
     x0, x1, y0, y1 = -12.5, 6.0, -4.5, 12.0
-    roof = P.flat_block(b, x0, x1, y0, y1, 13.0, wall='plasterWhite')
+    roof = P.flat_block(b, x0, x1, y0, y1, 13.0, wall='brick')
     # Three storeys of punched windows with a dark spandrel band.
     for zf in (PAD + 2.2, PAD + 6.0, PAD + 9.8):
         for a in P.frange(x0 + 1.6, x1 - 1.4, 2.3):

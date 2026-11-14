@@ -26,23 +26,28 @@ TEX_OUT = os.path.join(ART, 'tex_out')
 # Textures
 # ---------------------------------------------------------------------------------------------
 
-# Poly Haven sets (CC0). key: (asset id, size of colour and normal maps, colour mode, contrast, gain)
+# Poly Haven sets (CC0). key: (asset id, size of colour and normal maps, colour mode, contrast, gain, weathering)
 #   'grey' turns the colour map into a neutral detail map that materials tint with baseColorFactor.
+#   weathering: strength of the rain streaks and grime blotches baked into the colour map (0 = none).
 PH_SETS = {
-    'clad': ('box_profile_metal_sheet', 1024, 'grey', 0.8, 1.0),
-    'concrete': ('concrete_floor_02', 1024, 'grey', 0.7, 1.0),
-    'brick': ('red_brick_03', 1024, 'keep', 1.0, 1.1),
-    'asphalt': ('asphalt_02', 512, 'keep', 1.0, 1.0),
-    'shutter': ('painted_metal_shutter', 512, 'grey', 0.8, 1.0),
-    'plaster': ('painted_plaster_wall', 512, 'grey', 0.6, 1.0),
-    'gravel': ('gravel_floor', 512, 'grey', 1.0, 1.0),
+    'clad': ('box_profile_metal_sheet', 1024, 'grey', 0.8, 1.0, 0.32),
+    'concrete': ('concrete_floor_02', 1024, 'grey', 0.9, 1.0, 0.25),
+    'brick': ('red_brick_03', 1024, 'keep', 1.0, 0.95, 0.15),
+    'asphalt': ('asphalt_02', 512, 'keep', 1.0, 1.0, 0.0),
+    'shutter': ('painted_metal_shutter', 512, 'grey', 0.8, 1.0, 0.2),
+    'plaster': ('painted_plaster_wall', 512, 'grey', 0.8, 1.0, 0.3),
+    'gravel': ('gravel_floor', 512, 'grey', 1.0, 1.0, 0.0),
+    'ore': ('gravel_floor', 512, 'grey', 2.2, 1.0, 0.0),
 }
+# Roughness remap (G of the ARM map → a + b·G) per set; every set is dielectric (painted, mineral), so the
+# metallic channel is zeroed: the Poly Haven sheet-metal map would otherwise make painted walls mirror the sky.
+ROUGH = {'clad': (0.42, 0.45), 'shutter': (0.4, 0.4), 'plaster': (0.55, 0.4), 'concrete': (0.5, 0.45)}
 
 
 def fetch_textures():
     """Download the Poly Haven maps we use (1k JPG) into .leap/art-src/buildings/tex if missing."""
     os.makedirs(TEX_SRC, exist_ok=True)
-    for asset, *_ in PH_SETS.values():
+    for asset, *_ in set(PH_SETS.values()):
         for kind in ('diff', 'nor_gl', 'arm'):
             name = f'{asset}_{kind}_1k.jpg'
             path = os.path.join(TEX_SRC, name)
@@ -89,7 +94,7 @@ def prepare_textures():
     """Resize and re-encode the source maps; make the procedural ones. Returns {key: {map: path}}."""
     os.makedirs(TEX_OUT, exist_ok=True)
     out = {}
-    for key, (asset, size, mode, contrast, gain) in PH_SETS.items():
+    for key, (asset, size, mode, contrast, gain, weather) in PH_SETS.items():
         maps = {}
         diff = _load_scaled(os.path.join(TEX_SRC, f'{asset}_diff_1k.jpg'), size)
         if mode == 'grey':
@@ -98,15 +103,57 @@ def prepare_textures():
             diff[..., 0] = diff[..., 1] = diff[..., 2] = np.clip(lum, 0, 1)
         else:
             diff[..., :3] = np.clip(diff[..., :3] * gain, 0, 1)
+        if weather:
+            diff[..., :3] *= _weathering(size, size, sum(map(ord, key)), weather)[..., None]
         diff[..., 3] = 1
         maps['col'] = _save(diff, f'{key}_col')
         maps['nor'] = _save(_load_scaled(os.path.join(TEX_SRC, f'{asset}_nor_gl_1k.jpg'), size), f'{key}_nor', 85)
-        maps['arm'] = _save(_load_scaled(os.path.join(TEX_SRC, f'{asset}_arm_1k.jpg'), 512), f'{key}_arm', 85)
+        arm = _load_scaled(os.path.join(TEX_SRC, f'{asset}_arm_1k.jpg'), 512)
+        a, b = ROUGH.get(key, (0.0, 1.0))
+        arm[..., 1] = np.clip(a + b * arm[..., 1], 0, 1)
+        arm[..., 2] = 0.0
+        maps['arm'] = _save(arm, f'{key}_arm', 85)
         out[key] = maps
     out['pv'] = {'col': _pv_texture()}
     out['fence'] = {'col': _fence_texture()}
     out['grille'] = {'col': _grille_texture()}
     return out
+
+
+def _blur_wrap(a, sigma):
+    """Gaussian blur of a 2D array that wraps at the edges (so tiling textures stay seamless)."""
+    h, w = a.shape
+    fy = np.fft.fftfreq(h)[:, None]
+    fx = np.fft.fftfreq(w)[None, :]
+    g = np.exp(-2 * (math.pi * sigma) ** 2 * (fx ** 2 + fy ** 2))
+    return np.real(np.fft.ifft2(np.fft.fft2(a) * g))
+
+
+def _norm(a):
+    return (a - a.min()) / max(1e-6, a.max() - a.min())
+
+
+def _weathering(h, w, seed, amount):
+    """A seamless multiplier (≤ 1) with vertical rain streaks and soft grime blotches. Rows run bottom-up."""
+    rng = np.random.default_rng(seed)
+    # Streaks: thin columns of dirt, strongest at random heights (where they run from a ledge), fading down.
+    cols = _norm(_blur_wrap(rng.random((1, w)).repeat(4, 0), w / 220)[0])
+    cols = np.clip((cols - 0.45) / 0.55, 0, 1) ** 1.5
+    y = np.arange(h)[:, None] / h
+    runs = np.zeros((h, w), dtype=np.float32)
+    for k in range(3):
+        start = rng.random(w)
+        length = 0.25 + 0.6 * rng.random(w)
+        t = (start[None, :] - y) % 1.0  # distance below the start of each run
+        runs += np.clip(1 - t / length[None, :], 0, 1) ** 1.3
+    runs = _blur_wrap(runs, 1.2)
+    streak = _norm(cols[None, :] * runs)
+    blotch = _norm(_blur_wrap(rng.random((h, w)), h / 18))
+    blotch = np.clip((blotch - 0.4) / 0.6, 0, 1)
+    speck = _blur_wrap(rng.random((h, w)), 0.8)
+    speck = _norm(speck)
+    dirt = 0.6 * streak + 0.35 * blotch + 0.1 * speck
+    return np.clip(1 - amount * dirt, 0, 1).astype(np.float32)
 
 
 def _pv_texture():
@@ -252,29 +299,35 @@ def make_materials():
     """The shared palette. Names starting with 'product' or equal to 'ore' are tinted per building in the game."""
     T = TEXTURES
     T.update(prepare_textures())
-    # Cladding (box-profile steel sheet, 2 m per repeat), tinted.
-    material('cladGrey', (0.42, 0.45, 0.48), tex='clad', tile=2.0)
-    material('cladLight', (0.72, 0.74, 0.74), tex='clad', tile=2.0)
-    material('cladWhite', (0.86, 0.87, 0.86), tex='clad', tile=2.0)
-    material('cladRoof', (0.13, 0.15, 0.17), tex='clad', tile=2.0)
-    material('cladRed', (0.36, 0.06, 0.04), tex='clad', tile=2.0)
-    material('cladBlue', (0.05, 0.13, 0.32), tex='clad', tile=2.0)
-    material('cladGreen', (0.12, 0.2, 0.15), tex='clad', tile=2.0)
-    material('concrete', (0.52, 0.51, 0.49), tex='concrete', tile=3.0)
-    material('concreteDark', (0.34, 0.34, 0.33), tex='concrete', tile=3.0)
-    material('foundation', (0.45, 0.44, 0.42), tex='concrete', tile=4.0)
+    # Cladding (box-profile steel sheet, 2 m per repeat), tinted. Muted, weathered paint colours: real sheds are
+    # never paper white, and the map already carries rain streaks.
+    material('cladGrey', (0.15, 0.18, 0.21), tex='clad', tile=2.0)
+    material('cladLight', (0.4, 0.4, 0.37), tex='clad', tile=2.0)
+    material('cladWhite', (0.55, 0.55, 0.52), tex='clad', tile=2.0)
+    material('cladCream', (0.5, 0.46, 0.37), tex='clad', tile=2.0)
+    material('cladSand', (0.4, 0.33, 0.23), tex='clad', tile=2.0)
+    material('cladSage', (0.19, 0.23, 0.18), tex='clad', tile=2.0)
+    material('cladRoof', (0.06, 0.065, 0.07), tex='clad', tile=2.0)
+    material('cladRed', (0.2, 0.045, 0.028), tex='clad', tile=2.0)
+    material('cladBlue', (0.035, 0.08, 0.19), tex='clad', tile=2.0)
+    material('cladGreen', (0.09, 0.15, 0.11), tex='clad', tile=2.0)
+    material('concrete', (0.4, 0.39, 0.37), tex='concrete', tile=3.0)
+    material('concreteDark', (0.23, 0.23, 0.22), tex='concrete', tile=3.0)
+    material('precast', (0.5, 0.47, 0.42), tex='concrete', tile=3.0)
+    material('foundation', (0.33, 0.32, 0.3), tex='concrete', tile=4.0)
     material('brick', tex='brick', tile=1.6)
-    material('asphalt', tex='asphalt', tile=4.0)
-    material('shutter', (0.6, 0.63, 0.66), tex='shutter', tile=2.0)
-    material('shutterBlue', (0.12, 0.22, 0.4), tex='shutter', tile=2.0)
-    material('plasterWhite', (0.86, 0.86, 0.84), tex='plaster', tile=2.5)
-    material('plasterWarm', (0.72, 0.66, 0.56), tex='plaster', tile=2.5)
-    material('plasterGrey', (0.42, 0.43, 0.44), tex='plaster', tile=2.5)
-    material('gravelRoof', (0.36, 0.36, 0.35), tex='gravel', tile=2.0)
-    material('dirt', (0.22, 0.18, 0.14), tex='gravel', tile=3.0)
-    material('grass', (0.14, 0.24, 0.07), tex='gravel', tile=2.0)
-    material('hedge', (0.05, 0.13, 0.04), tex='gravel', tile=1.0, rough=0.9)
-    material('ore', (1.0, 1.0, 1.0), tex='gravel', tile=2.0)
+    material('asphalt', (0.7, 0.7, 0.7), tex='asphalt', tile=4.0)
+    material('shutter', (0.38, 0.4, 0.42), tex='shutter', tile=2.0)
+    material('shutterBlue', (0.08, 0.15, 0.28), tex='shutter', tile=2.0)
+    material('plasterWhite', (0.58, 0.57, 0.53), tex='plaster', tile=2.5)
+    material('plasterWarm', (0.5, 0.44, 0.34), tex='plaster', tile=2.5)
+    material('plasterGrey', (0.22, 0.23, 0.24), tex='plaster', tile=2.5)
+    material('gravelRoof', (0.16, 0.16, 0.15), tex='gravel', tile=2.0)
+    material('dirt', (0.2, 0.16, 0.12), tex='gravel', tile=3.0)
+    material('grass', (0.11, 0.19, 0.05), tex='gravel', tile=2.0)
+    material('hedge', (0.04, 0.1, 0.03), tex='gravel', tile=1.0, rough=0.9)
+    # Ore heaps: high-contrast gravel with a strong normal map; the game tints it with a muted Deposit colour.
+    material('ore', (1.0, 1.0, 1.0), tex='ore', tile=1.5, normal_strength=2.0)
     # Plain painted and bare metals.
     material('steelDark', (0.035, 0.04, 0.045), rough=0.5, metal=0.3)
     material('steelGrey', (0.2, 0.21, 0.22), rough=0.45, metal=0.4)
@@ -283,11 +336,11 @@ def make_materials():
     material('steelYellow', (0.82, 0.5, 0.02), rough=0.45)
     material('steelRed', (0.3, 0.045, 0.025), rough=0.5)
     material('steelBlue', (0.04, 0.12, 0.32), rough=0.45)
-    material('whitePaint', (0.8, 0.8, 0.78), rough=0.35)
+    material('whitePaint', (0.62, 0.62, 0.6), rough=0.45)
     material('hazard', (0.02, 0.02, 0.02), rough=0.6)
-    material('glass', (0.32, 0.4, 0.45), rough=0.05, metal=0.9)
+    material('glass', (0.2, 0.25, 0.28), rough=0.06, metal=0.85)
     material('foil', (0.78, 0.52, 0.14), rough=0.32, metal=1.0)
-    material('skylight', (0.62, 0.66, 0.64), rough=0.35)
+    material('skylight', (0.3, 0.33, 0.32), rough=0.3)
     material('glassDark', (0.03, 0.035, 0.04), rough=0.08, metal=0.7)
     material('frame', (0.28, 0.29, 0.3), rough=0.35, metal=0.8)
     material('interior', (0.015, 0.015, 0.016), rough=0.95)
@@ -545,7 +598,7 @@ class Builder:
         """A heap of loose material: a rounded cone with a lumpy surface."""
         rnd = random.Random(seed)
         bm = bmesh.new()
-        rings = 7
+        rings = 10
         prof = []
         for i in range(rings + 1):
             t = i / rings
@@ -559,7 +612,8 @@ class Builder:
             if v.co.z < 0.01 or v.co.xy.length < 0.01:
                 continue
             a = math.atan2(v.co.y, v.co.x)
-            n = (0.08 * math.sin(3 * a + phases[0]) + 0.05 * math.sin(5 * a + phases[1]) + 0.04 * math.sin(9 * a + v.co.z + phases[2]))
+            n = (0.08 * math.sin(3 * a + phases[0]) + 0.05 * math.sin(5 * a + phases[1]) + 0.04 * math.sin(9 * a + v.co.z + phases[2])
+                 + 0.03 * math.sin(17 * a + 3 * v.co.z + phases[3]) + rnd.uniform(-0.035, 0.035))
             k = 1 + n
             v.co.x *= k * squash[0]
             v.co.y *= k * squash[1]
@@ -676,6 +730,7 @@ def finalize(b, scene):
             view.objects.active = obj
             bpy.ops.object.join()
             me = obj.data
+            _densify(me)
             _box_uv(me, (b.rng.random(), b.rng.random()))
             if 'keepuv' in me.attributes:
                 me.attributes.remove(me.attributes['keepuv'])
@@ -706,6 +761,104 @@ def finalize(b, scene):
             bpy.data.meshes.remove(me)
     bpy.data.collections.remove(b.coll)
     return root
+
+
+def _densify(me, step=2.0, min_area=3.0):
+    """Cut big faces on a grid (every `step` metres along x, y and z) so the baked vertex AO has enough
+    vertices to shade walls, roofs and the pad smoothly. Faces with kept UVs (PV, fences) are left alone."""
+    bm = bmesh.new()
+    bm.from_mesh(me)
+    keep = bm.faces.layers.int.get('keepuv')
+
+    def big(f):
+        return f.is_valid and not (keep and f[keep]) and f.calc_area() > min_area
+
+    for axis in range(3):
+        faces = [f for f in bm.faces if big(f)]
+        if not faces:
+            continue
+        lo = min(v.co[axis] for f in faces for v in f.verts)
+        hi = max(v.co[axis] for f in faces for v in f.verts)
+        cuts = list(np.arange(math.floor(lo / step) * step + step, hi, step))
+        if axis == 2:
+            # Extra cuts near the ground, where contact shadows and splash grime are.
+            cuts = sorted(set(round(c, 3) for c in cuts + [0.55, 0.9, 1.4]))
+        no = [0, 0, 0]
+        no[axis] = 1
+        for c in cuts:
+            hit = [f for f in bm.faces if big(f) and min(v.co[axis] for v in f.verts) < c - 0.05
+                   and max(v.co[axis] for v in f.verts) > c + 0.05]
+            if not hit:
+                continue
+            edges = list({e for f in hit for e in f.edges})
+            verts = list({v for f in hit for v in f.verts})
+            co = [0, 0, 0]
+            co[axis] = c
+            bmesh.ops.bisect_plane(bm, geom=hit + edges + verts, dist=1e-4, plane_co=co, plane_no=no)
+    bm.to_mesh(me)
+    bm.free()
+
+
+def bake_ao(root, samples=32, distance=4.0, strength=0.95):
+    """Bake ambient occlusion into a vertex colour (COLOR_0, which glTF multiplies into the base colour), and
+    darken wall bases with splash grime. The scene ground (z = 0) and the model itself occlude."""
+    scene = bpy.context.scene
+    scene.render.engine = 'CYCLES'
+    scene.cycles.device = 'CPU'
+    scene.cycles.samples = samples
+    if not scene.world:
+        scene.world = bpy.data.worlds.new('bake')
+    scene.world.light_settings.distance = distance
+    ground = bpy.data.objects.get('bakeGround')
+    if not ground:
+        gm = bpy.data.meshes.new('bakeGround')
+        s = 300
+        gm.from_pydata([(-s, -s, 0), (s, -s, 0), (s, s, 0), (-s, s, 0)], [], [(0, 1, 2, 3)])
+        ground = bpy.data.objects.new('bakeGround', gm)
+        scene.collection.objects.link(ground)
+    ground.hide_render = False
+    objs = [o for o in [root, *root.children_recursive] if o.type == 'MESH']
+    view = bpy.context.view_layer
+    view.update()
+    for o in view.objects:
+        o.select_set(False)
+    for o in objs:
+        me = o.data
+        attr = me.color_attributes.new('Col', 'FLOAT_COLOR', 'CORNER')
+        me.color_attributes.active_color = attr
+        me.color_attributes.render_color_index = me.color_attributes.active_color_index
+        o.select_set(True)
+    view.objects.active = objs[0]
+    bpy.ops.object.bake(type='AO', target='VERTEX_COLORS', use_clear=True)
+    for o in objs:
+        me = o.data
+        mw = o.matrix_world
+        rot = mw.to_3x3()
+        col = me.color_attributes['Col']
+        n = len(me.loops)
+        vals = np.empty(n * 4, dtype=np.float32)
+        col.data.foreach_get('color', vals)
+        ao = vals.reshape(n, 4)[:, 0].copy()
+        z = np.empty(n, dtype=np.float32)
+        nz = np.empty(n, dtype=np.float32)
+        for poly in me.polygons:
+            wn = (rot @ poly.normal).normalized()
+            for li in poly.loop_indices:
+                z[li] = (mw @ me.vertices[me.loops[li].vertex_index].co).z
+                nz[li] = wn.z
+        if o is objs[0]:
+            print(f'AO {o.name}: raw min {ao.min():.2f} mean {ao.mean():.2f}')
+        ao = 1 - strength * (1 - np.clip(ao, 0, 1))
+        # Splash grime: walls are darker for the first ~1.5 m above the ground.
+        wall = np.abs(nz) < 0.5
+        t = np.clip((z - 0.3) / 1.4, 0, 1)
+        grime = np.where(wall, 0.72 + 0.28 * t * t * (3 - 2 * t), 1.0)
+        v = np.clip(ao * grime, 0.08, 1).astype(np.float32)
+        out = np.stack([v, v, v, np.ones_like(v)], 1)
+        col.data.foreach_set('color', out.ravel())
+    ground.hide_render = True
+    for o in objs:
+        o.select_set(False)
 
 
 def _clean_slots(obj):

@@ -77,7 +77,7 @@ const FRAGMENT = /* glsl */ `
     vec3 r1 = ripple(p / 9.0 + vec2(uTime * 0.011, uTime * 0.007) * uFlow);
     vec3 r2 = ripple(p / 23.0 * mat2(0.8, 0.6, -0.6, 0.8) - vec2(uTime * 0.006, -uTime * 0.009) * uFlow);
     vec3 r3 = ripple(p / 3.1 + vec2(-uTime * 0.02, uTime * 0.015) * uFlow);
-    vec2 slope = (r1.xy * 0.6 + r2.xy * 0.8 + r3.xy * 0.35) * mix(0.55, 0.12, smoothstep(30.0, 260.0, dist));
+    vec2 slope = (r1.xy * 0.6 + r2.xy * 0.8 + r3.xy * 0.35) * mix(0.36, 0.12, smoothstep(30.0, 260.0, dist));
     vec3 N = normalize(vec3(slope.x, 1.0, -slope.y));
 
     // Fresnel reflection of the sky.
@@ -93,8 +93,8 @@ const FRAGMENT = /* glsl */ `
 
     // Light inside the water: turquoise over shallow sand, deep blue offshore.
     float absorb = 1.0 - exp(-depth * 1.35);
-    vec3 shallow = vec3(0.05, 0.22, 0.2);
-    vec3 deep = vec3(0.004, 0.03, 0.07);
+    vec3 shallow = vec3(0.07, 0.3, 0.28);
+    vec3 deep = vec3(0.012, 0.075, 0.13);
     float lit = max(uSunDir.y, 0.0) * 0.7 + 0.35;
     vec3 body = mix(shallow, deep, smoothstep(0.0, 1.0, absorb)) * uSunColour * lit;
 
@@ -112,7 +112,7 @@ const FRAGMENT = /* glsl */ `
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
     #ifdef USE_FOG
-      vec3 fogSky = textureLod(uSkyCube, normalize(vec3(-V.x, max(-V.y, 0.0) * 0.4 + 0.03, -V.z)), 2.0).rgb;
+      vec3 fogSky = textureLod(uSkyCube, normalize(vec3(-V.x, max(-V.y, 0.0) * 0.3 + 0.003, -V.z)), 1.0).rgb;
       #ifdef TONE_MAPPING
         fogSky = toneMapping(fogSky);
       #endif

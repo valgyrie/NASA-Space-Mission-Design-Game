@@ -143,7 +143,7 @@ export function latticeGeometry(b: LatticeBuffers, include: (i: number, j: numbe
 /** Flat colours per ground kind, used until the photographs have loaded (linear RGB). */
 const FALLBACK = {
   grass: [0.08, 0.09, 0.025],
-  sand: [0.28, 0.24, 0.2],
+  sand: [0.25, 0.185, 0.105],
   dirt: [0.19, 0.12, 0.075],
   rock: [0.15, 0.11, 0.05],
   snow: [0.55, 0.57, 0.62],
@@ -209,6 +209,7 @@ const SAMPLE_LAYERS = GROUND_KINDS.map(
     vec4 nA = textureGrad(gNrm[${k}], uvA, dpx * dA, dpy * dA);
     vec4 nB = textureGrad(gNrm[${k}], uvB + 0.37, rot * dpx * dA / ${LARGE_LAYER.toFixed(2)}, rot * dpy * dA / ${LARGE_LAYER.toFixed(2)});
     alb[${k}] = mix(cA, cB, layerMix);
+    avg[${k}] = textureLod(gAlb[${k}], vec2(0.5), 12.0).rgb;
     nrm[${k}] = mix(nA.rgb, nB.rgb, layerMix);
   }`,
 ).join('\n');
@@ -221,16 +222,27 @@ const SHADER_GROUND = /* glsl */ `
   float slope = 1.0 - gN.y;
   float macro = gFbm(p * 0.035);
   float detail = gFbm(p * 0.45 + 7.3);
+  // Far away, photographs fade to their average colour and flatten, so their pattern never repeats visibly.
+  float camDist = length(vGWorld - cameraPosition);
+  float farK = smoothstep(30.0, 170.0, camDist);
+  // Noise that breaks up where one kind of ground ends and the next begins.
+  float brk = (gFbm(p * 0.21 + 5.1) - 0.5) * 0.8 + (detail - 0.5) * 0.4;
+  float brk2 = (gFbm(p * 0.13 - 9.7) - 0.5) * 0.9 + (detail - 0.5) * 0.3;
 
-  // Weights: sand, dry soil, rock, snow from the land; rock on steep slopes; grass is the rest.
-  float wSand = vMix.x;
-  float wDirt = vMix.y;
-  float wRock = vMix.z;
-  float wSnow = vMix.w;
-  float steep = smoothstep(gRockSlope.x, gRockSlope.y, slope + (detail - 0.5) * 0.04);
+  // Weights: sand, dry soil, rock, snow from the land; rock on steep slopes and high ground; grass is the rest.
+  float wSand = smoothstep(0.3, 0.7, vMix.x + brk * 0.85);
+  float wDirt = clamp(vMix.y + brk2 * 0.5 * smoothstep(0.0, 0.25, vMix.y), 0.0, 1.0);
+  float wRock = clamp((vMix.z + brk2 * 0.75 - 0.18) * 2.0, 0.0, 1.0);
+  float wSnow = smoothstep(0.25, 0.75, vMix.w + brk * 0.6);
+  float steep = smoothstep(gRockSlope.x, gRockSlope.y, slope + brk * 0.12);
+  steep = max(steep, smoothstep(0.07, 0.2, slope + brk * 0.08) * smoothstep(2.0, 3.8, vGWorld.y) * 0.85);
   wRock = max(wRock, steep);
   wSnow *= 1.0 - smoothstep(gRockSlope.y, gRockSlope.y + 0.12, slope);
   wDirt = max(wDirt, (1.0 - wSnow) * smoothstep(0.62, 0.82, gFbm(p * 0.08 + 3.1)) * 0.35 * (1.0 - wSand));
+  // Grass gives way to soil at the edge of rock and sand.
+  wDirt = max(wDirt, (1.0 - wSnow) * 0.35 * max(wRock, wSand) * (1.0 - max(wRock, wSand)) * 4.0 * 0.5);
+  float wSum = wSand + wDirt + wRock + wSnow;
+  if (wSum > 1.0) { wSand /= wSum; wDirt /= wSum; wRock /= wSum; wSnow /= wSum; }
   float wGrass = max(0.0, 1.0 - wSand - wDirt - wRock - wSnow);
   float w[5];
   w[0] = wGrass;
@@ -241,38 +253,56 @@ const SHADER_GROUND = /* glsl */ `
 
   vec3 alb[5];
   vec3 nrm[5];
-  for (int k = 0; k < 5; k++) { alb[k] = gFallback[k]; nrm[k] = vec3(0.5, 0.5, 0.85); }
+  vec3 avg[5];
+  for (int k = 0; k < 5; k++) { alb[k] = gFallback[k]; nrm[k] = vec3(0.5, 0.5, 0.85); avg[k] = gFallback[k]; }
   float layerMix = clamp(0.25 + (macro - 0.5) * 1.2, 0.0, 0.75);
   mat2 rot = mat2(0.8, 0.6, -0.6, 0.8);
   if (gReady > 0.5) {
     ${SAMPLE_LAYERS}
   }
+  // Sand: the photograph's ripples, graded to a warm sand colour with more contrast, in broad drifts.
+  float sandLum = dot(alb[1], vec3(0.333)) / max(dot(avg[1], vec3(0.333)), 0.02);
+  alb[1] = gSandTint * clamp(1.0 + (sandLum - 1.0) * 2.2, 0.4, 1.8) * (0.86 + 0.28 * gFbm(p * 0.09 + 1.3));
+  avg[1] = gSandTint;
   alb[0] *= gGrassTint * (0.85 + 0.3 * gFbm(p * 0.02 + 11.0));
-  alb[1] *= gSandTint;
+  avg[0] *= gGrassTint;
   alb[4] = min(alb[4] * gSnowBoost + 0.05, vec3(0.9));
+  avg[4] = min(avg[4] * gSnowBoost + 0.05, vec3(0.9));
+  for (int k = 0; k < 5; k++) {
+    alb[k] = mix(alb[k], avg[k] * (0.9 + 0.2 * detail), farK * 0.6);
+    nrm[k] = mix(nrm[k], vec3(0.5, 0.5, nrm[k].b), farK * 0.7);
+  }
 
   // Height blend: where kinds meet, the higher-looking one (bright stones, sand) shows through in patches.
   float hi = 0.0;
   float t[5];
   for (int k = 0; k < 5; k++) {
-    t[k] = w[k] > 0.002 ? w[k] + (dot(alb[k], vec3(0.33)) * (k == 3 ? 0.4 : 1.0) + (detail - 0.5) * 0.6) * 0.5 : -1.0;
+    t[k] = w[k] > 0.002 ? w[k] + (dot(alb[k], vec3(0.33)) * (k == 3 ? 0.4 : 1.0) + (detail - 0.5) * 0.6) * 0.35 : -1.0;
     hi = max(hi, t[k]);
   }
   float sum = 0.0;
-  for (int k = 0; k < 5; k++) { t[k] = max(t[k] - hi + 0.2, 0.0); sum += t[k]; }
+  for (int k = 0; k < 5; k++) { t[k] = max(t[k] - hi + 0.25, 0.0); sum += t[k]; }
   vec3 albedo = vec3(0.0);
   vec3 tn = vec3(0.0);
   for (int k = 0; k < 5; k++) { albedo += alb[k] * t[k] / sum; tn += nrm[k] * t[k] / sum; }
   albedo *= 0.88 + 0.24 * macro;
 
-  // Deposits: ore-coloured gravel in patchy spreads.
+  // Deposits: a patch of ore-coloured stony ground with a ragged edge, readable from the whole-Site view.
   float oreAmount = vOre.a;
   if (oreAmount > 0.01) {
     vec3 oreColour = pow(vOre.rgb / oreAmount, vec3(2.2));
-    float spread = smoothstep(0.28, 0.5, oreAmount + (gFbm(p * 1.3) - 0.5) * 0.5);
-    float grains = 0.75 + 0.5 * gNoise(p * 14.0);
-    albedo = mix(albedo, oreColour * (0.45 + 0.9 * dot(albedo, vec3(0.33))) * grains, spread * 0.85);
-    tn.b = mix(tn.b, 0.55, spread);
+    float edgeNoise = (gFbm(p * 0.9 + 4.0) - 0.5) * 0.5 + (gNoise(p * 5.0) - 0.5) * 0.12;
+    // A solid core and, around it, scattered stones thinning out into the ground.
+    float spread = max(smoothstep(0.36, 0.42, oreAmount + edgeNoise),
+      smoothstep(0.2, 0.36, oreAmount + edgeNoise) * step(0.62, gNoise(p * 7.0 + 1.7)));
+    float grains = 0.65 + 0.7 * gNoise(p * 9.0) * (1.0 - farK * 0.7);
+    float stones = smoothstep(0.55, 0.75, gNoise(p * 3.3 + 2.0));
+    vec3 ore = oreColour * (0.75 + 0.35 * stones) * grains;
+    // Pale ores stay stone-coloured rather than glowing white.
+    ore *= min(1.0, 0.3 / max(dot(oreColour, vec3(0.3, 0.59, 0.11)), 0.01));
+    ore = mix(vec3(dot(ore, vec3(0.3, 0.59, 0.11))), ore, 0.8);
+    albedo = mix(albedo, ore, spread * 0.92);
+    tn = mix(tn, vec3(0.5 + (gNoise(p * 6.0) - 0.5) * 0.3, 0.5 + (gNoise(p * 6.0 + 3.0) - 0.5) * 0.3, 0.6), spread * 0.7);
   }
 
   // Damp ground at the water's edge.
@@ -284,8 +314,8 @@ const SHADER_GROUND = /* glsl */ `
   albedo = mix(albedo, vec3(dot(albedo, vec3(0.3, 0.59, 0.11))), 0.14 * outside) * (1.0 - 0.04 * outside);
 
   diffuseColor.rgb = albedo;
-  vec2 tnxy = (tn.rg * 2.0 - 1.0) * 1.15;
-  gNormalW = normalize(gN * (1.0 + 0.0 * tn.b) + vec3(tnxy.x, 0.0, -tnxy.y));
+  vec2 tnxy = (tn.rg * 2.0 - 1.0) * 1.1;
+  gNormalW = normalize(gN + vec3(tnxy.x, 0.0, -tnxy.y));
   gRough = clamp(mix(tn.b, 0.35, wet), 0.3, 1.0);
 `;
 
@@ -294,7 +324,7 @@ const SHADER_FOG = /* glsl */ `
   vec3 fogRay = vGWorld - cameraPosition;
   float fogDist = length(fogRay);
   vec3 fogDir = fogRay / fogDist;
-  vec3 fogSky = textureLod(gSkyCube, normalize(vec3(fogDir.x, max(fogDir.y, 0.0) * 0.4 + 0.03, fogDir.z)), 2.0).rgb;
+  vec3 fogSky = textureLod(gSkyCube, normalize(vec3(fogDir.x, max(fogDir.y, 0.0) * 0.3 + 0.003, fogDir.z)), 1.0).rgb;
   #ifdef TONE_MAPPING
     fogSky = toneMapping(fogSky);
   #endif
@@ -325,9 +355,10 @@ export function terrainMaterial(sky: SkyUniforms, look: TerrainLook): THREE.Mesh
     gFallback: { value: GROUND_KINDS.map((k) => new THREE.Vector3(...FALLBACK[k])) },
     gReady: { value: 0 },
     gGrassTint: { value: new THREE.Vector3(grassTint.r, grassTint.g, grassTint.b) },
-    gSandTint: { value: new THREE.Vector3(1.0, 0.86, 0.66 - 0.08 * dry) },
+    // Sand colour (linear): pale golden by the sea, warmer and redder in deserts.
+    gSandTint: { value: new THREE.Vector3(0.27 + 0.05 * dry, 0.19 + 0.0 * dry, 0.085 - 0.015 * dry) },
     gSnowBoost: { value: 1.9 },
-    gRockSlope: { value: new THREE.Vector2(0.17, 0.3) },
+    gRockSlope: { value: new THREE.Vector2(0.15, 0.32) },
     gSkyCube: sky.skyCube,
     gAerial: { value: 0.002 },
     gWaterY: { value: WATER_Y },

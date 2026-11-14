@@ -40,7 +40,18 @@ for name, build in MODELS.items():
     b = lib.Builder(name)
     build(b)
     roots[name] = lib.finalize(b, scene)
+    if '--no-ao' not in args:
+        lib.bake_ao(roots[name])
+    # Hide each finished model so it does not shade the next one's bake (they all stand at the origin).
+    for o in [roots[name], *roots[name].children_recursive]:
+        o.hide_render = True
     print(f'MODEL {name}: {lib.triangles(roots[name])} triangles')
+
+for root in roots.values():
+    for o in [root, *root.children_recursive]:
+        o.hide_render = False
+if bpy.data.objects.get('bakeGround'):
+    bpy.data.objects.remove(bpy.data.objects['bakeGround'])
 
 if not only:
     os.makedirs(os.path.dirname(OUT), exist_ok=True)
@@ -55,6 +66,8 @@ if not only:
         export_normals=True,
         export_tangents=False,
         export_materials='EXPORT',
+        export_vertex_color='ACTIVE',
+        export_all_vertex_colors=False,
         export_cameras=False,
         export_lights=False,
         export_animations=False,

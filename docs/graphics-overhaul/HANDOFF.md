@@ -4,6 +4,52 @@ Written 14 Nov 2026 by the orchestrating agent (Claude Fable) when usage ran low
 Read this file first, then `notes-terrain.md` and `notes-buildings.md` beside it (written by the two coding agents at
 their checkpoint; if one is missing, that agent was cut off: inspect its files and screenshots instead).
 
+## Session 2 (14 Nov, afternoon): read this first
+
+A second orchestrator (Claude Fable) continued on branch `realistic-graphics` and was cut short by the usage limit.
+The team asked for the work in progress to be committed, pushed and merged into `main` so the next session can go on.
+
+- **Started, not finished:** two Opus agents were continuing **stream 1** (terrain, water, sky) and **stream 2**
+  (buildings) from the priority lists in the two "continue" prompts below. Whatever they had changed when the
+  checkpoint was taken is committed. It passes the type check and tests, but **nobody has looked at it critically
+  yet**. Their notes (`notes-terrain.md`, `notes-buildings.md`) are only as fresh as the agents left them: if a note
+  does not mention session 2, that agent was cut off, so trust `git log -p` and new screenshots instead.
+- **First thing to do:** take the Demo Era 2 screenshots (command below), compare them with the problem lists in the
+  two "continue" prompts, and re-run those prompts with whatever is still wrong. Then streams 3 and 4 together, then
+  5, then 6, then 7, as in the table.
+- **Not started:** streams 3, 4, 5, 6 and 7. Their prompts below are ready to paste.
+- The **final** look still needs the team's go-ahead before its last merge.
+
+What the orchestrator saw in the game at the start of session 2 (Demo Era 2, 1280×800), i.e. what streams 1 and 2
+were asked to fix:
+
+- At low camera angles the whole sky is near-white from the horizon to the top of the screen; no clouds show.
+- Sand is flat pale grey blobs with a hard outline; rock areas are blotchy with visible repetition and hard edges.
+- Deposits are tiny blue-white specks, hard to find from the whole-Site view.
+- Buildings are clean bright white with pale roofs, like an untextured maquette; the Mine's ore piles are flat
+  orange blobs; smoke is faceted puffs; level signs are the old pole with gold icosahedra.
+- Building foundations stick out over slopes like a table, with the ground falling away under the edge.
+
+### This machine (Windows 11, differs from the notes further down)
+
+- **Node is on PATH** (v24, `C:\Program Files\nodejs`), and `node_modules` is installed. `npm run typecheck` and
+  `npx vitest run` work from the repo root (463 tests on 14 Nov). No need for `.leap/node`.
+- **Screenshots need Chrome.** Edge fails to launch from `shot.mjs` here. Always pass
+  `--browser "C:/Program Files/Google/Chrome/Application/chrome.exe"`. `.leap/shots/` (git-ignored) must be set up
+  once per machine: copy `scripts/dev/shot.mjs` there, then `npm init -y && npm install puppeteer-core` in it.
+- **Dev server:** in the Claude desktop app, add `.claude/launch.json` (not committed) with
+  `node node_modules/vite/bin/vite.js --port 5173 --strictPort` and start it with the preview tool. Elsewhere, run
+  that command in the background.
+- **`gh` is not installed.** Git push works through the Windows credential manager. Merge like part 1: push the
+  branch, then fast-forward `main` (`git push origin realistic-graphics:main`) when `main` has not moved, or merge
+  locally and push.
+- `.leap/art-src/` is empty on a fresh clone: the Blender script downloads its textures again on first run; terrain
+  originals must be fetched again if needed.
+- The two 404s in the console do not happen on the title page (every texture and the GLB load). They appear later
+  in the Demo Era 2 flow; not traced yet.
+- Agents were started with the Agent tool, `subagent_type: general-purpose`, `model: opus`, two at a time, each
+  with the shared rules plus one stream prompt, pasted in full (an agent starts with no memory of this file).
+
 ## What the team asked for
 
 > Change the graphics from voxel to something more realistic and non-voxel; improve the terrain and the models.
@@ -79,7 +125,8 @@ saves and seeds must not change: only how things are drawn (`src/site/site.ts` a
 Rules:
 - Edit only the files listed as yours. Another agent may be working in the same checkout on other files.
 - Do NOT commit, push, switch branches or stash. Do not add npm dependencies (three's `examples/jsm` is fine).
-- Node is not on PATH: `export PATH="<repo>/.leap/node:$PATH"`, then `npm run typecheck` and `npx vitest run`.
+- Node: on PATH on the team's Windows machine; if `node` is missing, `export PATH="<repo>/.leap/node:$PATH"`.
+  Then `npm run typecheck` and `npx vitest run`. Do not run `scripts/leap.test.mjs` or any launcher.
   All tests and the type check must pass when you finish. Vitest runs in plain Node (no DOM, no WebGL): nothing may
   touch `document`, images, `fetch` or a renderer at module import time. Add tests for new pure functions.
 - All player-facing text lives in `src/strings.ts` (a test enforces it). No real logos (NASA, SpaceX…).
@@ -88,8 +135,11 @@ Rules:
   URL, licence). Keep textures ≤ 1024 px (Earth may be larger) and your stream's shipped assets ≤ ~10 MB.
 - Performance: 60 fps on a mid-range laptop GPU; no extra full-scene render passes per frame.
 - Check your work visually and iterate like a harsh art director: a dev server runs at http://localhost:5173 (do not
-  start or stop one); take screenshots with `.leap/shots/shot.mjs` (see HANDOFF.md) and look at them with the Read
-  tool. Toy-like, boxy, plasticky or flat results are not done.
+  start or stop one); take screenshots with `.leap/shots/shot.mjs` (see HANDOFF.md; on Windows always pass
+  `--browser "C:/Program Files/Google/Chrome/Application/chrome.exe"`) and look at them with the Read tool.
+  Toy-like, boxy, plasticky or flat results are not done.
+- Another agent may change the sky, exposure or ground under you while you work, and the type check may fail in
+  its files for a moment: wait and re-run, do not fix files that are not yours.
 - Finish with a short report: what you built, assets used, test results, screenshot paths, known rough edges, and
   anything you needed from files you don't own. Also write it to `docs/graphics-overhaul/notes-<stream>.md`.
 ```
@@ -119,6 +169,26 @@ requirements, in short:
 9. Looks right for temperate, desert, snowy, flat, mountainous, and all four water kinds.
 10. ≤ ~200k near-terrain vertices, one shadow map, fast redrawLand().
 11. Hooks for a later vegetation agent: surface height, slope/normal and terrain kind at a world position.
+
+Session-2 priority list (fix in this order, check each in screenshots, stop when it looks good):
+1. Sky and exposure: at low camera angles the sky is blown out to near-white and no clouds show. Wanted: a clearly
+   blue daytime sky with soft visible clouds, a pale haze only in a thin band at the horizon, distant land and sea
+   fading into exactly that haze colour. Re-tune exposure, sun and environment intensity together so buildings and
+   land do not get darker or flatter. If three's Preetham `Sky` cannot do it at this sun height, replace the dome
+   with a cheap gradient + sun + procedural cloud shader, keeping `createSkyEnvironment`'s API, sky cube and PMREM.
+2. Sand reads as flat pale grey blobs with a hard outline: warm sand/dry-ground colour, visible texture and
+   ripples, edges broken up and blended into the grass with noise; inland sand should look like natural bare ground.
+3. Rock/hill areas are blotchy and repeat visibly from the whole-Site view, with hard edges: natural transition by
+   slope and height, less noise at distance, no visible tiling.
+4. Deposits are tiny specks: a clearly readable ore-coloured ground patch plus realistic ore rocks, visible from
+   the whole-Site view (players place Mines on them). `clearRocks` must keep working.
+5. Steep rock walls where high land meets water: widen and soften the bank.
+6. Building pads on slopes: foundations stick out over the slope like a table. Make the pressed pad and skirt wide
+   and graded enough that foundations sit in the ground all round (the foundation block belongs to stream 2).
+7. Verify and fix: shadows close to buildings, a Site with several bought Plots, the title screen's live Site, the
+   3×3 placement marker, Plot markers, four climates (temperate, desert, snowy, mountainous) with coast, lake,
+   river and no water; water after the sky change.
+8. If cheap: find the two 404s in the Demo Era 2 flow.
 ```
 
 ## Prompt: continue stream 2 (buildings in Blender)
@@ -143,6 +213,24 @@ Read docs/graphics-overhaul/notes-buildings.md and continue from its "not done" 
   Mine ore piles take DEPOSIT_COLOUR; doors face +x and +z. Buildings cast and receive shadows. A late or missing
   GLB must never crash the game or leave a building invisible.
 - Check every building close up and from the whole-Site view in Demo Mode Era 2, and that moving parts move.
+
+Session-2 priority list (fix in this order, check each in Blender previews and game screenshots):
+1. White and plasticky: nearly every building is the same clean white with pale grey roofs. Wanted: varied,
+   believable materials per building (weathered corrugated cladding in muted colours, brick, concrete, dark bitumen
+   or standing-seam roofs, galvanised steel), dirt and rain streaks, darker bases, panel joints. Bake ambient
+   occlusion (small AO/ORM texture or vertex colours, whichever exports cleanly through glTF). Keep each building
+   recognisable from the whole-Site view and keep the PRODUCT_COLOUR accents.
+2. The Mine's ore piles are flat saturated orange blobs: heaped crushed ore, rough and textured, tinted by
+   DEPOSIT_COLOUR but not neon.
+3. Smoke: soft camera-facing sprite puffs (canvas texture made lazily). World overwrites each puff's `scale`, so
+   put the Sprite as a child of each puff with a fixed scale; the `smoke` group must exist synchronously.
+4. Level sign (`buildLevelSign`): a small plaque with 1–n stars instead of the pole with gold icosahedra.
+5. HQ flag: gently waved cloth; Company logo visible close up.
+6. Verify in the game: moving parts move (two shots a second apart), the crane during an upgrade, every building
+   close up, the title-screen Site, lamps and windows not glowing too much by day, glass reflecting the sky.
+7. Budget: researchLab and hq under 30k triangles; report the `MODEL …` lines and the GLB size (9.7 MB before).
+8. No flash of the old code-built model before the GLB arrives: preload before the first Site is shown if simple
+   and safe, else a neutral placeholder; a late or failed GLB must never crash or leave a building invisible.
 ```
 
 ## Prompt: stream 3 (rockets and the Launch scene)
