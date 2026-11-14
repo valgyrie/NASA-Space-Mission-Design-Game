@@ -1,8 +1,37 @@
 # Realistic graphics overhaul: handoff
 
 Written 14 Nov 2026 by the orchestrating agent (Claude Fable) when usage ran low. Another agent continues from here.
-Read "Session 3: START HERE" first, then `notes-terrain.md`, `notes-buildings.md` and `notes-space.md` beside it (written by the two coding agents at
+Read "Session 4" and "Session 3: START HERE" first, then `notes-terrain.md`, `notes-buildings.md` and `notes-space.md` beside it (written by the two coding agents at
 their checkpoint; if one is missing, that agent was cut off: inspect its files and screenshots instead).
+
+## Session 4 (14 Nov, later): latest state, read before "Session 3"
+
+A fourth orchestrator (Claude Fable) pulled session 3's work onto a second PC and went on from there. "Session 3:
+START HERE" below still holds for everything not listed here.
+
+- **Running in session 4 (the team's choice):** **stream 3** (rockets and the Launch scene) and **stream 5** (trees,
+  rocks, Shipping truck), one Opus agent each. Their notes: `notes-launch.md` and `notes-nature.md` (written early
+  and updated as they go). If a notes file exists but the work is uncommitted or looks half done, that agent was
+  cut off: run the checks, look at the game, then re-run its prompt with what is left.
+- **Stream 4 (Spacecraft, Earth, space views) is NOT being done in session 4.** It was started in session 3 on the
+  other PC and its work was not pushed (only `scripts/build_earth_textures.py` is in the repo). Whoever has that
+  PC should push it; otherwise start stream 4 from its prompt.
+- **Left after that:** stream 6 (credits, docs), stream 7 (play-test), then ask the team before the final merge.
+- Agent prompts used in session 4: the session-3 header with the "Second PC" facts below instead of its machine
+  facts, plus: the owned-files list of the stream, "another agent is editing other files in this checkout", and
+  an order of work that leaves a visible gain if cut off (stream 3: sky and pad ground, rockets, exhaust and smoke,
+  tower, climb; stream 5: temperate trees, other climates, truck and road, boulders).
+
+### Second PC (Windows 11, repo in `Pictures/NASA-Space-Mission-Design-Game`)
+
+- **Node is on PATH** (v24); `npm run typecheck` and `npx vitest run` work from the repo root.
+- **Edge does not launch from `shot.mjs`; Chrome does.** Always pass
+  `--browser "C:/Program Files/Google/Chrome/Application/chrome.exe"`.
+- Dev server on **5173**, started with the preview tool from `.claude/launch.json` in the repo (not committed).
+- `.leap/shots/` holds only `shot.mjs` (no `shot2.mjs`, no `s3/` shots, no `.leap/ph_models.json`). Site shots
+  after session 3: `.leap/shots/out/s4/`.
+- A local `git stash` on this PC holds two agents' unfinished session-2 edits to the land and buildings. Session 3
+  replaced that work; the stash is only a safety copy and can be dropped.
 
 ## Session 3 (14 Nov, evening): START HERE
 
