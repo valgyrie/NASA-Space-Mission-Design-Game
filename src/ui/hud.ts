@@ -5,6 +5,7 @@ import { availableContracts, daysLeft } from '../game/contracts';
 import { missionStage } from '../game/mission';
 import { satellitesInOrbit } from '../game/space';
 import type { SiteState } from '../game/siteState';
+import { icon } from './icons';
 import { t } from '../strings';
 import { DEPOSIT_COLOUR } from '../world/siteMesh';
 import { contractText, cssColour, formatDays, formatNumber } from './format';
@@ -74,6 +75,7 @@ export function showHud(
   market.className = 'small market-button';
   market.textContent = t('market.open');
   market.title = t('market.openName');
+  market.prepend(icon('market'));
   market.addEventListener('click', onMarket);
 
   const contracts = document.createElement('button');
@@ -81,6 +83,7 @@ export function showHud(
   contracts.className = 'small market-button';
   contracts.textContent = t('contracts.open');
   contracts.title = t('contracts.openName');
+  contracts.prepend(icon('contracts'));
   contracts.dataset.tutorial = 'contracts';
   contracts.addEventListener('click', onContracts);
 
@@ -89,6 +92,8 @@ export function showHud(
   designer.className = 'small market-button designer-button';
   designer.textContent = t('designer.open');
   designer.title = t('designer.openName');
+  designer.prepend(icon('designer'));
+  designer.classList.add('designer-open');
   designer.dataset.tutorial = 'designer';
   designer.addEventListener('click', onDesigner);
 
@@ -98,6 +103,7 @@ export function showHud(
   space.className = 'small market-button designer-button space-button';
   space.textContent = t('space.open');
   space.title = t('space.openName');
+  space.prepend(icon('space'));
   space.hidden = true;
   space.addEventListener('click', onSpace);
 
@@ -107,6 +113,7 @@ export function showHud(
   archive.className = 'small market-button designer-button';
   archive.textContent = t('archive.open');
   archive.title = t('archive.openName');
+  archive.prepend(icon('archive'));
   archive.hidden = true;
   archive.addEventListener('click', onArchive);
 
@@ -125,6 +132,7 @@ export function showHud(
   launch.className = 'small launch-button';
   launch.textContent = t('mission.launch');
   launch.title = t('mission.launchName');
+  launch.prepend(icon('rocket'));
   launch.hidden = true;
   launch.dataset.tutorial = 'launch';
   launch.addEventListener('click', onLaunch);
@@ -133,6 +141,7 @@ export function showHud(
   track.className = 'small market-button';
   track.textContent = t('mission.track');
   track.title = t('mission.trackName');
+  track.prepend(icon('track'));
   track.hidden = true;
   track.addEventListener('click', onTrack);
 

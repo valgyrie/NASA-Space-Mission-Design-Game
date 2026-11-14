@@ -46,6 +46,11 @@
 - **Site look:** HUD, top bar, Build menu, side panels (Mine, Factory, Market, Contracts, plots) and the dialogs (pause menu, setup, Online, logo, Era and grant cards) now use the title look: dark glass, blue edges, uppercase headings, blue glow on chosen/hovered buttons. CSS only, at the end of `src/style.css`. The Launch show (its speed buttons included), Scrub card, Mission Designer and Launch planner are untouched.
 - Main menu bottom row: speaker, Real data, Credits.
 
+**Rest of the game in the new look, clearer Site (14 Nov, night), same branch, waiting for approval:**
+- Restyled (CSS block at the end of `src/style.css`): Space view, Launch show overlay (card, bars, speed and Skip buttons; the 3D is unchanged), Mission Report, History Archive and cards, tutorial, Anomaly panel, loading card, save warning, Contracts buttons. Mission Designer and Launch planner untouched.
+- Clearer: line icons on the HUD buttons (`src/ui/icons.ts`, shared with the menu's speaker); Mission Designer is the highlighted main button; the Launch button stays orange; the Build bar always says what to do ("Build: pick a building, then click the land."); the Demo Mode note moved under the top bar so panels no longer cover it; Real data opens straight to its list.
+- Screenshots of every screen with a title bar, and one overview sheet: `screenshots/development-NASA_resources/features and game/all-screens/`.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
@@ -61,6 +66,7 @@
 
 ## Log
 
+- 2026-11-14: The rest of the game (Space view, Launch show overlay, Mission Report, History, tutorial, Anomaly) in the new look; HUD icons and clearer hints; captioned screenshots of every screen. Mission Designer and Launch planner untouched.
 - 2026-11-14: Several Companies (Your Companies list, own save each, index only in memory), Music & Sounds with a title-music choice, and the Site panels and dialogs in the title look. Launch show, Mission Designer and Launch planner untouched. Waiting for the team's approval to merge.
 - 2026-11-14: Title and main menu merged into one screen like a classic game menu, over a random rocket Launch (five Launch Vehicles). Launch show untouched. Tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Folds (short line + arrow) in the Mission Designer and Launch planner, an equator tip for the Launch Site, and the HQ's floating logo fixed. 492 tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.

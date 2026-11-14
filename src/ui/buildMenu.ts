@@ -15,7 +15,7 @@ export interface BuildMenu {
 }
 
 function placingText(kind: BuildingKind | null): string {
-  if (!kind) return '';
+  if (!kind) return t('build.idle');
   return kind === 'mine' ? t('build.placing.mine') : t('build.placing.other', { name: t(`building.${kind}`) });
 }
 
@@ -54,6 +54,7 @@ export function showBuildMenu(root: HTMLElement, state: SiteState, onPick: (kind
   const hint = document.createElement('p');
   hint.className = 'build-hint';
   hint.setAttribute('aria-live', 'polite');
+  hint.textContent = placingText(null);
 
   menu.append(hint, row);
   root.append(menu);

@@ -447,6 +447,7 @@ export const STRINGS = {
   'build.hint.groundStation': 'A big dish that talks to your Spacecraft, so their antennas can send more Data home.',
   'build.lockedEra': 'Era {era}',
   'build.lockedEraName': 'Opens in Era {era}: upgrade your HQ first.',
+  'build.idle': 'Build: pick a building, then click the land.',
   'build.placing.mine': 'Click a Deposit to build a Mine. Esc to stop.',
   'build.placing.other': 'Click free land to build a {name}. Esc to stop.',
   'build.problem.noDeposit': 'Mines go on a Deposit (the coloured rocks).',

@@ -4777,3 +4777,82 @@ button.designer-challenge-test[hidden] { display: none; }
 .market-button.attention { border-color: var(--accent); }
 .progress { height: 7px; background: rgba(140, 170, 210, 0.16); }
 .progress-fill { background: linear-gradient(to right, #4fa3ff, #8fe0ff); box-shadow: 0 0 8px rgba(79, 163, 255, 0.6); }
+
+/* ---- The rest of the game in the same look: Space view, Launch show overlay, Mission Report, History,
+   tutorial, Anomaly panel, loading. The Mission Designer and Launch planner keep their own styles. ---- */
+.report, .archive, .history-card, .tutorial, .loading-card, .save-warning, .space-card, .launch-card,
+.launch-controls, .launch-note, .anomaly-panel, .demo-playing {
+  background: rgba(10, 17, 30, 0.84);
+  border: 1px solid rgba(140, 170, 210, 0.32);
+  border-radius: 12px;
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+.report, .archive, .history-card { background: rgba(10, 17, 30, 0.92); }
+.tutorial { border: 2px solid var(--accent); box-shadow: 0 0 22px color-mix(in srgb, var(--accent) 35%, transparent); }
+.anomaly-panel { border-color: var(--warn); box-shadow: 0 0 22px rgba(255, 179, 107, 0.25); }
+.report h2, .archive h2, .history-card h2, .space-head h2, .loading-card h2, .launch-title {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+.launch-title { font-size: 19px; text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6); }
+.report h3, .space-card h3, .archive h3, .history-card h3 { color: #8fc6ff; letter-spacing: 0.14em; }
+.launch-bar-track { height: 9px; background: rgba(140, 170, 210, 0.16); }
+.launch-bar-fill { background: linear-gradient(to right, #4fa3ff, #8fe0ff); box-shadow: 0 0 8px rgba(79, 163, 255, 0.6); }
+
+/* Buttons there: dark glass with a blue edge; hover glows; the chosen one keeps the glow. */
+.report button, .archive button, .history-card button, .tutorial button, .space-card button, .space-tag,
+.launch-controls button, .anomaly-buttons button, .hud button.market-button, .side-panel button.question,
+.side-panel button.accept, .side-panel button.upgrade, .side-panel button.trade {
+  color: var(--text);
+  background: rgba(20, 31, 48, 0.88);
+  border: 1px solid rgba(140, 170, 210, 0.38);
+  border-radius: 8px;
+  transition: background-color 0.12s, border-color 0.12s, box-shadow 0.12s;
+}
+.report button:hover:not(:disabled), .archive button:hover, .history-card button:hover, .tutorial button:hover,
+.space-card button:hover, .space-tag:hover, .launch-controls button:hover, .anomaly-buttons button:hover,
+.hud button.market-button:hover, .side-panel button:hover:not(:disabled) {
+  background: rgba(30, 50, 80, 0.92);
+  border-color: var(--accent);
+  box-shadow: 0 0 14px color-mix(in srgb, var(--accent) 38%, transparent);
+}
+.space-card button[aria-pressed='true'], .launch-controls button[aria-pressed='true'] {
+  background: rgba(33, 54, 84, 0.95);
+  color: var(--text);
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent), 0 0 14px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+/* The main step on each screen: a thicker blue edge with a glow. */
+.report button.report-close, button.history-continue, .anomaly-buttons button.anomaly-start, .side-panel button.accept,
+.hud button.designer-open {
+  font-weight: 750;
+  color: var(--text);
+  background: rgba(14, 30, 54, 0.9);
+  border: 2px solid var(--accent);
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 40%, transparent);
+}
+.hud button.launch-button {
+  border-radius: 8px;
+  box-shadow: 0 0 16px rgba(255, 138, 61, 0.55);
+}
+/* Icons beside the words on the Site's buttons. */
+.icon-svg {
+  width: 15px;
+  height: 15px;
+  flex: none;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.hud button:has(> .icon-svg):not([hidden]) { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+.hud button.launch-button { background: #ff8a3d; color: #1a0d03; border: 1px solid #ffb27d; font-weight: 750; }
+.hud button.launch-button:hover { background: #ff9a55; border-color: #ffd0ad; box-shadow: 0 0 20px rgba(255, 138, 61, 0.7); }
+/* The Demo Mode note sits centred under the top bar, clear of the panels on both sides. */
+.demo-playing { top: max(96px, calc(var(--top-bar-bottom, 0px) + 10px)); right: auto; left: 50%; transform: translateX(-50%); text-align: center; }
+.build-item:disabled { opacity: 0.5; cursor: not-allowed; }

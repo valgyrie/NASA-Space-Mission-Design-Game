@@ -9,6 +9,7 @@ import { TITLE_TRACKS } from '../audio/tracks';
 import type { CompanyEntry } from '../save/companies';
 import { t, type StringKey } from '../strings';
 import { formatGameDate } from './format';
+import { icon } from './icons';
 
 /** Short lines that tilt beside the wordmark, one picked each time the menu opens. Facts: docs/research/milestones.md. */
 const SPLASHES: StringKey[] = [
@@ -18,22 +19,6 @@ const SPLASHES: StringKey[] = [
   'mainMenu.splash.equator',
   'mainMenu.splash.simple',
 ];
-
-const SVG = 'http://www.w3.org/2000/svg';
-/** Simple line icons drawn here, so no outside icon set is needed. */
-const ICONS = {
-  sound: 'M4 9h4l5-4v14l-5-4H4z M16 9a4 4 0 0 1 0 6 M18.5 6.5a7.5 7.5 0 0 1 0 11',
-};
-
-function icon(path: string): SVGSVGElement {
-  const svg = document.createElementNS(SVG, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('aria-hidden', 'true');
-  const line = document.createElementNS(SVG, 'path');
-  line.setAttribute('d', path);
-  svg.append(line);
-  return svg;
-}
 
 export interface MainMenuOptions {
   /** Saved Companies, last played first (only their list lines, never the saves). */
@@ -117,11 +102,11 @@ export function showMainMenu(
     b.textContent = text;
     return b;
   };
-  const iconButton = (label: string, path: string) => {
+  const iconButton = (label: string, name: 'sound') => {
     const b = button('', 'menu-button menu-icon');
     b.setAttribute('aria-label', label);
     b.title = label;
-    b.append(icon(path));
+    b.append(icon(name));
     return b;
   };
 
@@ -133,7 +118,7 @@ export function showMainMenu(
   online.addEventListener('click', options.onOnline);
   const dataButton = button(t('data.heading'));
   const creditsButton = button(t('credits.heading'));
-  const soundButton = iconButton(t('sound.heading'), ICONS.sound);
+  const soundButton = iconButton(t('sound.heading'), 'sound');
   const row = document.createElement('div');
   row.className = 'main-menu-row';
   row.append(soundButton, dataButton, creditsButton);
@@ -176,6 +161,8 @@ export function showMainMenu(
   const sound = sheet(t('sound.heading'), makeAudioControls(), titleMusic(), backButton());
   sound.classList.add('sound-view');
   const data = sheet(t('data.heading'), makeDataCredits(), backButton());
+  // Opened here already: this sheet is only for the list.
+  data.querySelector('details')?.setAttribute('open', '');
 
   // ---- Your Companies: pick one to play, make a new one, or delete one. ----
   const list = document.createElement('div');
