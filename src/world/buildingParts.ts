@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import type { FactoryKind } from '../economy/part';
 import { FOOTPRINT } from '../game/siteState';
+import { useFoundation, useModel } from './buildingModels';
 
 /**
  * Shared pieces for the low-poly building models. Every model is drawn about 0.9 × 0.9 and then scaled
@@ -136,7 +137,8 @@ export function buildingGroup(name: string): THREE.Group {
   const g = new THREE.Group();
   g.name = name;
   g.scale.setScalar(BUILDING_SCALE);
-  parts(g).add(box(0.9, FOUNDATION_DEPTH, 0.9), M.foundation, 0, -FOUNDATION_DEPTH / 2, 0);
+  parts(g).add(box(0.9, FOUNDATION_DEPTH, 0.9), M.foundation, 0, -FOUNDATION_DEPTH / 2, 0).name = 'foundation';
+  useFoundation(g);
   return g;
 }
 
@@ -193,5 +195,6 @@ export function buildCrane(): THREE.Group {
   p.add(box(0.08, 0.06, 0.06), M.concrete, -0.17, 0.04, 0, jib);
   p.bar(v(0.45, 0.05, 0), v(0.45, -0.35, 0), 0.004, M.dark, jib);
   p.add(box(0.06, 0.06, 0.06), M.wood, 0.45, -0.38, 0, jib);
+  useModel(g, 'crane');
   return g;
 }
