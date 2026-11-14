@@ -42,7 +42,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 34 🧪 | [NASA's GMAT trajectories](34-gmat-trajectories.md) | 27, 31 | Syncom 3's real LEO → GEO transfer and Reference paths (long ellipse, Earth → Moon) from NASA Mission Viz. |
 | 35 ✅ | [Orbit maths checked against GMAT](35-orbit-maths-checked-against-gmat.md) | 34 | A repo test compares LEAP's Kepler code with a GMAT run; one line in Real data. |
 | 36 ✅ | [Like the real one](36-like-the-real-one.md) | 18, 21 | The Mission Report ends with the player's Spacecraft beside the real one. |
-| 37 | [Alouette 1 card](37-alouette-1-card.md) | 18 | "Also in 1962" side story after Telstar 1, from CSA. |
+| 37 ✅ | [Alouette 1 card](37-alouette-1-card.md) | 18 | "Also in 1962" side story after Telstar 1, from CSA. |
 | 38 | [Sourced tips](38-sourced-tips.md) | 12, 26 | About eight loading tips and report lines from CubeSat 101, each with its page. |
 | 39 | [NASA's six steps](39-nasas-six-steps.md) | 13 | The tutorial's eight steps under NASA's six step names. |
 | 40 | [Ground Tests](40-ground-tests.md) | 12, 33 | Vibration, thermal vacuum and Day in the Life tests: days and money against Anomaly risk. |

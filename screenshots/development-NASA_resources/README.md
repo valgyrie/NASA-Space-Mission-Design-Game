@@ -27,3 +27,6 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [ticket-36-report-free-play-relay-1024.png](features%20and%20game/ticket-36-report-free-play-relay-1024.png) | A failed Free Play relay beside TDRS-1, at 1024×768 | Same, Contract `free-2` |
 | [ticket-36-real-data-webb-1280.png](features%20and%20game/ticket-36-real-data-webb-1280.png) | Real data: the Webb game entry | Main menu → Where LEAP uses real data |
 | [ticket-32-report-rocket-failed-1280.png](features%20and%20game/ticket-32-report-rocket-failed-1280.png) | A rocket failure: the Launch segment comes first, the rest say what the design would have done | Same, with stage 2 failed |
+
+| [ticket-37-alouette-1-1280.png](features%20and%20game/ticket-37-alouette-1-1280.png) | Alouette 1, text-only with CSA reading link (1280×800) | Era 2 Demo → Telstar 1 success → close report → Continue from Telstar after card. Capture uses real Shipping/Launch rules, skips the flight animation and settles any Anomaly with a perfect played score. |
+| [ticket-37-alouette-1-archive-1024.png](features%20and%20game/ticket-37-alouette-1-archive-1024.png) | Alouette reopened from the History Archive (1024×768) | Same Company → History Archive → Canada’s first satellite |

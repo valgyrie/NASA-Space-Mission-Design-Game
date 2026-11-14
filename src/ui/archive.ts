@@ -64,13 +64,17 @@ export function showArchive(
         const card = HISTORY_CARDS[id];
         const b = el('button', 'archive-card');
         b.type = 'button';
-        const img = el('img', '');
-        img.src = imageUrl(id);
-        img.alt = '';
-        img.loading = 'lazy';
+        const image = imageUrl(id);
+        if (image) {
+          const img = el('img', '');
+          img.src = image;
+          img.alt = '';
+          img.loading = 'lazy';
+          b.append(img);
+        }
         const words = el('span', 'archive-card-words');
         words.append(el('strong', '', t(`history.${id}.title`)), el('span', '', t(`history.${card.when}`, { year: card.year })));
-        b.append(img, words);
+        b.append(words);
         b.addEventListener('click', () => hooks.onCard(id));
         return b;
       }),

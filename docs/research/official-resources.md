@@ -103,7 +103,7 @@ Page numbers are the printed ones.
 <https://www.asc-csa.gc.ca/eng/youth-educators/digital-games-and-activities.asp>
 
 - The catalogue lists Tomatosphere Adventure, Mission: Astronaut, Exploring Earth, a RADARSAT Constellation Mission game ("Help a farmer, a captain and a first responder achieve their missions using RADARSAT imagery") and an OSIRIS-REx game.
-- Alouette 1, from CSA's own page <https://www.asc-csa.gc.ca/eng/satellites/alouette.asp>: launched 29 September 1962 from the Pacific Missile Range, California, on a two-stage Thor-Agena; 145 kg; "a near perfect 1000 km orbit"; studied the ionosphere from above; one-year design life, a 10-year mission, over one million images of the ionosphere; Canada "the first nation, after the Russian and American superpowers, to design and build its own artificial Earth satellite". Photo credit and terms not stated on the page _(verify)_.
+- Alouette 1, from CSA's own page <https://www.asc-csa.gc.ca/eng/satellites/alouette.asp>: launched 29 September 1962 from the Pacific Missile Range, California, on a two-stage Thor-Agena; 145 kg; "a near perfect 1000 km orbit"; studied the ionosphere from above; one-year design life, a 10-year mission, over one million images of the ionosphere; Canada "the first nation, after the Russian and American superpowers, to design and build its own artificial Earth satellite". Rechecked 2026-11-14: the banner photo's credit and reuse terms remain unverified; the CSA/NASA credit belongs to the video. Ticket 37 ships text-only; details in `milestones.md`.
 - **Planned in LEAP:** Alouette 1 card (ticket 37), science-first Contracts (42).
 
 ## Source files in the repo

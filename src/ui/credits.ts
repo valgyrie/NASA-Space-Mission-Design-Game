@@ -19,7 +19,7 @@ export function makeCredits(): HTMLElement {
   data.append(paragraph(t('data.intro'), 'note'), makeDatasetList());
 
   const photos = section('credits.photos.heading');
-  photos.append(list(HISTORY_CARD_IDS.map((id) => {
+  photos.append(list(HISTORY_CARD_IDS.filter((id) => HISTORY_CARDS[id].image).map((id) => {
     const item = document.createElement('li');
     item.textContent = `${t(`history.${id}.title`)}: ${t(`history.${id}.credit`)}`;
     return item;
