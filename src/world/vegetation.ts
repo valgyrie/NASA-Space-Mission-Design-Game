@@ -15,7 +15,7 @@ import type { SceneryLayer } from './world';
  */
 
 /** Size (tiles) of the patches trees are grouped in: full-detail ones, and the rest. */
-const PATCH = [32, 64] as const;
+const PATCH = [48, 128] as const;
 
 const wind = { value: 0 };
 let textures: { col: THREE.Texture; mask: THREE.Texture } | null = null;
@@ -166,7 +166,7 @@ function refresh(group: THREE.Group): void {
 
 function patchKey(s: TreeSpot): string {
   const p = PATCH[s.lod];
-  return `${s.kind}:${s.lod}:${s.variant}:${Math.floor(s.x / p)},${Math.floor(s.z / p)}`;
+  return `${s.kind}:${s.lod}:${s.variant}:${s.shadow}:${Math.floor(s.x / p)},${Math.floor(s.z / p)}`;
 }
 
 /** The trees layer; add it once with `world.addScenery(vegetationLayer())`. */
@@ -209,7 +209,7 @@ export function vegetationLayer(): SceneryLayer {
           gone: new Uint8Array(list.length),
         } satisfies Instances;
         mesh.computeBoundingSphere();
-        mesh.castShadow = true;
+        mesh.castShadow = list[0]!.shadow;
         mesh.receiveShadow = lod === 0;
         mesh.onBeforeRender = () => {
           wind.value = performance.now() / 1000;

@@ -187,6 +187,9 @@ export class LaunchView {
     this.spaceEarthPivot.position.y = -3_150;
     this.space.add(this.spaceEarthPivot);
     this.space.add(new THREE.HemisphereLight(0xcfe3ff, 0x1a2230, 1.0));
+    // Earth-shine for the metal and paint: black space above, blue Earth below.
+    this.space.environment = earthShine(this.renderer);
+    this.space.environmentIntensity = 0.8;
     const spaceSun = new THREE.DirectionalLight(0xfff2dc, 2.6);
     spaceSun.position.set(-3, 5, 4);
     this.space.add(spaceSun);
@@ -338,7 +341,7 @@ export class LaunchView {
     for (const f of flames) {
       f.visible = on;
       // Thinner air lets the plume grow longer; it widens a little.
-      if (on) f.scale.set(1 + (stretch - 1) * 0.6, (0.93 + Math.random() * 0.14) * stretch, 1 + (stretch - 1) * 0.6);
+      if (on) f.scale.set(1 + (stretch - 1) * 2.2, (0.93 + Math.random() * 0.14) * stretch, 1 + (stretch - 1) * 2.2);
     }
   }
 
@@ -484,7 +487,7 @@ export class LaunchView {
     if (!rocket) return;
     rocket.spinner.rotation.y = this.spin;
     for (let s = 1; s < rocket.stages.length; s++) {
-      this.flicker(this.upperFlames[s]!, this.burning(s, t) && !failed);
+      this.flicker(this.upperFlames[s]!, this.burning(s, t) && !failed, 1.5);
       const g = rocket.stages[s]!.group;
       const back = this.separation(s, t);
       g.position.y = -back;
@@ -531,6 +534,29 @@ export class LaunchView {
       camera.updateProjectionMatrix();
     }
   }
+}
+
+/** A small environment map for the space shot: black above, the blue glow of Earth below, a bright limb between. */
+function earthShine(renderer: THREE.WebGLRenderer): THREE.Texture {
+  const scene = new THREE.Scene();
+  const sphere = new THREE.Mesh(
+    new THREE.SphereGeometry(10, 32, 16),
+    new THREE.ShaderMaterial({
+      side: THREE.BackSide,
+      vertexShader: 'varying vec3 vDir; void main() { vDir = position; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
+      fragmentShader:
+        'varying vec3 vDir; void main() { float y = normalize(vDir).y;' +
+        ' vec3 c = mix(vec3(0.0), vec3(0.16, 0.3, 0.55), smoothstep(0.1, -0.4, y)) + vec3(0.35, 0.5, 0.75) * exp(-abs(y + 0.05) * 18.0);' +
+        ' gl_FragColor = vec4(c, 1.0); }',
+    }),
+  );
+  scene.add(sphere);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  const target = pmrem.fromScene(scene, 0, 0.1, 100);
+  pmrem.dispose();
+  sphere.geometry.dispose();
+  (sphere.material as THREE.Material).dispose();
+  return target.texture;
 }
 
 /** A soft round glow for the Spacecraft's dot. */

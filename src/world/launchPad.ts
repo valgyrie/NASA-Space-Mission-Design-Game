@@ -16,7 +16,7 @@ const M = {
   greySteel: paint(0x8a8f94, { roughness: 0.5, metalness: 0.75, grime: 0.7 }),
   galvanised: paint(0x80858a, { roughness: 0.55, metalness: 0.8, grime: 0.8 }),
   grating: paint(0x5a5e62, { roughness: 0.7, metalness: 0.6, grime: 0.9 }),
-  concrete: paint(0x8d8a82, { roughness: 0.92, grime: 1, rings: 1.2 }),
+  concrete: paint(0x6b6862, { roughness: 0.92, grime: 1, rings: 1.2 }),
   sooty: paint(0x3b3732, { roughness: 0.95, grime: 1, soot: 1, sootTop: 3 }),
   white: paint(0xd9d7d0, { roughness: 0.5, grime: 0.8, rings: 1.5, seams: 12 }),
   dark: paint(0x2b2d30, { roughness: 0.6, metalness: 0.3, grime: 0.4 }),

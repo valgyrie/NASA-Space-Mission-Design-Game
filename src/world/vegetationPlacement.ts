@@ -25,12 +25,16 @@ export interface TreeSpot {
   yaw: number;
   /** Colour the shape is multiplied by (0–1 RGB). */
   tint: [number, number, number];
+  /** Casts a shadow (only trees near the Site do: shadows of the far woods cost much and show little). */
+  shadow: boolean;
   /** 0–1, for thinning: the trees with the highest numbers go first. */
   keep: number;
 }
 
 /** Trees nearer the Site than this (tiles past its edge) are drawn in full detail. */
 export const DETAIL_REACH = 8;
+/** Trees nearer the Site than this (tiles past its edge) cast shadows. */
+export const SHADOW_REACH = 24;
 /** How far past the Site's edge trees grow (beyond the full-detail land, sparser and in 2-tile steps). */
 export const TREE_REACH = 104;
 /** Most triangles all the trees of a Site may have together: thick woods are thinned evenly to stay under it. */
@@ -166,7 +170,7 @@ export function placeVegetation(ground: Ground, site: Site): TreeSpot[] {
     spots.push({
       kind,
       lod: out < DETAIL_REACH ? 0 : 1,
-      variant: out < DETAIL_REACH ? Math.floor(rng() * 3) : 0,
+      variant: out < DETAIL_REACH ? Math.floor(rng() * 2) : 0,
       x,
       y: ground.heightAt(x, z) - (0.02 + slope * 0.3) * Math.min(scale, 1),
       z,
@@ -174,6 +178,7 @@ export function placeVegetation(ground: Ground, site: Site): TreeSpot[] {
       squash,
       yaw: rng() * Math.PI * 2,
       tint,
+      shadow: out < SHADOW_REACH,
       keep: rng(),
     });
   };
