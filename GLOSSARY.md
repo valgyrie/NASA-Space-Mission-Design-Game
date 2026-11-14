@@ -197,6 +197,10 @@ _Avoid_: event, glitch, bug
 The result of a Mission, explaining why it succeeded or failed.
 _Avoid_: results screen, summary
 
+**Like the real one**:
+The last part of a Mission Report: the player's Spacecraft beside a real one, by mass, Power and how long it worked. In the Campaign it is the Milestone's own Spacecraft; in Free Play, a real mission of the same kind.
+_Avoid_: real comparison, history match
+
 **Space view**:
 A 3D view of Earth with every Spacecraft the Company has put in orbit, each moving along its real orbit. Clicking one follows it.
 _Avoid_: map, radar, tracker (that is the Mission tracker)

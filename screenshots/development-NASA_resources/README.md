@@ -21,4 +21,9 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [ticket-34-space-two-paths-1024.png](features%20and%20game/ticket-34-space-two-paths-1024.png) | Two paths at once at 1024×768 | Same, both switched on |
 | [ticket-35-real-data-gmat-check-1280.png](features%20and%20game/ticket-35-real-data-gmat-check-1280.png) | Real data: Mission Viz entry with the line on the GMAT check of LEAP's orbit maths | Main menu → Where LEAP uses real data |
 | [ticket-35-real-data-gmat-check-1024.png](features%20and%20game/ticket-35-real-data-gmat-check-1024.png) | The same at 1024×768 | Same |
+| [ticket-36-report-campaign-explorer-1-1280.png](features%20and%20game/ticket-36-report-campaign-explorer-1-1280.png) | Like the real one at the end of an Explorer 1 report: 2.5 kg lighter, batteries alone, until 23 May 1958 | The real report dialog, filled from a real Explorer 1 flight in the dev page (Demo Mode Era 2, `window.leap.report.show`) |
+| [ticket-36-report-campaign-telstar-1-1024.png](features%20and%20game/ticket-36-report-campaign-telstar-1-1024.png) | The same for Telstar 1 at 1024×768 | Same |
+| [ticket-36-report-free-play-weather-1280.png](features%20and%20game/ticket-36-report-free-play-weather-1280.png) | Free Play weather watch beside NOAA-18 | Same, Contract `free-1` |
+| [ticket-36-report-free-play-relay-1024.png](features%20and%20game/ticket-36-report-free-play-relay-1024.png) | A failed Free Play relay beside TDRS-1, at 1024×768 | Same, Contract `free-2` |
+| [ticket-36-real-data-webb-1280.png](features%20and%20game/ticket-36-real-data-webb-1280.png) | Real data: the Webb game entry | Main menu → Where LEAP uses real data |
 | [ticket-32-report-rocket-failed-1280.png](features%20and%20game/ticket-32-report-rocket-failed-1280.png) | A rocket failure: the Launch segment comes first, the rest say what the design would have done | Same, with stage 2 failed |
