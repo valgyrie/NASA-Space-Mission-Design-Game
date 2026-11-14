@@ -4,16 +4,18 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 30–38 built (32, 33 and 34 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Tickets 37–38 built on `codex/tickets-37-38`, from freshly pulled `main` **c4f5fed**, for merge to `main`. 420 game tests, both type checks, production and online builds pass.
+**State:** tickets 01–26 and 30–38 built (32, 33 and 34 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Tickets 37–38 merged through PR #43 (`main` **7fc797a**), from freshly pulled `main` **c4f5fed**. 420 game tests, both type checks, production and online builds pass.
 
 **Done this session (14 Nov): tickets 37 and 38.**
 - Alouette 1: "Canada's first satellite", "Also in 1962", after Telstar 1's after card. Kept once in the History Archive and saves; CSA reading link also in Credits. CSA facts rechecked. Text-only as allowed: the banner's photo credit and reuse terms are unverified.
 - Eight CubeSat 101 tips: five random loading choices, plus Stuck solar panel report, Ground Station and Scrub. Physical-fit advice also in Design Review. Printed pages 16/22/23/28 link to PDF pages 24/30/31/36. CubeSat 101 in Real data and Credits. No loading delay.
 - Choices: omit "build two" (no batch discount), omit fixed-departure advice until ticket 44; use build-time margin from p. 23. Preserve the real burn-wire lesson: the line melts; two separate wires and lines reduce premature opening. No new game mechanics or balance changes.
 - Browser: Telstar success → report → after card → Alouette; archive/reopen and save/load; all five loading choices, report tip reset, Ground Station, Design Review, Scrub, source links and Credits. 1280×800 and 1024×768, no page errors. Real game fixtures accelerate the flight animation and hold the loading import only for capture. Screenshots `ticket-37-*` and `ticket-38-*`.
-- Tests: three focused tests added (417 → 420), existing save coverage extended; tip citations checked against the stored handbook. No save version bump. The backend rebuild is ready; live deployment was blocked by automatic approval review.
+- Tests: three focused tests added (417 → 420), existing save coverage extended; tip citations checked against the stored handbook. No save version bump. After explicit approval, the prepared backend bundle is deployed as `leap-online` v6 and verified live.
 
-**Release blocker:** the live `leap-online` v5 validator rejects saves containing `alouette1` (confirmed HTTP 400; the control save passed). The rebuilt bundle accepts the new ID locally. Automatic approval review rejected the production replacement because repository implementation/merging did not explicitly authorize deployment. Do not retry through another deployment route. Obtain deployment approval, rebuild with `npm run build:online`, deploy and verify save/load. A temporary verification account remains (`Ticket37Check`, ID `8255a026-af45-440c-830c-435eb6b096b4`, revision 1); its deletion was interrupted and a follow-up read confirmed it still exists. It has a synthetic control save and may appear on the leaderboard; remove only this record with approval. See `supabase/README.md`.
+**Online verification (14 Nov, after user approval):** `leap-online` v6 is active with the existing `verify_jwt = false` recovery-code authentication. Bundle SHA-256 `64a59c339d89e15e2bc7803356d02ba3a51569aeb68a5fb129fc7379b2b359af`, built from the merged PR #43 source. The v5 control save passed while `alouette1` failed (HTTP 400); v6 accepts it (HTTP 200), and direct and Chromium client save/load checks preserve the complete save. Browser recovery on a second client passed, revision 4. No schema migration or save-version bump.
+
+**Cleanup still pending:** the user also approved removing the synthetic verification account `Ticket37Check`, ID `8255a026-af45-440c-830c-435eb6b096b4`. Both renewed Supabase SQL confirmations expired before deletion could execute. A read-only check confirmed one matching record remains (revision 4, synthetic Free Play save with Alouette); it may appear on the leaderboard. No weekly submissions were made. Do not request the same permission again; the missing step is a working Supabase deletion confirmation. Remove only this ID and nickname, then verify zero matches. See `supabase/README.md`.
 
 **Next:**
 1. Team: test tickets 32, 33, 34 and 36. Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
@@ -27,6 +29,8 @@
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
+
+- 2026-11-14: With explicit user approval, deployed `leap-online` v6 for Alouette History ID compatibility. Live API and Chromium client recovery/save/load pass. Cleanup of the one synthetic account remains blocked by expired Supabase confirmations, despite approval.
 
 - 2026-11-14: Ticket 38 built: eight page-linked CubeSat 101 tips, five random loading choices and contextual advice; Real data/Credits updated. 420 game tests, both type checks, production/online builds and focused browser checks pass. Backend deployment for the new History ID remains blocked pending explicit production approval.
 
