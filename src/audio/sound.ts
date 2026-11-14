@@ -50,6 +50,8 @@ class Sound {
   private scenes = new Map<string, MusicScene>();
   private scene: MusicScene | null = null;
   private buffers = new Map<TrackId, Promise<AudioBuffer>>();
+  /** Tracks that failed once stay silent until reload, so a blocked file is never requested again and again. */
+  private failed = new Set<TrackId>();
   private voices = new Set<{ source: AudioBufferSourceNode; gain: GainNode }>();
   private timer = 0;
   private generation = 0;
@@ -121,13 +123,15 @@ class Sound {
     this.playScene();
   }
   private load(id: TrackId): Promise<AudioBuffer> {
+    if (this.failed.has(id)) return Promise.reject(new Error('Audio unavailable'));
     let buffer = this.buffers.get(id);
     if (!buffer) {
-      buffer = fetch(import.meta.env.BASE_URL + 'audio/music/' + id + '.mp3')
+      // MP3 data under a neutral extension: download managers grab ".mp3" requests and the game gets nothing.
+      buffer = fetch(import.meta.env.BASE_URL + 'audio/music/' + id + '.music')
         .then((response) => { if (!response.ok) throw new Error('Audio unavailable'); return response.arrayBuffer(); })
         .then((bytes) => this.context!.decodeAudioData(bytes));
       this.buffers.set(id, buffer);
-      void buffer.catch(() => { if (this.buffers.get(id) === buffer) this.buffers.delete(id); });
+      void buffer.catch(() => { this.failed.add(id); if (this.buffers.get(id) === buffer) this.buffers.delete(id); });
     }
     return buffer;
   }

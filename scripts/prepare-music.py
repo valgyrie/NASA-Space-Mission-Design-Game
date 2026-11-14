@@ -41,14 +41,14 @@ def main():
         # Preserve the team's dynamics: apply the measured integrated gain, rather than
         # compressing quiet intros to a smaller loudness range. Limit only if needed.
         gain = -16 - float(measure['input_i'])
-        output = target / path.name
+        output = target / (name + '.music')  # MP3 data; neutral extension so download managers leave it alone
         # Measure the encoded MP3 too: lossy encoding and loudness gating can shift the result.
         for attempt in range(3):
             norm = 'volume=' + str(gain) + 'dB'
             if float(measure['input_tp']) + gain > -1.5:
                 norm += ',aresample=192000,alimiter=limit=0.84:level=false,aresample=44100'
             run(['ffmpeg', '-y', '-hide_banner', '-nostats', '-i', str(path), '-af', trim + ',' + norm,
-                 '-ar', '44100', '-ac', '2', '-c:a', 'libmp3lame', '-b:a', '128k', '-map_metadata', '-1', str(output)])
+                 '-ar', '44100', '-ac', '2', '-c:a', 'libmp3lame', '-b:a', '128k', '-map_metadata', '-1', '-f', 'mp3', str(output)])
             measured = loudness(['-i', str(output), '-af', 'loudnorm=I=-16:TP=-1:LRA=20:print_format=json'])
             correction = -16 - float(measured['input_i'])
             if abs(correction) <= .1:

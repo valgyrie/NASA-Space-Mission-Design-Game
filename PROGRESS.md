@@ -30,6 +30,7 @@
 
 ## Log
 
+- 2026-11-14: Music fix: tracks are now MP3s saved as `<id>.music`, because download managers (e.g. Internet Download Manager) grabbed every `.mp3` request, so the game had no music and kept re-requesting. A track that fails stays silent until reload. 463 tests and type checks pass; browser check: one request per track, a blocked track is not retried.
 - 2026-11-14: Ticket 42 built: who needs the Data on every Free Play Contract, a Choose a question card with greying in the Mission Designer, side panels end above a two-row Build menu. 460 tests, type checks and browser checks (Free Play, 1280×800 and 1024×768) pass.
 - 2026-11-14: Ticket 41 built: Team Mode (2–4 players on one computer, roles own slots and planner choices, signing the Design Review, report section, nicknames kept out of cloud saves). 453 tests, type checks and browser checks (TIROS-1, three players, 1280×800 and 1024×768) pass.
 - 2026-11-14: Ticket 40 built: Ground Tests in the Launch planner (days, price, halved Anomaly chance, CubeSat 101 pages), report line, save still v19. 435 tests, type checks and browser checks (TIROS-1 at 1280×800 and 1024×768) pass.

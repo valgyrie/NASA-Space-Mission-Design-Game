@@ -22,10 +22,12 @@ describe('audio', () => {
     const measured = JSON.parse(readFileSync('docs/audio/levels.json', 'utf8')) as Record<string, { lufs: number; truePeakDb: number; bytes: number; sha256: string }>;
     const credits = readFileSync('docs/audio/README.md', 'utf8');
     expect(Object.keys(measured).sort()).toEqual([...TRACK_IDS].sort());
-    expect(readdirSync('public/audio/music').filter((name) => name.endsWith('.mp3')).sort()).toEqual(TRACK_IDS.map((id) => id + '.mp3').sort());
+    // MP3 data under a neutral extension, so download managers do not intercept the game's requests.
+    expect(readdirSync('public/audio/music').sort()).toEqual(TRACK_IDS.map((id) => id + '.music').sort());
     let total = 0;
     for (const id of TRACK_IDS) {
-      const path = 'public/audio/music/' + id + '.mp3';
+      const path = 'public/audio/music/' + id + '.music';
+      expect(readFileSync(path).subarray(0, 3).toString('latin1'), id).toBe('ID3');
       const info = measured[id]!;
       expect(Math.abs(info.lufs + 16), id).toBeLessThanOrEqual(.2);
       expect(info.truePeakDb, id).toBeLessThanOrEqual(-1);
