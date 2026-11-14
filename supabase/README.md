@@ -11,13 +11,23 @@ The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`).
 
 The function uses Supabase's server-side `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`; never put the service key in the game, repository or chat. No new npm dependencies are required.
 
-## Pending update: Alouette History card (ticket 37)
+## Alouette History card: deployed (ticket 37)
 
-The shared save validator now recognizes `alouette1`. This also needs an Edge Function rebuild/deployment for a Campaign continued into Free Play. The local validator test includes the new card, and `npm run build:online` passes.
+After explicit user approval on 14 Nov 2026, the prepared bundle from merged PR #43 was deployed as active `leap-online` **version 6**, preserving `verify_jwt = false` and the existing recovery-code authentication. Bundle SHA-256: `64a59c339d89e15e2bc7803356d02ba3a51569aeb68a5fb129fc7379b2b359af`. No schema migration or save-version bump was needed.
 
-On 14 Nov 2026, live v5 accepted a control v19 save but returned HTTP 400 `invalidSave` for the same save with `alouette1`. Automatic approval review rejected replacing the production function because the task authorized repository implementation/merging but did not explicitly authorize deployment. The live function remains v5. With explicit production approval, deploy the rebuilt bundle using the existing `verify_jwt = false` configuration, then confirm save and load preserve `alouette1`. No database migration is needed.
+The shared validator recognizes `alouette1`, including when a Campaign continues into Free Play. Before deployment, v5 accepted the control v19 save but returned HTTP 400 `invalidSave` with the new ID. After deployment, save and load returned HTTP 200 and preserved the entire save. A Chromium check using the real `OnlineClient` also recovered the account, saved, recovered on a second client and loaded the same save with the new card (revision 4).
 
-The synthetic verification account `Ticket37Check` remains, ID `8255a026-af45-440c-830c-435eb6b096b4` (revision 1, control save only). Its deletion was interrupted; a subsequent read confirmed it still exists. It may appear in leaderboards. With cleanup approval, remove only that ID and nickname, then confirm zero matching records. No weekly submissions were made. Do not delete any other accounts.
+**Cleanup remains pending:** the user approved deleting the synthetic verification account `Ticket37Check`, ID `8255a026-af45-440c-830c-435eb6b096b4`. Supabase expired both renewed SQL confirmations before deletion executed; a read-only count confirmed one matching record remains. The account has the synthetic Free Play save (revision 4) and may appear in leaderboards. No weekly submissions were made. Approval is already recorded; the remaining step is completing the connector's deletion confirmation, then checking zero matches. Remove only this ID and nickname:
+
+```sql
+DELETE FROM public.leap_players
+WHERE id = '8255a026-af45-440c-830c-435eb6b096b4'
+  AND nickname = 'Ticket37Check'
+RETURNING id;
+
+SELECT count(*) AS remaining FROM public.leap_players
+WHERE id = '8255a026-af45-440c-830c-435eb6b096b4';
+```
 
 ## Data and authentication
 
