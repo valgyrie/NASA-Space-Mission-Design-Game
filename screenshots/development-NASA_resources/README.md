@@ -11,6 +11,7 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 | [title-menu-liftoff-falcon-9-1280.png](features%20and%20game/title-menu-liftoff-falcon-9-1280.png) | Falcon 9 climbing | Same |
 | [title-menu-liftoff-thor-able-1280.png](features%20and%20game/title-menu-liftoff-thor-able-1280.png) | Thor-Able climbing | Same |
 | [title-menu-liftoff-juno-1-1280.png](features%20and%20game/title-menu-liftoff-juno-1-1280.png) | Juno I climbing | Same |
+| [title-menu-space-thor-delta-1280.png](features%20and%20game/title-menu-space-thor-delta-1280.png) | High up: Thor-Delta's upper stage firing over Earth | Same, about 30 s in |
 | [title-menu-1024.png](features%20and%20game/title-menu-1024.png) | The menu at 1024×768, Delta D on the pad | Open the game (1024×768) |
 | [title-menu-demo-1024.png](features%20and%20game/title-menu-demo-1024.png) | Demo Mode sheet in place of the buttons | Main menu → Demo Mode |
 | [title-menu-sound-1024.png](features%20and%20game/title-menu-sound-1024.png) | Sound sheet from the speaker icon | Main menu → speaker icon |
