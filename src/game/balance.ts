@@ -322,6 +322,21 @@ export const ECLIPSE_CHANCE = {
   smallBattery: 0.12,
 } as const;
 
+/**
+ * Ground Tests (ticket 40): optional tests of the Spacecraft on Earth before Shipping, after CubeSat 101 §6.9.
+ * Each adds `days` to assembly, costs `cost`, and makes one Anomaly less likely: its chance is multiplied by
+ * GROUND_TEST_CHANCE_LEFT. Game estimates, not real test durations or prices: a few days against 30–60 days of
+ * assembly, and a small share of a Rideshare (about $460,000 for Explorer 1).
+ */
+export const GROUND_TESTS = {
+  dayInTheLife: { days: 3, cost: 15_000 },
+  vibration: { days: 5, cost: 25_000 },
+  thermalVacuum: { days: 7, cost: 35_000 },
+} as const;
+
+/** Share of an Anomaly's chance left after its Ground Test: about half. Game estimate. */
+export const GROUND_TEST_CHANCE_LEFT = 0.5;
+
 /** Share of the Mission's Data a fully failed Anomaly loses. The reward is cut by the same share. Game estimate. */
 export const ANOMALY_MAX_DATA_LOSS = 0.3;
 

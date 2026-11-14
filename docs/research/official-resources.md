@@ -91,6 +91,8 @@ Page numbers are the printed ones.
 | §6.9.2, pp. 60–61 | vibration and shock: survive launch; vibration testing "is required for all launches" | Ground Tests: Stuck solar panel (40) |
 | §6.9.3, p. 62 | thermal vacuum bakeout (outgassing); TVAC cycling "can help screen for problems caused by the thermal cycling on orbit" | Ground Tests: Survive the eclipse (40), standing for the cycling kind |
 
+**Ground Tests as built (ticket 40, checked 2026-11-14):** Learn more links open the handbook at PDF pages 67, 68 and 70 (printed 59, 60, 62); a repo test checks each passage is on that page. The bakeout is mainly to let materials outgas; LEAP's thermal vacuum test stands for the cycling kind, so its line talks about hot and cold, not outgassing. Days, prices and the halved chance are game estimates, not from CubeSat 101.
+
 ### Tips as built (ticket 38, checked 2026-11-14)
 
 Eight plain-word tips, all in `src/strings.ts`; printed pages in `src/game/tips.ts`:

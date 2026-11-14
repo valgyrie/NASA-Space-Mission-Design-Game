@@ -145,7 +145,7 @@ export function showMissionTracker(
     const bus = t(`part.${(m.design.bus ?? 'smallBus') as BusId}`);
     const range = (a: number, b: number) => t('tracker.range', { from: formatGameDate(a), to: formatGameDate(b) });
     const texts: Record<StageName, [string, string]> = {
-      assembling: [t('tracker.stage.assembling', { bus }), range(dates.startDay, dates.shipDay)],
+      assembling: [t(m.groundTests?.length ? 'tracker.stage.assemblingTests' : 'tracker.stage.assembling', { bus }), range(dates.startDay, dates.shipDay)],
       shipping: [t('tracker.stage.shipping', { site }), range(dates.shipDay, dates.readyDay)],
       ready: [t('tracker.stage.ready', { site }), t('tracker.from', { date: formatGameDate(dates.readyDay) })],
       flight: [

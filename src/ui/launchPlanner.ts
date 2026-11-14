@@ -25,6 +25,9 @@ import { learnMore } from './learnMore';
 import { SITE_SOURCES, SOURCES, VEHICLE_SOURCES } from '../game/sources';
 import { makeDesignReview } from './designReview';
 import { transferPicture } from './transferPicture';
+import { GROUND_TESTS } from '../game/balance';
+import { GROUND_TEST_IDS, GROUND_TEST_PAGES, type GroundTestId, groundTestChances, toggleGroundTest } from '../game/groundTests';
+import { percentText } from './anomalyPanel';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -209,6 +212,34 @@ export function makeLaunchPlanner(
   const spacecraft = el('section', 'planner-card');
   const spaceRows = el('dl', 'planner-rows');
   spacecraft.append(spaceRows);
+  // Ground Tests (ticket 40): a tick box each, shown only when its Anomaly can strike this design.
+  const tests = el('section', 'planner-card planner-tests');
+  tests.dataset.tutorial = 'planner-tests';
+  const testFirst = el('p', 'planner-hint', t('planner.groundTests.first'));
+  const testSolar = el('p', 'planner-hint', t('planner.groundTests.solar'));
+  tests.append(el('h4', '', t('planner.groundTests')), el('p', 'planner-hint', t('planner.groundTests.hint')));
+  const testRows = new Map<GroundTestId, { wrap: HTMLElement; box: HTMLInputElement; chance: HTMLElement }>();
+  for (const id of GROUND_TEST_IDS) {
+    const wrap = el('div', 'planner-test');
+    wrap.dataset.test = id;
+    const box = el('input', 'planner-test-box');
+    box.type = 'checkbox';
+    box.addEventListener('change', () => {
+      toggleGroundTest(state, id, box.checked);
+      hooks.onVehicle();
+      render();
+    });
+    const label = el('label', 'planner-insure');
+    const g = GROUND_TESTS[id];
+    label.append(box, el('span', '', t('planner.groundTests.option', { name: t(`groundTest.${id}`), days: formatNumber(g.days), price: formatMoney(g.cost) })));
+    const chance = el('span', 'planner-test-chance');
+    const what = el('p', 'planner-hint', t(`groundTest.${id}.what`));
+    what.append(' ', learnMore(`${SOURCES.cubesat101}#page=${GROUND_TEST_PAGES[id] + 8}`, t('groundTest.source', { page: GROUND_TEST_PAGES[id] })));
+    wrap.append(label, chance, what);
+    tests.append(wrap);
+    testRows.set(id, { wrap, box, chance });
+  }
+  tests.append(testFirst, testSolar, el('p', 'planner-hint', t('planner.groundTests.estimates')));
   // Ground segment: which dishes talk to it, and whether the Data fits through them.
   const ground = el('section', 'planner-card');
   const groundRows = el('dl', 'planner-rows');
@@ -240,7 +271,7 @@ export function makeLaunchPlanner(
   intro.append(' ', learnMore(SOURCES.segments, t('sources.segments')));
   // Begin with the end in mind: the people who use the Data come first, the Launch last.
   const side = el('div', 'planner-column');
-  side.append(segment('user', user), segment('space', spacecraft), segment('ground', ground));
+  side.append(segment('user', user), segment('space', spacecraft, tests), segment('ground', ground));
   const launchSide = el('div', 'planner-launch');
   launchSide.append(costs, timeline, weather);
   const grid = el('div', 'planner-grid');
@@ -307,6 +338,7 @@ export function makeLaunchPlanner(
     lighter.hidden = plan.wholeLaunch;
     wholeNote.hidden = !plan.wholeLaunch;
     row(costRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), formatMoney(plan.shipping));
+    if (plan.testCost > 0) row(costRows, t('planner.groundTests'), formatMoney(plan.testCost));
     if (insured) row(costRows, t('planner.insurance'), formatMoney(plan.insurance));
     const total = plan.total + plan.insurance;
     row(costRows, t('planner.total'), formatMoney(total), 'total');
@@ -337,6 +369,23 @@ export function makeLaunchPlanner(
     row(spaceRows, t('planner.mass'), t('planner.kg', { kg: formatDecimal(plan.massKg) }));
     const bus = state.design.bus;
     if (bus) row(spaceRows, t('planner.assembly', { bus: t(`part.${bus as BusId}`) }), t('planner.days', { days: formatNumber(plan.assemblyDays) }));
+    if (plan.testDays > 0) row(spaceRows, t('planner.groundTests.days'), t('planner.days', { days: formatNumber(plan.testDays) }));
+
+    const chances = new Map(groundTestChances(state, state.design, plan.marks).map((c) => [c.id, c]));
+    for (const [id, ui] of testRows) {
+      const c = chances.get(id);
+      ui.wrap.hidden = !c;
+      ui.box.checked = plan.groundTests.includes(id);
+      if (c) {
+        ui.chance.textContent = t('planner.groundTests.chance', {
+          anomaly: t(`anomaly.${c.kind}.name`),
+          before: percentText(c.before),
+          after: percentText(c.after),
+        });
+      }
+    }
+    testFirst.hidden = state.reports.length > 0;
+    testSolar.hidden = state.design.power === 'solarCells';
 
     groundRows.replaceChildren();
     const stations = state.groundStations.length;

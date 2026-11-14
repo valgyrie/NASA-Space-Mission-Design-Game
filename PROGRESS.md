@@ -4,19 +4,20 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**State:** tickets 01–26 and 30–39 built (32, 33, 34, 36 and 39 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 39 built from freshly pulled `main` **1c6bdef** and merged into `main`. 424 game tests and both type checks pass.
+**State:** tickets 01–26 and 30–40 built (32, 33, 34, 36, 39 and 40 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 40 built from freshly pulled `main` **47ddec1** and merged into `main`. 435 game tests and both type checks pass.
 
-**Done this session (14 Nov): ticket 39, NASA's six steps.**
-- Ticket 35 was asked for first; it was already merged (PR #41) and its test still passes.
-- The tutorial guide shows NASA's step name above "Step N of 8" and a row of six dots (done ticked, current lit). After the first Mission Report, a last card names all six with Learn more → slide 10 of NASA's slides; Close instead of Skip. It also goes once the next Mission ships. No save change.
-- Mapping kept as the ticket's table (Mines and Metal Works under "Define Concept"); order never goes backwards. Still an open point for the team.
-- Browser: fresh Campaign at 1280×800 and 1024×768, all eight steps, guide inside the Mission Designer, a real Launch with the antenna Anomaly, last card, Close. No page errors. Screenshots `ticket-39-*`.
+**Done this session (14 Nov): ticket 40, Ground Tests.**
+- A Ground Tests card in the Launch planner's Space segment: Day in the Life, vibration and thermal vacuum, each with a tick box, days, price, "Anomaly: before% → after%", and Learn more → CubeSat 101 pp. 59, 60, 62. Vibration and thermal vacuum show only with Solar Cells.
+- Ticked tests add days after assembly (Time bar, Design Review, planner, Mission tracker) and money to the Costs and Budget bar; each halves its Anomaly's chance. Numbers in `GROUND_TESTS` (balance.ts), game estimates.
+- Mission Report: a line under the Anomaly says whether its test was done. The first flight's Point the antenna still comes. Not in the Weekly Challenge (no planner, no Anomalies).
+- Save stays v19: optional fields only, so the deployed `leap-online` still reads cloud saves.
+- Browser: TIROS-1 fixture at 1280×800 and 1024×768, ship with two tests, a real flight with Stuck solar panel and the report line. No page errors. Screenshots `ticket-40-*`.
 
 **Still pending from the last session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
-1. Team: test tickets 32, 33, 34, 36 and 39. In 39, decide whether Mines and Metal Works belong under "Define Concept". Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
-2. The rule items in tickets 28 and 29, then 40–41 in the order in `docs/tickets/README.md`.
+1. Team: test tickets 32, 33, 34, 36, 39 and 40 (are the Ground Test days, prices and halving fun?). In 39, decide whether Mines and Metal Works belong under "Define Concept". Check the open-point choices in ticket 36 (failed Missions, Syncom 3's mass) and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path (1 h 43 min at 300×) should play faster. Confirm the Mission Viz credit wording.
+2. The rule items in tickets 28 and 29, then 41 (Team Mode) in the order in `docs/tickets/README.md`. Feature freeze is Saturday night.
 3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; paste `docs/submission.md` into the Project tab (opens Sat 14 Nov 9:00 local); demo (30 s video or 7 slides); save support's early-start message.
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
@@ -26,6 +27,8 @@
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
+
+- 2026-11-14: Ticket 40 built: Ground Tests in the Launch planner (days, price, halved Anomaly chance, CubeSat 101 pages), report line, save still v19. 435 tests, type checks and browser checks (TIROS-1 at 1280×800 and 1024×768) pass.
 
 - 2026-11-14: Ticket 39 built: the tutorial under NASA's six steps (step name, six-dot row, last card with the slides). 424 tests, type checks and browser checks (1280×800, 1024×768, full tutorial) pass.
 

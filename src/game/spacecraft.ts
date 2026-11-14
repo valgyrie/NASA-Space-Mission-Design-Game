@@ -1,3 +1,4 @@
+import { chosenGroundTests, groundTestDays } from './groundTests';
 import type { Part } from '../economy/part';
 import { GROUND_STATION_STEP, MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
 import { type Era, eraOf, isBuildingOpen, isPartOpen, partEra } from './eras';
@@ -458,7 +459,8 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   }
 
   // Time: putting it together, shipping it and flying the Mission, against the days left before the deadline.
-  const buildDays = assemblyDays(design);
+  // Ticked Ground Tests (ticket 40) add their days to assembly.
+  const buildDays = assemblyDays(design) + groundTestDays(chosenGroundTests(state, design));
   const needDays = buildDays + goal.shippingDays + goal.missionDays;
   const timeGauge = gauge(needDays, goal.daysLeft, 'max', empty('bus'));
   if (timeGauge.status === 'short') problems.push({ kind: 'late', needDays, daysLeft: goal.daysLeft });

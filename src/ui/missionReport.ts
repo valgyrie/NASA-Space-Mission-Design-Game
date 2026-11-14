@@ -9,6 +9,7 @@ import { contractById } from '../game/contracts';
 import { OPTIONS } from '../game/spacecraft';
 import { t } from '../strings';
 import { lostText, percentText } from './anomalyPanel';
+import { groundTestFor, testedChance, untestedChance } from '../game/groundTests';
 import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
 import { makePatch } from './patch';
 import { type MissionSegment, bySegment, findingSegment } from '../game/segments';
@@ -143,7 +144,20 @@ export function anomalyLines(report: MissionReport): string[] {
     lost: lostText(a.lostDays),
   });
   const cut = a.cut > 0 ? ` ${t('report.anomaly.cut', { money: formatMoney(a.cut) })}` : '';
-  return [what + cut, anomalyWhy(a)];
+  const tested = groundTestLine(a);
+  return tested ? [what + cut, anomalyWhy(a), tested] : [what + cut, anomalyWhy(a)];
+}
+
+/**
+ * Whether the Anomaly's Ground Test was done (ticket 40), or '' for reports from before Ground Tests.
+ * The first flight's Point the antenna came whatever the test.
+ */
+function groundTestLine(a: Anomaly): string {
+  if (a.tested === undefined) return '';
+  const test = t(`groundTest.${groundTestFor(a.kind)}`);
+  if (!a.tested) return t('report.groundTest.missed', { test, after: percentText(testedChance(a.chance)) });
+  if (a.kind === 'antenna' && a.first) return t('report.groundTest.first', { test });
+  return t('report.groundTest.done', { test, chance: percentText(a.chance), before: percentText(untestedChance(a.chance)) });
 }
 
 /** Why the Anomaly happened, from the design numbers behind its chance. */

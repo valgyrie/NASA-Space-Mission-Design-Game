@@ -113,7 +113,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Alouette 1 side story card (ticket 37)
 - [x] Sourced tips from CubeSat 101 (ticket 38)
 - [x] Tutorial under NASA's six steps (ticket 39)
-- [ ] Ground Tests before Shipping (ticket 40)
+- [x] Ground Tests before Shipping (ticket 40)
 - [ ] Team Mode on one screen (ticket 41)
 
 ## Optional (later)
