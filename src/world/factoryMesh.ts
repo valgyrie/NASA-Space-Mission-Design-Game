@@ -484,11 +484,18 @@ export function buildHQ(): THREE.Group {
   p.add(box(0.07, 0.04, 0.11), colourMat(0x3b6fb6), 0.38, 0.08, 0.02);
   p.lamp(-0.42, 0.42);
   // The realistic model keeps the code-made flag and logo, moved onto its flag pole and logo board.
-  useModel(g, 'hq', {}, ['flag', 'company-logo'], (model) => {
-    model.getObjectByName('flag')?.position.copy(at(10.5 + 0.1, 13.0, 9.5));
-    model.getObjectByName('company-logo')?.position.copy(at(-4.0, 10.0, 4.64));
-  });
+  useModel(g, 'hq', {}, ['flag', 'company-logo'], placeHqExtras);
   return g;
+}
+
+/**
+ * Move the HQ's code-made flag onto the model's flag pole and its wall logo onto the logo board. Looks at direct
+ * children only: the flag's own logos are also named "company-logo", and moving one of those instead of the wall
+ * logo left a logo floating above the roof.
+ */
+export function placeHqExtras(g: THREE.Object3D): void {
+  g.children.find((c) => c.name === 'flag')?.position.copy(at(10.5 + 0.1, 13.0, 9.5));
+  g.children.find((c) => c.name === 'company-logo')?.position.copy(at(-4.0, 10.0, 4.64));
 }
 
 /**

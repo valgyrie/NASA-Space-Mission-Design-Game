@@ -55,6 +55,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Launch site choice, latitude and coast effects (ticket 16; ticket 17: a failed rocket falls into the Atlantic, which is why launch sites are on the coast)
 - [x] Weather from real climate, Scrubs
 - [ ] Launch Window advisor (weather done; Moon and Mars windows with their Eras)
+- [x] Equator tip in the Launch planner: marks the Launch Site nearest the equator and folds out why (Earth's spin, orbit tilt, Kourou, launching over the sea)
 - [x] Launch Insurance (ticket 17: priced from the Test Run's estimated success, pays back 80% of the cost)
 - [x] Test Run (2D) with estimated success %
 - [x] 3D Launch and flight
@@ -87,6 +88,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Sound effects (ticket 25: generated in code)
 - [x] Music (licensed or generated, credited; ticket 25)
 - [x] Learn more → links on real things
+- [x] Calmer screens: short line + arrow (fold) for explanations and reading links in the Mission Designer and Launch planner (team to judge)
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
 - [x] Real NASA photos (credited) on Real History cards
 - [x] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). All three in the game, made from game screenshots, watermarked

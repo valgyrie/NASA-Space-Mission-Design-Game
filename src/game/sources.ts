@@ -34,6 +34,8 @@ export const SOURCES = {
   missionDesignLab: 'https://etd.gsfc.nasa.gov/capabilities/integrated-design-center/mission-design-lab/',
   /** NASA CubeSat Launch Initiative, October 2017: practical advice (ticket 38). */
   cubesat101: 'https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf',
+  /** Europe's spaceport, 5° north of the equator, chosen for Earth's spin (launch-sites-and-physics.md). */
+  equator: 'https://en.wikipedia.org/wiki/Guiana_Space_Centre',
 };
 
 /**

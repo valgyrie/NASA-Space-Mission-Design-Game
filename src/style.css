@@ -3636,3 +3636,64 @@ button.upgrade {
     grid-column: 2 / -1;
   }
 }
+
+/* Folds: a short line with an arrow; the details open underneath (src/ui/fold.ts). */
+.fold {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.fold-summary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  cursor: pointer;
+  list-style: none;
+  padding: 2px 0;
+  color: #8fc6ff;
+}
+.fold-summary::-webkit-details-marker { display: none; }
+.fold-summary::before {
+  content: '▸';
+  flex: none;
+  display: inline-block;
+  width: 10px;
+  transition: transform 0.15s;
+}
+.fold[open] > .fold-summary::before { transform: rotate(90deg); }
+.fold-summary:hover { color: var(--text); }
+.fold-body {
+  padding: 4px 0 2px 16px;
+  border-left: 2px solid rgba(79, 163, 255, 0.25);
+  margin: 2px 0 0 4px;
+}
+.fold-body > p { margin: 0 0 6px; }
+.fold-body > p:last-child { margin-bottom: 0; }
+.fold-body .learn-more { display: block; padding: 2px 0; }
+
+/* The Launch Site the equator favours. */
+.planner-best {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 1px 7px;
+  border-radius: 9px;
+  font-size: 11px;
+  font-weight: 600;
+  color: #0d1a2b;
+  background: #8fd18a;
+}
+.planner-best[hidden] { display: none; }
+.planner-tip {
+  margin: 6px 0 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  background: rgba(143, 209, 138, 0.1);
+  border: 1px solid rgba(143, 209, 138, 0.35);
+  font-size: 12px;
+  color: var(--text);
+}
+.planner-tip .fold { margin: 4px 0 0; }
+.slot-why { margin: -2px 0 5px; }
+.designer-resources > .fold { margin-top: 10px; }
+.planner-intro.fold { margin: 10px 0 0; font-size: 13px; }
+.planner-card .option + .option { margin-top: 6px; }

@@ -6,6 +6,12 @@ Captures from the tickets built on the official Resources (tickets 32 onward). S
 
 | Screenshot | What it shows | How to open it |
 |---|---|---|
+| [hq-floating-logo-1280.png](features%20and%20game/hq-floating-logo-1280.png) | Bug: one of the flag's logos floated above the HQ roof, and the wall logo hung off its board | Demo Mode → Era 1, camera close to the HQ |
+| [hq-floating-logo-1280_solved.png](features%20and%20game/hq-floating-logo-1280_solved.png) | Fixed: both logos on the flag, the wall logo centred on its board | Same |
+| [folds-designer-1280.png](features%20and%20game/folds-designer-1280.png) | Mission Designer folds: each slot's idea in one line, Power's arrow opened to show why | Demo Mode → Era 1 → Mission Designer → press the arrow under Power |
+| [folds-planner-1280.png](features%20and%20game/folds-planner-1280.png) | Launch planner with folds: four Segments, Ground Tests and reading links behind arrows | Same → Plan the Launch |
+| [equator-tip-open-1280.png](features%20and%20game/equator-tip-open-1280.png) | Equator tip opened: Earth's spin, each site's speed, orbit tilt, Kourou | Same → Launch Site → Why the equator? |
+| [equator-tip-closed-1024.png](features%20and%20game/equator-tip-closed-1024.png) | The same closed at 1024×768, Cape Canaveral marked nearest the equator | Same, 1024×768 |
 | [ticket-32-planner-explorer-1-1280.png](features%20and%20game/ticket-32-planner-explorer-1-1280.png) | Launch planner under the four Segments (1280×800): no Research Lab yet, borrowed stations | Demo Mode → Era 1 → Mission Designer → Next |
 | [ticket-32-planner-telstar-1-1024.png](features%20and%20game/ticket-32-planner-telstar-1-1024.png) | The same for Telstar 1 at 1024×768: AT&T, a Research Lab, one Ground Station (2×) | Demo Mode → Era 2 → Mission Designer → Next |
 | [ticket-32-report-telstar-1-1024.png](features%20and%20game/ticket-32-report-telstar-1-1024.png) | Mission Report lines under the Segments, with who got the Data and the stations | The real report dialog, filled from a real Telstar 1 flight in the dev page |

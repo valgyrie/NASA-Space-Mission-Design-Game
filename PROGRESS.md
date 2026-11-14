@@ -21,6 +21,13 @@
 
 **Realistic graphics, session 4 (14 Nov, later):** on a second PC. Rockets and the Launch scene, and trees, rocks and the Shipping truck, were being built by two agents when usage ran low; their work so far is committed as a checkpoint that passes the checks but has not been reviewed on screen. The Spacecraft, Earth and stars came in from the first PC (left-overs and one licence point are in the handoff). Start at "Session 4" in `docs/graphics-overhaul/HANDOFF.md`: state, both PCs' set-up and the prompts to re-run.
 
+**Teaching and calmer screens (14 Nov, night), on branch `claude/stoic-lamport-zoqne8`, waiting for the team's approval before merging:**
+- **Folds:** busy screens show the idea in one line with an arrow; pressing it opens the details (`src/ui/fold.ts`, GDD §17). Mission Designer: each slot's one-line idea opens a short "why it matters" (new `slot.*.why` strings), the difficulty note and reading links fold. Launch planner: the four Segments, reading links (one per card, not one under every rocket), the transfer orbit picture, weather rules and Ground Test explanations fold. Numbers and choices stay visible.
+- **Equator tip:** the Launch Site section says "Tip: launch as close to the equator as you can", marks the site nearest the equator, and folds out why (Earth's spin, each site's ground speed, orbit tilt, Kourou at 5° N, launching over the sea). Sources added to `docs/research/launch-sites-and-physics.md`.
+- **Floating logo fixed:** the HQ's model placement moved one of the flag's two logos instead of the wall logo, so it floated above the roof and the wall logo hung off its board. Test `src/world/hqFlag.test.ts`.
+- 492 tests and both type checks pass. Browser: Demo Mode Era 1 at 1280×800 and 1024×768 (HQ from two sides, Mission Designer, Launch planner, folds open and closed). Screenshots in `screenshots/development-NASA_resources/` (`hq-floating-logo-*`, `folds-*`, `equator-tip-*`).
+- Next: team approves the look, then merge into `main`. More slots of text could fold later (the Concept Maturity strip, Costs) if the team wants it even calmer.
+
 **Still pending from an earlier session:** remove the synthetic Supabase account `Ticket37Check` (ID `8255a026-af45-440c-830c-435eb6b096b4`) once a working Supabase deletion confirmation is available. See `supabase/README.md`. Do not ask for the same permission again.
 
 **Next:**
@@ -36,6 +43,7 @@
 
 ## Log
 
+- 2026-11-14: Folds (short line + arrow) in the Mission Designer and Launch planner, an equator tip for the Launch Site, and the HQ's floating logo fixed. 492 tests and type checks pass; browser checks at 1280×800 and 1024×768. Waiting for the team's approval to merge.
 - 2026-11-14: Realistic graphics, session 3: land, water, sky and the ten Blender buildings finished and reviewed in screenshots; Spacecraft and Earth started. 476 tests and type checks pass. Handoff with agent prompts in `docs/graphics-overhaul/HANDOFF.md`.
 - 2026-11-14: Music fix: tracks are now MP3s saved as `<id>.music`, because download managers (e.g. Internet Download Manager) grabbed every `.mp3` request, so the game had no music and kept re-requesting. A track that fails stays silent until reload. 463 tests and type checks pass; browser check: one request per track, a blocked track is not retried.
 - 2026-11-14: Ticket 42 built: who needs the Data on every Free Play Contract, a Choose a question card with greying in the Mission Designer, side panels end above a two-row Build menu. 460 tests, type checks and browser checks (Free Play, 1280×800 and 1024×768) pass.

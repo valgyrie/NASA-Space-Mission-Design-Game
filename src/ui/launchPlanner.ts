@@ -30,6 +30,7 @@ import { transferPicture } from './transferPicture';
 import { GROUND_TESTS } from '../game/balance';
 import { GROUND_TEST_IDS, GROUND_TEST_PAGES, type GroundTestId, groundTestChances, toggleGroundTest } from '../game/groundTests';
 import { percentText } from './anomalyPanel';
+import { fold } from './fold';
 
 export interface LaunchPlanner {
   readonly root: HTMLElement;
@@ -131,6 +132,7 @@ export function makeLaunchPlanner(
     LaunchVehicleId,
     { button: HTMLButtonElement; fit: HTMLElement; locked: HTMLElement; lifts: HTMLElement; price: HTMLElement }
   >();
+  const vehicleLinks: HTMLElement[] = [];
   for (const id of LAUNCH_VEHICLE_IDS) {
     const v = LAUNCH_VEHICLES[id];
     const b = button('option planner-vehicle', '');
@@ -157,27 +159,47 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b, learnMore(VEHICLE_SOURCES[id], t(`launchVehicle.${id}`)));
+    choices.append(b);
+    vehicleLinks.push(learnMore(VEHICLE_SOURCES[id], t(`launchVehicle.${id}`)));
     vehicleButtons.set(id, { button: b, fit, locked, lifts, price });
   }
   // How a geostationary orbit is reached, shown when the Contract asks for one.
   const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
   const geoPath = transferPicture();
-  choices.append(geoNote, geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
+  const geoFold = fold(t('fold.howItWorks'), geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
+  choices.append(fold(t('fold.sources'), ...vehicleLinks), geoNote, geoFold);
   choices.append(titled(t('planner.site'), 'lead'), el('p', 'planner-hint', t('planner.siteHint')));
+  // Teach why the equator helps: one line of advice, the reasons behind an arrow (Earth's spin, orbit tilt, Kourou).
+  const spinRow = (id: (typeof LAUNCH_SITE_IDS)[number]) => t('planner.equatorSite', {
+    site: t(`launchSite.${id}.short`),
+    lat: formatDecimal(LAUNCH_SITES[id].lat),
+    speed: formatNumber(Math.round(spinSpeed(LAUNCH_SITES[id].lat))),
+  });
+  const tip = el('div', 'planner-tip', t('planner.equatorTip'));
+  tip.append(fold(
+    t('planner.equatorWhy'),
+    t('planner.equatorSpin'),
+    t('planner.equatorFree'),
+    ...LAUNCH_SITE_IDS.map(spinRow),
+    t('planner.equatorTilt'),
+    t('planner.equatorKourou'),
+    learnMore(SOURCES.equator, t('sources.equator')),
+  ));
+  choices.append(tip);
+  const best = LAUNCH_SITE_IDS.reduce((a, b) => (liftFactor(b) > liftFactor(a) ? b : a));
   const siteButtons = new Map<string, HTMLButtonElement>();
+  const siteLinks: HTMLElement[] = [];
   for (const id of LAUNCH_SITE_IDS) {
     const ls = LAUNCH_SITES[id];
     const route = shippingTo(state.place, id);
     const b = button('option planner-site', '');
     b.dataset.site = id;
     const change = Math.round((liftFactor(id) - 1) * 100);
+    const badge = el('span', 'planner-best', t('planner.siteBest'));
+    badge.hidden = id !== best;
     b.append(
       el('span', 'option-name', t(`launchSite.${id}`)),
-      el('span', 'option-stats', t('planner.siteSpin', {
-        lat: formatDecimal(ls.lat),
-        speed: formatNumber(Math.round(spinSpeed(ls.lat))),
-      })),
+      badge,
       el('span', 'option-stats', change === 0 ? t('planner.siteLiftSame') : t(change > 0 ? 'planner.siteLiftMore' : 'planner.siteLiftLess', { pct: Math.abs(change) })),
       el('span', 'option-stats', t('planner.shipping', { price: formatMoney(route.cost), days: formatNumber(route.days), km: formatNumber(route.km) })),
     );
@@ -188,15 +210,17 @@ export function makeLaunchPlanner(
       hooks.onVehicle();
       render();
     });
-    choices.append(b, learnMore(SITE_SOURCES[id], t(`launchSite.${id}.short`)));
+    choices.append(b);
+    siteLinks.push(learnMore(SITE_SOURCES[id], t(`launchSite.${id}.short`)));
     siteButtons.set(id, b);
   }
+  choices.append(fold(t('fold.sources'), ...siteLinks));
 
   // Launch weather and the Launch Window advisor
   const weather = el('section', 'planner-card');
   const weatherLine = el('p', 'planner-weather');
   const adviceLine = el('p', 'planner-advice');
-  weather.append(el('h4', '', t('planner.weather')), weatherLine, adviceLine, el('p', 'planner-hint', t('planner.weatherHint')), learnMore(SOURCES.climate, t('sources.climate')), el('p', 'planner-hint', t('sources.estimates')));
+  weather.append(el('h4', '', t('planner.weather')), weatherLine, adviceLine, fold(t('fold.howItWorks'), t('planner.weatherHint'), learnMore(SOURCES.climate, t('sources.climate')), t('sources.estimates')));
 
   // Costs and timeline
   const costs = el('section', 'planner-card');
@@ -234,7 +258,8 @@ export function makeLaunchPlanner(
   tests.dataset.tutorial = 'planner-tests';
   const testFirst = el('p', 'planner-hint', t('planner.groundTests.first'));
   const testSolar = el('p', 'planner-hint', t('planner.groundTests.solar'));
-  tests.append(el('h4', '', t('planner.groundTests')), el('p', 'planner-hint', t('planner.groundTests.hint')));
+  const testsHow = fold(t('fold.howItWorks'), t('planner.groundTests.hint'), testFirst, testSolar, t('planner.groundTests.estimates'));
+  tests.append(el('h4', '', t('planner.groundTests')), testsHow);
   const testRows = new Map<GroundTestId, { wrap: HTMLElement; box: HTMLInputElement; chance: HTMLElement }>();
   for (const id of GROUND_TEST_IDS) {
     const wrap = el('div', 'planner-test');
@@ -250,13 +275,11 @@ export function makeLaunchPlanner(
     const g = GROUND_TESTS[id];
     label.append(box, el('span', '', t('planner.groundTests.option', { name: t(`groundTest.${id}`), days: formatNumber(g.days), price: formatMoney(g.cost) })), chip(GROUND_TEST_ROLE[id]));
     const chance = el('span', 'planner-test-chance');
-    const what = el('p', 'planner-hint', t(`groundTest.${id}.what`));
-    what.append(' ', learnMore(`${SOURCES.cubesat101}#page=${GROUND_TEST_PAGES[id] + 8}`, t('groundTest.source', { page: GROUND_TEST_PAGES[id] })));
+    const what = fold(t('fold.what'), t(`groundTest.${id}.what`), learnMore(`${SOURCES.cubesat101}#page=${GROUND_TEST_PAGES[id] + 8}`, t('groundTest.source', { page: GROUND_TEST_PAGES[id] })));
     wrap.append(label, chance, what);
     tests.append(wrap);
     testRows.set(id, { wrap, box, chance });
   }
-  tests.append(testFirst, testSolar, el('p', 'planner-hint', t('planner.groundTests.estimates')));
   // Ground segment: which dishes talk to it, and whether the Data fits through them.
   const ground = el('section', 'planner-card');
   const groundRows = el('dl', 'planner-rows');
@@ -287,8 +310,8 @@ export function makeLaunchPlanner(
     section.append(el('h3', '', t(`segment.${id}`)), el('p', 'planner-hint', t(`segment.${id}.hint`)), body);
     return section;
   };
-  const intro = el('p', 'planner-intro', t('segment.intro'));
-  intro.append(' ', learnMore(SOURCES.segments, t('sources.segments')));
+  const intro = fold(t('segment.introShort'), t('segment.intro'), learnMore(SOURCES.segments, t('sources.segments')));
+  intro.classList.add('planner-intro');
   // Begin with the end in mind: the people who use the Data come first, the Launch last.
   const side = el('div', 'planner-column');
   side.append(segment('user', user), segment('space', spacecraft, tests), segment('ground', ground));
@@ -326,7 +349,7 @@ export function makeLaunchPlanner(
     }
     const orbit = plan.goal.orbit;
     const whole = !!plan.goal.contract.wholeLaunch;
-    geoNote.hidden = geoPath.hidden = orbit !== 'geostationary';
+    geoNote.hidden = geoFold.hidden = orbit !== 'geostationary';
     for (const [id, ui] of vehicleButtons) {
       const status = vehicleStatus(state, id);
       const open = status.open;

@@ -39,6 +39,7 @@ import type { Part } from '../economy/part';
 import { type StringKey, t } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
 import { missionLinks } from './learnMore';
+import { fold } from './fold';
 import { contractText, formatDecimal, formatMoney, formatNumber } from './format';
 
 export interface MissionDesigner {
@@ -227,8 +228,7 @@ export function showMissionDesigner(
   // Slots
   const slotsBox = el('section', 'designer-slots');
   slotsBox.append(el('h3', '', t('designer.slots')));
-  slotsBox.append(el('p', 'side-note', t('designer.mode', { mode: t(`mode.${state.difficulty}`) })),
-    el('p', 'side-note', t(`designer.${state.difficulty}.note`)));
+  slotsBox.append(fold(t('designer.mode', { mode: t(`mode.${state.difficulty}`) }), t(`designer.${state.difficulty}.note`)));
   const slotRows = new Map<
     Slot,
     { row: HTMLElement; options: Map<string, HTMLButtonElement>; stock: HTMLElement; chip: ReturnType<typeof makeRoleChip>; notYours: HTMLElement }
@@ -246,7 +246,10 @@ export function showMissionDesigner(
     const row = el('div', 'slot');
     const label = el('div', 'slot-head');
     const chip = makeRoleChip(SLOT_ROLE[slot]);
-    label.append(el('span', 'slot-name', t(`slot.${slot}`)), chip.root, el('span', 'slot-hint', t(`slot.${slot}.hint`)));
+    label.append(el('span', 'slot-name', t(`slot.${slot}`)), chip.root);
+    // The idea in one line; the arrow opens why it matters.
+    const slotWhy = fold(t(`slot.${slot}.hint`), t(`slot.${slot}.why`));
+    slotWhy.classList.add('slot-why');
     const choices = el('div', 'slot-options');
     const options = new Map<string, HTMLButtonElement>();
     for (const o of optionsFor(slot, state.difficulty)) {
@@ -278,7 +281,7 @@ export function showMissionDesigner(
     }
     const stock = el('div', 'slot-stock');
     const notYours = el('p', 'team-not-yours');
-    row.append(label, choices, notYours, stock);
+    row.append(label, slotWhy, choices, notYours, stock);
     slotsBox.append(row);
     slotRows.set(slot, { row, options, stock, chip, notYours });
   }
@@ -291,7 +294,8 @@ export function showMissionDesigner(
 
   // Resources
   const resBox = el('section', 'designer-resources');
-  const sources = el('div', '');
+  const sourceLinks = el('div', '');
+  const sources = fold(t('fold.sources'), sourceLinks);
   resBox.append(el('h3', '', t('designer.resources')));
   const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; text: HTMLElement }>();
   for (const r of RESOURCES) {
@@ -393,7 +397,7 @@ export function showMissionDesigner(
     const contract = contractText(check.goal.contract.id);
     const forKey = { accepted: 'designer.for', offered: 'designer.forOffer', done: 'designer.forDone' } as const;
     goal.textContent = t(forKey[check.goal.status], { contract });
-    sources.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
+    sourceLinks.replaceChildren(missionLinks(check.goal.contract.id, check.goal.vehicle));
 
     const players = team ? state.team?.players : undefined;
     const asked = check.goal.contract;
