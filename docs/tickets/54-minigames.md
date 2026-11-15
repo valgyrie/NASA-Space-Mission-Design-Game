@@ -4,7 +4,7 @@
 
 **Blocked by:** 53
 
-**Status:** in progress (15 Nov 2026), branch `minigames`, not merged into `main`. Work was stopped by the user and checkpointed.
+**Status:** merged into `main` (15 Nov 2026) at the user's request, without the last browser play-test. Lost Signal had small fixes from a play-test that was stopped before it finished; the browser items below are still open.
 
 **Facts and sources:** [`docs/research/minigames.md`](../research/minigames.md). Numbers in the games that aren't there are game estimates, labelled in the code.
 
@@ -23,6 +23,6 @@
 - [x] Mission Director: Too Hot, Too Cold and Square Peg, Round Hole built
 - [ ] Mission Director: Lost Signal built with its model and tests, but its browser play-through to a win was not finished
 - [ ] Play every game through the real menu (the Mission Director games were tested only in a harness)
-- [ ] GDD, GLOSSARY ("Minigame" vs the Anomaly "mini-game"), CHECKLIST
+- [x] GDD, GLOSSARY ("Minigame" vs the Anomaly "mini-game"), CHECKLIST
 
 **As built so far:** `src/minigames/` (contract `types.ts`, `catalogue.ts`, games, models with tests, `kit.ts` shared drawing helpers, `minigames.css`, `director.css`), `src/ui/minigames.ts` (the screens), main menu button in `mainMenu.ts` / `main.ts`. Kids' links for the three Explorer facts in `sources.ts` (`MINIGAME_SOURCES`, `KIDS_LINKS`). 648 tests and both type checks pass.
