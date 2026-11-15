@@ -190,12 +190,22 @@ export function missionSource(id: ContractId): string | null {
   return card ? HISTORY_CARDS[card].learnMore : null;
 }
 
+/** Minigames (src/minigames/): the page behind each game's fact (docs/research/minigames.md). */
+export const MINIGAME_SOURCES = {
+  pluto: 'https://science.nasa.gov/dwarf-planets/pluto/facts/',
+  rover: 'https://science.nasa.gov/mission/mars-2020-perseverance/',
+  planets: 'https://nssdc.gsfc.nasa.gov/planetary/factsheet/',
+  thermal: 'https://www.nasa.gov/smallsat-institute/sst-soa/thermal-control/',
+  co2: 'https://www.nasa.gov/missions/apollo/apollo-13-mission-details/',
+  signal: 'https://www.nasa.gov/missions/voyager-program/voyager-2/nasa-mission-update-voyager-2-communications-pause/',
+} as const;
+
 /**
  * Explorer mode: NASA pages written for children (docs/research/kids-links.md, each opened and checked 15 Nov 2026).
  * A "Learn more" link whose page has a kids' page below points there instead; any other is hidden in Explorer.
  * Credits keep every original link in both modes.
  */
-export const KIDS_LINK_IDS = ['rocket', 'sls', 'launching', 'orbit', 'satellite', 'hurricanes', 'antennas', 'spaceWeather', 'earth', 'apollo', 'moon', 'artemis'] as const;
+export const KIDS_LINK_IDS = ['rocket', 'sls', 'launching', 'orbit', 'satellite', 'hurricanes', 'antennas', 'spaceWeather', 'earth', 'apollo', 'moon', 'artemis', 'pluto', 'marsRovers', 'planets'] as const;
 export type KidsLinkId = (typeof KIDS_LINK_IDS)[number];
 const K4 = (page: string) => `https://www.nasa.gov/learning-resources/for-kids-and-students/${page}-grades-k-4/`;
 export const KIDS_LINKS: Record<KidsLinkId, string> = {
@@ -211,6 +221,9 @@ export const KIDS_LINKS: Record<KidsLinkId, string> = {
   apollo: K4('what-was-the-apollo-program'),
   moon: 'https://spaceplace.nasa.gov/all-about-the-moon/en/',
   artemis: K4('what-is-the-artemis-program'),
+  pluto: 'https://spaceplace.nasa.gov/all-about-pluto/en/',
+  marsRovers: 'https://spaceplace.nasa.gov/mars-rovers/en/',
+  planets: 'https://spaceplace.nasa.gov/planets/en/',
 };
 
 /** Which kids' page stands in for each grown-up page (matched without its #fragment). */
@@ -244,6 +257,9 @@ const KIDS_FOR: Readonly<Record<string, KidsLinkId>> = (() => {
     'https://www.nasa.gov/mission/artemis-ii/',
     'https://www.nasa.gov/missions/artemis/nasas-artemis-iii-mission-to-test-future-moon-lander-operations/',
     'https://www.nasa.gov/missions/artemis/nasa-partners-accelerate-lander-development-for-2028-moon-missions/');
+  add('pluto', MINIGAME_SOURCES.pluto);
+  add('marsRovers', MINIGAME_SOURCES.rover, 'https://science.nasa.gov/mission/msl-curiosity/');
+  add('planets', MINIGAME_SOURCES.planets);
   return map;
 })();
 

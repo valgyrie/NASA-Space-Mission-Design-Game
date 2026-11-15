@@ -71,6 +71,9 @@ export const STRINGS = {
   'kids.apollo': 'What was the Apollo program?',
   'kids.moon': 'All about the Moon',
   'kids.artemis': 'What is the Artemis program?',
+  'kids.pluto': 'All about Pluto',
+  'kids.marsRovers': 'The Mars rovers',
+  'kids.planets': 'All about the planets',
   'sources.orbits': 'Orbits',
   'sources.earth': 'Earth',
   'sources.climate': 'NASA POWER',
@@ -293,6 +296,23 @@ export const STRINGS = {
   'online.error.conflict': 'The cloud Company changed on another computer. Close and reopen Online to check its date, then load it or choose to save this Company.',
   'online.error.storage': 'This browser could not save. Allow browser storage or free some space, then try again.',
   'demo.heading': 'Demo Mode',
+
+  // Minigames: the facts each game teaches (docs/research/minigames.md). Explorer facts are for children.
+  'minigame.pluto.title': 'Build Pluto',
+  'minigame.pluto.fact': 'In 2006, scientists decided Pluto is a dwarf planet, not a planet. It is small and made of rock and ice, not gas.',
+  'minigame.rover.title': 'Rover Rescue',
+  'minigame.rover.fact': 'Rovers are robot cars that drive around Mars. They drill into rocks and study them in their own little labs. Perseverance even keeps rock samples in tubes, so scientists may study them on Earth one day.',
+  'minigame.planets.title': 'Planet Parade',
+  'minigame.planets.fact': 'The planets go around the Sun in this order: Mercury, Venus, Earth, Mars, Jupiter, Saturn, Uranus, Neptune. Jupiter is the biggest. Mercury is the smallest.',
+  'minigame.thermal.title': 'Too Hot, Too Cold',
+  'minigame.thermal.fact': "Every spacecraft part has a range of temperatures it can survive, and a narrower range it can work in. Heaters, often run by thermostats, keep the parts with the narrowest limits (like batteries) warm; radiators send waste heat out to deep space. Getting the balance right is a big part of a spacecraft's design.",
+  'minigame.co2.title': 'Square Peg, Round Hole',
+  'minigame.co2.fact': "Apollo 13, April 1970: after an explosion, three astronauts sheltered in a Lunar Module built for two people for two days, and its carbon dioxide rose to a dangerous level. The spare lithium hydroxide canisters from the Command Module were square; the Lunar Module's openings were round. Mission Control worked out a fix from plastic bags, cardboard and tape, the crew built it, and all three came home safely.",
+  'minigame.signal.title': 'Lost Signal',
+  'minigame.signal.fact': "On 21 July 2023, a command left Voyager 2's antenna pointing 2° away from Earth, and contact was lost. The Deep Space Network could still hear its faint carrier tone. Canberra's big dish, the only one that can command Voyager 2, sent a high-power command to turn it back; 18.5 light-hours away, the answer took 37 hours. Full contact was back by 4 August. Radio signals weaken with the square of distance, which is why NASA's biggest dishes are 70 m wide.",
+  // Minigames: the shell and the Explorer games (src/ui/minigames.ts, src/minigames/pluto|rover|planets.ts).
+  // (agent A adds here)
+
   'demo.company': 'LEAP Demo',
   'demo.note': 'Try a ready Company on one fixed Site. Your own Company is kept. Choosing an Era starts that demo afresh.',
   'demo.1.goal': 'Explorer 1: batteries, radiation and a first Launch. The design and Parts are ready in the Mission Designer.',
@@ -1891,6 +1911,9 @@ export const STRINGS = {
   'explorer.finding.comms.ok.design': 'All the Data would have reached home.',
   'explorer.finding.comms.no.design': "Some Data would have been lost: the antenna couldn't send it all home.",
   'explorer.report.groundOwn': 'Your Ground Stations helped send the Data home.',
+  // Minigames: the Mission Director games (src/minigames/thermal|co2|signal.ts).
+  // (agent B adds here)
+
   // Explorer's Mission Report: a big result, what happened, one thing to try, the reward.
   'explorer.report.subtitle': 'On {vehicle} · {date}',
   'explorer.report.success': 'Mission complete!',
