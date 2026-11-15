@@ -10,7 +10,7 @@
 - [x] Sky, clouds, haze, water and sun shadows look real and match between the Site and the Launch
 - [x] The ten buildings, the crane and the foundations are Blender models (Draco GLB, each under 30k triangles) with weathering and baked shading; code-built stand-ins if loading fails; moving parts, smoke, level signs and the HQ flag still work
 - [x] Trees, bushes, cacti and boulders by climate, never on buildings, Deposits, water or the Shipping road; the Shipping truck and dock
-- [ ] Rockets, launch pads, flame, smoke and the climb in the Launch (first pass built; the climb not yet checked on screen)
+- [x] Rockets, launch pads, flame, smoke and the climb in the Launch (checked on screen 15 Nov; play-test in `docs/graphics-overhaul/notes-playtest.md`)
 - [x] The Earth is a NASA photo with real clouds, city lights and a thin atmosphere; Spacecraft look like flight hardware; stars vary and show the Milky Way
 - [x] Every third-party file is CC0 or public domain, listed in `docs/art/assets-*.md` and in Credits; a test checks the Poly Haven and ambientCG pages
 - [x] README, submission text, GDD §13 and §14, ADR-0005, Checklist; favicon

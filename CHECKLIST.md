@@ -88,10 +88,12 @@ Tick an item only after it works in the game. Details for each item are in [`doc
   - [x] Buildings, crane and foundations built in Blender
   - [x] Trees, bushes, cacti and boulders by climate; Shipping truck, dock and road
   - [x] Photo Earth (NASA), Spacecraft like flight hardware, stars with the Milky Way
-  - [ ] Rockets, launch pads, flame and smoke (first pass built; the climb not yet checked on screen)
+  - [x] Rockets, launch pads, flame and smoke (Blender pads; checked on screen 15 Nov)
   - [x] Every asset credited (Credits, README, `docs/art/`)
-  - [ ] Play-test of the whole game in the new look, and frame rate on a school-class laptop
-  - [ ] Team test and go-ahead before the final merge into `main`
+  - [x] Play-test in the new look: Demo Era 1 and 2 end to end, title menu, 1024×768, a desert Company (`docs/graphics-overhaul/notes-playtest.md`)
+  - [ ] Frame rate on a school-class laptop (Intel UHD in headless Chrome: about 15 fps on the whole-Site view, 50+ on the Launch)
+  - [x] Team's go-ahead to merge into `main` (15 Nov)
+  - [ ] Team test of the new look
 - [x] Buildings big enough to see from the whole-Site view (3 × 3 tiles each; the Site stays 64 × 64)
 - [x] Smooth Earth from space: rounded coasts and soft clouds, far and close up
 - [x] Sound effects (ticket 25: generated in code)
