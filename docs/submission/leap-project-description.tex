@@ -139,6 +139,30 @@ Both modes play the same missions under the same rules; the player picks one whe
 An Explorer company can move up to Mission Director at any time, keeping its progress. How the split follows research
 on learning from space games is in Section~\ref{sec:learning}.
 
+\subsection{Minigames mode}
+A separate mode from the main menu offers short 2D games for each level. The player picks Explorer or Mission
+Director and plays that level's three games in a random order. Each game ends on one real space fact (in plain
+words in Explorer), a star score and a link to read more: a NASA Space Place page in Explorer, a NASA page in Mission
+Director. These Minigames are separate from the anomaly mini-games that happen during a mission.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}l p{3.3cm} L L@{}}
+\toprule
+\textbf{Level} & \textbf{Game} & \textbf{What the player does} & \textbf{The fact it teaches} \\
+\midrule
+Explorer & Build Pluto & Catch rock for the core and ice for the shell, and dodge the gas. & Pluto became a dwarf planet in 2006; it is rock and ice, not gas \cite{pluto, spaceplace}. \\
+Explorer & Rover Rescue & Drive a rover to glowing rocks, drill samples and bring them to the lab before the battery runs low. & Mars rovers drive, drill and study rock samples \cite{perseverance, curiosity}. \\
+Explorer & Planet Parade & Put the planets in order from the Sun, then by size. & The planets' order and their real sizes \cite{planetfacts}. \\
+Mission Director & Too Hot, Too Cold & Keep four parts of a small satellite in their temperature bands for four orbits, with heaters that cost power and three radiator louvers to share. & Every part has a temperature range; heaters and radiators keep it there \cite{thermal}. \\
+Mission Director & Square Peg, Round Hole & Build an air path from the cabin fan through a square canister to Apollo~13's round socket, with bags, cardboard and tape. & Apollo~13's carbon dioxide fix in April 1970 \cite{apollo13}. \\
+Mission Director & Lost Signal & Work the loss-of-signal checklist for a probe whose antenna points 2\textdegree{} off Earth, and wait out the light time. & Voyager~2's loss of contact in 2023, the Deep Space Network and how signals fade with distance \cite{voyager2, dsn}. \\
+\bottomrule
+\end{tabularx}
+\end{table}
+\noindent Status: on its own branch, not yet merged. The three Explorer games and two Mission Director games are built
+and played to the end; Lost Signal is built but its play-through is not finished.
+
 \subsection{Multiplayer and weekly challenges}
 Players can create an anonymous account and compare scores on a leaderboard. They can also enter a weekly
 challenge with the same budget and parts for everyone; the score favours reliability, then science value, then money
@@ -436,6 +460,17 @@ allowed our team to start before the hackathon; the git history shows every chan
   \url{https://doi.org/10.3389/feduc.2022.919645}
 \bibitem{nasamedia} NASA, Images and Media Usage Guidelines. \url{https://www.nasa.gov/nasa-brand-center/images-and-media/}
 
+\bibitem{pluto} NASA Science, Pluto: Facts. \url{https://science.nasa.gov/dwarf-planets/pluto/facts/}
+\bibitem{spaceplace} NASA Space Place: All About Pluto; The Mars Rovers; All About the Planets. \url{https://spaceplace.nasa.gov/}
+\bibitem{perseverance} NASA Science, Mars 2020: Perseverance. \url{https://science.nasa.gov/mission/mars-2020-perseverance/}
+\bibitem{curiosity} NASA Science, Mars Science Laboratory: Curiosity. \url{https://science.nasa.gov/mission/msl-curiosity/}
+\bibitem{planetfacts} NASA NSSDCA, Planetary Fact Sheet. \url{https://nssdc.gsfc.nasa.gov/planetary/factsheet/}
+\bibitem{thermal} NASA Small Spacecraft Systems Virtual Institute, \emph{State of the Art of Small Spacecraft Technology}, ch.~7, Thermal Control.
+  \url{https://www.nasa.gov/smallsat-institute/sst-soa/thermal-control/}
+\bibitem{apollo13} NASA, Apollo 13 Mission Details. \url{https://www.nasa.gov/missions/apollo/apollo-13-mission-details/}
+\bibitem{voyager2} NASA, ``Mission Update: Voyager 2 Communications Pause'', 2023.
+  \url{https://www.nasa.gov/missions/voyager-program/voyager-2/nasa-mission-update-voyager-2-communications-pause/}
+\bibitem{dsn} NASA, Deep Space Network. \url{https://www.nasa.gov/communicating-with-missions/dsn/}
 \end{thebibliography}
 
 \end{document}
