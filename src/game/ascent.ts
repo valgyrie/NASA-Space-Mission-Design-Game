@@ -1,4 +1,5 @@
 import type { Flight } from './flight';
+import type { MoonShowSpec } from '../world/moonShow';
 import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
 
 /**
@@ -7,7 +8,7 @@ import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
  * the outcome is the Flight already worked out by flight.ts, never decided here.
  */
 
-export type ShowPhase = 'countdown' | 'burn' | 'coast' | 'orbit' | 'mission' | 'lost' | 'end';
+export type ShowPhase = 'countdown' | 'burn' | 'coast' | 'orbit' | 'moon' | 'mission' | 'lost' | 'end';
 
 /** One stretch of the show. `from`–`to` are flight seconds (T+), or Mission days for 'mission'. */
 export interface Segment {
@@ -16,6 +17,11 @@ export interface Segment {
   stage?: number;
   /** For 'lost': the rocket worked, but with no main engine the Spacecraft stayed in its transfer orbit. */
   stuck?: boolean;
+  /**
+   * For 'moon': which Moon sequence plays (Apollo 11's landing, Artemis II's flyby, ...). `from`–`to` are seconds
+   * of that sequence (0 to its length), so `ShowMoment.value` is the sequence's own clock. See src/world/moonShow.ts.
+   */
+  moon?: MoonShowSpec;
   from: number;
   to: number;
   /** Seconds it takes on screen at normal speed. */

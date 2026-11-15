@@ -96,6 +96,9 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
       const values = { contract, low: formatNumber(km.low), high: formatNumber(km.high) };
       return { title: t('launch.orbit'), detail: t(geo ? 'launch.orbitDetailGeo' : 'launch.orbitDetail', values) };
     }
+    case 'moon':
+      // Placeholder until the Moon sequences' captions (moonShow.<kind>.<beat>) exist: docs/eras-demo/PLAN.md.
+      return { title: t('launch.orbit'), detail: '' };
     case 'lost':
       if (seg.stage !== undefined) return { title: t('launch.rocketFailed', { n: formatNumber(seg.stage) }), detail: t('launch.rocketFailedDetail') };
       if (seg.stuck) return { title: t('launch.stuck'), detail: t('launch.stuckDetail') };
