@@ -721,16 +721,18 @@ export const makeCo2: MinigameMaker = (): Minigame => {
             audio.effect('alarm');
             say(t('minigame.co2.spent'), 'bad');
           }
-          if (g.state !== 'playing') end();
           refresh();
         }
+        if (g.state !== 'playing' && !ended) end();
         refreshGauges();
         drawDial();
         drawBoard(dt);
       });
       let spentSaid = false;
 
+      let ended = false;
       function end(): void {
+        ended = true;
         const won = g.state === 'won';
         const stars = co2Stars(g);
         audio.effect(won ? 'reward' : 'alarm');

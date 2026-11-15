@@ -489,8 +489,8 @@ export const makeThermal: MinigameMaker = (): Minigame => {
               if (h.length > HISTORY_S / SAMPLE_S + 1) h.shift();
             }
           }
-          if (g.state !== 'playing') end();
         }
+        if (g.state !== 'playing' && !ended) end();
         tickerT += dt;
         if (tickerT > 6 && ticker.className !== 'dg-ticker') ticker.className = 'dg-ticker dg-ticker-old';
         refresh();
@@ -498,7 +498,9 @@ export const makeThermal: MinigameMaker = (): Minigame => {
         for (const p of PARTS) drawChart(p, cards.get(p)!);
       });
 
+      let ended = false;
       function end(): void {
+        ended = true;
         const stars = thermalStars(g);
         const won = g.state === 'won';
         audio.effect(won ? 'reward' : 'alarm');
