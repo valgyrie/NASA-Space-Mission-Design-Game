@@ -34,16 +34,7 @@
 \begin{document}
 \maketitle
 
-\begin{abstract}
-\noindent LEAP is a browser game in which the player runs a small space company and designs, launches and flies
-space missions modelled on real ones, from Explorer~1 in 1958 to the Artemis Moon missions. Every design choice moves
-six live resources (mass, power, budget, data, communications and time), so the trade-offs of real mission design
-are something players feel, not just read about. Missions are planned under NASA's four mission segments, tested
-before launch, flown in 3D and explained afterwards in a mission report. Every fact in the game comes from a cited
-NASA or other source, and the game uses NASA climate and Earth-observation data. This document gives the team, the
-problem and our solution, our research findings and data sources, the business opportunity and potential impact,
-and the supporting documents and references.
-\end{abstract}
+
 
 \tableofcontents
 \bigskip
@@ -82,8 +73,7 @@ communications, time) something players feel, not just read about. The game is a
 meant to teach children and adults alike about the history of NASA and space missions, while letting them learn the
 basics of space mission design in a fun and interactive way.
 
-\subsection{Game structure}
-The game is split into roughly 60\% mission design and 40\% tycoon.
+
 
 \paragraph{Tycoon economy.} Players build mines, factories and other buildings to produce spacecraft parts, then
 upgrade them over time. The economy feeds the missions but never blocks them, since parts can also be bought.
@@ -129,8 +119,25 @@ forming?'', which sets the orbit, instrument and mission length.
 \subsection{Audience and online safety}
 The audience includes students and people of all backgrounds from about age 10. The online features are kept safe:
 no chat, anonymous accounts with a generated nickname, no personal data, and only preset actions between players.
-Several difficulty levels let children enjoy a simple, educational experience while adults can take on a harder
-game with more technical detail.
+Two game modes, described next, let children enjoy a simple, educational experience while adults can take on a
+harder game with more technical detail.
+
+\subsection{Two modes: Explorer and Mission Director}
+Both modes play the same missions under the same rules; the player picks one when starting a company.
+\begin{itemize}
+  \item \textbf{Explorer} (beginner, from about age 10): bars with icons and plain words instead of numbers and
+        units; a ``ghost'' preview on the resource bars that shows how each part would change them before it is
+        chosen; a shorter, four-step Launch planner (rocket, launch site, weather, launch) with a tick-and-cross
+        checklist; a simple mission report that leads with the result and lists what went right and wrong; bigger,
+        colour-blind-safe controls; NASA pages for young readers as ``learn more'' links; gentler failure (one refund
+        per contract) and shorter waits.
+  \item \textbf{Mission Director} (advanced): every number and unit, every part and all seven planning steps, the
+        mission report grouped under NASA's four segments with the design's own numbers, design margins in the style
+        of JPL's concept maturity checklist, contract offers that expire, paid repeat test runs, costlier ground tests,
+        mineral deposits that run out, and NASA papers and slides as reading.
+\end{itemize}
+An Explorer company can move up to Mission Director at any time, keeping its progress. How the split follows research
+on learning from space games is in Section~\ref{sec:learning}.
 
 \subsection{Multiplayer and weekly challenges}
 Players can create an anonymous account and compare scores on a leaderboard. They can also enter a weekly
@@ -150,6 +157,7 @@ from NASA's lunar data. Anyone can play it on any desktop or laptop, which lets 
   \item The Mission Designer with six live resource bars, the Launch planner under the four segments, ground tests,
         the free test run, 3D launches with staging, and Moon sequences for Apollo~11 and Artemis that the player can
         look around in.
+  \item Two game modes on one rule set: Explorer for beginners and Mission Director for realism.
   \item Anomaly mini-games, the mission report, mission patches, the History Archive, Team Mode for up to four
         players on one screen, and the optional online features.
 \end{itemize}
@@ -222,6 +230,39 @@ Every fact and number in LEAP is cited; the full notes, with a source for each c
   \item Part masses, power and data rates in the game are tuned within these real ranges, and each mission report
         compares the player's spacecraft with the real one it is modelled on.
 \end{itemize}
+
+\subsection{Learning from space games: why two modes}\label{sec:learning}
+Two studies of educational space games shaped how LEAP splits Explorer from Mission Director.
+
+\paragraph{Cao, Peng and Hansberger (2019)} built a serious game on the Apollo~16 lunar mission: players plan a rover
+route on a lunar map, pick and load equipment, then drive while watching direction, speed and motor and battery
+temperature. With 30 participants, a virtual-reality version raised interest in space science and lunar history more
+than a standard-screen version, but was harder to operate and took longer; practice closed part of the gap. The study
+measured usability, engagement and interest, not factual learning \cite{cao2019}.
+
+\paragraph{Herder and Rau (2022)} studied students playing the astronomy game \emph{At Play in the Cosmos}, which uses
+tools such as spectrum analysers and radial-velocity displays. A high-performing student could operate the tools
+without understanding the science behind them. In an experiment (45 students, 43 analysed), players got better at
+recognising patterns in the visuals but showed no significant gain in explaining what they meant or in astronomy
+knowledge, and added instructional prompts did not help significantly. Using a game's interface is not the same as
+understanding the science \cite{herder2022}.
+
+\begin{table}[H]
+\centering\small
+\begin{tabularx}{\textwidth}{@{}p{4.2cm} L L@{}}
+\toprule
+\textbf{Finding} & \textbf{Explorer (beginner)} & \textbf{Mission Director (advanced)} \\
+\midrule
+Build learning into connected mission phases \cite{cao2019}. & Contract, design, launch plan, flight and report in order, with a four-step planner. & The same chain with all seven planning steps; each phase's numbers carry into the next. \\
+Balance immersion with ease of use; let players practise first \cite{cao2019}. & Short texts, bigger controls, gentler failure and a refund, so a first failure is a lesson, not a wall. & The full detail once the player is ready; an Explorer company can move up and keep its progress. \\
+Give meaningful scientific choices with authentic details \cite{cao2019}. & Real parts, rockets, launch sites and weather, shown in words and pictures. & Real numbers and units, cited facts, real launch weather and margins. \\
+Design for accessibility and comfort \cite{cao2019}. & Colour-blind-safe, larger interface; plain mouse controls. & Full 3D views to look around in. Both modes can skip a launch to its report or switch to a simple 2D view. \\
+Connect data to what it means \cite{herder2022}. & The ghost preview shows a part's effect on the bars before it is chosen. & Six live resource bars with exact values and margins. \\
+Using the interface is not understanding; make interpretation part of progress \cite{herder2022}. & The report says in plain words \emph{why} the mission worked or failed. & The report explains each result with the design's own numbers; the design review asks for margins, not just a working design. \\
+Check understanding, not only task completion; simple prompts were not enough \cite{herder2022}. & \multicolumn{2}{>{\raggedright\arraybackslash}p{\dimexpr\textwidth-4.2cm-4\tabcolsep\relax}}{Not yet measured in LEAP. Our classroom tests will ask players to explain a failure, not only to fix it (see Next steps).} \\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \subsection{Mission history}
 \begin{table}[H]
@@ -306,16 +347,13 @@ Without agency adoption, LEAP can still reach players and pay for its developmen
   \item custom mission packs and kiosk versions for science museums and planetariums;
   \item workshops and competitions built on the weekly challenge.
 \end{itemize}
-NASA content may generally be used without permission when it is used in a factual way, credited to NASA, and does
-not imply NASA's endorsement; commercial use must not suggest that NASA endorses the product, and the NASA insignia
-and logotype are restricted \cite{nasamedia}. LEAP already credits NASA for every image and uses no NASA or other
-agency logos. The code is released
-under the Apache License~2.0, which allows both an open, agency-backed version and a commercial one.
+
 
 \subsection{Next steps}
 \begin{enumerate}
   \item Make the repository public and host the game on GitHub Pages.
-  \item Test with students and teachers; measure what they learn before and after a lesson.
+  \item Test both modes with students and teachers; measure what they learn before and after a lesson, including
+        whether they can explain why a mission failed, not only fix it \cite{herder2022}.
   \item Finish the remaining eras and the planned features (trade studies, end-of-mission choices, more anomalies).
   \item Approach agency education offices and science museums with the classroom results.
 \end{enumerate}
@@ -334,9 +372,10 @@ The hosted game will be at \url{https://valgyrie.github.io/NASA-Space-Mission-De
 \midrule
 \texttt{docs/GDD.md} & Game design document: what the game is and every design decision. \\
 \texttt{docs/research/} & Cited research notes: milestones, rockets, spacecraft parts, orbits, launch sites, weather, Eras 3--5. \\
+\texttt{docs/research/learning-from-games.md} & Summaries of the two learning studies and how they map onto Explorer and Mission Director. \\
 \texttt{docs/challenge.md} & The official challenge brief and resources. \\
 \texttt{docs/adr/} & Architecture decision records (lasting technical choices and why). \\
-\texttt{docs/tickets/} & The 52 feature tickets, each with what was built and how it was tested. \\
+\texttt{docs/tickets/} & The 53 feature tickets, each with what was built and how it was tested. \\
 \texttt{docs/art/}, \texttt{docs/audio/} & Every 3D model, texture and sound with its author, source and licence. \\
 \texttt{docs/eras-demo/notes-playtest.md} & Play-test notes for the Moon and Artemis eras. \\
 \texttt{GLOSSARY.md}, \texttt{CHECKLIST.md} & Game vocabulary; everything done and still to do. \\
@@ -391,6 +430,10 @@ allowed our team to start before the hackathon; the git history shows every chan
 \bibitem{a4} NASA, ``NASA, partners accelerate lander development for 2028 Moon missions'', 23 October 2026.
   \url{https://www.nasa.gov/missions/artemis/nasa-partners-accelerate-lander-development-for-2028-moon-missions/}
 \bibitem{alouette} Canadian Space Agency, Alouette I and II. \url{https://www.asc-csa.gc.ca/eng/satellites/alouette.asp}
+\bibitem{cao2019} L.~Cao, C.~Peng, J.~T.~Hansberger, ``Usability and Engagement Study for a Serious Virtual Reality Game of Lunar Exploration Missions'', \emph{Informatics} 6(4), 44, 2019.
+  \url{https://doi.org/10.3390/informatics6040044}
+\bibitem{herder2022} T.~Herder, M.~A.~Rau, ``The role of representational competencies for students' learning from an educational video game for astronomy'', \emph{Frontiers in Education} 7, 919645, 2022.
+  \url{https://doi.org/10.3389/feduc.2022.919645}
 \bibitem{nasamedia} NASA, Images and Media Usage Guidelines. \url{https://www.nasa.gov/nasa-brand-center/images-and-media/}
 
 \end{thebibliography}
