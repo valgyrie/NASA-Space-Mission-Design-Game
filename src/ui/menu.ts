@@ -13,9 +13,10 @@ export interface Menu {
 
 /**
  * The pause menu (Esc): Seed, settings and controls.
- * `onOpen` and `onClose` let the game pause and resume.
+ * `onOpen` and `onClose` let the game pause and resume. `onSwitchMode`, when given, lets an Explorer Company move
+ * to Mission Director for good, after a confirm.
  */
-export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode' | 'place'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void, onOnline?: () => void): Menu {
+export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState, 'difficulty' | 'playMode' | 'place'>, onOpen: () => void, onClose: () => void, onMainMenu: () => void, onOnline?: () => void, onSwitchMode?: () => void): Menu {
   const difficulty = state.difficulty;
   const backdrop = document.createElement('div');
   backdrop.className = 'backdrop';
@@ -86,7 +87,53 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, makeAudioControls(), makeDataCredits(), controlsLabel, controls);
+  // Game modes: an Explorer Company can switch to Mission Director, one way, after a confirm.
+  const switchBox = document.createElement('div');
+  switchBox.className = 'menu-switch';
+  const canSwitch = !!onSwitchMode && difficulty === 'easy';
+  switchBox.hidden = !canSwitch;
+  fixedMode.hidden = canSwitch;
+  if (canSwitch) {
+    const switchNote = document.createElement('p');
+    switchNote.className = 'note';
+    switchNote.textContent = t('modes.switchNote');
+    const switchButton = document.createElement('button');
+    switchButton.type = 'button';
+    switchButton.className = 'small';
+    switchButton.textContent = t('modes.switch');
+    const confirmBox = document.createElement('div');
+    confirmBox.className = 'menu-switch-confirm';
+    confirmBox.hidden = true;
+    confirmBox.setAttribute('role', 'alert');
+    const confirmText = document.createElement('p');
+    confirmText.textContent = t('modes.switchConfirm');
+    const yes = document.createElement('button');
+    yes.type = 'button';
+    yes.className = 'small';
+    yes.textContent = t('modes.switchYes');
+    const no = document.createElement('button');
+    no.type = 'button';
+    no.className = 'small';
+    no.textContent = t('modes.switchNo');
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.append(yes, no);
+    confirmBox.append(confirmText, row);
+    switchButton.addEventListener('click', () => {
+      confirmBox.hidden = false;
+      switchButton.hidden = true;
+      no.focus();
+    });
+    no.addEventListener('click', () => {
+      confirmBox.hidden = true;
+      switchButton.hidden = false;
+      switchButton.focus();
+    });
+    yes.addEventListener('click', () => onSwitchMode!());
+    switchBox.append(switchNote, switchButton, confirmBox);
+  }
+
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, switchBox, makeAudioControls(), makeDataCredits(), controlsLabel, controls);
   // Resume, Main menu and Online stay pinned to the bottom of the panel, so they never need a scroll to reach.
   const footer = document.createElement('div');
   footer.className = 'sticky-foot menu-footer';

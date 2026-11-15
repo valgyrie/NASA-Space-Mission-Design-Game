@@ -30,8 +30,8 @@ import { learnMore } from './learnMore';
 import { SITE_SOURCES, SOURCES, VEHICLE_SOURCES } from '../game/sources';
 import { makeDesignReview } from './designReview';
 import { transferPicture } from './transferPicture';
-import { GROUND_TESTS } from '../game/balance';
-import { GROUND_TEST_IDS, GROUND_TEST_PAGES, type GroundTestId, groundTestChances, toggleGroundTest } from '../game/groundTests';
+import { GROUND_TEST_IDS, GROUND_TEST_PAGES, type GroundTestId, groundTestChances, groundTestPrice, toggleGroundTest } from '../game/groundTests';
+import { checkTestRun, payTestRun } from '../game/testRunFee';
 import { percentText } from './anomalyPanel';
 import { fold } from './fold';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
@@ -274,7 +274,7 @@ export function makeLaunchPlanner(
   const siteTags = new Map<LaunchSiteId, HTMLElement>();
   const siteLinks: HTMLElement[] = [];
   for (const id of LAUNCH_SITE_IDS) {
-    const route = shippingTo(state.place, id);
+    const route = shippingTo(state.place, id, state.difficulty);
     const b = button('planner-tile planner-site', '');
     b.dataset.site = id;
     b.setAttribute('aria-label', t(`launchSite.${id}`));
@@ -383,7 +383,7 @@ export function makeLaunchPlanner(
       render();
     });
     const label = el('label', 'planner-insure');
-    const g = GROUND_TESTS[id];
+    const g = groundTestPrice(id, state.difficulty);
     label.append(box, el('span', '', t('planner.groundTests.option', { name: t(`groundTest.${id}`), days: formatNumber(g.days), price: formatMoney(g.cost) })), chip(GROUND_TEST_ROLE[id]));
     const chance = el('span', 'planner-test-chance');
     const what = fold(t('fold.what'), t(`groundTest.${id}.what`), learnMore(`${SOURCES.cubesat101}#page=${GROUND_TEST_PAGES[id] + 8}`, t('groundTest.source', { page: GROUND_TEST_PAGES[id] })));
@@ -519,7 +519,18 @@ export function makeLaunchPlanner(
   const actions = el('div', 'planner-actions');
   const testRun = button('planner-testrun', t('planner.testRun'));
   testRun.title = t('planner.testRunName');
-  testRun.addEventListener('click', () => hooks.onTestRun(state.vehicle));
+  // Game modes: Mission Director pays for a repeat Test Run of the same design.
+  testRun.addEventListener('click', () => {
+    if (!payTestRun(state, state.design).ok) return render();
+    hooks.onTestRun(state.vehicle);
+  });
+  const testRunLabel = () => {
+    const pay = checkTestRun(state, state.design);
+    testRun.textContent = pay.fee > 0 ? t('modes.testRunFee', { money: formatMoney(pay.fee) }) : t('planner.testRun');
+    testRun.title = !pay.ok ? t('modes.testRunShort', { money: formatMoney(pay.fee) })
+      : pay.fee > 0 ? t('modes.testRunFeeName', { money: formatMoney(pay.fee) }) : t('planner.testRunName');
+    testRun.disabled = !pay.ok;
+  };
   const ship = button('planner-ship', '');
   ship.dataset.tutorial = 'planner-ship';
   testRun.dataset.tutorial = 'planner-testrun';
@@ -602,6 +613,7 @@ export function makeLaunchPlanner(
     const lead = mayChange(state, 'lead');
     for (const c of chips) c.render(state);
     firstLaunch.hidden = state.reports.length > 0;
+    testRunLabel();
 
     // Launch Site tiles and the chosen site's name and numbers
     // NASA's pads take only NASA's rockets, and NASA's rockets only their own pad: show the sites this rocket uses.

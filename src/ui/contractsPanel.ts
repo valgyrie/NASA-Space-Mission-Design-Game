@@ -14,6 +14,7 @@ import {
   rewardFor,
   daysLeft,
   deadlineDay,
+  offerDaysLeft,
   questionOffers,
 } from '../game/contracts';
 import { eraAfter, eraOf, milestonesDone } from '../game/eras';
@@ -84,6 +85,9 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
 
   /** Deadline lines of active Contracts, refreshed as the Game date moves. */
   let dueLines: { line: HTMLElement; contract: AcceptedContract }[] = [];
+  /** Mission Director: days left on each offer, refreshed the same way. */
+  let offerLines: { line: HTMLElement; id: ContractId }[] = [];
+  const boardKey = () => `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).map((c) => c.id).join()}`;
 
   const field = (label: string, value: HTMLElement | string) => {
     const row = el('div', 'contract-field');
@@ -135,6 +139,12 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     }
     // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
     if (!taken && state.reopened.includes(contract.id)) box.append(el('p', 'side-note', t('contracts.reopened')));
+    // Mission Director: an offer nobody accepts goes away; show the days left.
+    if (!taken && offerDaysLeft(state, contract.id) !== null) {
+      const line = el('p', 'side-note offer-left');
+      offerLines.push({ line, id: contract.id });
+      box.append(line);
+    }
     if (!taken) {
       const accept = el('button', 'small accept', t('contracts.accept'));
       accept.type = 'button';
@@ -179,8 +189,9 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
   };
 
   const render = () => {
-    shownTaken = `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).length}`;
+    shownTaken = boardKey();
     dueLines = [];
+    offerLines = [];
     body.replaceChildren();
     if (state.contracts.length > 0) {
       body.append(el('h3', '', t('contracts.active')));
@@ -254,7 +265,7 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
   const update = () => {
     if (panel.hidden) return;
     setText(eraLine, eraText());
-    const taken = `${state.contracts.map((c) => c.id).join()}|${availableContracts(state).length}`;
+    const taken = boardKey();
     if (taken !== shownTaken) {
       shownTaken = taken;
       render();
@@ -263,6 +274,11 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     for (const d of dueLines) {
       setText(d.line, deadlineText(state, d.contract));
       d.line.classList.toggle('warn', daysLeft(state, d.contract) === 0);
+    }
+    for (const o of offerLines) {
+      const left = offerDaysLeft(state, o.id) ?? 0;
+      setText(o.line, left > 0 ? t('modes.offerLeft', { days: formatDays(left) }) : t('modes.offerLastDay'));
+      o.line.classList.toggle('warn', left <= 7);
     }
   };
 

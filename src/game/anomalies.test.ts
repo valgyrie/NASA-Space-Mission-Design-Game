@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { JPL } from './places';
 import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, PANEL_CHANCE } from './balance';
 import {
   type Anomaly,
@@ -31,7 +32,7 @@ function design(ids: OptionId[]): Design {
 const plan = (ids: OptionId[] = EXPLORER) => ({ contract: 'explorer1' as const, design: design(ids), vehicle: 'juno1' as const, tech: [] });
 
 /** Fly Explorer 1 for real: accepted, shipped, launched on the day it arrives. */
-function launched(state: SiteState = newSiteState(), ids: OptionId[] = EXPLORER, seed = 'K7QXM2') {
+function launched(state: SiteState = newSiteState(JPL, 'advanced'), ids: OptionId[] = EXPLORER, seed = 'K7QXM2') {
   acceptContract(state, 'explorer1');
   state.design = design(ids);
   for (const p of partsNeeded(state.design)) state.parts[p] += 1;
@@ -127,7 +128,7 @@ describe('Point the antenna: what it costs', () => {
   });
 
   it('costs no money on a failed Mission, only Data', () => {
-    const { state, report, money } = launched(newSiteState(), swap('largeBattery', 'smallBattery'));
+    const { state, report, money } = launched(newSiteState(JPL, 'advanced'), swap('largeBattery', 'smallBattery'));
     expect(report.success).toBe(false);
     settleAnomaly(state, report, 0, 'played');
     expect(report.anomaly!.lostDays).toBeGreaterThan(0);

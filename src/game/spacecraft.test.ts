@@ -154,7 +154,7 @@ describe('checking a design', () => {
   });
 
   it('uses the accepted Contract for the deadline', () => {
-    const state = newSiteState();
+    const state = newSiteState(JPL, 'advanced');
     acceptContract(state, 'explorer1');
     state.day = 340; // 25 days left: not enough to build (30), ship (7) and fly (30)
     const check = checkDesign(state, design(...EXPLORER));

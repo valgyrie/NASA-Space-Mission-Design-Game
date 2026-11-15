@@ -1,4 +1,5 @@
-import { CONTRACT_DEADLINE_DAYS, CONTRACT_EXTRA_REWARD, CONTRACT_REWARD, LAND_CONTRACT_EVERY } from './balance';
+import { CONTRACT_DEADLINE_DAYS, CONTRACT_EXTRA_REWARD, CONTRACT_REWARD, LAND_CONTRACT_EVERY, OFFER_DAYS } from './balance';
+import { isDirector } from './modes';
 import { type Era, eraOf } from './eras';
 import type { LaunchSiteId, LaunchVehicleId } from './launchVehicles';
 import type { SiteState } from './siteState';
@@ -419,7 +420,7 @@ export function accepted(state: SiteState, id: ContractId): AcceptedContract | u
 /** Contracts on the board that the Company hasn't taken or finished yet. */
 export function availableContracts(state: SiteState): Contract[] {
   if (state.playMode === 'freePlay') {
-    const used = new Set<ContractId>([...state.completed, ...state.contracts.map((c) => c.id)]);
+    const used = new Set<ContractId>([...state.completed, ...state.contracts.map((c) => c.id), ...(state.expiredOffers ?? [])]);
     const offers: Contract[] = [];
     for (let n = 0; offers.length < 3; n++) {
       const id: ContractId = `free-${n}`;
@@ -479,6 +480,39 @@ export function expireContracts(state: SiteState): ContractId[] {
   state.contracts = state.contracts.filter((c) => !late.includes(c.id));
   for (const id of late) if (!state.reopened.includes(id)) state.reopened.push(id);
   return late;
+}
+
+/**
+ * Mission Director: Free Play Contracts on the board go away if nobody accepts them within OFFER_DAYS of being
+ * offered, and the next ones take their place. Campaign Milestones and the "Choose a question" Contracts never
+ * expire (the question card is the small Contract always on offer); accepted Contracts keep their deadline.
+ * Dates the Contracts on the board, forgets those no longer on it, and returns the ones that expired.
+ */
+export function refreshOffers(state: SiteState): ContractId[] {
+  if (!isDirector(state) || state.playMode !== 'freePlay') return [];
+  const today = Math.floor(state.day);
+  const expired: ContractId[] = [];
+  // Expired offers make room for new ones, which are dated today, so this settles in two rounds.
+  for (let round = 0; round < 2; round++) {
+    const offers = availableContracts(state).map((c) => c.id);
+    const days: Partial<Record<ContractId, number>> = {};
+    for (const id of offers) days[id] = state.offerDays[id] ?? today;
+    state.offerDays = days;
+    const late = offers.filter((id) => today - days[id]! >= OFFER_DAYS);
+    if (late.length === 0) break;
+    for (const id of late) delete state.offerDays[id];
+    state.expiredOffers.push(...late);
+    state.reopened = state.reopened.filter((id) => !late.includes(id));
+    expired.push(...late);
+  }
+  return expired;
+}
+
+/** Mission Director: whole game days before a Contract on the board goes away, or null if it never does. */
+export function offerDaysLeft(state: SiteState, id: ContractId): number | null {
+  if (!isDirector(state) || state.playMode !== 'freePlay' || !id.startsWith('free-') || accepted(state, id)) return null;
+  const today = Math.floor(state.day);
+  return Math.max(0, (state.offerDays[id] ?? today) + OFFER_DAYS - today);
 }
 
 /** The Game day an accepted Contract is due: whole days from the date it was accepted. */

@@ -373,6 +373,8 @@ export function showMissionReport(
       }
       else reward.textContent = t('report.tooLate');
       if (report.insurancePaid > 0) reward.textContent += ` ${t('report.insurance', { money: formatMoney(report.insurancePaid) })}`;
+      // Game modes: Explorer's refund of the launch costs.
+      if (report.refund) reward.textContent += ` ${t('modes.refund', { money: formatMoney(report.refund) })}`;
       const team = teamLines(report, explorer);
       teamHeading.hidden = teamBox.hidden = team.length === 0;
       const teamList = el('ul', 'report-team-lines');

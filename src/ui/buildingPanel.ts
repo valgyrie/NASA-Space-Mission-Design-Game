@@ -1,6 +1,8 @@
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
-import { LAB_KB_PER_DAY, MINE_OUTPUT_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { LAB_KB_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
+import { depositLeft, depositShare } from '../game/deposits';
+import { isDirector } from '../game/modes';
 import { ERA_YEARS, type Era, LAST_ERA, eraAfter, eraGoals, eraOf, isPartOpen, milestonesDone } from '../game/eras';
 import { milestoneDone } from '../game/contracts';
 import { groundBoost } from '../game/spacecraft';
@@ -13,8 +15,11 @@ import {
   type SiteState,
   buildingAt,
   levelBoost,
+  mineDeposit,
+  mineEmpty,
   mineMaterial,
   mineOutput,
+  mineOutputAt,
   missingInputs,
   partMass,
   partsMadeBy,
@@ -255,7 +260,7 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       refresh();
     });
     const nextText = (level: number): string => {
-      if (kind === 'mine') return t('level.next.mine', { level, kg: formatNumber(MINE_OUTPUT_PER_DAY * levelBoost(level)) });
+      if (kind === 'mine') return t('level.next.mine', { level, kg: formatNumber(mineOutputAt(level, state)) });
       if (kind === 'warehouse') return t('level.next.warehouse', { level, kg: formatNumber(WAREHOUSE_STORAGE_KG * levelBoost(level)) });
       if (kind === 'researchLab') return t('level.next.researchLab', { level, kb: formatNumber(LAB_KB_PER_DAY * levelBoost(level)) });
       if (kind === 'assemblyHall') return t('level.next.assemblyHall', { level, bus: t(`part.${busesAt(level).at(-1) as BusId}`) });
@@ -309,10 +314,24 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
         const material = t(`material.${mineMaterial(site, mine) ?? 'aluminium'}`);
         const digs = el('p', 'side-note');
         const full = el('p', 'side-note warn');
-        body.append(digs, full);
+        // Mission Director: how much of the Deposit is left, as a bar.
+        const deposit = mineDeposit(site, mine);
+        const left = el('p', 'side-note deposit-left');
+        const leftBar = el('div', 'progress deposit-bar');
+        const leftFill = el('div', 'progress-fill');
+        leftBar.append(leftFill);
+        left.hidden = leftBar.hidden = !deposit || !isDirector(state);
+        body.append(digs, left, leftBar, full);
         refresh = () => {
-          setText(digs, t('panel.mine', { kg: formatNumber(mineOutput(mine)), material }));
-          setText(full, storageFree(state) <= 0 ? t('panel.mineFull') : '');
+          const empty = mineEmpty(site, state, mine);
+          setText(digs, empty ? t('modes.depositEmpty') : t('panel.mine', { kg: formatNumber(mineOutput(mine, state)), material }));
+          digs.classList.toggle('warn', empty);
+          if (deposit && isDirector(state)) {
+            const kg = depositLeft(state, deposit);
+            setText(left, t('modes.depositLeft', { kg: formatNumber(Math.ceil(kg)), size: formatNumber(deposit.sizeKg) }));
+            leftFill.style.width = `${Math.round(depositShare(state, deposit) * 100)}%`;
+          }
+          setText(full, !empty && storageFree(state) <= 0 ? t('panel.mineFull') : '');
         };
       } else if (building.kind === 'warehouse') {
         const warehouse = building.building;

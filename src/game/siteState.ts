@@ -4,13 +4,14 @@ import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildin
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
-import { CONTRACTS, CONTRACT_IDS, type AcceptedContract, type ContractId, choiceOf, expireContracts, milestoneDone } from './contracts';
+import { CONTRACTS, CONTRACT_IDS, type AcceptedContract, type ContractId, choiceOf, expireContracts, milestoneDone, refreshOffers } from './contracts';
+import { type Deposit, depositAt, depositLeft, digDeposit } from './deposits';
 import { nextLevel } from './upgrades';
 import type { HistoryCardId, Patch } from './history';
 import { type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen } from './launchVehicles';
 import { MODERN_ERA, eraOf, eraStartDay, isBuildingOpen } from './eras';
 import { JPL, type Place } from './places';
-import type { Difficulty, PlayMode } from './modes';
+import { type Difficulty, type PlayMode, isExplorer } from './modes';
 import { type Research, newResearch, runLabs } from './research';
 import type { TutorialProgress } from './tutorial';
 import type { Mission, MissionReport } from './mission';
@@ -18,6 +19,7 @@ import { type Design, emptyDesign } from './spacecraft';
 import {
   BASE_STORAGE_KG,
   BUILD_COST,
+  EXPLORER_PACE,
   LEVEL_OUTPUT_STEP,
   MARK_STEP,
   MAX_FRAME_SECONDS,
@@ -160,6 +162,19 @@ export interface SiteState {
    * Optional like `testedDesigns`, so saves stay v19.
    */
   team?: Team;
+  // ---- Game modes: rules (save v21) ----
+  /** Grants paid so far, the first one included (`grantDay` is the last one's day). */
+  grants: number;
+  /** Mission Director: the Game day each Free Play Contract on the board was offered, by ID. Only those on the board. */
+  offerDays: Partial<Record<ContractId, number>>;
+  /** Mission Director: Free Play Contracts that went away unaccepted. They never come back. */
+  expiredOffers: ContractId[];
+  /** Mission Director: designs (`testRunKey`) that have had their free Test Run, newest last. */
+  testRuns: string[];
+  /** Mission Director: kilograms dug out of each Deposit, by `depositKey`. Missing: none, so it is full. */
+  depositsUsed: Record<string, number>;
+  /** Explorer: Contracts whose failed Mission already had its launch costs refunded. */
+  refunds: ContractId[];
 }
 
 const zeroes = <K extends string>(keys: readonly K[]) => Object.fromEntries(keys.map((k) => [k, 0])) as Record<K, number>;
@@ -203,6 +218,12 @@ export function newSiteState(place: Place = JPL, difficulty: Difficulty = 'easy'
     launchSite: 'capeCanaveral',
     plots: [],
     freePlots: 0,
+    grants: 0,
+    offerDays: {},
+    expiredOffers: [],
+    testRuns: [],
+    depositsUsed: {},
+    refunds: [],
   };
 }
 
@@ -214,7 +235,8 @@ export function partsMadeBy(kind: FactoryKind): Part[] {
 // ---- Building ----
 
 /** `dock`: the Shipping truck's loading dock is in use there (checked by the Site view, which knows the dock). */
-export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money' | 'era' | 'dock';
+/** `emptyDeposit`: Mission Director, the Deposit a Mine there would dig has run out. */
+export type PlaceProblem = 'noDeposit' | 'onDeposit' | 'water' | 'edge' | 'occupied' | 'money' | 'era' | 'dock' | 'emptyDeposit';
 
 export type PlaceCheck = { ok: true } | { ok: false; problem: PlaceProblem };
 
@@ -346,6 +368,7 @@ export function checkBuild(site: Site, state: SiteState, kind: BuildingKind, x: 
   if (!isBuildingOpen(state, kind)) return { ok: false, problem: 'era' };
   const problem = placeProblem(site, state, kind, x, z);
   if (problem) return { ok: false, problem };
+  if (kind === 'mine' && mineEmpty(site, state, { x, z })) return { ok: false, problem: 'emptyDeposit' };
   if (state.money < BUILD_COST[kind]) return { ok: false, problem: 'money' };
   return { ok: true };
 }
@@ -432,9 +455,28 @@ export function levelBoost(level: number): number {
   return 1 + LEVEL_OUTPUT_STEP * (level - 1);
 }
 
-/** Kilograms one Mine digs a day at its level. */
-export function mineOutput(mine: Mine): number {
-  return MINE_OUTPUT_PER_DAY * levelBoost(mine.level);
+/** Kilograms a day a Mine at `level` digs: Explorer's Mines dig faster (EXPLORER_PACE). */
+export function mineOutputAt(level: number, state: Pick<SiteState, 'difficulty'>): number {
+  return MINE_OUTPUT_PER_DAY * levelBoost(level) * (isExplorer(state) ? EXPLORER_PACE.mineOutput : 1);
+}
+
+/** Kilograms one Mine digs a day at its level, while its Deposit lasts. */
+export function mineOutput(mine: Mine, state: Pick<SiteState, 'difficulty'>): number {
+  return mineOutputAt(mine.level, state);
+}
+
+/** The Deposit a Mine digs: the one nearest its middle, as `mineMaterial` picks. */
+export function mineDeposit(site: Site, mine: Pick<Mine, 'x' | 'z'>): Deposit | null {
+  for (const t of footprint(mine.x, mine.z)) {
+    if (tileAt(site, t.x, t.z)?.deposit) return depositAt(site, t.x, t.z);
+  }
+  return null;
+}
+
+/** Mission Director: the Mine's Deposit is empty, so it has stopped. */
+export function mineEmpty(site: Site, state: SiteState, mine: Pick<Mine, 'x' | 'z'>): boolean {
+  const deposit = mineDeposit(site, mine);
+  return !!deposit && depositLeft(state, deposit) <= 0;
 }
 
 /** Kilograms one Warehouse stores at its level. */
@@ -524,11 +566,18 @@ export function bestMark(state: SiteState, part: Part): number {
 /** Kilograms per game day of each Raw Material from all Mines (while there is room to store it). */
 export function outputPerDay(site: Site, state: SiteState): Record<RawMaterial, number> {
   const out = zeroes(RAW_MATERIALS);
-  for (const mine of state.mines) {
-    const material = mineMaterial(site, mine);
-    if (material) out[material] += mineOutput(mine);
-  }
+  for (const { deposit, kgPerDay } of digging(site, state)) out[deposit.material] += kgPerDay;
   return out;
+}
+
+/** Every Mine that is digging (its Deposit not empty), with its Deposit and kilograms a day. */
+function digging(site: Site, state: SiteState): { deposit: Deposit; kgPerDay: number }[] {
+  const list: { deposit: Deposit; kgPerDay: number }[] = [];
+  for (const mine of state.mines) {
+    const deposit = mineDeposit(site, mine);
+    if (deposit && depositLeft(state, deposit) > 0) list.push({ deposit, kgPerDay: mineOutput(mine, state) });
+  }
+  return list;
 }
 
 /** Raw Materials the Factory still needs before it can start its next Part (kilograms short of each). */
@@ -640,13 +689,15 @@ export function advanceDays(site: Site, state: SiteState, days: number): void {
   finishUpgrades(state);
   // Mines stop when storage is full. A Factory's inputs keep their room until its Part is done, and a finished Part
   // weighs less than its inputs, so Factories never overfill it.
-  const out = outputPerDay(site, state);
-  const total = RAW_MATERIALS.reduce((sum, m) => sum + out[m], 0) * days;
+  // Mission Director: each Mine takes what it digs out of its Deposit, and stops when it is empty.
+  const mines = digging(site, state);
+  const total = mines.reduce((sum, m) => sum + m.kgPerDay, 0) * days;
   const share = total > 0 ? Math.min(1, storageFree(state) / total) : 0;
-  for (const m of RAW_MATERIALS) state.stock[m] += out[m] * days * share;
+  for (const { deposit, kgPerDay } of mines) state.stock[deposit.material] += digDeposit(state, deposit, kgPerDay * days * share);
   for (const factory of state.factories) runFactory(state, factory, days);
   runLabs(state, days);
   expireContracts(state);
+  refreshOffers(state);
 }
 
 /** Game days that pass in `seconds` of real time at `speed`. Long gaps are capped. */

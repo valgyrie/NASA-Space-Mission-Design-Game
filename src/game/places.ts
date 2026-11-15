@@ -1,5 +1,6 @@
 import { CLIMATE_CHARS, CLIMATE_ROWS, CLIMATE_SCALES, LAUNCH_WEATHER_2025, US_ROWS } from './placeData';
-import { LAUNCH_WEATHER, SHIPPING, START_DATE_UTC } from './balance';
+import { EXPLORER_PACE, LAUNCH_WEATHER, SHIPPING, START_DATE_UTC } from './balance';
+import type { Difficulty } from './modes';
 import { LAUNCH_SITES, type LaunchSiteId } from './launchVehicles';
 import { type Surface, surfaceAt } from '../world/earthTexture';
 import type { SiteClimate } from '../site/site';
@@ -164,11 +165,15 @@ export function distanceKm(a: { lat: number; lon: number }, b: { lat: number; lo
   return 2 * 6371 * Math.asin(Math.min(1, Math.sqrt(h)));
 }
 
-/** What shipping a Spacecraft from the Site to a Launch Site costs, and how many days it takes (balance.ts). */
-export function shippingTo(place: Place, site: LaunchSiteId): { km: number; cost: number; days: number } {
+/**
+ * What shipping a Spacecraft from the Site to a Launch Site costs, and how many days it takes (balance.ts).
+ * Explorer's Shipping is quicker (EXPLORER_PACE).
+ */
+export function shippingTo(place: Place, site: LaunchSiteId, difficulty?: Difficulty): { km: number; cost: number; days: number } {
   const km = distanceKm(place, LAUNCH_SITES[site]);
   const cost = Math.round((SHIPPING.baseCost + km * SHIPPING.perKm) / 1000) * 1000;
-  const days = Math.ceil(km / SHIPPING.kmPerDay) + SHIPPING.loadDays;
+  const road = Math.ceil(km / SHIPPING.kmPerDay) + SHIPPING.loadDays;
+  const days = difficulty === 'easy' ? Math.max(1, Math.ceil(road * EXPLORER_PACE.shippingDays)) : road;
   return { km: Math.round(km), cost, days };
 }
 

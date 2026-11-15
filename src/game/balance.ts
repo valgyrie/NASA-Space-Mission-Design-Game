@@ -467,10 +467,41 @@ export const INSURANCE = {
 } as const;
 
 /**
- * The one-time startup grant (game estimates): when the Company's money falls below `belowMoney` with no
- * Mission on its way, it gets `amount`, once per game.
+ * The startup grant (game estimates): when the Company's money falls below `belowMoney` with no Mission on its
+ * way, it gets `amount`. It can come again later (GRANT_AGAIN).
  */
 export const STARTUP_GRANT = {
   belowMoney: 300_000,
   amount: 1_000_000,
 } as const;
+
+// ---- Game modes: rules ----
+// Explorer ('easy') and Mission Director ('advanced') fly the same physics; these numbers set their economy apart.
+// All of them are game estimates.
+
+/**
+ * The grant can come again (both modes): when money is low again with no Mission on its way, at least `everyDays`
+ * game days after the last one, and no more than `max` grants in a game (the first one included).
+ */
+export const GRANT_AGAIN = { everyDays: 180, max: 5 } as const;
+
+/** Mission Director: a Free Play Contract on the board that nobody accepts goes away this many game days after it was offered. */
+export const OFFER_DAYS = 60;
+
+/**
+ * Mission Director: the first Test Run of each design is free; running the same design again costs `share` of the
+ * accepted Contract's reward, never less than `min` (also the price with no Contract), rounded to $1,000.
+ */
+export const TEST_RUN_FEE = { share: 0.02, min: 10_000 } as const;
+
+/** Mission Director: Ground Tests cost this many times the money and take this many times the days in GROUND_TESTS. */
+export const DIRECTOR_GROUND_TESTS = { cost: 3, days: 2 } as const;
+
+/**
+ * Mission Director: each tile of a Deposit holds this many kilograms. A Mine stops when its Deposit is empty.
+ * A Deposit has 4–8 tiles, so one level 1 Mine (10 kg a day) empties an average one in about 600 game days.
+ */
+export const DEPOSIT_KG_PER_TILE = 1_000;
+
+/** Explorer: shorter waits. Mines dig this many times faster; Shipping takes this share of the days (at least 1). */
+export const EXPLORER_PACE = { mineOutput: 1.5, shippingDays: 0.5 } as const;
