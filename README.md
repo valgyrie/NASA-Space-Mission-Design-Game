@@ -73,6 +73,14 @@ There are two game modes. A Company keeps the one it started with, though an Exp
 
 Online play (cloud saves, leaderboards and a Weekly Challenge) is built but switched off for now; its button says "Coming soon".
 
+## Future work
+
+- **A better interface.** Improve the UI from what beta players tell us.
+- **Playing together.** A multiplayer mode where players work together through the Campaign.
+- **The whole Campaign, 1958 to 2028.** To save time we jumped from Apollo 11 straight to Artemis. The missions in between are still to be built: Landsat 1, Hubble, the Lunar Reconnaissance Orbiter, the first Falcon 9 booster landing and Artemis I.
+- **Proper hosting.** Put LEAP on a dedicated host, so anyone can play it in a browser without running it on their own computer.
+- **Working with space agencies.** Partner with NASA or other space agencies to bring more real data into the game, and their experience into the team.
+
 ## Run it
 
 Download the repository (Code → Download ZIP), unzip it, and keep the folder together. Then:

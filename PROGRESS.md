@@ -95,7 +95,7 @@
 **Next:**
 1. Team: test tickets 32, 33, 34, 36, 39, 40, 41 and 42 (42: do the need lines and questions read well for a 10-year-old? Should Milestone cards get a need line too?). In 39, decide whether Mines and Metal Works belong under "Define Concept". Check the open-point choices in ticket 36 and the Free Play picks (SAMPEX, NOAA-18, TDRS-1). Decide if the Earth → Moon path should play faster. Confirm the Mission Viz credit wording.
 2. The rule items in tickets 28 and 29, then 43–48 in the order in `docs/tickets/README.md`. Feature freeze is Saturday night (14 Nov).
-3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; paste `docs/submission.md` into the Project tab; demo (30 s video or 7 slides; Team Mode answers the brief's "up to four" point); save support's early-start message.
+3. Team: make the repo public, then Settings → Pages → Source: GitHub Actions; write and paste the Project tab text (the team writes its own; `docs/submission.md` was removed on 15 Nov); demo (30 s video or 7 slides; Team Mode answers the brief's "up to four" point); save support's early-start message.
 
 **Note:** a fresh container needs `npm ci` before `npm run check`.
 
@@ -105,7 +105,8 @@
 
 ## Log
 
-- 2026-11-15: YouTube links (2-min, 30-s, main game and Minigames playthroughs) at the top of the README and in `docs/submission.md`.
+- 2026-11-15: Future work section in the README; `docs/submission.md` removed (the team writes its own project page text).
+- 2026-11-15: YouTube links (2-min, 30-s, main game and Minigames playthroughs) at the top of the README.
 - 2026-11-15: README rewrite with current screenshots; Exit button on the main menu; docs made consistent with the game. 648 tests pass. Merged into `main`.
 - 2026-11-15: Minigames (ticket 54) on branch `minigames`: shell, three Explorer games and three Mission Director games; checkpointed when the user stopped the work (Lost Signal not yet played to a win). 648 tests pass.
 
