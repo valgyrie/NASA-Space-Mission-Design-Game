@@ -6,7 +6,7 @@
 |---|---|
 | 2-minute video | https://youtu.be/M3r4RiREfuA |
 | 30-second video | https://youtu.be/djvGhI7mmnE |
-| Main game, partial playthrough | https://youtu.be/XW8jWDYuxBc |
+| Main game, tutorial section | https://youtu.be/XW8jWDYuxBc |
 | Minigames playthrough | https://youtu.be/MwC3U5vhJKs |
 
 ![The LEAP title screen: the main menu in front of SLS on its pad](screenshots/game%20screenshots/title.jpg)
