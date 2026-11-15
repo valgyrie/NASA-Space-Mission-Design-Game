@@ -11,7 +11,7 @@
 
 ![The LEAP title screen: the main menu in front of SLS on its pad](screenshots/game%20screenshots/title.jpg)
 
-Run a small space company. Mine metals, build Parts, design the spacecraft, pick the rocket, check the weather and launch. Along the way you fly the real missions of space history, from Explorer 1 in 1958 to the planned Artemis IV Moon landing.
+Run a space company. Mine metals, build Parts, design the spacecraft, pick the rocket, check the weather and launch. Along the way you fly the real missions of space history, from Explorer 1 in 1958 to the planned Artemis IV Moon landing.
 
 Every choice moves six bars: Mass, Power, Budget, Data, Communications and Time. When a mission works or fails, the report says why, and a card tells what happened on the real one.
 
