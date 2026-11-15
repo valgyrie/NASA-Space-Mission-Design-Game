@@ -5102,3 +5102,38 @@ body.mode-explorer .designer .maturity { display: none; }
 
 /* Explorer mode hides reading links that have no NASA page for young readers (src/ui/learnMore.ts). */
 a.mode-link[hidden] { display: none !important; }
+
+/* Explorer's Mission Report (missionReport.ts, explorerReport): a big result, a short list, one tip, the patch up top. */
+.report-outcome-line[hidden], .report-tip[hidden] { display: none; }
+body.mode-explorer .report .report-outcome { font-size: 34px; margin-top: 12px; text-align: center; }
+body.mode-explorer .report .report-outcome-line { margin: 4px 0 6px; font-size: 20px; text-align: center; }
+body.mode-explorer .report .report-subtitle { text-align: center; }
+body.mode-explorer .report .report-patch { justify-content: center; flex-direction: column; text-align: center; }
+body.mode-explorer .report .report-patch-art { width: 150px; }
+body.mode-explorer .report h3 { font-size: 20px; }
+body.mode-explorer .report .report-findings { gap: 10px; }
+body.mode-explorer .report .report-findings li { align-items: center; }
+body.mode-explorer .report .report-findings .report-mark {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  background: rgba(255, 255, 255, 0.08);
+}
+body.mode-explorer .report .report-findings .ok .report-mark { background: rgba(77, 163, 255, 0.22); }
+body.mode-explorer .report .report-findings .short .report-mark { background: rgba(255, 150, 60, 0.25); }
+body.mode-explorer .report .report-tip {
+  margin: 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 196, 80, 0.5);
+  background: rgba(255, 196, 80, 0.1);
+  font-size: 18px;
+}
+body.mode-explorer .report .report-anomaly p,
+body.mode-explorer .report .report-real p { font-size: 18px; }
+body.mode-explorer .report .report-reward { margin: 4px 0 0; font-size: 24px; font-weight: 700; text-align: center; color: var(--accent); }
+body.mode-explorer .report .report-outcome:not(.ok) ~ .report-reward { color: var(--text); font-size: 20px; font-weight: 600; }

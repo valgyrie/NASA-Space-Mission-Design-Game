@@ -124,9 +124,64 @@ function explorerFindingText(f: Finding, d: '' | '.design'): string {
         : t(`explorer.finding.power.no${d}`, { phase: t(`explorer.phase.${dayPhase(f.lastsDays ?? 0, f.needDays)}`) });
     case 'comms':
       return t(`explorer.finding.comms.${mark}${d}`);
+    case 'time':
+      return t(`explorer.finding.time.${mark}${d}`);
     default:
       return '';
   }
+}
+
+/**
+ * The Explorer Mission Report: a big result, a short list of what happened (problems first), one thing to try
+ * next time, one line on any trouble in space, and the reward in plain words. No Segments, chances or units.
+ */
+export interface ExplorerReport {
+  headline: string;
+  line: string;
+  lines: { ok: boolean; text: string }[];
+  tip: string | null;
+  trouble: string | null;
+  reward: string;
+}
+
+export function explorerReport(report: MissionReport, deadlineDay: number | null, today: number): ExplorerReport {
+  const contract = contractText(report.contract);
+  const flown = reachedOrbit(report.findings);
+  const rocketOnly = report.findings.every((f) => f.ok || (f.kind === 'orbit' && f.failedStage != null));
+  const lines = report.findings
+    .map((f) => ({ ok: f.ok, text: findingText(f, flown || f.kind === 'orbit', true) }))
+    .sort((a, b) => Number(a.ok) - Number(b.ok));
+  const failed = report.findings.find((f) => !f.ok);
+  let tip: string | null = null;
+  if (failed && !rocketOnly) {
+    if (failed.kind === 'orbit') tip = t(failed.noEngine ? 'explorer.tip.engine' : 'explorer.tip.orbit');
+    else tip = t(`explorer.tip.${failed.kind}`);
+  }
+  let reward: string;
+  if (report.success) {
+    reward = t('explorer.reward', { money: formatMoney(report.reward) });
+    if (contractById(report.contract).plot) reward += ` ${t('report.rewardPlot')}`;
+  } else if (deadlineDay !== null && today < deadlineDay) {
+    reward = t(rocketOnly ? 'explorer.retryRocket' : 'explorer.retry', { date: formatGameDate(deadlineDay) });
+  } else reward = t('explorer.tooLate');
+  if (report.refund) reward += ` ${t('explorer.refund', { money: formatMoney(report.refund) })}`;
+  return {
+    headline: t(report.success ? 'explorer.report.success' : 'explorer.report.failure'),
+    line: t(report.success ? 'explorer.report.successLine' : rocketOnly ? 'explorer.report.rocketLine' : 'explorer.report.failureLine', { contract }),
+    lines,
+    tip,
+    trouble: explorerTrouble(report.anomaly, report.success),
+    reward,
+  };
+}
+
+/** One plain line on an Anomaly: what it was, and how much Data the player saved. */
+function explorerTrouble(a: Anomaly | null | undefined, paid: boolean): string | null {
+  if (!a || a.score === null || a.answer === null) return null;
+  const name = t(`anomaly.${a.kind}.name`);
+  const how = a.lostDays === 0 ? 'saved' : a.score >= 0.4 ? 'some' : 'most';
+  const text = t(`explorer.trouble.${how}`, { name });
+  return paid && a.cut > 0 ? `${text} ${t('explorer.trouble.cut')}` : text;
 }
 
 /** A line of the Mission Report: a requirement met (ok), not met (short), or a plain fact (info). */
@@ -244,9 +299,14 @@ export function teamLines(report: MissionReport, explorer = false): TeamLine[] {
 }
 
 /** The "Like the real one" section: a line on who the real one is, a two-column table, one comparing line. */
-function realSection(report: MissionReport): HTMLElement[] {
-  const c = likeTheRealOne(report);
+function realSection(report: MissionReport, explorer = false): HTMLElement[] {
+  const c = likeTheRealOne(report, explorer);
   if (!c) return [];
+  if (explorer) {
+    // No table of kilograms and no link of its own (the reading links sit at the bottom): who it is, how it was like yours.
+    const intro = el('p', 'report-real-intro', t(c.sameMission ? 'report.real.introMilestone' : 'report.real.introFree', { name: c.name }));
+    return [intro, el('p', 'report-real-line', c.line)];
+  }
   const intro = el('p', 'report-real-intro', t(c.sameMission ? 'report.real.introMilestone' : 'report.real.introFree', { name: c.name }));
   intro.append(' ', learnMore(c.craft.learnMore, c.name));
   const table = el('table', 'report-real-table');
@@ -288,12 +348,17 @@ export function showMissionReport(
   const need = el('p', 'report-need');
   const sources = el('div', '');
   const outcome = el('p', 'report-outcome');
+  // Explorer: one plain sentence under the big result.
+  const outcomeLine = el('p', 'report-outcome-line');
   const why = el('h3', '', t('report.why'));
   // The lines sit under NASA's four Segments, with one line on what they are.
   const segmentsIntro = el('p', 'report-segments-intro');
   const segmentsLink = learnMore(SOURCES.segments, t('sources.segments'));
   const notFlown = el('p', 'report-not-flown');
   const findings = el('div', 'report-segments');
+  // Explorer: one thing to try next time.
+  const tipHeading = el('h3', '', t('explorer.report.tip'));
+  const tip = el('p', 'report-tip');
   const anomalyHeading = el('h3', '', t('report.anomaly'));
   const anomaly = el('div', 'report-anomaly');
   const reward = el('p', 'report-reward');
@@ -316,16 +381,50 @@ export function showMissionReport(
   seeOrbit.type = 'button';
   const buttons = el('div', 'report-buttons');
   buttons.append(seeOrbit, close);
-  panel.append(heading, subtitle, need, sources, outcome, why, segmentsIntro, notFlown, findings, anomalyHeading, anomaly, reward, teamHeading, teamBox, patchHeading, patchBox, realHeading, real, buttons);
+  panel.append(heading, subtitle, need, sources, outcome, outcomeLine, why, segmentsIntro, notFlown, findings, tipHeading, tip, anomalyHeading, anomaly, reward, teamHeading, teamBox, patchHeading, patchBox, realHeading, real, buttons);
   let shown: MissionReport | null = null;
   backdrop.append(panel);
   root.append(backdrop);
+
+  /** Explorer: the same report in a few plain lines (see explorerReport). */
+  const showExplorer = (report: MissionReport, deadlineDay: number | null, today: number) => {
+    const r = explorerReport(report, deadlineDay, today);
+    subtitle.textContent = t('explorer.report.subtitle', {
+      vehicle: t(`launchVehicle.${report.vehicle}`),
+      date: formatGameDate(report.launchDay),
+    });
+    outcome.textContent = r.headline;
+    outcomeLine.textContent = r.line;
+    outcomeLine.hidden = false;
+    why.textContent = t('explorer.report.what');
+    segmentsIntro.hidden = notFlown.hidden = true;
+    const list = el('ul', 'report-findings');
+    list.append(
+      ...r.lines.map((l) => {
+        const li = el('li', l.ok ? 'ok' : 'short');
+        const mark = el('span', 'report-mark', t(l.ok ? 'report.ok' : 'report.short'));
+        mark.setAttribute('aria-label', t(l.ok ? 'report.okName' : 'report.shortName'));
+        li.append(mark, el('span', '', l.text));
+        return li;
+      }),
+    );
+    findings.replaceChildren(list);
+    tip.textContent = r.tip ?? '';
+    tipHeading.hidden = tip.hidden = !r.tip;
+    anomalyHeading.textContent = t('explorer.report.trouble');
+    anomaly.replaceChildren(...(r.trouble ? [el('p', '', r.trouble)] : []));
+    anomalyHeading.hidden = anomaly.hidden = !r.trouble;
+    reward.textContent = r.reward;
+  };
 
   const api: MissionReportDialog = {
     show(report, deadlineDay, today, earned = null, labs = 0) {
       // Explorer: the same report in plain words (the mode is fixed per Company, so it is read when shown).
       const explorer = explorerShown();
       segmentsIntro.replaceChildren(textFor('segment.intro', explorer), ' ', segmentsLink);
+      segmentsIntro.hidden = false;
+      why.textContent = t('report.why');
+      anomalyHeading.textContent = t('report.anomaly');
       notFlown.textContent = textFor('report.notFlown', explorer);
       const contract = contractText(report.contract);
       sources.replaceChildren(missionLinks(report.contract, report.vehicle));
@@ -391,7 +490,19 @@ export function showMissionReport(
       patchHeading.hidden = patchBox.hidden = !earned;
       patchArt.replaceChildren(...(earned ? [makePatch(earned.patch, company.name, company.logo)] : []));
       patchText.textContent = earned ? t(earned.first ? 'report.patchFirst' : 'report.patchMore') : '';
-      real.replaceChildren(...realSection(report));
+      real.replaceChildren(...realSection(report, explorer));
+      realHeading.textContent = t(explorer ? 'explorer.report.real' : 'report.real.heading');
+      patchHeading.textContent = t(explorer ? 'explorer.report.patch' : 'report.patch');
+      // Explorer: the patch is the prize, so it comes straight after the result; elsewhere it sits near the end.
+      const before = explorer ? why : realHeading;
+      panel.insertBefore(patchHeading, before);
+      // Explorer: the reading links wait at the bottom, so the result is the first thing a child sees,
+      // and the reward is the prize, so it sits right under the result.
+      panel.insertBefore(sources, explorer ? buttons : outcome);
+      panel.insertBefore(reward, explorer ? patchHeading : teamHeading);
+      panel.insertBefore(patchBox, before);
+      outcomeLine.hidden = tipHeading.hidden = tip.hidden = true;
+      if (explorer) showExplorer(report, deadlineDay, today);
       shown = report;
       seeOrbit.hidden = !report.findings.some((f) => f.kind === 'orbit' && f.ok);
       backdrop.hidden = false;

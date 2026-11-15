@@ -136,3 +136,60 @@ describe('a Mission flown in Team Mode (ticket 41)', () => {
     expect(lines.every((l) => l.ok)).toBe(true);
   });
 });
+
+describe('Mission Report: Explorer', () => {
+  const noDigits = (s: string) => expect(s, s).not.toMatch(/\d/);
+
+  it('opens with a big result and plain lines, without numbers', async () => {
+    const { explorerReport } = await import('./missionReport');
+    const r = explorerReport(report(null), 400, 100);
+    expect(r.headline).toBe('Mission complete!');
+    expect(r.line).toBe('Explorer 1 worked. Your Spacecraft did its job!');
+    expect(r.lines.length).toBeGreaterThan(0);
+    for (const l of r.lines) noDigits(l.text);
+    expect(r.tip).toBeNull();
+    expect(r.trouble).toBeNull();
+    expect(r.reward).toBe('You earned $2.6M!');
+  });
+
+  it('puts problems first and gives one thing to try', async () => {
+    const { explorerReport } = await import('./missionReport');
+    const base = report(null);
+    const findings = base.findings.map((f) => (f.kind === 'power' ? { ...f, ok: false, lastsDays: 15, needDays: 30 } : f));
+    const r = explorerReport({ ...base, success: false, findings }, 400, 100);
+    expect(r.headline).toBe('Not this time');
+    expect(r.lines[0]).toEqual({ ok: false, text: 'The battery ran out about halfway through the Mission. A bigger battery would fix this.' });
+    expect(r.tip).toBe('Pick a bigger battery, or add solar cells.');
+    expect(r.reward).toContain('Change the design and try again before');
+  });
+
+  it('blames the rocket, not the design, when only the rocket failed', async () => {
+    const { explorerReport } = await import('./missionReport');
+    const base = report(null);
+    const findings = base.findings.map((f) => (f.kind === 'orbit' ? { ...f, ok: false, failedStage: 1 } : f));
+    const r = explorerReport({ ...base, success: false, findings, refund: 400_000 }, 400, 100);
+    expect(r.line).toContain('The rocket failed, not your Spacecraft');
+    expect(r.tip).toBeNull();
+    expect(r.reward).toContain('Build the same Spacecraft and fly again');
+    expect(r.reward).toContain('you get $400K back for the launch');
+  });
+
+  it('sums up trouble in space in one line', async () => {
+    const { explorerReport } = await import('./missionReport');
+    expect(explorerReport(report({ lostDays: 0, cut: 0, score: 1 }), 400, 100).trouble).toBe('Point the antenna: you fixed it in time, so no Data was lost.');
+    expect(explorerReport(report({}), 400, 100).trouble).toBe('Point the antenna: you fixed it, but some Data was lost. The reward was a little smaller.');
+    expect(explorerReport(report({ score: 0, lostDays: 9 }), 400, 100).trouble).toContain('a lot of Data was lost');
+  });
+
+  it('says when the deadline has passed', async () => {
+    const { explorerReport } = await import('./missionReport');
+    expect(explorerReport({ ...report(null), success: false }, 50, 100).reward).toContain('the deadline has passed');
+  });
+});
+
+describe('Mission Report: Explorer, no reward', () => {
+  it('does not say the reward was smaller when there was none', async () => {
+    const { explorerReport } = await import('./missionReport');
+    expect(explorerReport({ ...report({}), success: false }, 400, 100).trouble).toBe('Point the antenna: you fixed it, but some Data was lost.');
+  });
+});

@@ -62,9 +62,10 @@ function yourWorkedText(y: Yours): string {
 }
 
 /** Mass, then Power, then how long the real one worked: each part only when both sides are known. */
-export function comparisonLine(y: Yours, craft: RealCraft, name: string): string {
+export function comparisonLine(y: Yours, craft: RealCraft, name: string, explorer = false): string {
   const parts: string[] = [];
-  if (y.massKg !== null && craft.massKg) {
+  // Explorer shows no kilograms.
+  if (!explorer && y.massKg !== null && craft.massKg) {
     const diff = y.massKg - craft.massKg.value;
     // Within half a kilogram or 5% reads as the same: Part Marks move the mass a little from flight to flight.
     const same = Math.abs(diff) < Math.max(0.5, craft.massKg.value * 0.05);
@@ -87,7 +88,7 @@ export function comparisonLine(y: Yours, craft: RealCraft, name: string): string
 }
 
 /** The real Spacecraft beside the player's, with only the figures that have a source. */
-export function likeTheRealOne(report: MissionReport): RealComparison | null {
+export function likeTheRealOne(report: MissionReport, explorer = false): RealComparison | null {
   const craft = realCraftFor(report.contract);
   if (!craft) return null;
   const name = t(`real.${craft.id}.name`);
@@ -109,7 +110,7 @@ export function likeTheRealOne(report: MissionReport): RealComparison | null {
     });
   }
   if (craft.worked) rows.push({ label: t('report.real.worked'), yours: yourWorkedText(y), real: workedText(craft.worked.value) });
-  return { craft, name, sameMission: !contractIsGenerated(report), rows, line: comparisonLine(y, craft, name) };
+  return { craft, name, sameMission: !contractIsGenerated(report), rows, line: comparisonLine(y, craft, name, explorer) };
 }
 
 function contractIsGenerated(report: MissionReport): boolean {
