@@ -1,5 +1,6 @@
 import type { Difficulty } from '../game/modes';
 import { type StringKey, textFor } from '../strings';
+import { refreshModeLinks } from './learnMore';
 
 /**
  * The game mode on show: set when a Company is loaded, cleared on the main menu. It puts `mode-explorer` or
@@ -12,6 +13,7 @@ export function setDisplayMode(difficulty: Difficulty | null): void {
   current = difficulty;
   document.body.classList.toggle('mode-explorer', difficulty === 'easy');
   document.body.classList.toggle('mode-director', difficulty === 'advanced');
+  refreshModeLinks();
 }
 
 /** Whether the loaded Company plays in Explorer mode. */

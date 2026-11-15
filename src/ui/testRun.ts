@@ -305,7 +305,7 @@ export function drawMoonTrip(canvas: HTMLCanvasElement, share: number, powered: 
 
 // ---- The screen ----
 
-export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean; /** Explorer: words instead of numbers. */ explorer?: boolean }): TestRunScreen {
+export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean; /** Explorer: words instead of numbers. */ explorer?: boolean; /** Mission Director: repeat runs of a design cost a fee. */ paid?: boolean }): TestRunScreen {
   const explorer = !!hooks.explorer;
   const dayWords = explorer ? ([t('explorer.testRun.start'), t('explorer.testRun.middle'), t('explorer.testRun.end')] as const) : undefined;
   const root = el('div', 'testrun');
@@ -352,7 +352,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean;
     el('h3', '', t('testRun.problems')),
     problems,
     none,
-    el('p', 'planner-hint', t('testRun.free')),
+    el('p', 'planner-hint', t(hooks.paid ? 'modes.testRunNote' : 'testRun.free')),
   );
 
   const grid = el('div', 'testrun-grid');

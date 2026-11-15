@@ -5099,3 +5099,6 @@ body.mode-explorer .planner-best { color: #06101d; background: var(--accent); }
 .sticky-foot > button { width: 100%; }
 /* Explorer: fewer panels at once. JPL's Concept Maturity strip stays in Mission Director. */
 body.mode-explorer .designer .maturity { display: none; }
+
+/* Explorer mode hides reading links that have no NASA page for young readers (src/ui/learnMore.ts). */
+a.mode-link[hidden] { display: none !important; }

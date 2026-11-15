@@ -189,3 +189,65 @@ export function missionSource(id: ContractId): string | null {
   const card = historyCardFor(id, 'before');
   return card ? HISTORY_CARDS[card].learnMore : null;
 }
+
+/**
+ * Explorer mode: NASA pages written for children (docs/research/kids-links.md, each opened and checked 15 Nov 2026).
+ * A "Learn more" link whose page has a kids' page below points there instead; any other is hidden in Explorer.
+ * Credits keep every original link in both modes.
+ */
+export const KIDS_LINK_IDS = ['rocket', 'sls', 'launching', 'orbit', 'satellite', 'hurricanes', 'antennas', 'spaceWeather', 'earth', 'apollo', 'moon', 'artemis'] as const;
+export type KidsLinkId = (typeof KIDS_LINK_IDS)[number];
+const K4 = (page: string) => `https://www.nasa.gov/learning-resources/for-kids-and-students/${page}-grades-k-4/`;
+export const KIDS_LINKS: Record<KidsLinkId, string> = {
+  rocket: K4('what-is-a-rocket'),
+  sls: K4('what-is-the-space-launch-system'),
+  launching: 'https://spaceplace.nasa.gov/launching-into-space/en/',
+  orbit: K4('what-is-an-orbit'),
+  satellite: K4('what-is-a-satellite'),
+  hurricanes: 'https://spaceplace.nasa.gov/hurricanes/en/',
+  antennas: 'https://spaceplace.nasa.gov/dsn-antennas/en/',
+  spaceWeather: 'https://spaceplace.nasa.gov/spaceweather/en/',
+  earth: 'https://spaceplace.nasa.gov/all-about-earth/en/',
+  apollo: K4('what-was-the-apollo-program'),
+  moon: 'https://spaceplace.nasa.gov/all-about-the-moon/en/',
+  artemis: K4('what-is-the-artemis-program'),
+};
+
+/** Which kids' page stands in for each grown-up page (matched without its #fragment). */
+const KIDS_FOR: Readonly<Record<string, KidsLinkId>> = (() => {
+  const map: Record<string, KidsLinkId> = {};
+  const add = (id: KidsLinkId, ...urls: string[]) => { for (const url of urls) map[url.split('#')[0]!] = id; };
+  add('rocket', VEHICLE_SOURCES.juno1, VEHICLE_SOURCES.thorAble, VEHICLE_SOURCES.thorDelta, VEHICLE_SOURCES.deltaD, VEHICLE_SOURCES.falcon9, VEHICLE_SOURCES.saturnV);
+  add('sls', VEHICLE_SOURCES.sls, SOURCES.slsGuide);
+  add('launching', ...Object.values(SITE_SOURCES));
+  add('orbit', SOURCES.orbits);
+  add('earth', SOURCES.earth);
+  add('satellite',
+    'https://www.nasa.gov/history/60-years-ago-explorer-1-becomes-americas-first-satellite/',
+    'https://science.nasa.gov/missions/explorer/10-things-to-know-about-explorer-1-americas-first-satellite/',
+    'https://science.nasa.gov/mission/explorer-1/',
+    'https://www.nasa.gov/image-article/vanguard-satellite-1958/');
+  add('hurricanes', 'https://science.nasa.gov/mission/tiros/', 'https://en.wikipedia.org/wiki/NOAA-18');
+  add('antennas',
+    'https://www.nasa.gov/history/telstar-opened-era-of-global-satellite-television/',
+    'https://www.asc-csa.gc.ca/eng/satellites/alouette.asp',
+    'https://www.nasa.gov/image-article/first-geosynchronous-satellite/',
+    'https://www.nasa.gov/history/communications-satellites/',
+    'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1964-047A',
+    'https://en.wikipedia.org/wiki/TDRS-1',
+    SOURCES.tdrs);
+  add('spaceWeather', 'https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=1992-038A', SOURCES.moonRadiation);
+  add('apollo', 'https://www.nasa.gov/mission/apollo-11/', SOURCES.saturnV, SOURCES.lunarNight, SOURCES.laserRanging, SOURCES.apollo8,
+    SOURCES.apollo9, SOURCES.apollo17, SOURCES.apollo11Overview, SOURCES.apollo11Numbers, SOURCES.apollo11Landing, SOURCES.apollo11Easep);
+  add('moon', 'https://science.nasa.gov/mission/lro/', SOURCES.im2, SOURCES.lolaSouthPole, SOURCES.southPoleSun, SOURCES.shackleton, SOURCES.earthFromPole);
+  add('artemis', SOURCES.artemis, SOURCES.artemis2PressKit, SOURCES.artemis2Return, SOURCES.artemisPlans,
+    'https://www.nasa.gov/mission/artemis-ii/',
+    'https://www.nasa.gov/missions/artemis/nasas-artemis-iii-mission-to-test-future-moon-lander-operations/',
+    'https://www.nasa.gov/missions/artemis/nasa-partners-accelerate-lander-development-for-2028-moon-missions/');
+  return map;
+})();
+
+/** The kids' page that stands in for a grown-up page in Explorer, or null to hide the link there. */
+export function kidsLinkFor(href: string): KidsLinkId | null {
+  return KIDS_FOR[href.split('#')[0]!] ?? null;
+}

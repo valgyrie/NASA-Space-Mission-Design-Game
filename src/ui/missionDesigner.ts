@@ -28,7 +28,7 @@ import {
   statsOf,
 } from '../game/spacecraft';
 import type { TechId } from '../game/research';
-import { type Difficulty, isExplorer } from '../game/modes';
+import { type Difficulty, isDirector, isExplorer } from '../game/modes';
 import { dayPhase, ghostLayout, optionLevels, whatIf } from '../game/explorer';
 import { icon } from './icons';
 import { makeLaunchPlanner } from './launchPlanner';
@@ -552,7 +552,7 @@ export function showMissionDesigner(
       strip.render(state);
     },
   });
-  const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge, explorer });
+  const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge, explorer, paid: !hooks.challenge && isDirector(state) });
   panel.append(head, ...(team ? [team.root] : []), strip.root, body, planner.root, testRun.root);
 
   /**

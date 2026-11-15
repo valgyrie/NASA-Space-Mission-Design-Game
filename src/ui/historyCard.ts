@@ -1,6 +1,7 @@
 import { audio } from '../audio/sound';
 import { HISTORY_CARDS, type HistoryCardId } from '../game/history';
 import { t } from '../strings';
+import { setLinkTarget } from './learnMore';
 import { tm } from './displayMode';
 
 export interface HistoryCardDialog {
@@ -78,7 +79,7 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
       label.textContent = t('history.label', { when: t(card.plan ? 'history.plan' : `history.${card.when}`, { year: card.year }) });
       title.textContent = t(`history.${id}.title`);
       text.textContent = tm(`history.${id}.text`);
-      learn.href = card.learnMore;
+      setLinkTarget(learn, card.learnMore, t('history.learnMore'), t('history.learnMoreName'));
       after = onDone;
       if (backdrop.hidden) {
         backdrop.hidden = false;
