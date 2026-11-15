@@ -71,7 +71,7 @@ There are two game modes. A Company keeps the one it started with, though an Exp
 
 ![Starting a Company: name, Campaign or Free Play, Explorer or Mission Director, a logo, and a real place on the globe](screenshots/game%20screenshots/new-company.jpg)
 
-Online play (cloud saves, leaderboards and a Weekly Challenge) is built but switched off for now; its button says "Coming soon".
+Online play (cloud saves, leaderboards, multiplayer and a Weekly Challenge) is still not fully built and switched off for now.
 
 ## Future work
 
