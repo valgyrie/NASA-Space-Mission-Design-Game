@@ -50,6 +50,8 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Contracts board
 - [x] Mission Designer: 3D Spacecraft, slots, six live resource bars
 - [x] Easy and Advanced Part sets
+- [x] Explorer and Mission Director modes (ticket 53): Explorer bars without numbers, ghost preview, four-step planner, kids' links; Mission Director expiring Offers, Test Run fees, dearer Ground Tests (browser-checked 15 Nov, Demo Era 1 and a Free Play Company)
+- [ ] Explorer and Mission Director: team play-test (Deposits running out, the grant coming again, Explorer refund, switching modes, touch screens)
 - [ ] Launch Vehicle catalogue with mass check (Juno I, Thor-Able, Thor-Delta, Delta D and the mass check done; more vehicles come with their Eras)
 - [x] Rideshare priced per kg
 - [x] Launch site choice, latitude and coast effects (ticket 16; ticket 17: a failed rocket falls into the Atlantic, which is why launch sites are on the coast)

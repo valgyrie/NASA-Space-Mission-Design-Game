@@ -49,7 +49,7 @@ A resource dug up by a Mine, such as aluminium or silicon.
 _Avoid_: ore, resource (alone)
 
 **Deposit**:
-A patch of a Site's land that holds one Raw Material; a Mine must touch one.
+A patch of a Site's land that holds one Raw Material; a Mine must touch one. In Mission Director mode a Deposit runs out as its Mines dig; new ones come with neighbouring Plots.
 _Avoid_: vein, node, resource tile
 
 **Part**:
@@ -241,7 +241,7 @@ How often a Launch Vehicle gets a Spacecraft light enough for it into orbit, as 
 _Avoid_: success rate (that is the Test Run's estimated success)
 
 **Startup grant**:
-Money given once per game when the Company runs dangerously low, so a new Company can't go broke.
+Money given when the Company runs dangerously low with nothing on its way, so a Company can't go broke; it can come again after a while, a few times per game.
 _Avoid_: bailout, loan
 
 **Ground Station**:
@@ -313,11 +313,17 @@ How long the Mission takes to build and how long it operates.
 
 ### Modes
 
-**Easy mode**:
-A difficulty with fewer Parts and rounded numbers, chosen when starting a Company.
+**Explorer mode**:
+The game mode for young players, chosen when starting a Company: the same rules shown with bars, words and pictures instead of numbers (money, days and counts stay), a shorter Launch planner, gentler failure and shorter waits. Was "Easy mode".
+_Avoid_: Easy mode, kids' mode, Explorer (alone: that is Explorer 1)
 
-**Advanced mode**:
-A difficulty with more Part choices and finer numbers, chosen when starting a Company.
+**Mission Director mode**:
+The realistic game mode, chosen when starting a Company: every number and unit, every Part and planning step, Offers that expire, paid repeat Test Runs, dearer Ground Tests and Deposits that run out. An Explorer Company can switch to it for good. Was "Advanced mode".
+_Avoid_: Advanced mode, hard mode, adult mode
+
+**Ghost preview**:
+On the Mission Designer's resource bars, how each bar would change if the Part under the pointer were chosen.
+_Avoid_: preview (alone), tooltip
 
 **Campaign**:
 The story mode from 1958 to Artemis IV, built on real Milestones.
