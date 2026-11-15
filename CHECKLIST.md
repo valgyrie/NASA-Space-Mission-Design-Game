@@ -135,9 +135,11 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 
 - [x] Buy neighbouring Plots to grow the Site (ticket 30)
 - [ ] Era 3: Apollo 11 support, Landsat 1
+  - [x] Demo: Apollo 11 science package on Saturn V, with the Moon landing sequence (ticket 50, played 15 Nov)
 - [ ] Crew Module, Launch Escape System, ≥95% rule (crewed Milestones start in Era 3)
 - [ ] Era 4: Hubble, Lunar Reconnaissance Orbiter, own rockets and Spaceport Site
 - [ ] Era 5: Falcon 9 landing, Artemis I, Artemis II, Artemis IV finale
+  - [x] Demo: Artemis II on SLS, Artemis III and IV choices, finale and Continue in Free Play (ticket 52, played 15 Nov)
 - [ ] Anomalies: Dodge the debris, Stop the tumble
 - [ ] Satellite photos of your region after imaging Missions (NASA GIBS)
 - [ ] Real Moon positions and windows (JPL Horizons)

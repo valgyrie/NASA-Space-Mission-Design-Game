@@ -4,10 +4,13 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**Eras demo (15 Nov, afternoon): START HERE.** The team asked to implement two Eras for the demo: the Moon landing (Era 3, Apollo 11) and the Artemis Era (Artemis II, III, IV). This replaces the earlier "do not implement the Eras yet". Work is on branch `eras-moon-artemis`, merged into `main` at the user's request when usage ran out.
-- Game logic done and tested (534 tests): Apollo 11 science package on Saturn V, Saturn V development card, Artemis II CubeSat on SLS, Artemis III and IV choice Milestones, finale, Demo Mode starts, save v20.
-- 3D mostly built but **never checked on screen**: NASA CGI Moon Kit globe, lunar surfaces, the four Moon sequences with captions and drag-to-look, Saturn V, SLS, LC-39A/39B, new Part meshes. The 3D agent was stopped mid-task.
-- Next: `docs/eras-demo/NEXT-SESSION.md` (prompt to paste, state and to-do). Plan and interface: `docs/eras-demo/PLAN.md`.
+**Eras demo (15 Nov, evening): played, fixed, merged into `main`. START HERE.** The team asked for two Eras for the demo: the Moon landing (Era 3, Apollo 11) and the Artemis Era (Artemis II, III, IV). Both are built, played end to end in Demo Mode, and merged.
+- Played (1280×800, parts at 1024×768): Apollo 11 on Saturn V with the whole Moon landing; Artemis II on SLS; Artemis III and IV choices, the finale card and Continue in Free Play. Every Moon sequence was also checked beat by beat. No console errors. Notes and left-overs: `docs/eras-demo/notes-playtest.md`.
+- Fixed: three badly framed Moon shots (Apollo 11 landed, Artemis II CubeSat release, Artemis III "your satellite"), seven caption facts (checked against NASA pages), "all 1 days" in the report, a three.js warning.
+- Credits: `docs/art/assets-moon.md` lists the CGI Moon Kit, a shape reference for every modelled craft and the NASA page behind every caption fact; the game's Credits list them. LC-39A/39B coordinates, Saturn V's last flight, EASEP's 77 kg and Falcon 9's lift to the Moon are now cited.
+- Not done: frame rate on the Intel UHD laptop (this container renders in software: check it on the laptop), LC-39A/39B in Blender (no Blender here; they are built in code), photos for the new history cards.
+- Team: decide the left-overs in the notes (Anomaly mini-games draw Earth below on the Moon too; the Moon in the Space view only on its reference path).
+- Earlier hand-over (afternoon): plan and interface in `docs/eras-demo/PLAN.md`.
 
 **State:** tickets 01–26 and 30–42 built (32, 33, 34, 36, 39, 40, 41 and 42 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 42 built from freshly pulled `main` **a95ba6a** and merged into `main`. 460 game tests and both type checks pass.
 

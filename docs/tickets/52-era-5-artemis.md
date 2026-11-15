@@ -85,3 +85,4 @@ Cut down by `docs/eras-demo/PLAN.md`: the Campaign's Artemis Era starts **1 Janu
 - **Launch show**: `'moon'` segments `{ kind: 'artemis2' }`, `{ kind: 'artemis3', choice }`, `{ kind: 'artemis4', choice }`.
 - **Demo Mode**: Artemis Era start with the Artemis II CubeSat ready and spare Parts for Artemis III and IV.
 - Tests: `src/game/era5.test.ts`.
+- **Play-tested** 15 Nov (evening), Demo Mode, 1280×800 and 1024×768; three Moon shots reframed and seven caption facts corrected. Notes and left-overs: `docs/eras-demo/notes-playtest.md`.

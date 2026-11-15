@@ -38,7 +38,8 @@ export const SC = {
     clearcoatRoughness: 0.06,
     iridescence: 0.75,
     iridescenceIOR: 1.7,
-    iridescenceThicknessRange: [250, 520],
+    iridescenceThicknessMinimum: 250,
+    iridescenceThicknessMaximum: 520,
   }),
   /** Solar cells seen from the back, and panel frames. */
   panelBack: standard({ color: 0x3a3f46, metalness: 0.4, roughness: 0.55 }),
