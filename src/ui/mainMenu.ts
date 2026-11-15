@@ -105,7 +105,7 @@ export function showMainMenu(
     b.textContent = text;
     return b;
   };
-  const iconButton = (label: string, name: 'sound') => {
+  const iconButton = (label: string, name: 'sound' | 'exit') => {
     const b = button('', 'menu-button menu-icon');
     b.setAttribute('aria-label', label);
     b.title = label;
@@ -124,9 +124,12 @@ export function showMainMenu(
   const dataButton = button(t('data.heading'));
   const creditsButton = button(t('credits.heading'));
   const soundButton = iconButton(t('sound.heading'), 'sound');
+  const exitButton = button(t('mainMenu.exit'));
+  exitButton.prepend(icon('exit'));
+  exitButton.classList.add('main-menu-exit');
   const row = document.createElement('div');
   row.className = 'main-menu-row';
-  row.append(soundButton, dataButton, creditsButton);
+  row.append(soundButton, dataButton, creditsButton, exitButton);
   actions.append(play, demo, minigames, online, row);
 
   // Demo picker, Companies, Credits, Music & Sounds and Real data open in one sheet in place of the buttons.
@@ -186,6 +189,14 @@ export function showMainMenu(
   const sound = sheet(t('sound.heading'), makeAudioControls(), titleMusic(), backButton());
   sound.classList.add('sound-view');
   const data = sheet(t('data.heading'), makeDataCredits(), backButton());
+  // Exit: browsers only let a page close a tab a script opened, so this sheet usually stays and says how to leave.
+  const exitText = (key: StringKey) => {
+    const p = document.createElement('p');
+    p.textContent = t(key);
+    return p;
+  };
+  const exitSheet = sheet(t('exit.heading'), exitText('exit.saved'), exitText('exit.tab'), exitText('exit.window'), backButton());
+  exitSheet.classList.add('exit-view');
   // Opened here already: this sheet is only for the list.
   data.querySelector('details')?.setAttribute('open', '');
 
@@ -287,7 +298,7 @@ export function showMainMenu(
     rows.find((r) => r.entry === selected)?.item.focus();
   });
 
-  const sheets = [picker, minigamesSheet, companies, credits, sound, data];
+  const sheets = [picker, minigamesSheet, companies, credits, sound, data, exitSheet];
 
   // A sheet replaces the buttons; Back or Esc returns to the button that opened it.
   let opener: HTMLButtonElement | null = null;
@@ -310,6 +321,11 @@ export function showMainMenu(
   creditsButton.addEventListener('click', () => open(credits, creditsButton));
   soundButton.addEventListener('click', () => open(sound, soundButton));
   dataButton.addEventListener('click', () => open(data, dataButton));
+  // The sheet opens first: if the browser lets the page close its tab, the tab goes; if not, the sheet says how to leave.
+  exitButton.addEventListener('click', () => {
+    open(exitSheet, exitButton);
+    window.close();
+  });
   // Esc first closes the delete question, then the sheet.
   const cancelDelete = () => { if (confirm.hidden) return false; no.click(); return true; };
 

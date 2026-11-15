@@ -2,6 +2,8 @@
 
 The team's project is `NASA-Space-Mission-Design-Game` (`oyslhxxgxtqhgpfivwcb`). Tickets 22 and 23's migrations and the `leap-online` function are deployed there. The public endpoint is in `src/online/client.ts`. Local play needs no Supabase configuration.
 
+**Switched off in the game for now (15 Nov 2026, ticket 53):** the Online buttons are greyed out with "Coming soon". The game's save is now v21, so rebuild and redeploy `leap-online` (steps below) before switching Online back on; the deployed bundle was built for an older save version.
+
 ## Updating the backend
 
 1. Run `npm run check` and `npm run build:online`. The latter bundles the shared name filter, save validator and score rules into `work/online-edge/index.js` using the existing Vite dependency.

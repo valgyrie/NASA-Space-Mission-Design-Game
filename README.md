@@ -1,6 +1,6 @@
 # LEAP: A Space Mission Design Game
 
-![The LEAP title screen: the main menu in front of a Thor-Delta rocket on its pad](screenshots/game%20screenshots/title.jpg)
+![The LEAP title screen: the main menu in front of SLS on its pad](screenshots/game%20screenshots/title.jpg)
 
 Run a small space company. Mine metals, build Parts, design the spacecraft, pick the rocket, check the weather and launch. Along the way you fly the real missions of space history, from Explorer 1 in 1958 to the planned Artemis IV Moon landing.
 
@@ -26,7 +26,7 @@ Take a Contract, then choose a Part for each slot: Bus, Power, Battery, Comms, P
 
 ![The Launch planner for Apollo 11's science package: Saturn V picked from the row of rockets, standing on its pad](screenshots/game%20screenshots/planner.jpg)
 
-Choose a rocket that can lift it and a Launch Site (nearer the equator is better), check the weather and book the launch. In Mission Director you also plan the Ground Stations that will hear it, and can pay for Ground Tests and Launch Insurance. Bad weather on the day means a Scrub.
+Choose a rocket that can lift it and a Launch Site (nearer the equator is better), check the weather and book the launch. In Mission Director mode you also plan the Ground Stations that will hear it, and can pay for Ground Tests and Launch Insurance. Bad weather on the day means a Scrub.
 
 ### Launch and fly
 
@@ -47,18 +47,18 @@ The report says what worked and what didn't, and why. It compares your spacecraf
 - **Campaign.** Space history in order. Era 1: Explorer 1 and TIROS-1. Era 2: Telstar 1 and Syncom 3. Era 3: Apollo 11, where you build the experiments the crew set up on the Moon. The Artemis Era: a CubeSat on Artemis II, then you choose how your Company helps Artemis III and IV. After that, the same Company carries on in Free Play.
 - **Free Play.** Start anywhere on Earth in 2026, with made-up Contracts that each say who needs the Data and why.
 - **Demo Mode.** A ready Company for each Era (Explorer 1, Telstar 1, Apollo 11, Artemis II), with the factories running and the design done, so you can go straight to the launch.
-- **Minigames.** Short 2D games, apart from any Company, each ending with a real fact. For Explorer: Build Pluto, Rover Rescue and Planet Parade. For Mission Director: Too Hot, Too Cold (keep a satellite's parts at safe temperatures), Square Peg, Round Hole (Apollo 13's carbon dioxide fix) and Lost Signal (Voyager 2's lost contact in 2023).
+- **Minigames.** Short 2D games, apart from any Company, each ending with a real fact. In Explorer mode: Build Pluto, Rover Rescue and Planet Parade. In Mission Director mode: Too Hot, Too Cold (keep a satellite's parts at safe temperatures), Square Peg, Round Hole (Apollo 13's carbon dioxide fix) and Lost Signal (Voyager 2's lost contact in 2023).
 - **Team Mode.** Two to four players share one Company on one computer. The four roles (Mission lead, Power, Communications, Science) are shared out, each owns its part of the design, and it ships only when every role has signed off.
 
 <p>
 <img src="screenshots/game%20screenshots/moon-apollo-11.jpg" width="49%" alt="Apollo 11 on the Moon: the Lunar Module and two astronauts setting up the science package">
-<img src="screenshots/game%20screenshots/minigame.jpg" width="49%" alt="Lost Signal, a Mission Director Minigame: work the checklist to win back a probe whose antenna points 2° away from Earth">
+<img src="screenshots/game%20screenshots/minigame.jpg" width="49%" alt="Lost Signal, a Mission Director mode Minigame: work the checklist to win back a probe whose antenna points 2° away from Earth">
 </p>
 
-There are two levels. A Company keeps the one it started with (an Explorer Company can switch up to Mission Director once, from the pause menu):
+There are two game modes. A Company keeps the one it started with, though an Explorer mode Company can switch to Mission Director mode once, from the pause menu:
 
-- **Explorer:** pictures and plain words instead of numbers, a simpler Launch planner and links to NASA pages written for young readers.
-- **Mission Director:** real numbers and a real budget, every Part and planning step. Offers expire, and repeat Test Runs cost money.
+- **Explorer mode:** pictures and plain words instead of numbers, a simpler Launch planner and links to NASA pages written for young readers.
+- **Mission Director mode:** real numbers and a real budget, every Part and planning step. Offers expire, and repeat Test Runs cost money.
 
 ![Starting a Company: name, Campaign or Free Play, Explorer or Mission Director, a logo, and a real place on the globe](screenshots/game%20screenshots/new-company.jpg)
 
@@ -74,7 +74,7 @@ Download the repository (Code → Download ZIP), unzip it, and keep the folder t
 
 The first start needs internet and takes a few minutes. The launcher downloads its own copy of [Node.js](https://nodejs.org/) into this folder, checks it, and installs the game's packages. You don't need to install anything or have administrator rights. Later starts are quick.
 
-LEAP opens in your browser at [http://localhost:5173](http://localhost:5173). **Keep the launcher window open while you play.** Close it, or press **Ctrl+C** in it, to quit. Closing the browser tab does not stop LEAP; run the launcher again to get the tab back.
+LEAP opens in your browser at [http://localhost:5173](http://localhost:5173). **Keep the launcher window open while you play.** To quit, press **Exit** on the main menu, close the tab, then close the launcher window (or press **Ctrl+C** in it). Closing only the browser tab does not stop LEAP; run the launcher again to get the tab back.
 
 Your Companies are saved in that browser. Use the same browser and address to find them again.
 

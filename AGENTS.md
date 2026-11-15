@@ -6,7 +6,7 @@ Instructions for any AI coding agent working on this repo (Claude Code reads it 
 
 **LEAP: A Space Mission Design Game** (Launch · Engineer · Advance · Pioneer), a 2.5D space-company tycoon for the **NASA Space Apps 2026** challenge "Space Mission Design Game". Players grow a Company (~40% tycoon) and design, launch and fly Missions that teach real space-mission trade-offs (~60%). Audience: everyone from about age 10, so easy to start, with depth for adults. Stack: TypeScript, Vite, Three.js, HTML/CSS UI, Supabase (ADR-0001).
 
-- **Phase:** building, one ticket at a time (48 tickets in `docs/tickets/`, ✅ marks the finished ones in its README). The FAQ bars starting early; Space Apps support allowed this team to (2026-11-13), and the submission must disclose it (ticket 28). Official Resources and rules (Nov 13): `docs/challenge.md`. Hackathon: Nov 14–15, 2026.
+- **Phase:** building, one ticket at a time (54 tickets in `docs/tickets/`, ✅ marks the finished ones in its README). The FAQ bars starting early; Space Apps support allowed this team to (2026-11-13), and the submission must disclose it (ticket 28). Official Resources and rules (Nov 13): `docs/challenge.md`. Hackathon: Nov 14–15, 2026.
 - **Owner:** the team reviews and tests; agents write all code and art.
 
 ## Start of every session

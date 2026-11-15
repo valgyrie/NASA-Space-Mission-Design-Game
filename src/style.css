@@ -5137,3 +5137,7 @@ body.mode-explorer .report .report-anomaly p,
 body.mode-explorer .report .report-real p { font-size: 18px; }
 body.mode-explorer .report .report-reward { margin: 4px 0 0; font-size: 24px; font-weight: 700; text-align: center; color: var(--accent); }
 body.mode-explorer .report .report-outcome:not(.ok) ~ .report-reward { color: var(--text); font-size: 20px; font-weight: 600; }
+
+/* Main menu: Exit at the end of the bottom row, with its door-and-arrow icon; the sheet that says how to leave. */
+.main-menu-row .main-menu-exit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.exit-view p { margin: 0 0 12px; line-height: 1.5; }

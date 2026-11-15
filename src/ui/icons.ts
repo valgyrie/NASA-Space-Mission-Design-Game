@@ -7,6 +7,7 @@ const PATHS = {
   space: 'M12 9a3 3 0 1 0 0 6a3 3 0 1 0 0-6 M4.5 17.5c-2-2 1.5-7.5 6.5-11.5s9-4 10-2.5-1.5 7-6.5 11-8.5 5-10 3z',
   archive: 'M4 5h6a2 2 0 0 1 2 2v13a2 2 0 0 0-2-2H4z M20 5h-6a2 2 0 0 0-2 2v13a2 2 0 0 1 2-2h6z',
   track: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M12 7v5l3 2',
+  exit: 'M10 4H5v16h5 M14 8l4 4-4 4 M18 12H9',
   rocket: 'M12 2c3 3 4 7 3 12h-6c-1-5 0-9 3-12z M9 14l-3 4h4 M15 14l3 4h-4 M12 8a1 1 0 1 0 0 .01',
   // The six resource bars (Explorer shows them beside each bar's name).
   mass: 'M9 7a3 3 0 1 1 6 0 M5 9h14l2 11H3z',

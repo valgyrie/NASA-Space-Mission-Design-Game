@@ -22,16 +22,16 @@ The hosted game: GitHub Pages at `https://valgyrie.github.io/NASA-Space-Mission-
 
 ## Project details
 
-**What it does.** Players grow a Company (about 40% of play) and design, launch and fly Missions (about 60%). Two historical Eras (1958–1964) and a modern Free Play mode. Easy and Advanced Part sets. Demo Mode starts a ready Company in one click.
+**What it does.** Players grow a Company (about 40% of play) and design, launch and fly Missions (about 60%). A Campaign through space history, from Explorer 1 (1958) through Apollo 11 to the Artemis Moon missions, then a modern Free Play mode. Two game modes: Explorer for young players (pictures and words) and Mission Director (real numbers and a real budget). Demo Mode starts a ready Company for each Era in one click. Minigames teach one real fact each in a minute or two.
 
 **How it works.**
 - The **Mission Designer** shows six live bars: Mass, Power, Budget, Data, Communications and Time.
 - The **Launch planner** groups the Mission under NASA's four Segments: who uses the Data (User), the Spacecraft (Space), the Ground Stations (Ground) and the rocket and launch site (Launch).
-- A free, deterministic **Test Run** estimates the chance of success before money is spent.
+- A deterministic **Test Run** estimates the chance of success before the Spacecraft ships (the first one of each design is free).
 - The Launch is shown in 3D; Anomalies (point the antenna, a stuck solar panel, an eclipse) are short mini-games that follow from the design's weak points.
 - The **Mission Report** says what worked and why, with the design's own numbers.
 - Real launch weather from NASA POWER can scrub a Launch; Earth's spin at each launch site changes what a rocket can lift.
-- Online (optional, anonymous): cloud saves, leaderboards and a Weekly Challenge with the same budget and Parts for everyone. No chat, no personal data.
+- Online (optional, anonymous; built but switched off for now): cloud saves, leaderboards and a Weekly Challenge with the same budget and Parts for everyone. No chat, no personal data.
 
 **Benefits.** Easy to start from about age 10, with depth for adults. Every number has a reason the player can read; every real mission links to its source.
 
@@ -46,7 +46,7 @@ The hosted game: GitHub Pages at `https://valgyrie.github.io/NASA-Space-Mission-
 - **NASA Black Marble** and **VIIRS true-colour pictures**, also via NASA GIBS: city lights on the night side of the globe, and the clouds of one real day (10 September 2024). <https://blackmarble.gsfc.nasa.gov/> · <https://www.earthdata.nasa.gov/data/instruments/viirs>
 - **NASA Image and Video Library**: the photos on Real History cards, each credited. <https://images.nasa.gov/>
 - **Design and Develop Science Missions** (NASA Small Spacecraft institute, 2025; an official challenge Resource): the four mission Segments in the Launch planner and Mission Report. <https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf>
-- **NASA history and science pages** for the facts behind each Milestone (Explorer 1, TIROS-1, Telstar 1, Syncom 3) and the orbits: cited in `docs/research/`.
+- **NASA history and science pages** for the facts behind each Milestone (Explorer 1, TIROS-1, Telstar 1, Syncom 3, Apollo 11, Artemis II–IV), the Moon sequences and the orbits: cited in `docs/research/`.
 
 ## Space Agency Partner data
 

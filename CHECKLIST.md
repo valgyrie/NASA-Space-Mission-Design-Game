@@ -106,6 +106,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
   - [x] Launch planner as a showcase: the rocket on its pad in 3D behind everything, one step at a time with tiles or cards and a pager, costs bottom-left, Test Run and Ship bottom-right
   - [x] Mission Designer as a showcase: the Spacecraft large in the middle, picture tiles per option, a pager through the slots ending in Check, resources bottom-left, Plan the Launch bottom-right; Parts slide into place
 - [x] Title screen → main menu with live 3D background; loading screens with sourced tips
+- [x] Exit on the main menu: closes the tab where the browser allows it, otherwise says the Companies are saved and how to stop LEAP (1280×800 and 1024×768, Esc and Back, 15 Nov)
 - [x] Real NASA photos (credited) on Real History cards
 - [x] Era illustrations: style guide + prompts, then team generates them (ticket 29, after the NASA Resources). All three in the game, made from game screenshots, watermarked
 

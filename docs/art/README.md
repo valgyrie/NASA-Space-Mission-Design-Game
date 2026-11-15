@@ -1,6 +1,6 @@
 # Era illustrations
 
-> **Note (15 Nov 2026):** the game itself now has a realistic look (ADR-0005), not the low-poly look this guide describes. The three Era pictures stay. New prompts should match the new look (a real-looking place, still clearly an illustration, not a photo); the prompts below have not been rewritten.
+> **Note (15 Nov 2026):** the game itself now has a realistic look (ADR-0005), not the low-poly look this guide describes. The three Era pictures stay. Since the Eras demo (15 Nov), Era 5 in the code is the Artemis Era, so `era-5.webp` (made as the Free Play picture) shows on both the Artemis Era card and the Free Play card; its caption fits both. Era 3 (Apollo 11) has no picture yet, so its card shows text only (`era.3.alt` is ready for one). New prompts should match the new look (a real-looking place, still clearly an illustration, not a photo); the prompts below have not been rewritten.
 >
 > The 3D models' textures and the Earth's photos are listed with author and licence in `assets-terrain.md`, `assets-buildings.md`, `assets-launch.md`, `assets-nature.md`, `assets-space.md` and `assets-moon.md` (the Moon, its craft and the caption facts) in this folder.
 

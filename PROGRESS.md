@@ -4,6 +4,12 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
+**README, Exit button and docs pass (15 Nov, late): merged into `main` at the user's request.**
+- README rewritten for players: what you do (with screenshots), ways to play, run it, controls, developers, credits. Ten current screenshots in `screenshots/game screenshots/` (its README says how to reach each screen).
+- **Exit** on the main menu's bottom row (`src/ui/mainMenu.ts`, `exit.*` strings). It opens a sheet first, then asks the browser to close the tab; browsers only let a page close a tab a script opened, so players normally see the sheet: Companies are saved here, close the tab, close the launcher window to stop LEAP. Checked at 1280×800 and 1024×768 (Esc and Back). GDD §15.
+- Docs made consistent with the game: GDD §1/§3/§7/§12/§15 (Eras 3 and Artemis, Demo Mode's four Eras, Explorer/Mission Director names, Online switched off, save v21), submission text, Supabase README, art README (`era-5.webp` also shows on the Artemis Era card; Era 3 has no picture), research and tickets indexes, AGENTS.md ticket count.
+- 648 tests and type checks pass.
+
 **Minigames (15 Nov, night): done, play-tested and merged into `main`. START HERE for this work.** Ticket `docs/tickets/54-minigames.md`, facts `docs/research/minigames.md`.
 - A new main-menu mode: choose Explorer or Mission Director, play three short 2D games in a random order, each followed by the real fact it teaches (child-friendly in Explorer), then an end screen with stars.
 - Done: the shell and the three Explorer games (Build Pluto, Rover Rescue, Planet Parade), played to the end at 1280×800 and 1024×768; Mission Director's Too Hot, Too Cold and Square Peg, Round Hole.
@@ -99,6 +105,7 @@
 
 ## Log
 
+- 2026-11-15: README rewrite with current screenshots; Exit button on the main menu; docs made consistent with the game. 648 tests pass. Merged into `main`.
 - 2026-11-15: Minigames (ticket 54) on branch `minigames`: shell, three Explorer games and three Mission Director games; checkpointed when the user stopped the work (Lost Signal not yet played to a win). 648 tests pass.
 
 - 2026-11-15: Game modes on branch `game-modes` (ticket 53): Explorer and Mission Director on one rule set, kids' NASA links, save v21; Online greyed out; Back/Resume always in reach. 588 tests, type checks and browser checks of both modes pass. Merged into `main` the same evening at the user's request.
