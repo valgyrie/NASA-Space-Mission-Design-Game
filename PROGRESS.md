@@ -105,6 +105,7 @@
 
 ## Log
 
+- 2026-11-15: YouTube links (2-min, 30-s, main game and Minigames playthroughs) at the top of the README and in `docs/submission.md`.
 - 2026-11-15: README rewrite with current screenshots; Exit button on the main menu; docs made consistent with the game. 648 tests pass. Merged into `main`.
 - 2026-11-15: Minigames (ticket 54) on branch `minigames`: shell, three Explorer games and three Mission Director games; checkpointed when the user stopped the work (Lost Signal not yet played to a win). 648 tests pass.
 

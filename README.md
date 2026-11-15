@@ -1,5 +1,14 @@
 # LEAP: A Space Mission Design Game
 
+**Watch it on YouTube**
+
+| Video | Link |
+|---|---|
+| 2-minute video | https://youtu.be/M3r4RiREfuA |
+| 30-second video | https://youtu.be/djvGhI7mmnE |
+| Main game, partial playthrough | https://youtu.be/XW8jWDYuxBc |
+| Minigames playthrough | https://youtu.be/MwC3U5vhJKs |
+
 ![The LEAP title screen: the main menu in front of SLS on its pad](screenshots/game%20screenshots/title.jpg)
 
 Run a small space company. Mine metals, build Parts, design the spacecraft, pick the rocket, check the weather and launch. Along the way you fly the real missions of space history, from Explorer 1 in 1958 to the planned Artemis IV Moon landing.

@@ -16,6 +16,10 @@ LEAP is a browser game where you run a small space company and design real missi
 
 A link to the 30-second video or the 7-slide deck (public, no login). Over the limit is not eligible for Global Judging.
 
+**Our link:** https://youtu.be/djvGhI7mmnE (30-second video).
+
+Other videos, linked from the README: 2-minute video https://youtu.be/M3r4RiREfuA · main game, partial playthrough https://youtu.be/XW8jWDYuxBc · Minigames playthrough https://youtu.be/MwC3U5vhJKs
+
 ## Final project link
 
 The hosted game: GitHub Pages at `https://valgyrie.github.io/NASA-Space-Mission-Design-Game/` once the repo is public and Pages is switched on (Settings → Pages → Source: GitHub Actions; the workflow is in `.github/workflows/pages.yml`). Also link the repository.
