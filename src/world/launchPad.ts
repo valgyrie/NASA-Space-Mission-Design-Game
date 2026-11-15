@@ -2,6 +2,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { latheGeometry } from './rocketLathe';
 import { paint } from './rocketPaint';
+import type { LaunchVehicleId } from '../game/launchVehicles';
+import { type LaunchModels, copyLaunchModel, launchModelsNow, loadLaunchModels } from './launchModels';
 
 /**
  * The launch complex round the rocket, in metres, built in code: a steel launch stand over the flame trench and
@@ -243,29 +245,152 @@ function lamps(kit: Kit): void {
 
 export interface LaunchPad {
   group: THREE.Group;
+  /** Show the pad that suits this Launch Vehicle (Falcon 9 gets the modern one) and fit the hold-down ring to it. */
+  setVehicle(vehicle: LaunchVehicleId): void;
   dispose(): void;
 }
 
-/** The whole launch complex. `rocketTop` is the tallest rocket's height, so the umbilical mast fits. */
+/** Which pad a Launch Vehicle flies from: Falcon 9 from a modern one, the others from a late-1950s one. */
+export function padKind(vehicle: LaunchVehicleId): 'classic' | 'modern' {
+  return vehicle === 'falcon9' ? 'modern' : 'classic';
+}
+
+/**
+ * The hold-down ring under a rocket's base: its inner and outer radius (clear of the engine bells, under the
+ * skirt), and the directions of the arms that carry it (radians round from +z, as rocketMesh.ts places parts).
+ * Delta D's three arms run between its Castor boosters.
+ */
+export function holdDown(vehicle: LaunchVehicleId): { inner: number; outer: number; arms: number[] } {
+  const four = [1, 3, 5, 7].map((k) => (k * Math.PI) / 4);
+  switch (vehicle) {
+    case 'juno1':
+      return { inner: 0.56, outer: 0.92, arms: four };
+    case 'falcon9':
+      return { inner: 0.66, outer: 0.84, arms: four };
+    case 'deltaD':
+      return { inner: 0.74, outer: 1.16, arms: [0.5, 7 / 6, 11 / 6].map((k) => k * Math.PI) };
+    default:
+      return { inner: 0.74, outer: 1.16, arms: four };
+  }
+}
+
+/** How far an arm at angle `a` (from +z) reaches before it meets the rectangle |x| = halfX, |z| = halfZ. */
+export function armReach(a: number, halfX: number, halfZ: number): number {
+  const sx = Math.abs(Math.sin(a));
+  const cz = Math.abs(Math.cos(a));
+  return Math.min(sx > 1e-6 ? halfX / sx : Infinity, cz > 1e-6 ? halfZ / cz : Infinity);
+}
+
+const RING_TOP = 1.8;
+
+/** The hold-down ring and its arms out to the stand's girders (classic) or the launch table's opening (modern). */
+function holdDownRing(vehicle: LaunchVehicleId): THREE.Group {
+  const g = new THREE.Group();
+  g.name = 'hold-down';
+  const { inner, outer, arms } = holdDown(vehicle);
+  const ring = new THREE.Mesh(
+    latheGeometry([[inner, RING_TOP - 0.26], [outer, RING_TOP - 0.26], [outer, RING_TOP - 0.02], [outer - 0.02, RING_TOP], [inner, RING_TOP], [inner, RING_TOP - 0.26]], 48),
+    M.greySteel,
+  );
+  g.add(ring);
+  const modern = padKind(vehicle) === 'modern';
+  for (const a of arms) {
+    const reach = modern ? armReach(a, 1.62, 1.62) : armReach(a, 2.1, 2.6);
+    const length = reach - outer + 0.15;
+    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.26, 0.3, length), M.greySteel);
+    arm.position.set(Math.sin(a) * (outer + length / 2 - 0.05), RING_TOP - 0.17, Math.cos(a) * (outer + length / 2 - 0.05));
+    arm.rotation.y = a;
+    g.add(arm);
+    // A clamp on the ring under the rocket's skirt.
+    const clamp = new THREE.Mesh(new THREE.BoxGeometry(0.22, 0.22, 0.3), M.dark);
+    clamp.position.set(Math.sin(a) * (outer - 0.12), RING_TOP + 0.08, Math.cos(a) * (outer - 0.12));
+    clamp.rotation.y = a;
+    g.add(clamp);
+  }
+  g.traverse((o) => {
+    if (o instanceof THREE.Mesh) o.castShadow = o.receiveShadow = true;
+  });
+  return g;
+}
+
+/**
+ * The whole launch complex. `rocketTop` is the tallest rocket's height, so the code-built umbilical mast fits.
+ * The code-built pad shows at once; the Blender models (launchModels.ts) replace it when they have loaded, and then
+ * `group.userData.trench` tells the ground (launchGround.ts) to open over the sunken flame trench.
+ */
 export function buildLaunchPad(rocketTop = 30): LaunchPad {
   const group = new THREE.Group();
   group.name = 'launch-pad';
+  const fallback = new THREE.Group();
+  fallback.name = 'launch-pad-simple';
   const kit = new Kit();
   launchStand(kit);
-  trench(kit, group);
+  trench(kit, fallback);
   umbilicalMast(kit, rocketTop);
-  gantry(kit, group);
+  gantry(kit, fallback);
   for (const [x, z, h] of [[-36, -30, 46], [36, -30, 46], [30, 36, 46]] as const) lightningMast(kit, x, z, h);
   blockhouse(kit, -166, 46);
   tanks(kit);
   lamps(kit);
-  kit.build(group);
+  kit.build(fallback);
+  group.add(fallback);
+
+  let vehicle: LaunchVehicleId = 'thorDelta';
+  let ring = holdDownRing(vehicle);
+  group.add(ring);
+  let parts: Record<'common' | 'classic' | 'modern', THREE.Object3D> | null = null;
+  let disposed = false;
+
+  const show = () => {
+    const kind = padKind(vehicle);
+    group.userData.kind = kind;
+    if (!parts) return;
+    parts.classic.visible = kind === 'classic';
+    parts.modern.visible = kind === 'modern';
+  };
+  const useModels = (models: LaunchModels | null) => {
+    if (!models || disposed || parts) return;
+    parts = { common: copyLaunchModel(models, 'common'), classic: copyLaunchModel(models, 'classic'), modern: copyLaunchModel(models, 'modern') };
+    group.remove(fallback);
+    disposeOwn(fallback);
+    group.add(parts.common, parts.classic, parts.modern);
+    group.userData.trench = true;
+    group.userData.version = ((group.userData.version as number | undefined) ?? 0) + 1;
+    show();
+  };
+  const ready = launchModelsNow();
+  if (ready) useModels(ready);
+  else void loadLaunchModels().then(useModels);
+
   return {
     group,
+    setVehicle(next) {
+      if (next !== vehicle) {
+        vehicle = next;
+        group.remove(ring);
+        disposeOwn(ring);
+        ring = holdDownRing(vehicle);
+        group.add(ring);
+        group.userData.version = ((group.userData.version as number | undefined) ?? 0) + 1;
+      }
+      show();
+    },
     dispose() {
-      group.traverse((o) => {
-        if (o instanceof THREE.Mesh) o.geometry.dispose();
-      });
+      disposed = true;
+      disposeOwn(group);
     },
   };
+}
+
+/** Free the code-built geometry under `root`; the Blender models' geometry is shared and kept. */
+function disposeOwn(root: THREE.Object3D): void {
+  root.traverse((o) => {
+    if (o.userData.shared) return;
+    if (o instanceof THREE.Mesh && !isShared(o)) o.geometry.dispose();
+  });
+}
+
+function isShared(o: THREE.Object3D): boolean {
+  for (let p: THREE.Object3D | null = o; p; p = p.parent) if (p.userData.shared) return true;
+  return false;
 }

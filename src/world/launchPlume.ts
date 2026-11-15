@@ -33,6 +33,7 @@ const FRAGMENT = /* glsl */ `
   uniform float uDiamonds;
   uniform float uSeed;
   uniform float uOpacity;
+  uniform float uCover;
   varying vec2 vUv;
   varying float vFacing;
   float hash(vec2 p) {
@@ -48,15 +49,21 @@ const FRAGMENT = /* glsl */ `
   }
   void main() {
     float v = vUv.y; // 0 at the nozzle, 1 at the tail
-    // Thick in the middle of the silhouette, thin at its edges, like a glowing volume.
-    float body = pow(vFacing, 1.6);
-    // Flicker running down the flame, and ragged edges toward the tail.
+    // A glowing volume: thick through the middle of the silhouette, nothing at its edge (no hard outline).
+    float body = smoothstep(0.0, 0.85, vFacing);
+    body *= body;
+    // Turbulence running down the flame, ragged toward the tail.
     float flow = noise(vec2(vUv.x * 9.0 + uSeed, v * 7.0 - uTime * 14.0)) * 0.6 + noise(vec2(vUv.x * 23.0, v * 19.0 - uTime * 31.0)) * 0.4;
-    float fade = (1.0 - smoothstep(0.15, 1.0, v + (flow - 0.5) * 0.35)) * smoothstep(0.0, 0.03, v);
-    float diamonds = uDiamonds * (0.5 + 0.5 * cos(v * 38.0)) * (1.0 - smoothstep(0.1, 0.55, v));
-    vec3 colour = mix(uCore, uSheath, smoothstep(0.05, 0.6, v)) * (0.75 + 0.5 * flow + diamonds);
-    float a = body * fade * uOpacity;
-    gl_FragColor = vec4(colour * a, 1.0);
+    float len = v + (flow - 0.5) * 0.3;
+    float fade = (1.0 - smoothstep(0.05, 0.95, len)) * smoothstep(0.0, 0.025, v);
+    fade *= fade;
+    // White-hot just below the nozzle, yellow then orange further down.
+    float hot = 1.0 - smoothstep(0.0, 0.32, v);
+    float diamonds = uDiamonds * pow(0.5 + 0.5 * cos(v * 44.0 - 0.8), 8.0) * (1.0 - smoothstep(0.04, 0.45, v));
+    vec3 colour = mix(uSheath, uCore, hot * hot) * (0.75 + 0.5 * flow) + uCore * diamonds;
+    float a = clamp(body * fade * uOpacity * (0.45 + 0.55 * hot + diamonds), 0.0, 1.0);
+    // Premultiplied: the glow adds light, and covers part of what is behind (so it is not lost against the sky).
+    gl_FragColor = vec4(colour * a, a * uCover);
   }
 `;
 
@@ -67,8 +74,8 @@ export interface PlumeLook {
   diamonds: number;
 }
 
-export const PLUME_LIQUID: PlumeLook = { core: new THREE.Color(1.0, 0.93, 0.72), sheath: new THREE.Color(1.0, 0.45, 0.12), diamonds: 0.6 };
-export const PLUME_SOLID: PlumeLook = { core: new THREE.Color(1.0, 0.95, 0.85), sheath: new THREE.Color(1.0, 0.55, 0.2), diamonds: 0.15 };
+export const PLUME_LIQUID: PlumeLook = { core: new THREE.Color(1.0, 0.9, 0.62), sheath: new THREE.Color(1.0, 0.42, 0.1), diamonds: 0.7 };
+export const PLUME_SOLID: PlumeLook = { core: new THREE.Color(1.0, 0.94, 0.82), sheath: new THREE.Color(1.0, 0.62, 0.28), diamonds: 0.1 };
 
 let glow: THREE.Texture | null = null;
 
@@ -79,10 +86,12 @@ function glowTexture(): THREE.Texture | null {
   c.width = c.height = 64;
   const g = c.getContext('2d');
   if (g) {
+    // A soft falloff (about exp(-4 r²)) with no visible edge.
     const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
-    grad.addColorStop(0, 'rgba(255,240,210,1)');
-    grad.addColorStop(0.25, 'rgba(255,190,110,0.55)');
-    grad.addColorStop(1, 'rgba(255,140,60,0)');
+    for (let k = 0; k <= 8; k++) {
+      const r = k / 8;
+      grad.addColorStop(r, `rgba(255,${Math.round(225 - 70 * r)},${Math.round(170 - 110 * r)},${(Math.exp(-5 * r * r) * (1 - r)).toFixed(3)})`);
+    }
     g.fillStyle = grad;
     g.fillRect(0, 0, 64, 64);
   }
@@ -99,12 +108,15 @@ function plumeMaterial(look: PlumeLook, opacity: number, seed: number): THREE.Sh
       uDiamonds: { value: look.diamonds },
       uSeed: { value: seed },
       uOpacity: { value: opacity },
+      uCover: { value: 0.55 },
     },
     vertexShader: VERTEX,
     fragmentShader: FRAGMENT,
     transparent: true,
     depthWrite: false,
-    blending: THREE.AdditiveBlending,
+    blending: THREE.CustomBlending,
+    blendSrc: THREE.OneFactor,
+    blendDst: THREE.OneMinusSrcAlphaFactor,
     side: THREE.DoubleSide,
     toneMapped: false,
     fog: false,
@@ -121,11 +133,11 @@ export function buildPlume(radius: number, length: number, look: PlumeLook = PLU
   const innerPts: THREE.Vector2[] = [];
   for (let k = 0; k <= 12; k++) {
     const t = k / 12;
-    outerPts.push(new THREE.Vector2(radius * (1 + 1.3 * Math.sqrt(t)), -length * t));
-    innerPts.push(new THREE.Vector2(radius * 0.55 * (1 - 0.6 * t), -length * 0.45 * t));
+    outerPts.push(new THREE.Vector2(radius * (0.95 + 1.5 * Math.sqrt(t) - 0.3 * t), -length * t));
+    innerPts.push(new THREE.Vector2(radius * 0.7 * (1 - 0.75 * t), -length * 0.32 * t));
   }
-  const outer = new THREE.Mesh(new THREE.LatheGeometry(outerPts, 24), plumeMaterial(look, 1.0, seed));
-  const inner = new THREE.Mesh(new THREE.LatheGeometry(innerPts, 16), plumeMaterial({ ...look, sheath: look.core }, 1.4, seed + 3));
+  const outer = new THREE.Mesh(new THREE.LatheGeometry(outerPts, 24), plumeMaterial(look, 0.9, seed));
+  const inner = new THREE.Mesh(new THREE.LatheGeometry(innerPts, 16), plumeMaterial({ ...look, sheath: look.core }, 1.0, seed + 3));
   // UVs: LatheGeometry runs v along the profile (0 at the nozzle), u round.
   for (const m of [outer, inner]) {
     m.renderOrder = 3;
@@ -135,10 +147,10 @@ export function buildPlume(radius: number, length: number, look: PlumeLook = PLU
   const texture = glowTexture();
   if (texture) {
     const sprite = new THREE.Sprite(
-      new THREE.SpriteMaterial({ map: texture, color: 0xffd9a0, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false }),
+      new THREE.SpriteMaterial({ map: texture, color: 0xffc890, opacity: 0.7, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, toneMapped: false, fog: false }),
     );
-    sprite.scale.setScalar(radius * 7);
-    sprite.position.y = -radius * 0.6;
+    sprite.scale.setScalar(radius * 4.5);
+    sprite.position.y = -radius * 0.9;
     sprite.renderOrder = 3;
     g.add(sprite);
   }

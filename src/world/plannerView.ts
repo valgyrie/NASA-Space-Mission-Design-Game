@@ -161,6 +161,7 @@ export class PlannerView {
       this.rocket.root.removeFromParent();
       disposeRocket(this.rocket.root);
     }
+    this.pad.setVehicle(vehicle);
     const rocket = buildRocket(design, vehicle, logo);
     rocket.root.position.y = STAND;
     rocket.root.traverse((o) => {

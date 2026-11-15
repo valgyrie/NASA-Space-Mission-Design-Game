@@ -17,13 +17,18 @@ import { buildSpacecraft } from './spacecraftMesh';
  */
 
 const R = {
-  white: paint(0xdedbd2, { roughness: 0.42, rings: 2.4, seams: 8, grime: 0.9, soot: 0.75, sootTop: 2.4 }),
-  black: paint(0x18191b, { roughness: 0.48, rings: 2.4, seams: 8, grime: 0.35 }),
+  white: paint(0xcbc8c0, { roughness: 0.3, rings: 2.4, seams: 8, grime: 1.0, soot: 0.75, sootTop: 2.4 }),
+  black: paint(0x18191b, { roughness: 0.36, rings: 2.4, seams: 8, grime: 0.35 }),
+  /** Falcon 9's first stage: flown before, so greyed by soot from the engines and streaked down from the interstage. */
+  whiteF9: paint(0xc6c3bb, { roughness: 0.36, rings: 1.9, seams: 6, grime: 1.6, soot: 0.55, sootTop: 6 }),
+  /** The Merlin Vacuum's big nozzle extension: dark niobium. */
+  niobium: paint(0x2e2b2a, { metalness: 0.85, roughness: 0.32, brushed: true, side: THREE.DoubleSide }),
   alu: paint(0xc3c7cc, { metalness: 0.9, roughness: 0.32, grime: 0.3, brushed: true }),
   steel: paint(0x8e949b, { metalness: 0.8, roughness: 0.4, rings: 0.6, grime: 0.45 }),
   dark: paint(0x3d3f43, { metalness: 0.65, roughness: 0.5, grime: 0.5, soot: 0.6, sootTop: 1.2 }),
   motor: paint(0x80858b, { metalness: 0.6, roughness: 0.42, rings: 0.35, grime: 0.4 }),
-  bellOut: paint(0x2b2826, { metalness: 0.7, roughness: 0.55, grime: 0.7 }),
+  // Regeneratively cooled bells: rows of brazed tubes round the outside.
+  bellOut: paint(0x2b2826, { metalness: 0.7, roughness: 0.5, grime: 0.7, seams: 120, relief: 0 }),
   bellIn: paint(0x161412, { metalness: 0.4, roughness: 0.8, grime: 0.6 }),
   carbon: paint(0x141516, { roughness: 0.62, grime: 0.25, seams: 4 }),
   octaweb: paint(0x4a4c50, { metalness: 0.55, roughness: 0.6, grime: 0.6, soot: 0.8, sootTop: 1.4 }),
@@ -234,9 +239,9 @@ function buildFalcon(design: Design): RocketModel {
   const first = new THREE.Group();
   // Octaweb and engine skirt, the long white tank, then the black interstage with folded grid fins.
   first.add(lathe([[r * 0.8, 0], [r * 0.98, 0], [r, 0.08], [r, 0.6], [r * 0.99, 0.62]], R.octaweb));
-  first.add(lathe([[r * 0.99, 0.6], [r, 0.62], [r, 16.6], [r * 0.99, 16.61]], R.white));
+  first.add(lathe([[r * 0.99, 0.6], [r, 0.62], [r, 16.6], [r * 0.99, 16.61]], R.whiteF9));
   first.add(lathe([[r * 0.99, 16.6], [r * 1.003, 16.62], [r * 1.003, 18.2], [r * 0.95, 18.22]], R.carbon));
-  first.add(raceway(r, 0.7, 16.5, Math.PI * 0.5, R.white, 0.16));
+  first.add(raceway(r, 0.7, 16.5, Math.PI * 0.5, R.whiteF9, 0.16));
   // Landing legs folded flat against the tank, and grid fins folded against the interstage.
   for (let i = 0; i < 4; i++) {
     const a = Math.PI / 4 + (i * Math.PI) / 2;
@@ -260,7 +265,9 @@ function buildFalcon(design: Design): RocketModel {
   const second = new THREE.Group();
   second.add(lathe([[r * 0.9, 18.2], [r, 18.25], [r, 24.2], [r * 0.99, 24.21]], R.white));
   second.add(band(r, 23.6, 23.75, R.carbon));
-  second.add(bell(0.1, 0.56, 0.8, 18.2));
+  // The Merlin Vacuum: a short engine and a big, dark nozzle extension nearly as wide as the stage.
+  second.add(bell(0.1, 0.3, 0.35, 18.2));
+  second.add(lathe(bellProfile(0.3, 0.66, 0.95, 0.008).map(([pr, py]) => [pr, py + 17.85] as [number, number]), R.niobium, 48));
   // Payload adapter: a short aluminium cone up to the Spacecraft.
   second.add(lathe([[r * 0.99, 24.2], [r * 0.97, 24.25], [0.5, 25.4], [0.48, 25.6], [0, 25.6]], R.alu));
   const spinner = new THREE.Group();

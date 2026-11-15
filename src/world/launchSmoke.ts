@@ -74,27 +74,30 @@ const FRAGMENT = /* glsl */ `
   varying float vSeed;
   void main() {
     vec2 p = vUv * 2.0 - 1.0;
-    // The card's shape: a lumpy round puff from the texture (one of four variants).
+    // The card's shape: a soft, wispy billow from the texture (one of four variants, turned with the card).
     vec2 cell = vec2(step(0.5, vSeed), step(0.25, fract(vSeed * 2.0))) * 0.5;
     vec4 tex = texture2D(uPuff, cell + vUv * 0.5);
     float density = tex.a;
-    if (density * vData.y < 0.004) discard;
-    // Shade it like a ball: a normal bent outward by the puff's lumps.
-    vec3 n = normalize(vec3(p * 0.9 + (tex.rg - 0.5) * 0.6, max(0.35, 1.0 - dot(p, p))));
-    float sun = clamp(dot(n, uSunView) * 0.5 + 0.55, 0.0, 1.0);
-    float under = clamp(-n.y * 0.5 + 0.5, 0.0, 1.0);
-    vec3 colour = uSun * sun * (0.55 + 0.45 * tex.b) + mix(uSky, uGround, under * 0.6) ;
-    colour *= 0.9;
+    float alpha = density * vData.y;
+    if (alpha < 0.003) discard;
+    // Light as part of one big cloud rather than as a ball: a gentle gradient toward the sun across the card, the
+    // texture's own relief, and the thick middle a little darker (light scatters out before it gets through).
+    vec2 relief = (tex.rg - 0.5) * 1.6;
+    float toward = dot(p * 0.45 + relief, uSunView.xy) + uSunView.z * 0.35;
+    float sun = clamp(0.62 + 0.5 * toward, 0.0, 1.0) * (0.72 + 0.28 * tex.b);
+    float under = clamp(0.5 - p.y * 0.35 - relief.y * 0.3, 0.0, 1.0);
+    vec3 colour = uSun * sun + mix(uSky, uGround, under * 0.55);
+    colour *= 0.86;
     // Close to the flame it glows.
-    colour += vec3(4.0, 1.6, 0.45) * vData.w * (0.5 + density);
-    gl_FragColor = vec4(colour, density * vData.y);
+    colour += vec3(4.0, 1.7, 0.5) * vData.w * (0.4 + density);
+    gl_FragColor = vec4(colour, alpha);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
     #include <fog_fragment>
   }
 `;
 
-/** A 2×2 atlas of soft lumpy puffs: alpha = density, rg = lump slope, b = self-shadow. Made once on first use. */
+/** A 2×2 atlas of soft billows: alpha = density, rg = its slope (for light), b = how thin it is. Made once on first use. */
 let atlas: THREE.Texture | null = null;
 function puffAtlas(): THREE.Texture | null {
   if (atlas || typeof document === 'undefined') return atlas;
@@ -105,42 +108,28 @@ function puffAtlas(): THREE.Texture | null {
   const g = c.getContext('2d');
   if (!g) return null;
   const img = g.createImageData(size, size);
-  let seed = 11;
-  const rand = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   for (let cell = 0; cell < 4; cell++) {
     const ox = (cell % 2) * half;
     const oy = Math.floor(cell / 2) * half;
-    // Each puff is a cluster of soft balls.
-    const balls: [number, number, number][] = [[0, 0, 0.62]];
-    for (let k = 0; k < 7; k++) {
-      const a = rand() * Math.PI * 2;
-      const d = 0.2 + rand() * 0.35;
-      balls.push([Math.cos(a) * d, Math.sin(a) * d, 0.26 + rand() * 0.18]);
-    }
     const dens = new Float32Array(half * half);
     for (let y = 0; y < half; y++) {
       for (let x = 0; x < half; x++) {
         const px = (x / (half - 1)) * 2 - 1;
         const py = (y / (half - 1)) * 2 - 1;
-        let d = 0;
-        for (const [bx, by, br] of balls) d += Math.exp(-((px - bx) ** 2 + (py - by) ** 2) / (br * br));
-        // Wispy edge noise.
-        const n = Math.sin(px * 13 + cell) * Math.sin(py * 11 - cell * 2) * 0.08 + Math.sin(px * 31 + py * 27) * 0.04;
-        const edge = Math.max(0, 1 - Math.hypot(px, py));
-        dens[y * half + x] = Math.max(0, Math.min(1, (1 - Math.exp(-d * 1.4)) + n * 0.6)) * Math.min(1, edge * 4);
+        dens[y * half + x] = billow(px, py, cell * 17.3);
       }
     }
     for (let y = 0; y < half; y++) {
       for (let x = 0; x < half; x++) {
         const at = (yy: number, xx: number) => dens[Math.min(half - 1, Math.max(0, yy)) * half + Math.min(half - 1, Math.max(0, xx))]!;
         const d = at(y, x);
-        const dx = at(y, x + 2) - at(y, x - 2);
-        const dy = at(y + 2, x) - at(y - 2, x);
+        const dx = at(y, x + 3) - at(y, x - 3);
+        const dy = at(y + 3, x) - at(y - 3, x);
         const i = ((oy + y) * size + ox + x) * 4;
-        img.data[i] = Math.round(Math.min(1, Math.max(0, 0.5 - dx * 2)) * 255);
-        img.data[i + 1] = Math.round(Math.min(1, Math.max(0, 0.5 + dy * 2)) * 255);
-        img.data[i + 2] = Math.round(Math.min(1, 0.4 + 0.6 * (1 - d)) * 255);
-        img.data[i + 3] = Math.round(Math.min(1, d * 1.1) ** 1.15 * 255);
+        img.data[i] = Math.round(Math.min(1, Math.max(0, 0.5 - dx * 1.5)) * 255);
+        img.data[i + 1] = Math.round(Math.min(1, Math.max(0, 0.5 + dy * 1.5)) * 255);
+        img.data[i + 2] = Math.round(Math.min(1, 0.35 + 0.65 * (1 - d)) * 255);
+        img.data[i + 3] = Math.round(Math.min(1, d) * 255);
       }
     }
   }
@@ -148,6 +137,44 @@ function puffAtlas(): THREE.Texture | null {
   atlas = new THREE.CanvasTexture(c);
   atlas.colorSpace = THREE.NoColorSpace;
   return atlas;
+}
+
+function hash2(x: number, y: number): number {
+  const h = Math.sin(x * 127.1 + y * 311.7) * 43758.5453;
+  return h - Math.floor(h);
+}
+
+function valueNoise(x: number, y: number): number {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const fx = x - ix;
+  const fy = y - iy;
+  const ux = fx * fx * (3 - 2 * fx);
+  const uy = fy * fy * (3 - 2 * fy);
+  const a = hash2(ix, iy);
+  const b = hash2(ix + 1, iy);
+  const c = hash2(ix, iy + 1);
+  const d = hash2(ix + 1, iy + 1);
+  return a + (b - a) * ux + (c - a) * uy + (a - b - c + d) * ux * uy;
+}
+
+/**
+ * Density of one billow at (x, y) in [-1, 1]²: a soft round falloff eaten into by fractal noise, so its edge is
+ * wispy and its face lumpy, and nothing reaches the card's border. 0–1.
+ */
+export function billow(x: number, y: number, seed = 0): number {
+  let n = 0;
+  let amp = 0.5;
+  let f = 2.2;
+  for (let o = 0; o < 5; o++) {
+    n += amp * valueNoise(x * f + seed, y * f - seed * 0.7);
+    amp *= 0.5;
+    f *= 2.03;
+  }
+  n /= 0.97;
+  const r2 = x * x + y * y;
+  const falloff = Math.max(0, 1 - r2) ** 1.6;
+  return Math.min(1, Math.max(0, (falloff * (0.55 + 0.9 * n) - 0.12) * 1.5));
 }
 
 export class LaunchSmoke {
@@ -160,6 +187,8 @@ export class LaunchSmoke {
   private readonly material: THREE.ShaderMaterial;
   private readonly order: number[] = [];
   private readonly depth: Float32Array;
+  /** The wind, in m/s: every puff drifts with it, the more the older it is (fresh exhaust is still fast). */
+  readonly wind = new THREE.Vector3();
 
   constructor(readonly capacity = 700) {
     const plane = new THREE.PlaneGeometry(1, 1);
@@ -235,6 +264,8 @@ export class LaunchSmoke {
         continue;
       }
       p.pos.addScaledVector(p.vel, dt);
+      // Stronger wind higher up shears the trail.
+      p.pos.addScaledVector(this.wind, dt * Math.min(1, p.age / 2) * (1 + Math.max(0, p.pos.y) / 3_000));
       p.pos.y += p.lift * dt;
       p.vel.multiplyScalar(Math.max(0, 1 - dt * p.drag));
       p.rot += p.spin * dt;
