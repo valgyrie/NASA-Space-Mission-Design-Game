@@ -105,7 +105,8 @@ export function showMinigames(root: HTMLElement, level: MinigameLevel, options: 
     stopGame();
     body.replaceChildren(card);
     body.scrollTop = 0;
-    focus?.focus();
+    // Keep the card's top (result, stars, total) in view; the focused button may sit below the fold.
+    focus?.focus({ preventScroll: true });
   }
 
   // ---- (a) Intro card ----

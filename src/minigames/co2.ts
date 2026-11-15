@@ -138,8 +138,8 @@ export const makeCo2: MinigameMaker = (): Minigame => {
         const tr = trace(b);
         if (tr.complete) {
           const n = tr.joints.filter((j) => j.leaking).length;
-          if (tr.unbraced > 0) say(t('minigame.co2.collapse', { n: tr.unbraced }), 'warn');
-          else if (n > 0) say(t('minigame.co2.leaks', { n }), 'warn');
+          if (tr.unbraced > 0) say(t(tr.unbraced === 1 ? 'minigame.co2.collapse.one' : 'minigame.co2.collapse', { n: tr.unbraced }), 'warn');
+          else if (n > 0) say(t(n === 1 ? 'minigame.co2.leaks.one' : 'minigame.co2.leaks', { n }), 'warn');
           return;
         }
         if (tr.end?.why === 'shape') say(t('minigame.co2.shape'), 'warn');

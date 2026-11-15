@@ -4,10 +4,10 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**Minigames (15 Nov, night): merged into `main` at the user's request, without the last browser play-test. START HERE for this work.** Ticket `docs/tickets/54-minigames.md`, facts `docs/research/minigames.md`.
+**Minigames (15 Nov, night): done, play-tested and merged into `main`. START HERE for this work.** Ticket `docs/tickets/54-minigames.md`, facts `docs/research/minigames.md`.
 - A new main-menu mode: choose Explorer or Mission Director, play three short 2D games in a random order, each followed by the real fact it teaches (child-friendly in Explorer), then an end screen with stars.
 - Done: the shell and the three Explorer games (Build Pluto, Rover Rescue, Planet Parade), played to the end at 1280×800 and 1024×768; Mission Director's Too Hot, Too Cold and Square Peg, Round Hole.
-- Left: play the three Mission Director games through the real menu, and Lost Signal to a win (a play-test started, made small Lost Signal fixes, and was stopped before it finished). GDD §3, GLOSSARY ("Minigame" vs an Anomaly's "mini-game") and CHECKLIST are done. 648 tests and type checks pass.
+- Play-tested: all six through the real menu at 1280×800 and 1024×768, Mission Director 9 of 9 stars; Lost Signal slowed down so the checklist can be followed, label and scroll fixes. Minor left-overs in ticket 54. GDD §3, GLOSSARY and CHECKLIST done. 648 tests and type checks pass.
 
 **Game modes (15 Nov, evening): merged into `main` at the user's request (branch `game-modes` kept). START HERE for this work.** Brief: the team's `game-modes-prompt.txt` (plans.txt plus the agreed changes). Everything built and how: `docs/tickets/53-game-modes.md` ("As built"); GDD §7 "Game modes".
 - Easy and Advanced are shown as **Explorer** and **Mission Director** (ids unchanged). Explorer: bars and words instead of numbers, a ghost preview of each Part, short texts, a four-step Launch planner with a checklist, word-only Test Run and report, bigger colour-blind-safe UI, NASA kids' pages instead of papers, a refund once per Contract, faster Mines and Shipping. Mission Director: Offers expire after 60 days, repeat Test Runs cost 2% of the reward, Ground Tests ×3 money and ×2 days, Deposits run out. Safety valve: the grant can come again (every 180 days, five per game). One-way switch from Explorer in the pause menu. Save v21.

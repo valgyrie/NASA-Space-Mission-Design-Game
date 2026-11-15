@@ -570,7 +570,7 @@ export const makeSignal: MinigameMaker = (): Minigame => {
         c.textBaseline = 'top';
         c.font = `700 ${12 * r}px system-ui, sans-serif`;
         const note = !listening && !g.telemetry
-          ? t(g.station === 'canberra' ? 'minigame.signal.spec.down' : 'minigame.signal.spec.noDish')
+          ? t(g.shoutAt !== null ? 'minigame.signal.spec.set' : g.station === 'canberra' ? 'minigame.signal.spec.down' : 'minigame.signal.spec.noDish')
           : g.telemetry
             ? t('minigame.signal.spec.data')
             : g.locked
