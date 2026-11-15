@@ -1,108 +1,156 @@
 # LEAP: A Space Mission Design Game
 
-_Launch · Engineer · Advance · Pioneer_
+![The LEAP title screen: the main menu in front of a Thor-Delta rocket on its pad](screenshots/game%20screenshots/title.jpg)
 
-Run a space company, design spacecraft, and relive real space history from Explorer 1 (1958) to Artemis IV, learning the real trade-offs of mission design along the way.
+Run a small space company. Mine metals, build Parts, design the spacecraft, pick the rocket, check the weather and launch. Along the way you fly the real missions of space history, from Explorer 1 in 1958 to the planned Artemis IV Moon landing.
 
-Built for the **NASA Space Apps Challenge 2026**: [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/).
+Every choice moves six bars: Mass, Power, Budget, Data, Communications and Time. When a mission works or fails, the report says why, and a card tells what happened on the real one.
 
-**Status:** early build. Campaign Eras 1 and 2 and modern Free Play are playable. Demo Mode offers ready Companies for both Campaign Eras.
+Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/). For players from about age 10 up.
 
-## How to play
+## The game
 
-1. **Start a Company.** Name it and pick where on Earth to build. Real climate data shapes your Site.
-2. **Build.** Place Mines on deposits, Factories to turn Raw Materials into Parts, and sell what you don't need on the Market.
-3. **Take a Contract.** The first is Explorer 1, America's first satellite (1958).
-4. **Design the Spacecraft.** In the Mission Designer, pick a Part for each slot and keep the six bars (Mass, Power, Budget, Data, Communications, Time) in the green. A free Test Run shows how it would do.
-5. **Launch.** Choose a rocket that can lift it, ship it to the Launch Site, watch the weather, and fly. Fix Anomalies in flight.
-6. **Read the Mission Report.** It explains what worked and why. Real History cards tell what happened on the real mission.
+### Build your Site
 
-Milestones unlock new Parts and rockets; an HQ Upgrade takes the Company into the next Era. After Era 2 the Company carries on in modern Free Play. No time to build? **Demo Mode** on the main menu starts a ready Company.
+![The Demo Site in 1958: Mines and factories on a coast, money and Raw Materials along the top, the Build menu at the bottom](screenshots/game%20screenshots/site.jpg)
+
+Pick a real place on a globe. Its real 2025 climate, from NASA POWER, shapes the land you get. Put Mines on Deposits of aluminium, copper and silicon, build Factories that turn them into Parts, and sell what you don't need on the Market.
+
+### Design the Spacecraft
+
+![The Mission Designer for Explorer 1: the spacecraft over Earth, the six resource bars, all clear](screenshots/game%20screenshots/designer.jpg)
+
+Take a Contract, then choose a Part for each slot: Bus, Power, Battery, Comms, Pointing, Payload. The spacecraft is put together in front of you. A Test Run shows how it would do before you ship it.
+
+### Plan the Launch
+
+![The Launch planner for Apollo 11's science package: Saturn V picked from the row of rockets, standing on its pad](screenshots/game%20screenshots/planner.jpg)
+
+Choose a rocket that can lift it and a Launch Site (nearer the equator is better), check the weather and book the launch. In Mission Director you also plan the Ground Stations that will hear it, and can pay for Ground Tests and Launch Insurance. Bad weather on the day means a Scrub.
+
+### Launch and fly
+
+![Liftoff of SLS from Pad 39B carrying the player's CubeSat on Artemis II](screenshots/game%20screenshots/launch-sls.jpg)
+
+Watch the launch in 3D: liftoff, staging, orbit, and on the Moon missions the trip to the Moon. Then things go wrong, as they do on real missions: point a drifting antenna back at the Ground Station, free a stuck solar panel, keep the batteries alive through an eclipse.
+
+![Explorer 1 in orbit: the "Point the antenna" Anomaly](screenshots/game%20screenshots/anomaly.jpg)
+
+### Read the Mission Report
+
+![The Mission Report for Explorer 1: the first Mission Patch, what happened, the trouble in space, and the real Explorer 1 beside yours](screenshots/game%20screenshots/report.jpg)
+
+The report says what worked and what didn't, and why. It compares your spacecraft with the real one, and a Real History card tells the real story. A successful Mission pays the reward and earns a Mission Patch; Milestones unlock new Parts and rockets.
+
+## Ways to play
+
+- **Campaign.** Space history in order. Era 1: Explorer 1 and TIROS-1. Era 2: Telstar 1 and Syncom 3. Era 3: Apollo 11, where you build the experiments the crew set up on the Moon. The Artemis Era: a CubeSat on Artemis II, then you choose how your Company helps Artemis III and IV. After that, the same Company carries on in Free Play.
+- **Free Play.** Start anywhere on Earth in 2026, with made-up Contracts that each say who needs the Data and why.
+- **Demo Mode.** A ready Company for each Era (Explorer 1, Telstar 1, Apollo 11, Artemis II), with the factories running and the design done, so you can go straight to the launch.
+- **Minigames.** Short 2D games, apart from any Company, each ending with a real fact. For Explorer: Build Pluto, Rover Rescue and Planet Parade. For Mission Director: Too Hot, Too Cold (keep a satellite's parts at safe temperatures), Square Peg, Round Hole (Apollo 13's carbon dioxide fix) and Lost Signal (Voyager 2's lost contact in 2023).
+- **Team Mode.** Two to four players share one Company on one computer. The four roles (Mission lead, Power, Communications, Science) are shared out, each owns its part of the design, and it ships only when every role has signed off.
+
+<p>
+<img src="screenshots/game%20screenshots/moon-apollo-11.jpg" width="49%" alt="Apollo 11 on the Moon: the Lunar Module and two astronauts setting up the science package">
+<img src="screenshots/game%20screenshots/minigame.jpg" width="49%" alt="Lost Signal, a Mission Director Minigame: work the checklist to win back a probe whose antenna points 2° away from Earth">
+</p>
+
+There are two levels. A Company keeps the one it started with (an Explorer Company can switch up to Mission Director once, from the pause menu):
+
+- **Explorer:** pictures and plain words instead of numbers, a simpler Launch planner and links to NASA pages written for young readers.
+- **Mission Director:** real numbers and a real budget, every Part and planning step. Offers expire, and repeat Test Runs cost money.
+
+![Starting a Company: name, Campaign or Free Play, Explorer or Mission Director, a logo, and a real place on the globe](screenshots/game%20screenshots/new-company.jpg)
+
+Online play (cloud saves, leaderboards and a Weekly Challenge) is built but switched off for now; its button says "Coming soon".
 
 ## Run it
 
-Download or clone the repo, then extract it if it is a ZIP. Keep the whole folder together.
+Download the repository (Code → Download ZIP), unzip it, and keep the folder together. Then:
 
 - **Windows:** double-click `LEAP.bat`.
 - **macOS:** double-click `LEAP.command`.
-- **Linux:** open `LEAP.sh` with **Run as a program**; it opens a terminal for setup and quitting. You can also run `./LEAP.sh` in a terminal in this folder.
+- **Linux:** run `./LEAP.sh` in a terminal in this folder, or open `LEAP.sh` with **Run as a program**.
 
-The launcher downloads a private copy of [Node.js](https://nodejs.org/), checks its checksum, and installs the packages in `package-lock.json`. No npm commands or administrator access needed. Setup stays in this folder. The first start needs internet and may take a few minutes; progress bars and short messages explain each step. Later starts check the packages and install any dependency changes after a game update. If needed, the launcher checks for a newer Node.js LTS release too.
+The first start needs internet and takes a few minutes. The launcher downloads its own copy of [Node.js](https://nodejs.org/) into this folder, checks it, and installs the game's packages. You don't need to install anything or have administrator rights. Later starts are quick.
 
-LEAP opens at [http://localhost:5173](http://localhost:5173) once it is ready. **Keep the launcher window open while you play.** To quit, close that window or press **Ctrl+C** there. Closing the browser tab does not stop LEAP. Run the launcher again to reopen the browser: it tells you if LEAP is already running and shows the same link. Closing that second window leaves the first one running.
+LEAP opens in your browser at [http://localhost:5173](http://localhost:5173). **Keep the launcher window open while you play.** Close it, or press **Ctrl+C** in it, to quit. Closing the browser tab does not stop LEAP; run the launcher again to get the tab back.
 
-Use a 64-bit Intel/AMD or ARM computer supported by the current Node.js LTS. Linux needs `curl` or `wget`, `tar`, and `sha256sum` or `shasum`; `xdg-open` opens the browser. If the browser does not open, use the link in the window. If executable permissions were lost in a ZIP, run `chmod +x LEAP.sh LEAP.command` once. On macOS, you can also run `sh LEAP.command` in Terminal.
+Your Companies are saved in that browser. Use the same browser and address to find them again.
 
-If setup fails, the window keeps the error visible. Check the message and your connection, then try again. If another app uses port 5173, close that app first; LEAP keeps the same address so your browser can find your existing save.
+<details>
+<summary>If something goes wrong</summary>
 
-### For development
+- **Setup failed:** the window shows the error. Check your internet connection and run the launcher again.
+- **The browser didn't open:** use the link in the launcher window.
+- **Port 5173 is in use:** close the other app using it. LEAP always uses the same address, so your browser can find your saves.
+- **macOS or Linux says permission denied:** a ZIP can drop the "executable" flag. Run `chmod +x LEAP.sh LEAP.command` once, or start it with `sh LEAP.command` on macOS.
+- **Linux needs:** `curl` or `wget`, `tar`, and `sha256sum` or `shasum`; `xdg-open` to open the browser.
+- **Computer:** a 64-bit Intel/AMD or ARM computer that the current Node.js LTS supports, and a browser with WebGL. Use a mouse and keyboard; touch is not supported yet.
 
-The existing npm commands still work. Use the current Node.js LTS.
+</details>
+
+## Controls
+
+| | |
+|---|---|
+| Move | Left-drag, or W A S D / arrow keys |
+| Turn and tilt | Right-drag, or Q E to turn and R F to tilt |
+| Zoom | Mouse wheel, or + and − |
+| Whole Site view | H |
+| Pause | Space |
+| Menu | Esc |
+
+The pause menu also shows your Company's Seed. Copy it to share your Site; paste it into the Seed field when you create a Company to get the same land in the same place.
+
+## For developers
+
+TypeScript, [three.js](https://threejs.org/) and [Vite](https://vite.dev/). Use the current Node.js LTS.
 
 ```bash
 npm install
-npm run dev
+npm run dev      # http://localhost:5173
+npm run check    # type check and tests; also runs before every commit
+npm run build    # production build in dist/
 ```
 
-The game opens at [http://localhost:5173](http://localhost:5173).
+- All player-facing text is in [`src/strings.ts`](src/strings.ts); a test fails if text is written anywhere else.
+- The 3D models are built from Blender scripts in [`scripts/blender/`](scripts/blender/).
+- The online backend (Supabase) is described in [`supabase/README.md`](supabase/README.md).
+- The launcher has its own checks, `node --test scripts/leap.test.mjs`. They are run only before a release, on Windows, macOS and Linux.
+- Rules for AI coding agents: [`AGENTS.md`](AGENTS.md).
 
-### Play
+## Docs
 
-**Title:** the LEAP logo and the main menu share one screen, with a rocket lifting off behind them (one of the five Launch Vehicles, a different one each time). **Learn more →** links beside real missions, rockets and science open their sources in a new tab.
-
-**Main menu:** **Play** lists your Companies, saved in this browser: pick one, create a new one (name, logo, Seed, place, Campaign or Free Play, difficulty) or delete one. **Demo Mode** offers Era 1 (Explorer 1) and Era 2 (Telstar 1), with working buildings, Parts and a prepared design. Open the Mission Designer to try a Test Run or ship. Your own Companies are kept; selecting an Era starts the demo afresh. The speaker button opens **Music & Sounds**: music and effects volume, and which track plays on the title screen. Use **Main menu** in the pause menu to return.
-
-**Camera:** left-drag (or W A S D / arrows) to move, right-drag to turn and tilt (or Q E to turn, R F to tilt down to the horizon), mouse wheel (or + −) to zoom. **H** goes back to the view of your whole Site.
-
-**Sound:** music and effects start after your first click or key. Adjust their separate volumes (0 mutes) in the main or pause menu; Audio credits lists the music and original effects. Settings stay in this browser.
-
-**Credits:** on the main menu. It lists the team, every real dataset, photo credits, 3D models and textures, reading sources, music and software.
-
-**Keys:** Space pauses. Esc opens the menu (your Seed and the controls).
-
-**Online:** open it from the main menu or the Free Play pause menu. Generate a nickname or choose a filtered, made-up one. Keep a private copy of the recovery code to continue on another computer. **Save to cloud** saves your Free Play Company and updates four leaderboards. **Load cloud Company** asks before replacing the Company on this browser. Saves are manual; local play still works offline. No email or password is needed. Backend setup and deployment notes are in [`supabase/README.md`](supabase/README.md).
-
-**Weekly Challenge:** in Online with a Free Play Company, design with the same budget and Parts as everyone else. Test for free, submit attempts and keep your best score. Every finisher gets the same weekly Mission Patch; the final top three earn podium badges. Your Company save is kept.
-
-**Share a Site:** Esc → Copy includes the Seed and location. Use **New Company from a Seed** on the main menu and paste the code into the Seed field. Starting asks before replacing an existing Company. A raw Seed still works with the location you choose.
-
-**Market:** open it under your Company name. Sell Raw Materials in 10 kg lots, or Parts one at a time, for money.
-
-**Contracts and Mission Designer:** both buttons are under your Company name. The Mission Designer pauses the Site: pick a Part for each slot, turn the 3D Spacecraft by dragging, and watch the six bars (Mass, Power, Budget, Data, Communications, Time). Missing Parts can be bought right there.
-
-**Checks:** `npm run check` runs the type check and tests. They also run before every commit and stop it if anything fails.
-
-**Launcher checks (final ticket only):** these are separate from the game tests and do not run on each ticket or update. At the final ticket, run `node --test scripts/leap.test.mjs` on Linux with port 5173 free, then check a clean first start, progress bars, reopening and quitting on Windows, macOS and Linux.
+- [Game design](docs/GDD.md): what the game is and how each part works
+- [Glossary](GLOSSARY.md): the game's terms
+- [Checklist](CHECKLIST.md): what's done and what's next
+- [Tickets](docs/tickets/README.md): the work, one playable slice at a time
+- [Decisions](docs/adr/): choices that are hard to undo, and why
+- [Research](docs/research/README.md): every fact and number in the game, with its source
+- [Challenge brief](docs/challenge.md)
+- [Screenshots](screenshots/README.md)
 
 ## Credits
 
-Made by Team Artemis-IV for the NASA Space Apps Challenge 2026. Code and art written with AI coding agents, then reviewed and tested by the team. LEAP is a fan-made learning game, not made or endorsed by NASA.
+Made by Team Artemis-IV for the NASA Space Apps Challenge 2026. LEAP is a fan-made learning game. It is not made or endorsed by NASA and uses no NASA logo or insignia.
 
-- **Real data:** NASA POWER (climate and launch weather), NASA Blue Marble: Next Generation and Black Marble (NASA Earth Observatory) and one day of VIIRS clouds (NASA and NOAA), all via NASA GIBS (the Earth's photos), Natural Earth (public domain map data), the NASA Image and Video Library (Real History photos) and NASA's slides *Design and Develop Science Missions* (the four mission Segments). Details: [`docs/research/`](docs/research/).
-- **Illustrations:** the Era pictures are AI-generated (Canva and ChatGPT image tools) from game screenshots and the prompts in [`docs/art/`](docs/art/README.md), and each carries a visible "AI-generated" mark.
-- **3D models and textures:** the models are made for LEAP in Blender by AI coding agents, from scripts in [`scripts/blender/`](scripts/blender/). Photo textures for the land, buildings and launch pads are from [Poly Haven](https://polyhaven.com/) (CC0); leaves and bark from [ambientCG](https://ambientcg.com/) by Lennart Demes (CC0). The ground photos repeat without a visible grid thanks to [Inigo Quilez's texture-repetition technique](https://iquilezles.org/articles/texturerepetition/). Every file, with author and licence: [`docs/art/`](docs/art/) (`assets-*.md`).
-- **Music:** generated by the team with Google Lyria 3.5. **Sound effects:** made in code with Web Audio. Details: [`docs/audio/`](docs/audio/README.md).
-- **Software:** [three.js](https://threejs.org/) and its add-ons, [Vite](https://vite.dev/) and [obscenity](https://github.com/jo3-l/obscenity) (all MIT licence); the [Draco](https://github.com/google/draco) decoder by Google (Apache License 2.0); [Blender](https://www.blender.org/) to make the models; [Supabase](https://supabase.com/) for online features.
+- **Real data:** NASA POWER (climate and launch weather); NASA Blue Marble: Next Generation, Black Marble and one day of VIIRS clouds, via NASA GIBS (the Earth from space); Natural Earth (map data); the NASA Image and Video Library (Real History photos); NASA Mission Viz (GMAT reference trajectories); NASA's *Design and Develop Science Missions* (the four mission Segments), JPL's Concept Maturity Levels and NASA's *CubeSat 101* (design tips). Details and links: [`docs/research/`](docs/research/README.md).
+- **3D models and textures:** models made for LEAP in Blender, from scripts in [`scripts/blender/`](scripts/blender/). Photo textures from [Poly Haven](https://polyhaven.com/) (CC0) and [ambientCG](https://ambientcg.com/) by Lennart Demes (CC0). Ground textures repeat without a visible grid using [Inigo Quilez's technique](https://iquilezles.org/articles/texturerepetition/). Every file with its author and licence: [`docs/art/`](docs/art/README.md).
+- **Illustrations:** the Era pictures are AI-generated (Canva and ChatGPT image tools) from game screenshots and our prompts, and carry a visible "AI-generated" mark. See [`docs/art/`](docs/art/README.md).
+- **Music:** generated by the team with Google Lyria 3.5. **Sound effects:** made in code with Web Audio. See [`docs/audio/`](docs/audio/README.md).
+- **Software:** [three.js](https://threejs.org/) and its add-ons, [Vite](https://vite.dev/) and [obscenity](https://github.com/jo3-l/obscenity) (MIT); the [Draco](https://github.com/google/draco) decoder by Google (Apache 2.0); [Blender](https://www.blender.org/) for the models; [Supabase](https://supabase.com/) for the online features.
 
 The in-game Credits screen has the full list with links.
 
 ## How AI was used
 
 - **Code:** written by AI coding agents (Claude Code, Codex) from the team's design and tickets, then reviewed and tested by the team. Commits made by an agent say so in their `Co-Authored-By` line.
-- **3D models:** built by AI coding agents as Blender Python scripts (`scripts/blender/`), not drawn by hand and not made by an image or 3D generator. The photo textures on them are real photos from Poly Haven and ambientCG (CC0).
-- **Music:** generated with Google Lyria 3.5. Each music file says so in its metadata (title, album and comment tags), and every track carries Google's SynthID mark.
-- **Illustrations:** the Era pictures are AI-generated and carry a visible "AI-generated" watermark; the game captions them "Illustration (AI-generated)".
-- **Not AI:** the idea and game design came from the team. The facts, numbers and photos come from the cited sources in [`docs/research/`](docs/research/), not from AI. Sound effects are made in code.
+- **3D models:** written by AI coding agents as Blender Python scripts. Not drawn by hand, and not made by an image or 3D generator. The photo textures on them are real photos.
+- **Music:** generated with Google Lyria 3.5. Each track says so in its metadata and carries Google's SynthID mark.
+- **Illustrations:** the Era pictures are AI-generated, watermarked, and captioned "Illustration (AI-generated)" in the game.
+- **Not AI:** the idea and the game design are the team's. Facts, numbers and photos come from the cited sources in [`docs/research/`](docs/research/README.md). Sound effects are made in code.
 
 ## Licence
 
-LEAP's own code and text are released under the [Apache License 2.0](LICENSE), the licence NASA Space Apps uses when a team names none. Material from others keeps its own terms: NASA data and photos (NASA media guidelines), Natural Earth (public domain), Poly Haven and ambientCG textures (CC0), three.js, Vite and obscenity (MIT), the Draco decoder (Apache License 2.0), and the AI-generated music (Google's terms for Lyria). No NASA logo or insignia is used.
-
-## Docs
-
-- [Game design](docs/GDD.md): what the game is
-- [Checklist](CHECKLIST.md): what's done and what's next
-- [Glossary](GLOSSARY.md): the game's terms
-- [Challenge brief](docs/challenge.md)
-- [Decisions](docs/adr/)
-- [Screenshots and QA evidence](screenshots/README.md)
+LEAP's own code and text are under the [Apache License 2.0](LICENSE), the licence NASA Space Apps uses when a team names none. Material from others keeps its own terms: NASA data and photos (NASA media guidelines), Natural Earth (public domain), Poly Haven and ambientCG textures (CC0), three.js, Vite and obscenity (MIT), the Draco decoder (Apache 2.0), and the AI-generated music (Google's terms for Lyria).

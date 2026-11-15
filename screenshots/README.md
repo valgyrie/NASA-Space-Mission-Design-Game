@@ -1,9 +1,17 @@
 # Screenshots
 
-- [Development feature guide, before the official NASA Resources](development-No_NASA_resources-/features%20and%20game/README.md): the built features across tickets 01–31, what each screenshot shows, how to open it, fixtures, tests and remaining limits.
-- [Bugs and errors](development-No_NASA_resources-/bugs%20and%20errors/README.md): visible problems, with steps and ticket links.
-- [Game screenshots](game%20screenshots/README.md): reserved for the final demo.
+| Folder | What's in it |
+|---|---|
+| [Game screenshots](game%20screenshots/README.md) | The current game, one picture per main screen. The main README uses these. |
+| [Development, with the NASA Resources](development-NASA_resources/README.md) | Captures from tickets 32 onward, the new look, step panels and the title menu |
+| [Development, before the NASA Resources](development-No_NASA_resources-/features%20and%20game/README.md) | Tickets 01–31: what each capture shows, how to open it, fixtures and limits |
+| [Bugs and errors](development-No_NASA_resources-/bugs%20and%20errors/README.md) | Visible problems with steps and ticket links, and the fixed captures beside them |
 
-Keep development captures under `development-No_NASA_resources-`. Name new files `ticket-NN-what-happened.png`. When a bug is fixed, add the same capture on the fixed build beside it, with `_solved` added to the name (`ticket-NN-what-happened_solved.png`); keep the original. Add the viewport, steps and result to the relevant ticket; link the screenshot here. Put background errors in the ticket with the measured evidence. A screenshot is not needed when nothing visible shows the problem.
+The development folders are a record: older captures show older versions of the game and are kept as they were.
 
-The root captures were moved to `features and game/earlier-runs/` unchanged. The 11 November QA images were moved to `bugs and errors/2026-11-11/` unchanged, including the two findings fixed since then. Their existing Markdown links were updated.
+## Adding a capture
+
+- Put development captures in `development-NASA_resources/` and list them in its README.
+- Name them `ticket-NN-what-happened.png`. When a bug is fixed, add the same capture on the fixed build with `_solved` on the end of the name, and keep the original.
+- Write the viewport, steps and result in the ticket. Background errors with no visible sign need no screenshot; put the measured evidence in the ticket.
+- Replace a picture in `game screenshots/` when its screen changes, so the README always shows the game as it is.

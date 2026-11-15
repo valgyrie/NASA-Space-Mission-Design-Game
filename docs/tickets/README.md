@@ -55,11 +55,11 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 47 | [A timeline you can drag](47-timeline-you-can-drag.md) _(Later)_ | 31 | Drag through a Mission's events in the Space view. |
 | 48 | [CubeSat sizes](48-cubesat-sizes.md) _(Later)_ | 20, 21 | Free Play Buses become 1U, 3U and 6U; needs a rebalance. |
 | 49 🧪 | [Realistic graphics](49-realistic-graphics.md) _(added 2026-11-14)_ | 26 | Smooth photo-textured land, real sky and water, Blender-built buildings and launch pads, trees by climate, a photo Earth; every asset credited. The team accepts it before the final merge. |
-| 50 | [Era 3: the Moon and the land from above](50-era-3.md) _(added 2026-11-15, planned)_ | 18 | The Apollo 11 science package on the Moon and Landsat 1; Saturn V, Delta 900, Vandenberg; new Parts; Assembly Hall level 4. |
+| 50 🧪 | [Era 3: the Moon and the land from above](50-era-3.md) _(added 2026-11-15; Apollo 11 built for the demo, Landsat 1 not yet)_ | 18 | The Apollo 11 science package on the Moon and Landsat 1; Saturn V, Delta 900, Vandenberg; new Parts; Assembly Hall level 4. |
 | 51 | [Era 4: telescopes and Moon maps](51-era-4.md) _(added 2026-11-15, planned)_ | 50 | Hubble on the Shuttle and LRO in lunar orbit; Atlas V; lithium batteries; Assembly Hall level 5. |
-| 52 | [Era 5: reusable rockets and Artemis](52-era-5-artemis.md) _(added 2026-11-15, planned)_ | 51 | Falcon 9 booster landing, Artemis I and II CubeSats, then you choose how to help Artemis III and the Artemis IV finale; Moon Contracts in Free Play. |
+| 52 🧪 | [Era 5: reusable rockets and Artemis](52-era-5-artemis.md) _(added 2026-11-15; Artemis II–IV built for the demo, the rest not yet)_ | 51 | Falcon 9 booster landing, Artemis I and II CubeSats, then you choose how to help Artemis III and the Artemis IV finale; Moon Contracts in Free Play. |
 | 53 🧪 | [Explorer and Mission Director](53-game-modes.md) _(added 2026-11-15)_ | 20 | Two game modes on one rule set: pictures and words for young players, real numbers, expiring Offers, paid testing and Deposits that run out for the realistic one. |
-| 54 | [Minigames](54-minigames.md) _(added 2026-11-15, in progress)_ | 53 | A main-menu mode of short 2D games, each teaching one real space fact: three for Explorer, three for Mission Director. |
+| 54 🧪 | [Minigames](54-minigames.md) _(added 2026-11-15)_ | 53 | A main-menu mode of short 2D games, each teaching one real space fact: three for Explorer, three for Mission Director. |
 
 **Recommended build order (2026-11-13):** 27 → 32 → 33 → 34 → 35 → 36 → 37 → 38 → 39 → the rule items in 28 and 29 → 40 → 41 → the rest (42–48). Stop adding features on Saturday night (14 Nov). Sunday is for hosting, the demo, the project page and the final launcher checks (ticket 28).
 

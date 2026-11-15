@@ -2,7 +2,7 @@
 
 > **Note (15 Nov 2026):** the game itself now has a realistic look (ADR-0005), not the low-poly look this guide describes. The three Era pictures stay. New prompts should match the new look (a real-looking place, still clearly an illustration, not a photo); the prompts below have not been rewritten.
 >
-> The 3D models' textures and the Earth's photos are listed with author and licence in `assets-terrain.md`, `assets-buildings.md`, `assets-launch.md`, `assets-nature.md` and `assets-space.md` in this folder.
+> The 3D models' textures and the Earth's photos are listed with author and licence in `assets-terrain.md`, `assets-buildings.md`, `assets-launch.md`, `assets-nature.md`, `assets-space.md` and `assets-moon.md` (the Moon, its craft and the caption facts) in this folder.
 
 One illustration per Era, shown at the top of the Era card when the Company enters that Era (ticket 29). Era 1's card opens a new Campaign; Era 2's follows the HQ Upgrade; Free Play's follows the move to the modern Era.
 
