@@ -115,8 +115,9 @@ export const INST_COLD_H = 4;
 
 // ---- Time ------------------------------------------------------------------------------------------------
 
-/** Game hours per real second: normal, and fast-forward while waiting. */
-export const RATE_H_S = 0.5;
+/** Game hours per real second: normal, and fast-forward while waiting. Normal is slow enough to read the console
+ * before the reserve runs flat (about 26 s with nothing shed). */
+export const RATE_H_S = 0.25;
 export const FAST_H_S = 4;
 /** Time each checklist action takes, hours (game estimates). */
 export const CROSS_CHECK_H = 1;
@@ -408,11 +409,14 @@ export function confirmContact(g: SignalGame): 'restored' | 'noData' | 'instrume
   return 'restored';
 }
 
+/** Share of the reserve to keep for the second star. */
+export const STAR_RESERVE = 0.5;
+
 /** Stars: 0 if lost; then one each for keeping half the reserve and getting contact back quickly. */
 export function signalStars(g: SignalGame): 0 | 1 | 2 | 3 {
   if (g.state !== 'won') return 0;
   let stars = 1;
-  if (g.minReserveWh >= RESERVE_WH * 0.6 && !g.instDamaged) stars++;
+  if (g.minReserveWh >= RESERVE_WH * STAR_RESERVE && !g.instDamaged) stars++;
   if (g.shoutAt !== null && g.shoutAt <= FIRST_WINDOW[0] + 4 && g.mistakes === 0) stars++;
   return stars as 1 | 2 | 3;
 }

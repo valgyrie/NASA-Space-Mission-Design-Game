@@ -20,6 +20,7 @@ import {
   RESERVE_WH,
   ROUND_TRIP_H,
   RTG_W,
+  STAR_RESERVE,
   STATIONS,
   STATION_SITE,
   STEPS,
@@ -388,7 +389,7 @@ export const makeSignal: MinigameMaker = (): Minigame => {
         const share = g.reserveWh / RESERVE_WH;
         resLabel.textContent = t('minigame.signal.reserve', { wh: fixed(g.reserveWh), pct: fixed(share * 100) });
         resFill.style.width = `${share * 100}%`;
-        resBar.dataset.level = share < 0.3 ? 'bad' : share < 0.6 ? 'warn' : 'ok';
+        resBar.dataset.level = share < 0.3 ? 'bad' : share < STAR_RESERVE ? 'warn' : 'ok';
         lineRow.textContent = t('minigame.signal.line', { c: fixed(g.lineC, 1), min: fixed(LINE_FREEZE_C) });
         lineRow.dataset.level = g.lineC < LINE_FREEZE_C + 4 ? 'bad' : 'ok';
         LOADS.forEach((l, i) => {
@@ -569,7 +570,7 @@ export const makeSignal: MinigameMaker = (): Minigame => {
         c.textBaseline = 'top';
         c.font = `700 ${12 * r}px system-ui, sans-serif`;
         const note = !listening && !g.telemetry
-          ? t('minigame.signal.spec.noDish')
+          ? t(g.station === 'canberra' ? 'minigame.signal.spec.down' : 'minigame.signal.spec.noDish')
           : g.telemetry
             ? t('minigame.signal.spec.data')
             : g.locked

@@ -2248,6 +2248,7 @@ export const STRINGS = {
   'minigame.signal.loadName.backupHeater': 'Backup heater',
   'minigame.signal.khz': '{n} kHz',
   'minigame.signal.spec.noDish': 'No antenna on the probe yet',
+  'minigame.signal.spec.down': 'Canberra can’t see the probe now: fast-forward to its window',
   'minigame.signal.spec.search': 'Searching ±{range} kHz for the carrier',
   'minigame.signal.spec.locked': 'CARRIER LOCK',
   'minigame.signal.spec.data': 'DATA LOCK',
