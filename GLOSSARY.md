@@ -211,7 +211,7 @@ The real attempt to fly a Mission, with costs and risks.
 
 **Anomaly**:
 A problem during a Mission, played as a short mini-game.
-_Avoid_: event, glitch, bug
+_Avoid_: event, glitch, bug, Minigame (that is the main-menu mode)
 
 **Mission Report**:
 The result of a Mission, explaining why it succeeded or failed.
@@ -320,6 +320,14 @@ _Avoid_: Easy mode, kids' mode, Explorer (alone: that is Explorer 1)
 **Mission Director mode**:
 The realistic game mode, chosen when starting a Company: every number and unit, every Part and planning step, Offers that expire, paid repeat Test Runs, dearer Ground Tests and Deposits that run out. An Explorer Company can switch to it for good. Was "Advanced mode".
 _Avoid_: Advanced mode, hard mode, adult mode
+
+**Minigames**:
+A mode from the main menu, apart from any Company: the player picks Explorer or Mission Director and plays that level's three short 2D games in a random order, each ending on one real space fact.
+_Avoid_: arcade, extras
+
+**Minigame**:
+One of the short 2D games in Minigames, teaching one real space fact (for example Build Pluto, or Square Peg, Round Hole about Apollo 13). Not part of a Mission.
+_Avoid_: mini-game (that word is for an Anomaly), level, challenge (that is the Weekly Challenge)
 
 **Ghost preview**:
 On the Mission Designer's resource bars, how each bar would change if the Part under the pointer were chosen.
