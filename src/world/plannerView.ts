@@ -39,7 +39,7 @@ const EASE_SECONDS = 1.4;
 /** Where the ground-station dish stands, north-west of the pad, off to the side of the usual view. Metres. */
 const DISH_AT = new THREE.Vector3(-95, 0, -20);
 /** Wallops Island's pads stand right by the beach: the site moves this far east, towards the sea. */
-const SITE_EAST: Record<LaunchSiteId, number> = { capeCanaveral: 0, wallops: 170 };
+const SITE_EAST: Record<LaunchSiteId, number> = { capeCanaveral: 0, wallops: 170, kennedy39A: 0, kennedy39B: 0 };
 /** The camera's usual heading: from the west-south-west, like the Launch show's pad camera. */
 const HEADING = Math.atan2(-42, 34);
 /** Size of a Launch Vehicle tile picture, in CSS pixels. */

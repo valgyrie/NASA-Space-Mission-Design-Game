@@ -110,6 +110,8 @@ export const ART_GROUPS = {
   launchPads: ['rustyPaintedMetal', 'blueMetalPlate', 'concreteFloorWorn001', 'metalPlate02'],
   /** ambientCG, assets-nature.md. */
   trees: ['leafSet024', 'leafSet016', 'leafSet019', 'bark012'],
+  /** NASA's Scientific Visualization Studio, assets-moon.md (public domain). */
+  moon: ['cgiMoonKit'],
   code: ['threeAddons', 'draco', 'textureRepetition'],
 } as const;
 export type ArtGroup = keyof typeof ART_GROUPS;
@@ -139,6 +141,8 @@ export const ART_ASSETS: Record<ArtAssetId, string> = {
   leafSet016: 'https://ambientcg.com/a/LeafSet016',
   leafSet019: 'https://ambientcg.com/a/LeafSet019',
   bark012: 'https://ambientcg.com/a/Bark012',
+  /** LROC colour mosaic and LOLA elevation (public domain): public/textures/moon/. */
+  cgiMoonKit: 'https://svs.gsfc.nasa.gov/4720',
   /** GLTFLoader, DRACOLoader, RoundedBoxGeometry and RoomEnvironment from three's examples/jsm (MIT). */
   threeAddons: 'https://github.com/mrdoob/three.js/tree/dev/examples/jsm',
   /** The decoder in public/models/draco/ (Apache License 2.0). */

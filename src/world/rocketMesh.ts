@@ -5,6 +5,7 @@ import type { LaunchVehicleId } from '../game/launchVehicles';
 import type { Design } from '../game/spacecraft';
 import { bellProfile, latheGeometry } from './rocketLathe';
 import { paint } from './rocketPaint';
+import { type PlumeKind, buildSLS, buildSaturnV } from './rocketMoon';
 import { buildSpacecraft } from './spacecraftMesh';
 
 /**
@@ -115,6 +116,9 @@ export interface StageModel {
   nozzles: THREE.Vector3[];
   /** Radius of one nozzle, for the size of its flame. */
   nozzleRadius: number;
+  /** The Moon rockets say what their flames look like and how long they are (stage units); others use defaults. */
+  plume?: PlumeKind;
+  flameLength?: number;
 }
 
 export interface RocketModel {
@@ -128,6 +132,8 @@ export interface RocketModel {
   upperBase: number;
   /** Metres from there to the top. */
   upperLength: number;
+  /** Height of the whole rocket, metres (the pad cameras stand back further for the Moon rockets). */
+  height?: number;
 }
 
 /** A swept tail fin with rounded edges, its root against a body of radius `r`. */
@@ -216,6 +222,19 @@ function spacecraftOnTop(design: Design, height: number): THREE.Group {
 
 /** The Launch Vehicle with the player's Spacecraft on top. */
 export function buildRocket(design: Design, vehicle: LaunchVehicleId = 'juno1', logo: CompanyLogo = DEFAULT_LOGO): RocketModel {
+  if (vehicle === 'saturnV' || vehicle === 'sls') {
+    const moon = vehicle === 'saturnV' ? buildSaturnV(design) : buildSLS(design);
+    const material = new THREE.MeshBasicMaterial({ map: logoTexture(logo), transparent: true, depthWrite: false });
+    material.name = 'company-logo';
+    const r = moon.logo.radius * 1.008;
+    for (let i = 0; i < 4; i++) {
+      const decal = new THREE.Mesh(new THREE.CylinderGeometry(r, r, r * 1.1, 16, 1, true, (i * Math.PI) / 2 - 0.55, 1.1), material);
+      decal.name = 'company-logo';
+      decal.position.y = moon.logo.y;
+      moon.logo.group.add(decal);
+    }
+    return moon;
+  }
   const model = vehicle === 'falcon9' ? buildFalcon(design) : vehicle === 'juno1' ? buildJuno(design) : buildThor(design, vehicle === 'thorAble' ? THOR : THOR_DELTA, vehicle === 'deltaD' ? 3 : 0);
   const radius = vehicle === 'falcon9' ? 0.74 : vehicle === 'juno1' ? JUNO.radius : THOR.radius;
   const material = new THREE.MeshBasicMaterial({ map: logoTexture(logo), transparent: true, depthWrite: false });

@@ -7,8 +7,9 @@ import { buildEarth } from './earthMesh';
 import { type SkyEnvironment, createSkyEnvironment } from './environment';
 import { type LaunchGround, buildLaunchGround } from './launchGround';
 import { type LaunchPad, buildLaunchPad } from './launchPad';
-import { PLUME_LIQUID, PLUME_SOLID, advancePlumes, buildPlume, disposePlume } from './launchPlume';
+import { PLUME_HYDROGEN, PLUME_LIQUID, PLUME_SOLID, type PlumeLook, advancePlumes, buildPlume, disposePlume } from './launchPlume';
 import { LaunchSmoke, type SmokeLight } from './launchSmoke';
+import { MoonShow, type MoonShowSpec, moonShowLength } from './moonShow';
 import { JUNO, type RocketModel, buildRocket, disposeRocket } from './rocketMesh';
 import { makeStars } from './spacecraftView';
 
@@ -18,7 +19,7 @@ import { makeStars } from './spacecraftView';
  * It only draws what the show says: the outcome is already decided by the flight.
  */
 
-export type Shot = 'pad' | 'space' | 'orbit';
+export type Shot = 'pad' | 'space' | 'orbit' | 'moon';
 
 const EARTH_KM = 6_371;
 /** Where the camera cuts from the pad to space: part-way through the coast. */
@@ -45,6 +46,8 @@ const PAD_SUN_INTENSITY = 12;
 const PAD_SKY_LIGHT = 0.5;
 /** The space shots were tuned for this exposure. */
 const SPACE_EXPOSURE = 1;
+
+const PLUME_LOOK = { liquid: PLUME_LIQUID, solid: PLUME_SOLID, hydrogen: PLUME_HYDROGEN } as const;
 
 const smooth = (a: number, b: number, x: number) => {
   const t = Math.min(1, Math.max(0, (x - a) / (b - a)));
@@ -127,6 +130,8 @@ export class LaunchView {
 
   private climbing: RocketModel | null = null;
   private vehicle: LaunchVehicleId = 'juno1';
+  /** How much further back the pad cameras stand: 1, more for the tall Moon rockets. */
+  private camScale = 1;
   private upper: RocketModel | null = null;
   private flames: THREE.Group[][] = [];
   private upperFlames: THREE.Group[][] = [];
@@ -135,6 +140,13 @@ export class LaunchView {
   private spin = 0;
   private orbitClock = 0;
   private lastT = -Infinity;
+  /** The Moon sequence (moonShow.ts), made the first time a show has a 'moon' segment. */
+  private moonShow: MoonShow | null = null;
+  /** The Moon sequence this show has started, held on screen through the Mission's days after it. */
+  private moonSpec: MoonShowSpec | null = null;
+  private moonHold = 0;
+  private design: Design | null = null;
+  private logo: CompanyLogo = DEFAULT_LOGO;
   /** What the pad's shadow map last showed (rocket and pad models), so a still pad is not drawn into it again. */
   private shadowOf = '';
 
@@ -233,6 +245,8 @@ export class LaunchView {
   /** Get ready for one Launch: build the rocket with this design on top and draw the orbit. */
   load(design: Design, vehicle: LaunchVehicleId, orbitKm: { low: number; high: number }, logo: CompanyLogo = DEFAULT_LOGO): void {
     this.unload();
+    this.design = design;
+    this.logo = logo;
     this.stages = stageTimes(vehicle);
     const burnEnd = this.stages[0]!.end;
     const coastEnd = this.stages[1]?.start ?? burnEnd;
@@ -242,8 +256,14 @@ export class LaunchView {
     this.climbing = buildRocket(design, vehicle, logo);
     this.climbing.root.position.y = 1.8;
     this.vehicle = vehicle;
+    // The Moon rockets carry their own flame looks and lengths (rocketMoon.ts); the others keep the old rules.
+    this.camScale = Math.max(1, (this.climbing.height ?? 0) / 28);
     this.flames = this.climbing.stages.map((s, i) =>
-      s.nozzles.map((n, k) => this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? (k === 0 || vehicle === 'falcon9' ? 9 : 7) : 1.2, i === 0 ? k > 0 && vehicle !== 'falcon9' : s.nozzleRadius <= 0.1)),
+      s.nozzles.map((n, k) =>
+        s.plume
+          ? this.addFlame(s.group, n, s.nozzleRadius, s.flameLength ?? 10, PLUME_LOOK[s.plume])
+          : this.addFlame(s.group, n, s.nozzleRadius, i === 0 ? (k === 0 || vehicle === 'falcon9' ? 9 : 7) : 1.2, i === 0 ? k > 0 && vehicle !== 'falcon9' : s.nozzleRadius <= 0.1),
+      ),
     );
     this.climbing.root.traverse((o) => {
       if (o instanceof THREE.Mesh && !(o.material as THREE.Material).transparent) o.castShadow = o.receiveShadow = true;
@@ -258,7 +278,9 @@ export class LaunchView {
     this.upper.root.scale.setScalar(fit);
     this.upper.root.rotation.z = -Math.PI / 2;
     this.upper.root.position.x = -this.upper.upperBase * fit;
-    this.upperFlames = this.upper.stages.map((s) => s.nozzles.map((n) => this.addFlame(s.group, n, s.nozzleRadius * 1.4, 1.6, s.nozzleRadius <= 0.1)));
+    this.upperFlames = this.upper.stages.map((s) =>
+      s.nozzles.map((n) => (s.plume ? this.addFlame(s.group, n, s.nozzleRadius * 1.4, (s.flameLength ?? 10) * 0.5, PLUME_LOOK[s.plume]) : this.addFlame(s.group, n, s.nozzleRadius * 1.4, 1.6, s.nozzleRadius <= 0.1))),
+    );
     this.space.add(this.upper.root);
 
     // The orbit: Earth's centre at one focus, drawn to scale.
@@ -302,6 +324,9 @@ export class LaunchView {
     }
     this.climbing = null;
     this.upper = null;
+    this.moonShow?.clear();
+    this.moonSpec = null;
+    this.moonHold = 0;
     const line = this.orbitPlane.getObjectByName('orbit-line');
     if (line instanceof THREE.Line) {
       line.removeFromParent();
@@ -315,6 +340,13 @@ export class LaunchView {
     const phase = m.segment.phase;
     this.spin += dt * SPIN_TURNS * Math.PI * 2;
     advancePlumes(dt);
+    // The Moon sequence plays in its own segment, then stays on screen (held, drifting) through the Mission's days.
+    if (phase === 'moon' && m.segment.moon) return this.drawMoon(m.segment.moon, m.value, dt);
+    if ((phase === 'mission' || phase === 'end') && this.moonSpec) {
+      this.moonHold += dt;
+      return this.drawMoon(this.moonSpec, moonShowLength(this.moonSpec) + this.moonHold, dt);
+    }
+    this.moonShow?.pause();
     let shot: Shot;
     if (phase === 'mission' || phase === 'end' || (phase === 'orbit' && m.fraction >= CUT_TO_ORBIT)) shot = 'orbit';
     else if (
@@ -336,8 +368,21 @@ export class LaunchView {
     return shot;
   }
 
-  private addFlame(parent: THREE.Object3D, at: THREE.Vector3, radius: number, length: number, solid = false): THREE.Group {
-    const f = buildPlume(radius, length, solid ? PLUME_SOLID : PLUME_LIQUID);
+  /** One frame of the Moon sequence `spec`, started the first time this show meets it. */
+  private drawMoon(spec: MoonShowSpec, seconds: number, dt: number): Shot {
+    this.moonShow ??= new MoonShow(this.renderer);
+    if (!this.moonSpec || this.moonSpec.kind !== spec.kind || this.moonSpec.choice !== spec.choice) {
+      this.moonSpec = { ...spec };
+      this.moonHold = 0;
+      if (this.design) this.moonShow.start(spec, this.design, this.logo);
+    }
+    const size = this.renderer.getSize(new THREE.Vector2());
+    this.moonShow.render(seconds, dt, size.x, size.y);
+    return 'moon';
+  }
+
+  private addFlame(parent: THREE.Object3D, at: THREE.Vector3, radius: number, length: number, solid: boolean | PlumeLook = false): THREE.Group {
+    const f = buildPlume(radius, length, typeof solid === 'object' ? solid : solid ? PLUME_SOLID : PLUME_LIQUID);
     f.position.copy(at);
     parent.add(f);
     return f;
@@ -377,6 +422,8 @@ export class LaunchView {
     rocket.spinner.rotation.y = this.spin;
     const burn = this.burning(0, t) && falling === 0;
     this.flicker(this.flames[0]!, burn, 1 + Math.min(alt / 20_000, 0.8));
+    // SLS: the core stage's four RS-25s light before the boosters and burn on after they drop.
+    if (this.vehicle === 'sls') this.flicker(this.flames[1]!, falling === 0 && (burn || this.burning(1, t)), 1 + Math.min(alt / 20_000, 0.8));
 
     // The first stage drops away after it burns out.
     const first = rocket.stages[0]!.group;
@@ -396,14 +443,15 @@ export class LaunchView {
 
     // Camera: on the ground watching it go, then chasing it.
     // Watch the middle of the rocket, then the part still flying once the first stage has gone.
-    const along = 11 + 7.5 * smooth(150, 175, t);
+    const k = this.camScale;
+    const along = (11 + 7.5 * smooth(150, 175, t)) * k;
     const centre = new THREE.Vector3(p.x, 1.8 + p.y, 0).add(new THREE.Vector3(Math.sin(p.lean), Math.cos(p.lean), 0).multiplyScalar(along));
     // Before liftoff, close by the pad; from liftoff, a tracking camera further back that sees the ground cloud.
-    const ground = t < 0 ? new THREE.Vector3(-42 + t * 0.6, 5, 34) : new THREE.Vector3(-150, 8, 125);
+    const ground = (t < 0 ? new THREE.Vector3(-42 + t * 0.6, 5, 34) : new THREE.Vector3(-150, 8, 125)).multiplyScalar(k);
     // From below while it climbs, then from above to watch the first stage fall away.
     const above = smooth(130, 175, t);
     const closer = 1 - 0.35 * smooth(160, 190, t);
-    const chase = centre.clone().add(new THREE.Vector3(-24 + above * 4, -6 + above * 16, 30 - above * 4).multiplyScalar(closer));
+    const chase = centre.clone().add(new THREE.Vector3(-24 + above * 4, -6 + above * 16, 30 - above * 4).multiplyScalar(closer * k));
     const w = smooth(9, 24, t);
     const fov = t < 0 ? 45 : 30 + 15 * w;
     if (this.padCamera.fov !== fov) {
@@ -411,7 +459,7 @@ export class LaunchView {
       this.padCamera.updateProjectionMatrix();
     }
     this.padCamera.position.lerpVectors(ground, chase, w);
-    this.padCamera.lookAt(t < 0 ? new THREE.Vector3(0, 12, 0) : centre);
+    this.padCamera.lookAt(t < 0 ? new THREE.Vector3(0, 12 * k, 0) : centre);
     this.padStars.position.copy(this.padCamera.position);
     this.padCamera.updateMatrixWorld();
     this.smoke.update(dt, this.padCamera, this.smokeLight);
@@ -474,7 +522,7 @@ export class LaunchView {
     const spacing = Math.max(2.4, size * 0.38);
     const steps = Math.min(20, Math.max(1, Math.ceil(Math.hypot(p.x - from.x, p.y - from.y) / spacing)));
     const thin = 1 - smooth(6_000, 30_000, alt);
-    const solid = this.vehicle === 'deltaD';
+    const solid = this.vehicle === 'deltaD' || this.vehicle === 'sls';
     for (let i = 1; i <= steps; i++) {
       const q = pathAt(this.path, t0 + ((t - t0) * i) / steps);
       const at = new THREE.Vector3(q.x, 1.8 + q.y, 0).addScaledVector(down, 8 + Math.random() * 4).add(new THREE.Vector3(rnd(), rnd(), rnd()).multiplyScalar(size * 0.45));

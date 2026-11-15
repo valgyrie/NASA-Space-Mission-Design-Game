@@ -3,6 +3,7 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { EARTH_KM, type Satellite, orbitMinutes, orbitPosition } from '../game/space';
 import { buildEarth } from './earthMesh';
+import { buildMoon } from './moonGlobe';
 import { buildSpacecraft, disposeSpacecraft } from './spacecraftMesh';
 import { makeStars } from './spacecraftView';
 import { outsideSphere } from './spaceCamera';
@@ -285,7 +286,8 @@ export class SpaceView {
     }
     let marker: THREE.Object3D;
     if (moon) {
-      marker = new THREE.Mesh(new THREE.SphereGeometry(MOON_KM * KM, 32, 16), new THREE.MeshStandardMaterial({ color: MOON_COLOUR, roughness: 1 }));
+      // NASA's Moon (moonGlobe.ts), its near side kept towards Earth in placeReferences.
+      marker = buildMoon(MOON_KM * KM, 64);
       const glow = new THREE.Sprite(
         new THREE.SpriteMaterial({ map: this.glowMap, color: MOON_COLOUR, sizeAttenuation: false, blending: THREE.AdditiveBlending, depthWrite: false, transparent: true }),
       );
@@ -308,7 +310,11 @@ export class SpaceView {
       // The paths shown together share one clock, set by the first (the Moon's covers the same days).
       const lap = paths[0].minutes;
       const now = (this.minutes - started) % lap;
-      for (const p of paths) p.marker.position.copy(toView(referencePositionAt(p.key, now)));
+      for (const p of paths) {
+        p.marker.position.copy(toView(referencePositionAt(p.key, now)));
+        // The Moon keeps one face to Earth: its 0° longitude (+x) points back at Earth's centre.
+        if (p.key === 'moon') p.marker.rotation.set(0, Math.atan2(p.marker.position.z, -p.marker.position.x), 0);
+      }
     }
   }
 

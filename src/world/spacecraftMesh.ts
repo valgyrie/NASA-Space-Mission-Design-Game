@@ -102,7 +102,8 @@ interface BusShape {
   sides: number;
 }
 
-const BUS_SHAPE: Record<'smallBus' | 'mediumBus' | 'largeBus', BusShape> = {
+const BUS_SHAPE: Record<'cubeSatBus' | 'smallBus' | 'mediumBus' | 'largeBus', BusShape> = {
+  cubeSatBus: { radius: 0.17, height: 0.5, sides: 4 },
   smallBus: { radius: 0.32, height: 1.0, sides: ROUND },
   mediumBus: { radius: 0.62, height: 1.1, sides: SIDES },
   largeBus: { radius: 0.85, height: 1.25, sides: ROUND },
@@ -209,9 +210,10 @@ function addLargeBus(g: THREE.Group, b: BusShape): void {
 }
 
 /** The Bus. Centred on y = 0. With no Bus, a faint outline shows where it goes. */
-function addBus(g: THREE.Group, id: keyof typeof BUS_SHAPE | null): BusShape {
-  const shape = BUS_SHAPE[id ?? 'smallBus'];
+function addBus(g: THREE.Group, id: keyof typeof BUS_SHAPE | null, cells = false): BusShape {
+  const shape = BUS_SHAPE[id ?? 'smallBus'] ?? BUS_SHAPE.smallBus;
   if (!id) g.add(mesh(cylinder(shape.radius, shape.radius, shape.height), S.ghost));
+  else if (id === 'cubeSatBus') addCubeSatBus(g, shape, cells);
   else if (id === 'smallBus') addSmallBus(g, shape);
   else if (id === 'mediumBus') addMediumBus(g, shape);
   else addLargeBus(g, shape);
@@ -536,6 +538,130 @@ function addMainEngine(g: THREE.Group, bus: BusShape, below: number): void {
   }
 }
 
+/**
+ * A 12U CubeSat: an aluminium box (about 23 x 23 x 34 cm, drawn a little larger to read next to the other Buses)
+ * with black anodised corner rails and their feet, side panels screwed on; with Solar Cells its faces are cells.
+ */
+function addCubeSatBus(g: THREE.Group, b: BusShape, cells: boolean): void {
+  const w = b.radius * 2;
+  g.add(mesh(box(w, b.height, w), S.hull));
+  const rail = box(0.035, b.height + 0.04, 0.035);
+  for (const [x, z] of [[1, 1], [1, -1], [-1, 1], [-1, -1]] as const) g.add(at(rail, S.hullDark, (x * w) / 2, 0, (z * w) / 2));
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2;
+    const face = cells ? new THREE.BoxGeometry(w * 0.84, b.height * 0.88, 0.008) : box(w * 0.84, b.height * 0.88, 0.008);
+    g.add(onSide(face, cells ? S.solar : S.steel, w / 2 + 0.004, a, 0));
+    for (const y of [-b.height * 0.42, b.height * 0.42]) for (const dx of [-0.35, 0.35]) {
+      const s = onSide(new THREE.SphereGeometry(0.006, 6, 4), S.bolt, w / 2 + 0.01, a, y);
+      s.position.x += Math.cos(a) * dx * w;
+      s.position.z -= Math.sin(a) * dx * w;
+      g.add(s);
+    }
+  }
+  g.add(mesh(box(w * 0.7, 0.012, w * 0.7), S.gold, b.height / 2 + 0.006));
+}
+
+/**
+ * Fold-out Solar Panels: two wings of cells on hinged arms either side of the Bus, opened flat, like the paddles
+ * and wings that took over from body-mounted cells.
+ */
+function addFoldOutPanels(g: THREE.Group, bus: BusShape): void {
+  const r = bus.sides === 4 ? bus.radius * 1.02 : bus.radius;
+  const panelW = Math.max(0.5, bus.height * 0.8);
+  const panelL = panelW * 1.25;
+  for (const s of [-1, 1]) {
+    g.add(rod(new THREE.Vector3(s * r, 0, 0), new THREE.Vector3(s * (r + 0.18), 0, 0), 0.015, S.steel));
+    g.add(at(box(0.05, 0.06, 0.06), S.hullDark, s * (r + 0.18), 0, 0));
+    for (let k = 0; k < 2; k++) {
+      const x = s * (r + 0.22 + panelL / 2 + k * (panelL + 0.03));
+      g.add(at(new THREE.BoxGeometry(panelL, 0.012, panelW), S.solar, x, 0.008, 0));
+      g.add(at(box(panelL + 0.02, 0.008, panelW + 0.02), S.solarBack, x, -0.004, 0));
+    }
+  }
+}
+
+/** A Dish Antenna: a parabolic reflector with its feed on struts, on a short mast from the top deck. */
+function addDishAntenna(g: THREE.Group, bus: BusShape): void {
+  const top = bus.height / 2;
+  const dishR = Math.max(0.2, Math.min(bus.radius * 0.75, 0.55));
+  const x = bus.radius * 0.25;
+  g.add(rod(new THREE.Vector3(x, top, 0), new THREE.Vector3(x, top + 0.18, 0), 0.02, S.steel));
+  const dish = new THREE.Group();
+  const profile: THREE.Vector2[] = [];
+  for (let k = 0; k <= 12; k++) {
+    const rr = (k / 12) * dishR;
+    profile.push(new THREE.Vector2(rr, (rr * rr) / (4 * dishR * 0.45)));
+  }
+  const shell = new THREE.LatheGeometry(profile, 40);
+  dish.add(new THREE.Mesh(shell, S.sensor));
+  const back = new THREE.Mesh(shell, S.silver);
+  back.scale.setScalar(0.995);
+  back.position.y = -0.006;
+  dish.add(back);
+  const focus = dishR * 0.45;
+  for (let i = 0; i < 3; i++) {
+    const a = (i / 3) * Math.PI * 2;
+    dish.add(rod(new THREE.Vector3(Math.sin(a) * dishR * 0.9, (dishR * 0.9) ** 2 / (4 * focus), Math.cos(a) * dishR * 0.9), new THREE.Vector3(0, focus, 0), 0.006, S.steel));
+  }
+  dish.add(at(cylinder(0.03, 0.02, 0.06, 12), S.hullDark, 0, focus, 0));
+  dish.position.set(x, top + 0.2, 0);
+  dish.rotation.z = -0.35;
+  g.add(dish);
+}
+
+/**
+ * The Science Package, like Apollo 11's: a seismometer under a domed thermal shroud with its gold-foil skirt,
+ * an electronics box and a little laser reflector, on the top deck.
+ */
+function addSciencePackage(g: THREE.Group, bus: BusShape): void {
+  const top = bus.height / 2;
+  const r = Math.min(bus.radius, 0.5) * 0.45;
+  g.add(mesh(cylinder(r * 1.5, r * 1.6, 0.03, 32), S.gold, top + 0.015));
+  g.add(at(new THREE.SphereGeometry(r, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), S.silver, 0, top + 0.03, 0));
+  g.add(at(cylinder(0.02, 0.02, 0.05, 8), S.bolt, 0, top + 0.03 + r, 0));
+  const bx = r * 1.4;
+  g.add(at(box(r * 0.9, r * 0.5, r * 0.7), S.radiator, bx, top + r * 0.25, 0));
+  const reflector = at(box(r * 0.8, 0.02, r * 0.8), S.glass, -bx, top + r * 0.35, 0);
+  reflector.rotation.z = 0.5;
+  g.add(reflector, rod(new THREE.Vector3(-bx, top, 0), new THREE.Vector3(-bx, top + r * 0.3, 0), 0.01, S.steel));
+}
+
+/** The Relay Radio: an electronics box with a crossed pair of helix antennas for the lunar link. */
+function addRelayRadio(g: THREE.Group, bus: BusShape): void {
+  const top = bus.height / 2;
+  const r = Math.min(bus.radius, 0.5);
+  g.add(at(box(r * 0.6, 0.1, r * 0.5), S.hullDark, 0, top + 0.05, 0));
+  for (const s of [-1, 1]) {
+    const x = s * r * 0.45;
+    const helix = new THREE.TubeGeometry(new Helix(0.04, 0.32, 7), 120, 0.006, 6);
+    g.add(at(helix, S.antenna, x, top + 0.1, 0));
+    g.add(at(cylinder(0.07, 0.07, 0.01, 20), S.steel, x, top + 0.1, 0));
+  }
+}
+
+/**
+ * The Lander: four splayed legs with round footpads, a landing engine under the middle and tanks beside it.
+ * Returns how far below the Bus it reaches (so the adapter is not drawn under the legs).
+ */
+function addLander(g: THREE.Group, bus: BusShape, below: number): void {
+  const y = -bus.height / 2 - below;
+  const r = Math.max(bus.radius, 0.3);
+  const legH = 0.55 + r * 0.3;
+  for (let i = 0; i < 4; i++) {
+    const a = Math.PI / 4 + (i * Math.PI) / 2;
+    const top = new THREE.Vector3(Math.sin(a) * r * 0.85, y + 0.05, Math.cos(a) * r * 0.85);
+    const foot = new THREE.Vector3(Math.sin(a) * (r + 0.45), y - legH, Math.cos(a) * (r + 0.45));
+    g.add(rod(top, foot, 0.022, S.steel));
+    g.add(rod(new THREE.Vector3(top.x * 0.6, y - 0.12, top.z * 0.6), foot.clone().setY(foot.y + 0.08), 0.012, S.steel));
+    g.add(at(cylinder(0.09, 0.07, 0.025, 16), S.silver, foot.x, foot.y - 0.01, foot.z));
+  }
+  // Two round tanks and the landing engine's bell.
+  for (const s of [-1, 1]) g.add(at(new THREE.SphereGeometry(r * 0.28, 20, 12), S.silver, s * r * 0.45, y - 0.18, 0));
+  const bell = new THREE.LatheGeometry([new THREE.Vector2(0.05, 0), new THREE.Vector2(0.09, -0.08), new THREE.Vector2(0.14, -0.22)], 32);
+  g.add(mesh(bell, S.nozzle, y - 0.05));
+  g.add(mesh(bell, S.throat, y - 0.05));
+}
+
 /** The ring that holds the Spacecraft to the Launch Vehicle. */
 function addAdapter(g: THREE.Group, bus: BusShape, below: number): void {
   const y = -bus.height / 2 - below - 0.05;
@@ -568,11 +694,14 @@ export function buildSpacecraft(design: Design): THREE.Group {
   dressSpacecraftMaterials();
   const g = new THREE.Group();
   g.name = 'spacecraft';
-  const bus = partOf(g, 'bus', () => addBus(g, design.bus as keyof typeof BUS_SHAPE | null));
+  const bus = partOf(g, 'bus', () => addBus(g, design.bus as keyof typeof BUS_SHAPE | null, design.power === 'solarCells'));
   const below = partOf(g, 'battery', () => addBattery(g, bus, design.battery));
   if (design.bus) partOf(g, 'bus', () => addAdapter(g, bus, below));
   if (design.propulsion === 'mainEngine') partOf(g, 'propulsion', () => addMainEngine(g, bus, below));
-  if (design.power === 'solarCells') partOf(g, 'power', () => addSolarCells(g, bus));
+  if (design.propulsion === 'lander') partOf(g, 'propulsion', () => addLander(g, bus, below));
+  if (design.power === 'solarCells' && design.bus !== 'cubeSatBus') partOf(g, 'power', () => addSolarCells(g, bus));
+  if (design.power === 'foldOutPanels') partOf(g, 'power', () => addFoldOutPanels(g, bus));
+  if (design.comms === 'dishAntenna') partOf(g, 'comms', () => addDishAntenna(g, bus));
   if (design.comms === 'simpleAntenna' || design.comms === 'lowPowerAntenna') {
     partOf(g, 'comms', () => addSimpleAntenna(g, bus, below, design.comms === 'lowPowerAntenna'));
   }
@@ -580,6 +709,8 @@ export function buildSpacecraft(design: Design): THREE.Group {
   if (design.payload === 'radiationDetector') partOf(g, 'payload', () => addRadiationDetector(g, bus));
   if (design.payload === 'tvCamera') partOf(g, 'payload', () => addTvCamera(g, bus));
   if (design.payload === 'transponder') partOf(g, 'payload', () => addTransponder(g, bus));
+  if (design.payload === 'sciencePackage') partOf(g, 'payload', () => addSciencePackage(g, bus));
+  if (design.payload === 'relayRadio') partOf(g, 'payload', () => addRelayRadio(g, bus));
   // Stand the whole stack around its middle so it turns in place.
   const box = new THREE.Box3().setFromObject(g);
   g.position.y = -(box.min.y + box.max.y) / 2;

@@ -4,6 +4,7 @@ import { latheGeometry } from './rocketLathe';
 import { paint } from './rocketPaint';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import { type LaunchModels, copyLaunchModel, launchModelsNow, loadLaunchModels } from './launchModels';
+import { ML_DECK, MOON_ROCKET_SCALE } from './rocketMoon';
 
 /**
  * The launch complex round the rocket, in metres, built in code: a steel launch stand over the flame trench and
@@ -251,7 +252,12 @@ export interface LaunchPad {
 }
 
 /** Which pad a Launch Vehicle flies from: Falcon 9 from a modern one, the others from a late-1950s one. */
-export function padKind(vehicle: LaunchVehicleId): 'classic' | 'modern' {
+export type PadKind = 'classic' | 'modern' | 'lc39a' | 'lc39b';
+
+/** Which pad a rocket stands on: Saturn V on LC-39A, SLS on LC-39B (Mobile Launchers, code-built), Falcon 9 on the modern pad. */
+export function padKind(vehicle: LaunchVehicleId): PadKind {
+  if (vehicle === 'saturnV') return 'lc39a';
+  if (vehicle === 'sls') return 'lc39b';
   return vehicle === 'falcon9' ? 'modern' : 'classic';
 }
 
@@ -314,6 +320,80 @@ function holdDownRing(vehicle: LaunchVehicleId): THREE.Group {
 }
 
 /**
+ * Kennedy's Launch Complex 39 for the Moon rockets, built in code at the Moon rockets' scale (rocketMoon.ts):
+ *  - Saturn V on LC-39A: the Mobile Launcher (a 49 x 41 m steel deck, 7.6 m high, over the exhaust hole) with the
+ *    red Launch Umbilical Tower beside the rocket, its nine swing arms reaching across (the top one is the crew's
+ *    access arm to the Command Module) and the hammerhead crane on top.
+ *  - SLS on LC-39B: Mobile Launcher 1, a grey 12 m-square tower about 108 m tall on the same kind of deck, with the
+ *    crew access arm to Orion, the umbilical arms, and the two tail service masts at the base.
+ * Merged per material like the rest of the pad. Not exact: tower heights and arm levels from NASA's fact sheets.
+ */
+function kennedyPad(vehicle: 'saturnV' | 'sls'): THREE.Group {
+  const k = MOON_ROCKET_SCALE;
+  const kit = new Kit();
+  const g = new THREE.Group();
+  g.name = vehicle === 'saturnV' ? 'lc39a' : 'lc39b';
+  const deck = ML_DECK * k;
+  // The Mobile Launcher's deck: four blocks round the square exhaust hole, on six pedestals.
+  const hole = 13.7 * k;
+  const w = 49 * k;
+  const d = 41 * k;
+  const side = (w - hole) / 2;
+  kit.box(M.greySteel, side, deck, d, -(hole / 2 + side / 2), deck / 2, 0);
+  kit.box(M.greySteel, side, deck, d, hole / 2 + side / 2, deck / 2, 0);
+  kit.box(M.greySteel, hole, deck, (d - hole) / 2, 0, deck / 2, -(hole / 2 + (d - hole) / 4));
+  kit.box(M.greySteel, hole, deck, (d - hole) / 2, 0, deck / 2, hole / 2 + (d - hole) / 4);
+  for (const x of [-w / 2 + 2, w / 2 - 2]) for (const z of [-d / 2 + 2, 0, d / 2 - 2]) kit.box(M.concrete, 2.4, 1.2, 2.4, x, 0.6, z);
+  // Hold-down posts round the hole and a grated rim.
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    kit.box(M.dark, 0.7, 0.9, 0.7, Math.sin(a) * hole * 0.42, deck + 0.45, Math.cos(a) * hole * 0.42);
+  }
+  // The tower on the north side (-z), its near face this far from the rocket's axis.
+  const tw = 12.2 * k;
+  const tz = -(vehicle === 'saturnV' ? 14 : 12.5) * k - tw / 2;
+  const red = vehicle === 'saturnV';
+  const steel = red ? M.redSteel : M.greySteel;
+  const towerTop = (red ? 120 : 108) * k;
+  const tower = new Kit();
+  latticeTower(tower, steel, -tw / 2, tz - tw / 2, tw, tw, towerTop, 4.2 * k * 2, 0.75 * k * 2, 0.35 * k * 2);
+  tower.build(g);
+  g.children.at(-1)!.position.y = deck;
+  // Floors every few levels, an elevator shaft, the crane or lightning mast on top.
+  for (let y = 0; y < towerTop; y += 12 * k) platform(kit, -tw / 2 - 0.3, deck + y, tz - tw / 2 - 0.3, tw + 0.6, tw + 0.6);
+  kit.box(M.white, tw * 0.25, towerTop, tw * 0.25, 0, deck + towerTop / 2, tz);
+  if (red) {
+    kit.box(steel, tw * 1.1, 2.5 * k, tw * 1.1, 0, deck + towerTop + 1.2 * k, tz);
+    kit.beam(steel, v(0, deck + towerTop + 3 * k, tz - tw * 0.4), v(0, deck + towerTop + 3 * k, tz + tw * 1.4), 1.6 * k);
+    kit.beam(steel, v(0, deck + towerTop + 2.5 * k, tz), v(0, deck + towerTop + 9 * k, tz), 1.2 * k);
+  } else {
+    kit.beam(M.galvanised, v(0, deck + towerTop, tz), v(0, deck + towerTop + 14 * k, tz), 0.5 * k);
+  }
+  // Arms across to the rocket: [height above the deck (real m), reach to the rocket's skin (real m), crew arm].
+  const arms: [number, number, boolean][] = red
+    ? [[23, 5.05, false], [40, 5.05, false], [48, 5.05, false], [58, 5.05, false], [66, 5.05, false], [72, 3.3, false], [86, 3.3, false], [96, 1.96, false], [103, 1.96, true]]
+    : [[12, 4.2, false], [55, 4.2, false], [76, 2.6, false], [82, 2.62, false], [89, 2.55, true]];
+  const near = tz + tw / 2;
+  for (const [y, skin, crew] of arms) {
+    const at = deck + y * k;
+    const end = -(skin + 0.4) * k;
+    const aw = (crew ? 2.4 : 1.6) * k;
+    // A box truss: four chords and a deck; the crew arm has a closed white room at its end.
+    for (const [dx, dy] of [[-aw / 2, 0], [aw / 2, 0], [-aw / 2, aw], [aw / 2, aw]] as const) kit.beam(steel, v(dx, at + dy, near), v(dx, at + dy, end), 0.22 * k * 2);
+    for (let z = near; z < end - 0.01; z += 2.2 * k) kit.beam(steel, v(-aw / 2, at, z), v(aw / 2, at + aw, z + 2.2 * k), 0.12 * k * 2);
+    kit.box(M.grating, aw, 0.1, end - near, 0, at + 0.05, (near + end) / 2);
+    if (crew) kit.box(M.white, aw * 1.4, aw * 1.2, 3.2 * k, 0, at + aw * 0.6, end - 1.4 * k);
+  }
+  if (!red) {
+    // Tail service masts either side of the core's base, and the Orion umbilical.
+    for (const s of [-1, 1]) kit.box(M.greySteel, 2.2 * k, 9.8 * k, 2.2 * k, s * 7.2 * k, deck + 4.9 * k, -4.6 * k);
+    kit.box(M.white, 4 * k, 2 * k, 3 * k, 0, deck + 80 * k, near + 1.5 * k);
+  }
+  kit.build(g);
+  return g;
+}
+
+/**
  * The whole launch complex. `rocketTop` is the tallest rocket's height, so the code-built umbilical mast fits.
  * The code-built pad shows at once; the Blender models (launchModels.ts) replace it when they have loaded, and then
  * `group.userData.trench` tells the ground (launchGround.ts) to open over the sunken flame trench.
@@ -340,10 +420,17 @@ export function buildLaunchPad(rocketTop = 30): LaunchPad {
   group.add(ring);
   let parts: Record<'common' | 'classic' | 'modern', THREE.Object3D> | null = null;
   let disposed = false;
+  const kennedy: Partial<Record<'lc39a' | 'lc39b', THREE.Group>> = {};
 
   const show = () => {
     const kind = padKind(vehicle);
     group.userData.kind = kind;
+    // The Moon rockets stand on a Mobile Launcher: no hold-down ring of the older pads, no gantry.
+    const ml = kind === 'lc39a' || kind === 'lc39b';
+    ring.visible = !ml;
+    if (ml && !kennedy[kind]) group.add((kennedy[kind] = kennedyPad(kind === 'lc39a' ? 'saturnV' : 'sls')));
+    for (const id of ['lc39a', 'lc39b'] as const) if (kennedy[id]) kennedy[id].visible = kind === id;
+    fallback.visible = !ml;
     if (!parts) return;
     parts.classic.visible = kind === 'classic';
     parts.modern.visible = kind === 'modern';

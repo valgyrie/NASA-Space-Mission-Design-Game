@@ -4,6 +4,11 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
+**Eras demo (15 Nov, afternoon): START HERE.** The team asked to implement two Eras for the demo: the Moon landing (Era 3, Apollo 11) and the Artemis Era (Artemis II, III, IV). This replaces the earlier "do not implement the Eras yet". Work is on branch `eras-moon-artemis`, merged into `main` at the user's request when usage ran out.
+- Game logic done and tested (534 tests): Apollo 11 science package on Saturn V, Saturn V development card, Artemis II CubeSat on SLS, Artemis III and IV choice Milestones, finale, Demo Mode starts, save v20.
+- 3D mostly built but **never checked on screen**: NASA CGI Moon Kit globe, lunar surfaces, the four Moon sequences with captions and drag-to-look, Saturn V, SLS, LC-39A/39B, new Part meshes. The 3D agent was stopped mid-task.
+- Next: `docs/eras-demo/NEXT-SESSION.md` (prompt to paste, state and to-do). Plan and interface: `docs/eras-demo/PLAN.md`.
+
 **State:** tickets 01–26 and 30–42 built (32, 33, 34, 36, 39, 40, 41 and 42 wait for a team test); 27 continues as tickets ship; 28 and 29 agent parts done. Ticket 42 built from freshly pulled `main` **a95ba6a** and merged into `main`. 460 game tests and both type checks pass.
 
 **Done this session (14 Nov): ticket 42, Science-first Contracts, Light and Full.** Details: `docs/tickets/42-science-first-contracts.md` ("As built").

@@ -76,6 +76,8 @@ export interface PlumeLook {
 
 export const PLUME_LIQUID: PlumeLook = { core: new THREE.Color(1.0, 0.9, 0.62), sheath: new THREE.Color(1.0, 0.42, 0.1), diamonds: 0.7 };
 export const PLUME_SOLID: PlumeLook = { core: new THREE.Color(1.0, 0.94, 0.82), sheath: new THREE.Color(1.0, 0.62, 0.28), diamonds: 0.1 };
+/** Hydrogen and oxygen (RS-25, J-2, RL10): an almost clear, pale blue-white flame with sharp shock diamonds. */
+export const PLUME_HYDROGEN: PlumeLook = { core: new THREE.Color(0.85, 0.9, 1.0), sheath: new THREE.Color(0.35, 0.45, 0.95), diamonds: 1.0 };
 
 let glow: THREE.Texture | null = null;
 
