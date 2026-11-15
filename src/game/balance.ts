@@ -58,7 +58,7 @@ export const ASSEMBLY_HALL_COST = 300_000;
 export const MAX_LEVEL = { assemblyHall: 3, hq: 2, other: 3 } as const;
 
 /** The Assembly Hall's top level in each Era: its level 3 waits for the Large Bus (Era 2). */
-export const HALL_LEVEL_BY_ERA = { 1: 2, 2: 3, 5: 3 } as const;
+export const HALL_LEVEL_BY_ERA = { 1: 2, 2: 3, 3: 3, 5: 3 } as const;
 
 /**
  * The HQ every Site starts with. Its Upgrades are priced from this, like every building's: moving to Era 2
@@ -73,13 +73,15 @@ export const HQ_COST = 1_500_000;
 export const UPGRADE = {
   2: { costShare: 1, days: 15 },
   3: { costShare: 2, days: 30 },
+  // The HQ's jump from Era 3 to the Artemis Era (Era 4 is not built yet, so level 4 is skipped).
+  5: { costShare: 3, days: 45 },
 } as const;
 
 /** How much each level above the first adds to a Mine's output, a Warehouse's storage and a Research Lab's pace. */
 export const LEVEL_OUTPUT_STEP = 0.5;
 
 /** The Assembly Hall level each Bus needs: a bigger Bus needs a bigger hall. */
-export const BUS_HALL_LEVEL = { smallBus: 1, mediumBus: 2, largeBus: 3 } as const;
+export const BUS_HALL_LEVEL = { cubeSatBus: 1, smallBus: 1, mediumBus: 2, largeBus: 3 } as const;
 
 /**
  * A Factory makes Parts of its own level, their Mark: each Mark above Mk 1 makes a Part this much lighter,
@@ -132,6 +134,17 @@ export const RECIPES: Record<Part, Recipe> = {
   // A solid apogee motor with its propellant. Syncom's fuelled 68 kg became 39 kg once its motor had burned
   // (docs/research/milestones.md): the motor is the heaviest Part, as it is here.
   mainEngine: { factory: 'metalWorks', inputs: { aluminium: 60, copper: 20 }, days: 8, massKg: 24, work: 20_000 },
+  // Era 3 (ticket 50, docs/research/eras-3-5.md): an EASEP-like science package (the real one: 77 kg, a seismometer
+  // with its own panels and a laser reflector), a dish antenna that must point at Earth, and fold-out solar panels.
+  sciencePackage: { factory: 'electronicsLab', inputs: { silicon: 14, copper: 8 }, days: 6, massKg: 12, work: 30_000 },
+  dishAntenna: { factory: 'electronicsLab', inputs: { aluminium: 15, copper: 5 }, days: 4, massKg: 3, work: 15_000 },
+  foldOutPanels: { factory: 'solarFab', inputs: { silicon: 25, aluminium: 10 }, days: 5, massKg: 5, work: 12_000 },
+  // The Artemis Era (ticket 52): a 12U CubeSat frame (Artemis II's real slots took 12U CubeSats up to 26 kg), a relay
+  // radio that passes signals between the Moon and Earth, and a small lander with legs and a landing engine. The
+  // lander is lighter than the ticket's 40 kg so it fits a Large Bus (no Heavy Bus in the demo).
+  cubeSatBus: { factory: 'metalWorks', inputs: { aluminium: 50 }, days: 5, massKg: 4, work: 6_000 },
+  relayRadio: { factory: 'electronicsLab', inputs: { silicon: 8, copper: 8 }, days: 5, massKg: 3, work: 20_000 },
+  lander: { factory: 'metalWorks', inputs: { aluminium: 120, copper: 30 }, days: 12, massKg: 18, work: 40_000 },
 };
 
 /** The Market sells to you at this many times the making cost... */
@@ -148,6 +161,18 @@ export const CONTRACT_REWARD = {
   // Telstar 1 pays for its whole Launch (about $2.7M), so it pays more.
   telstar1: 8_000_000,
   syncom3: 10_000_000,
+  apollo11: 12_000_000,
+  // The ride is free (NASA picked the real CubeSats) and the Mission lasts a day, so it pays less.
+  artemis2: 6_000_000,
+  artemis3: 12_000_000,
+  // The finale.
+  artemis4: 30_000_000,
+} as const;
+
+/** What each extra choice of a Choice Milestone pays, once one of its choices is done. Game estimates. */
+export const CONTRACT_EXTRA_REWARD = {
+  artemis3: 6_000_000,
+  artemis4: 15_000_000,
 } as const;
 
 /** Game days from accepting a Contract to its deadline. A year keeps the tutorial relaxed (about 12 minutes at 1×). */
@@ -156,6 +181,10 @@ export const CONTRACT_DEADLINE_DAYS = {
   tiros1: 365,
   telstar1: 365,
   syncom3: 365,
+  apollo11: 365,
+  artemis2: 365,
+  artemis3: 365,
+  artemis4: 365,
 } as const;
 
 /**
@@ -202,13 +231,53 @@ export const OPTION_STATS = {
   transponder: { powerUseW: 1, dataPerDay: 90 },
   noEngine: {},
   mainEngine: {},
+  // Apollo-like: Science Package and Dish Antenna use 4 W. Over the 7 dark days that is 672 Wh: a Large Battery
+  // (720 Wh) just covers it, a Medium one (420 Wh) does not. From the Moon the Dish sends 400 / 5 = 80 kB a day.
+  sciencePackage: { powerUseW: 2, dataPerDay: 30 },
+  dishAntenna: { powerUseW: 2, sendPerDay: 400 },
+  foldOutPanels: { solarW: 20 },
+  cubeSatBus: { carriesKg: 22, assemblyDays: 25 },
+  relayRadio: { powerUseW: 4, dataPerDay: 30 },
+  lander: {},
 } as const satisfies Record<string, OptionStats>;
 
 /**
  * Share of each orbit a Spacecraft spends in sunlight (the rest is in Earth's shadow). Low Earth Orbit: game
  * estimate. Geostationary: NASA says Syncom 3 was in sunlight 99% of the time (docs/research/milestones.md).
  */
-export const SUNLIT_SHARE = { lowEarthOrbit: 0.6, geostationary: 0.99 } as const;
+export const SUNLIT_SHARE = {
+  lowEarthOrbit: 0.6,
+  geostationary: 0.99,
+  // Game estimate: a high, stretched orbit is rarely in Earth's shadow.
+  highEarthOrbit: 0.99,
+  // Game estimate between LRO's worst case (about 58%) and its two-month seasons of full Sun (eras-3-5.md, Era 4).
+  lunarOrbit: 0.75,
+  // Apollo 11 landed in the lunar morning: about 14 of the 21 days are sunlit (see LUNAR_NIGHT).
+  moonSurface: 0.67,
+  // A sunlit south-pole ridge: NASA's LOLA studies give 70% on average along Connecting Ridge, 88% at best.
+  lunarSouthPole: 0.8,
+} as const;
+
+/**
+ * The lunar night at Tranquility Base: a day on the Moon lasts about two Earth weeks, then about two weeks of night
+ * (NASA: a 340-hour night). Apollo 11 landed in the lunar morning, with about 14 days of sunlight left. A Spacecraft on
+ * the Moon's surface has full sunlight for the first `sunDays` of its Mission, then none: its battery must carry it
+ * through the dark (7 days of a 21-day Mission). Game rule built on docs/research/eras-3-5.md.
+ */
+export const LUNAR_NIGHT = { sunDays: 14 } as const;
+
+/**
+ * Radio from the Moon: about 10 times farther than geostationary orbit, so a signal arrives about 100 times weaker.
+ * Game rule: from the Moon every antenna sends this share of what it sends near Earth (ticket 50, open question 3).
+ */
+export const MOON_SEND_SHARE = 0.2;
+
+/**
+ * The south pole often can't see Earth. NASA's LCRNS paper (2025): straight to Earth a south-pole site has 17–43%
+ * coverage; one relay satellite makes it 80–86%. Game estimates built on those: a Spacecraft there sends Data this
+ * share of the time on its own, or with the Company's relay in lunar orbit.
+ */
+export const SOUTH_POLE_LINK = { alone: 0.3, relay: 0.85 } as const;
 
 /**
  * Ground Stations (Era 2): the Company's own antennas on its Site. Each one adds this much to what every
@@ -308,6 +377,9 @@ export const ANTENNA_CHANCE = {
  */
 export const PANEL_CHANCE = { 1: 0.35, 2: 0.2, 3: 0.1 } as const;
 
+/** Fold-out Solar Panels have more hinges and latches to stick than body-mounted Solar Cells: their chance times this. Game estimate. */
+export const FOLD_OUT_PANEL_CHANCE = 1.3;
+
 /**
  * Survive the eclipse: how likely, from the Power margin (the days the battery would last against the Mission's
  * days) and the battery's size. With no spare at all the chance is HIGH; with SAFE_SPARE (200% extra) or more,
@@ -377,6 +449,9 @@ export const ROCKET_RELIABILITY = {
   // since two flights can't show a rocket never fails.
   thorDelta: 0.97,
   deltaD: 0.97,
+  // Saturn V: every one of its 13 launches reached orbit (verify); SLS: 2 of 2. Game estimates kept below perfect.
+  saturnV: 0.98,
+  sls: 0.97,
 } as const;
 
 /**

@@ -29,5 +29,13 @@ export const PARTS = [
   'largeBus',
   'transponder',
   'mainEngine',
+  // Era 3: Apollo 11's science package (ticket 50).
+  'sciencePackage',
+  'dishAntenna',
+  'foldOutPanels',
+  // The Artemis Era (ticket 52).
+  'cubeSatBus',
+  'relayRadio',
+  'lander',
 ] as const;
 export type Part = (typeof PARTS)[number];

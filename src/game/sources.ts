@@ -9,11 +9,15 @@ export const VEHICLE_SOURCES: Record<LaunchVehicleId, string> = {
   thorDelta: 'https://en.wikipedia.org/wiki/Thor-Delta',
   deltaD: 'https://en.wikipedia.org/wiki/Delta_D',
   falcon9: 'https://en.wikipedia.org/wiki/Falcon_9',
+  saturnV: 'https://www.nasa.gov/history/55-years-ago-apollo-4-the-first-flight-of-the-saturn-v/',
+  sls: 'https://www.nasa.gov/wp-content/uploads/2025/12/sls-5558-artemis-ii-sls-reference-guide.pdf',
 };
 
 export const SITE_SOURCES: Record<LaunchSiteId, string> = {
   capeCanaveral: 'https://en.wikipedia.org/wiki/Cape_Canaveral_Launch_Complex_26',
   wallops: 'https://en.wikipedia.org/wiki/Wallops_Flight_Facility',
+  kennedy39A: 'https://en.wikipedia.org/wiki/Kennedy_Space_Center_Launch_Complex_39A',
+  kennedy39B: 'https://en.wikipedia.org/wiki/Kennedy_Space_Center_Launch_Complex_39B',
 };
 
 export const SOURCES = {
@@ -36,6 +40,19 @@ export const SOURCES = {
   cubesat101: 'https://www3.nasa.gov/sites/default/files/atoms/files/nasa_csli_cubesat_101_508.pdf',
   /** Europe's spaceport, 5° north of the equator, chosen for Earth's spin (launch-sites-and-physics.md). */
   equator: 'https://en.wikipedia.org/wiki/Guiana_Space_Centre',
+  /** Eras 3 and 5 (docs/research/eras-3-5.md). The lunar night (340 hours) and Apollo 11's seismometer. */
+  lunarNight: 'https://science.nasa.gov/resource/apollo-11-seismic-experiment/',
+  /** The Apollo laser reflectors: the Moon recedes about 3.8 cm a year. */
+  laserRanging: 'https://eclipse.gsfc.nasa.gov/help/ApolloLaser.html',
+  /** Apollo 4 (9 Nov 1967), the first Saturn V, flown "all-up". */
+  saturnV: 'https://www.nasa.gov/history/55-years-ago-apollo-4-the-first-flight-of-the-saturn-v/',
+  /** Apollo 8 (21 Dec 1968): the first crewed Saturn V, the first people to orbit the Moon. */
+  apollo8: 'https://www.nasa.gov/mission/apollo-8/',
+  /** SLS Block 1, its stages and lift, and Artemis II's four CubeSats. */
+  slsGuide: 'https://www.nasa.gov/wp-content/uploads/2025/12/sls-5558-artemis-ii-sls-reference-guide.pdf',
+  /** NASA's Lunar Communications Relay and Navigation Systems paper (2025): south-pole coverage with and without a relay. */
+  lcrns: 'https://www.nasa.gov/wp-content/uploads/2026/02/lcrns-esper-257-1.pdf',
+  artemis: 'https://www.nasa.gov/humans-in-space/artemis/',
 };
 
 /**

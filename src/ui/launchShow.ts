@@ -3,15 +3,17 @@ import { audio } from '../audio/sound';
 import { withContactLost } from '../game/anomalies';
 import { type CompanyLogo, DEFAULT_LOGO } from '../company/logo';
 import { type Segment, type ShowMoment, flightShow, secondsAtDay, showAt, stageTimes } from '../game/ascent';
-import { contractById } from '../game/contracts';
+import { contractById, onMoonGround } from '../game/contracts';
+import { placeOf } from '../game/space';
+import { moonBeatAt } from '../world/moonShow';
 import { contractNeeds } from '../game/spacecraft';
 import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { LaunchResult } from '../game/mission';
-import { t } from '../strings';
+import { STRINGS, type StringKey, t } from '../strings';
 import type { LaunchView } from '../world/launchView';
 import { type AnomalyHooks, showAnomalyPanel } from './anomalyPanel';
 import { contractText, formatDecimal, formatNumber } from './format';
-import { at, drawOrbit } from './testRun';
+import { at, drawMoonTrip, drawOrbit } from './testRun';
 
 /**
  * The Launch, played between pressing Launch and the Mission Report: liftoff, staging, orbit, then the
@@ -80,9 +82,10 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
       const s = formatNumber(stage.burnS);
       if (n === 1) return { title: t('launch.liftoff'), detail: t('launch.firstStage', { s }) };
       const last = n === lv.stages.length;
+      // Juno I's upper stages were tubs of small solid rockets; later rockets have big engines.
       const detail =
         stage.motors > 1
-          ? t('launch.motors', { count: formatNumber(stage.motors), s })
+          ? t(report.vehicle === 'juno1' ? 'launch.motors' : 'launch.engines', { count: formatNumber(stage.motors), s })
           : last
             ? t(lv.lastStageStays ? 'launch.motor' : 'launch.lastStage', { s })
             : t('launch.engine', { s });
@@ -91,17 +94,31 @@ export function showText(m: ShowMoment, result: LaunchResult, powered: boolean):
     case 'coast':
       return { title: t(`launch.coast.${report.vehicle}`), detail: t(`launch.coastDetail.${report.vehicle}`, { s: formatNumber(lv.coastS) }) };
     case 'orbit': {
+      // Bound for the Moon: this is only the parking orbit round Earth.
+      if (placeOf(report.contract) !== 'earth') return { title: t('launch.orbit'), detail: t('launch.orbitParking', { contract }) };
       const km = contractById(report.contract).orbitKm;
       const geo = contractNeeds(contractById(report.contract)).orbit === 'geostationary';
       const values = { contract, low: formatNumber(km.low), high: formatNumber(km.high) };
       return { title: t('launch.orbit'), detail: t(geo ? 'launch.orbitDetailGeo' : 'launch.orbitDetail', values) };
     }
-    case 'moon':
-      // Placeholder until the Moon sequences' captions (moonShow.<kind>.<beat>) exist: docs/eras-demo/PLAN.md.
-      return { title: t('launch.orbit'), detail: '' };
+    case 'moon': {
+      // The Moon sequence's captions: moonShow.<kind>.<beat> and .detail (src/world/moonShow.ts defines the beats).
+      const spec = seg.moon;
+      const key = spec ? `moonShow.${spec.kind}.${moonBeatAt(spec, m.value).key}` : '';
+      if (key in STRINGS) {
+        const detail = `${key}.detail`;
+        return { title: t(key as StringKey), detail: detail in STRINGS ? t(detail as StringKey) : '' };
+      }
+      return { title: t('launch.moon'), detail: t('launch.moonDetail', { contract }) };
+    }
     case 'lost':
       if (seg.stage !== undefined) return { title: t('launch.rocketFailed', { n: formatNumber(seg.stage) }), detail: t('launch.rocketFailedDetail') };
-      if (seg.stuck) return { title: t('launch.stuck'), detail: t('launch.stuckDetail') };
+      if (seg.stuck) {
+        const { orbit } = contractNeeds(contractById(report.contract));
+        if (orbit === 'lunarOrbit') return { title: t('launch.stuckMoon'), detail: t('launch.stuckMoonDetail') };
+        if (onMoonGround(orbit)) return { title: t('launch.stuckLander'), detail: t('launch.stuckLanderDetail') };
+        return { title: t('launch.stuck'), detail: t('launch.stuckDetail') };
+      }
       return { title: t('launch.lost'), detail: t('launch.lostDetail', { vehicle }) };
     case 'mission': {
       const a = report.anomaly;
@@ -340,8 +357,16 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
     const powered = flight.powerOutDay === null || day < flight.powerOutDay;
 
     if (simple || !view) {
-      if (phase === 'orbit' || phase === 'mission' || phase === 'end') {
-        drawOrbit(simpleCanvas, contractById(result.report.contract).orbitKm, showSeconds / LAP_SECONDS, powered);
+      const place = placeOf(result.report.contract);
+      if (phase === 'moon') {
+        // Off to the Moon (or Artemis III's docking near Earth): the trip across, then round or onto the Moon.
+        const near = place === 'earth';
+        if (near) drawOrbit(simpleCanvas, contractById(result.report.contract).orbitKm, showSeconds / LAP_SECONDS, powered);
+        else drawMoonTrip(simpleCanvas, Math.min(1, m.fraction * 1.25), powered, place === 'moonGround', showSeconds / LAP_SECONDS);
+      } else if (phase === 'orbit' || phase === 'mission' || phase === 'end') {
+        const parked = phase === 'orbit' && place !== 'earth';
+        if (parked) drawMoonTrip(simpleCanvas, 0, powered);
+        else drawOrbit(simpleCanvas, contractById(result.report.contract).orbitKm, showSeconds / LAP_SECONDS, powered, place);
       } else {
         // A failed stage stops the climb where it failed; too heavy, it falls back from the top.
         const tPlus = phase === 'lost' ? (m.segment.stage !== undefined ? m.segment.from : ascentEnd) : Math.max(0, m.value);
@@ -399,7 +424,7 @@ export function showLaunchShow(root: HTMLElement, makeView: () => LaunchView, lo
       result = r;
       done = onDone;
       anomalyHooks = anomaly ?? null;
-      segments = flightShow(r.report.vehicle, r.flight);
+      segments = flightShow(r.report.vehicle, r.flight, contractById(r.report.contract).moonShow);
       sources.replaceChildren(missionLinks(r.report.contract, r.report.vehicle));
       const times = stageTimes(r.report.vehicle);
       ascentEnd = times.at(-1)!.end;

@@ -1,5 +1,5 @@
 import type { Flight } from './flight';
-import type { MoonShowSpec } from '../world/moonShow';
+import { type MoonShowSpec, moonShowLength } from '../world/moonShow';
 import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
 
 /**
@@ -45,10 +45,11 @@ const MISSION_PLAY_MAX_S = 45;
 const END_PLAY_S = 3;
 
 /**
- * The show for one flight. A Spacecraft too heavy to reach orbit stops after the last stage; when a rocket
+ * The show for one flight. With `moon` (the Contract's Moon sequence) a 'moon' segment plays after 'orbit', its
+ * `value` the sequence's own seconds. A Spacecraft too heavy to reach orbit stops after the last stage; when a rocket
  * stage fails, the show stops half-way through that stage's burn ('lost' then carries the stage).
  */
-export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findings' | 'missionDays'>): Segment[] {
+export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findings' | 'missionDays'>, moon?: MoonShowSpec): Segment[] {
   const lv = LAUNCH_VEHICLES[vehicle];
   const segments: Segment[] = [{ phase: 'countdown', from: -COUNTDOWN_S, to: 0, playS: COUNTDOWN_S }];
   const orbit = flight.findings.find((f) => f.kind === 'orbit');
@@ -72,6 +73,11 @@ export function flightShow(vehicle: LaunchVehicleId, flight: Pick<Flight, 'findi
     return segments;
   }
   segments.push({ phase: 'orbit', from: t, to: t, playS: ORBIT_PLAY_S });
+  // A Mission to or near the Moon (and Artemis III's docking) plays its Moon sequence before the Mission's days.
+  if (moon) {
+    const length = moonShowLength(moon);
+    segments.push({ phase: 'moon', moon, from: 0, to: length, playS: length });
+  }
   const days = flight.missionDays;
   segments.push({ phase: 'mission', from: 0, to: days, playS: Math.min(MISSION_PLAY_MAX_S, days * DAY_PLAY_S) });
   segments.push({ phase: 'end', from: days, to: days, playS: END_PLAY_S });

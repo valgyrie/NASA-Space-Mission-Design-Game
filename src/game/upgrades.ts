@@ -1,6 +1,6 @@
 import type { SiteBuildingKind } from '../economy/part';
 import { ASSEMBLY_HALL_COST, BUILD_COST, BUS_HALL_LEVEL, HALL_LEVEL_BY_ERA, HQ_COST, MAX_LEVEL, UPGRADE } from './balance';
-import { type Era, eraOf, milestonesDone } from './eras';
+import { type Era, eraAfter, eraOf, milestonesDone } from './eras';
 import type { Building, SiteState } from './siteState';
 
 /**
@@ -14,7 +14,7 @@ import type { Building, SiteState } from './siteState';
 /** The highest level a kind of building reaches in an Era. The Assembly Hall's level 3 waits for the Large Bus (Era 2). */
 export function maxLevel(kind: SiteBuildingKind, era: Era = 1): number {
   if (kind === 'assemblyHall') return HALL_LEVEL_BY_ERA[era];
-  if (kind === 'hq') return era === 5 ? 5 : MAX_LEVEL.hq;
+  if (kind === 'hq') return eraAfter(era) ?? era;
   return MAX_LEVEL.other;
 }
 
@@ -31,7 +31,7 @@ export function nextUpgrade(
   building: Building,
   era: Era = 1,
 ): { level: number; cost: number; days: number } | null {
-  const level = building.level + 1;
+  const level = nextLevel(kind, building.level);
   if (level > maxLevel(kind, era)) return null;
   const step = UPGRADE[level as keyof typeof UPGRADE];
   return { level, cost: Math.round(priceOf(kind) * step.costShare), days: step.days };
@@ -48,6 +48,13 @@ export function checkUpgrade(state: SiteState, kind: SiteBuildingKind, building:
   if (kind === 'hq' && !milestonesDone(state, eraOf(state))) return { ok: false, problem: 'milestones' };
   if (state.money < next.cost) return { ok: false, problem: 'money' };
   return { ok: true };
+}
+
+/** The level an Upgrade raises a building to: one up, except the HQ, whose levels are the Eras (Era 4 is skipped). */
+export function nextLevel(kind: SiteBuildingKind, level: number): number {
+  if (kind !== 'hq') return level + 1;
+  const era = ([1, 2, 3, 5] as const).find((e) => e > level);
+  return era ?? level + 1;
 }
 
 /** Pay for the next level and start the work. It is done `days` game days from now. */

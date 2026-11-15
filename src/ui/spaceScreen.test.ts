@@ -26,7 +26,7 @@ describe('Space view text', () => {
 
   it("gives Explorer 1's real orbit and lap time", () => {
     const r = report(EXPLORER);
-    const facts = satelliteFacts({ id: 0, contract: 'explorer1', report: r, orbitKm: { low: 358, high: 2_550 }, inclinationDeg: 33.24, status: satelliteStatus(r, 40) });
+    const facts = satelliteFacts({ id: 0, contract: 'explorer1', report: r, orbitKm: { low: 358, high: 2_550 }, inclinationDeg: 33.24, place: 'earth', status: satelliteStatus(r, 40) });
     expect(facts).toEqual([
       expect.stringContaining('on Juno I from Cape Canaveral'),
       '358 to 2,550 km above Earth, tilted 33.2° to the equator.',

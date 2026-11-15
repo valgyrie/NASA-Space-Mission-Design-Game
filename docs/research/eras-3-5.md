@@ -400,3 +400,24 @@ Checks:
 [^lola]: [NASA (NTRS 20170007365): Illumination conditions at the lunar poles](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf) · [NASA Lunar Surface Data Book (NTRS 20250002845)](https://ntrs.nasa.gov/api/citations/20250002845/downloads/M2M-30044%20Lunar%20Surface%20Data%20Book%20Baseline_Final.pdf) · [NASA SVS: Moon's south pole](https://svs.gsfc.nasa.gov/gallery/moonpole/) (via search summary)
 [^rad]: [NASA: Step 3, Artemis: Moon missions as an astronaut testbed for Mars](https://www.nasa.gov/humans-in-space/step-3-artemis-moon-missions-as-an-astronaut-testbed-for-mars/) · [NASA THREE (JSC) risk pages](https://three.jsc.nasa.gov/?sub=nonRisks) (via search summary)
 [^moonfact]: [NASA NSSDCA: Moon fact sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) (the page reset the connection from here; 384,400 km is its well-known mean distance _(verify)_)
+
+
+---
+
+## As built for the demo: facts checked again (15 Nov 2026)
+
+Each fact the demo shows on screen, re-checked on a NASA page today (agent A). Items still marked _(verify)_ are in the code comments too.
+
+| Fact in the game | Source (checked 15 Nov 2026) |
+|---|---|
+| Saturn V: Marshall Space Flight Center was given overall responsibility for its development; Wernher von Braun was Marshall's director | [NASA SP-4206, ch. 12](https://history.nasa.gov/SP-4206/ch12.htm) · [NASA: Saturn V F-1 engine arrives at Marshall](https://www.nasa.gov/image-article/saturn-v-f-1-engine-arrives-marshall/) |
+| Five F-1 engines, 7.5 million pounds of thrust; 363 ft tall; Apollo 4, the first flight, uncrewed, 9 Nov 1967, Pad 39A, the first "all-up" test of all three stages | [NASA: 55 years ago, Apollo 4](https://www.nasa.gov/history/55-years-ago-apollo-4-the-first-flight-of-the-saturn-v/) |
+| Apollo 8 (21 Dec 1968): first crewed Saturn V; first people to orbit the Moon (Borman, Lovell, Anders) | [NASA: Apollo 8](https://www.nasa.gov/mission/apollo-8/) |
+| Apollo 11: 16 Jul 1969, 9:32 a.m. EDT, Pad 39A, AS-506; Armstrong, Collins, Aldrin; Eagle and Columbia; Sea of Tranquility, 20 Jul; Aldrin deployed EASEP; splashdown 24 Jul | [NASA: Apollo 11 mission overview](https://www.nasa.gov/history/apollo-11-mission-overview/) |
+| Seismometer: two solar panels, worked only in the lunar day; radioisotope heater; about 340-hour night; about three weeks of data; stopped answering at 04:00 UT on 25 Aug 1969; 100–200 meteorite hits | [NASA Science: Apollo 11 seismic experiment](https://science.nasa.gov/resource/apollo-11-seismic-experiment/) |
+| Laser reflector: 100 corner cubes, distance to about 3 cm; the Moon recedes about 3.8 cm a year | [NASA Goddard: Apollo laser ranging](https://eclipse.gsfc.nasa.gov/help/ApolloLaser.html) |
+| SLS Block 1: more than 95 t to low Earth orbit, more than 27 t to the Moon | [NASA SLS fact sheet (Dec 2025)](https://www.nasa.gov/wp-content/uploads/2026/03/sls-5640-sls-fact-sheet-dec2025-508.pdf) · [SLS Reference Guide for Artemis II](https://www.nasa.gov/wp-content/uploads/2025/12/sls-5558-artemis-ii-sls-reference-guide.pdf) |
+| Falcon 9 to the Moon: IM-1's Nova-C weighed about 1,908 kg at launch (15 Feb 2024, LC-39A); used as a lower bound for lift, rounded to 1,900 kg _(verify on a NASA page; secondary sources only)_ | NASASpaceflight, Wikipedia (Nova-C) |
+| Artemis II, Artemis III and IV plans | as above in this note ([^a2], [^a3], [^a4]); III and IV are labelled "NASA's plan" in the game |
+
+Game rules built on these (game estimates, in `src/game/balance.ts`): `LUNAR_NIGHT.sunDays` 14, `MOON_SEND_SHARE` 0.2, `SOUTH_POLE_LINK` 0.3 / 0.85, `SUNLIT_SHARE` (high Earth orbit 0.99, lunar orbit 0.75, Moon's surface 0.67, south pole 0.8), Lunar Module limit 45 kg, Lander 18 kg, Relay Radio as a Payload (30 kB/day). Not verified: Kennedy LC-39A/39B coordinates (Wikipedia, rounded) _(verify)_; Saturn V record "13 of 13 reached orbit" _(verify; Apollo 6 had engine problems)_ is not shown in the game.

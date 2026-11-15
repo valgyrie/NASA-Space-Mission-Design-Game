@@ -4,7 +4,8 @@ import { type BuildingKind, type FactoryKind, PARTS, type Part, type SiteBuildin
 import { RAW_MATERIALS, type RawMaterial } from '../economy/rawMaterial';
 import { type Site, tileAt } from '../site/site';
 import type { AnomalyKind } from './anomalies';
-import { CONTRACT_IDS, type AcceptedContract, type ContractId, expireContracts } from './contracts';
+import { CONTRACTS, CONTRACT_IDS, type AcceptedContract, type ContractId, choiceOf, expireContracts, milestoneDone } from './contracts';
+import { nextLevel } from './upgrades';
 import type { HistoryCardId, Patch } from './history';
 import { type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen } from './launchVehicles';
 import { MODERN_ERA, eraOf, eraStartDay, isBuildingOpen } from './eras';
@@ -581,7 +582,7 @@ export function setMaking(state: SiteState, factory: Factory, part: Part): void 
 function finishUpgrades(state: SiteState): void {
   for (const { kind, building } of allBuildings(state)) {
     if (building.upgradeDay !== null && state.day >= building.upgradeDay) {
-      building.level += 1;
+      building.level = nextLevel(kind, building.level);
       building.upgradeDay = null;
       if (kind === 'hq') enterEra(state);
     }
@@ -609,10 +610,14 @@ export function enterEra(state: SiteState): void {
   if (!isVehicleOpen(state, state.vehicle)) state.vehicle = firstOpenVehicle(state);
 }
 
-/** Until later Campaign Eras are built, its four playable Milestones are the endpoint. */
+/** The Campaign is finished once its finale (Artemis IV, any one choice) is done: the Company can go on in Free Play. */
 export function canContinueFreePlay(state: SiteState): boolean {
-  return state.playMode === 'campaign' && state.mission === null &&
-    CONTRACT_IDS.every((id) => state.completed.includes(id));
+  return state.playMode === 'campaign' && state.mission === null && campaignDone(state);
+}
+
+/** Every Campaign Milestone is done (a Choice Milestone by any one of its Contracts). */
+export function campaignDone(state: Pick<SiteState, 'completed'>): boolean {
+  return CONTRACT_IDS.filter((id) => CONTRACTS[id].kind === 'milestone').every((id) => milestoneDone(state, choiceOf(id) ?? id));
 }
 
 /** Keep the Company and its history; move dates still to come with the jump to modern play. */

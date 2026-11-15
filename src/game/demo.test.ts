@@ -22,7 +22,7 @@ describe('Demo Mode', () => {
     expect(game.site).toEqual(createDemo(1).site);
     expect(eraOf(state)).toBe(era);
     expect(state.day).toBe(eraStartDay(era));
-    expect(state.contracts[0]?.id).toBe(era === 1 ? 'explorer1' : 'telstar1');
+    expect(state.contracts[0]?.id).toBe(({ 1: 'explorer1', 2: 'telstar1', 3: 'apollo11', 5: 'artemis2' } as const)[era]);
     expect(fitBuildings(site, state)).toBe(false);
     expect(state.mines.map((m) => mineMaterial(site, m)).sort()).toEqual(['aluminium', 'copper', 'silicon']);
     expect(storageUsed(state)).toBeLessThan(storageCapacity(state));

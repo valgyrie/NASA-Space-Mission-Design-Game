@@ -1,4 +1,4 @@
-import { type ContractId, contractById } from './contracts';
+import { type ContractId, type MilestoneId, contractById } from './contracts';
 
 /**
  * "Like the real one" (ticket 36): the real Spacecraft the Mission Report puts beside the player's. In the
@@ -7,7 +7,7 @@ import { type ContractId, contractById } from './contracts';
  * is left out and never shown. Names live in strings.ts (`real.<id>.name`). Notes: docs/research/like-the-real-one.md.
  */
 
-export const REAL_CRAFT_IDS = ['explorer1', 'tiros1', 'telstar1', 'syncom3', 'sampex', 'noaa18', 'tdrs1'] as const;
+export const REAL_CRAFT_IDS = ['explorer1', 'tiros1', 'telstar1', 'syncom3', 'sampex', 'noaa18', 'tdrs1', 'easep', 'kRadCube', 'lro'] as const;
 export type RealCraftId = (typeof REAL_CRAFT_IDS)[number];
 
 /** How a Spacecraft got its Power. `solar`: the source names only solar cells. */
@@ -105,14 +105,50 @@ export const REAL_CRAFT: Record<RealCraftId, RealCraft> = {
     worked: { value: { until: '2010-06-27' }, source: 'https://ntrs.nasa.gov/citations/20110012816' },
     learnMore: WIKI('TDRS-1'),
   },
+  // Apollo 11's science package. NASA SP-4205 (Chariots for Apollo, appendix D): seismometer and laser reflector 77 kg
+  // together. NASA Science: solar powered; it stopped answering commands on 25 August 1969.
+  easep: {
+    id: 'easep',
+    massKg: { value: 77, source: 'https://apolloexplorer.co.uk/books/SP-4205/app-d.html' },
+    power: { value: 'solar', source: 'https://science.nasa.gov/resource/apollo-11-seismic-experiment/' },
+    worked: { value: { until: '1969-08-25' }, source: 'https://science.nasa.gov/resource/apollo-11-seismic-experiment/' },
+    learnMore: 'https://science.nasa.gov/resource/apollo-11-seismic-experiment/',
+  },
+  // Artemis II: Korea's K-Rad Cube, one of four 12U CubeSats (up to 26 kg each) released in high Earth orbit to
+  // measure radiation across the Van Allen belts. Its own mass and results are not confirmed, so none are shown.
+  kRadCube: {
+    id: 'kRadCube',
+    learnMore: 'https://www.nasa.gov/wp-content/uploads/2025/12/sls-5558-artemis-ii-sls-reference-guide.pdf',
+  },
+  // The Moon Mapper is like LRO, in a 50 km polar orbit since 2009. NASA Science: 1,850 kg with fuel; still working.
+  lro: {
+    id: 'lro',
+    massKg: { value: 1_850, source: 'https://science.nasa.gov/mission/lro/about/' },
+    learnMore: 'https://science.nasa.gov/mission/lro/',
+  },
+};
+
+/**
+ * The real Spacecraft each Milestone is compared with. Artemis III's choices and Artemis IV's relay and cargo lander
+ * compare with plans, not flown Spacecraft, so they have none (the Mission Report leaves the section out).
+ */
+const MILESTONE_CRAFT: Partial<Record<MilestoneId, RealCraftId>> = {
+  explorer1: 'explorer1',
+  tiros1: 'tiros1',
+  telstar1: 'telstar1',
+  syncom3: 'syncom3',
+  apollo11: 'easep',
+  artemis2: 'kRadCube',
+  artemis4Mapper: 'lro',
 };
 
 /** Which real Spacecraft each generated Contract kind is compared with. */
 const FREE_PLAY: Record<'survey' | 'weather' | 'relay', RealCraftId> = { survey: 'sampex', weather: 'noaa18', relay: 'tdrs1' };
 
 /** The real Spacecraft a Contract's Mission is compared with: the Milestone's own, or one of the same kind. */
-export function realCraftFor(id: ContractId): RealCraft {
+export function realCraftFor(id: ContractId): RealCraft | null {
   const contract = contractById(id);
   if (contract.template) return REAL_CRAFT[FREE_PLAY[contract.template]];
-  return REAL_CRAFT[id as RealCraftId];
+  const craft = MILESTONE_CRAFT[id as MilestoneId];
+  return craft ? REAL_CRAFT[craft] : null;
 }

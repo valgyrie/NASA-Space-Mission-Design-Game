@@ -1,4 +1,4 @@
-import { contractById, type ContractId } from './contracts';
+import { atMoon, contractById, type ContractId, onMoonGround } from './contracts';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
 import { contractNeeds } from './spacecraft';
@@ -47,9 +47,18 @@ export interface Satellite {
   id: number;
   contract: ContractId;
   report: MissionReport;
+  /** Kilometres above the ground at its lowest and highest: above Earth's, or above the Moon's when `place` says so. */
   orbitKm: { low: number; high: number };
   inclinationDeg: number;
+  /** Round Earth, round the Moon (`orbitKm` is then above the Moon), or on the Moon's ground. */
+  place: 'earth' | 'moonOrbit' | 'moonGround';
   status: SatelliteStatus;
+}
+
+/** Where a Contract's Spacecraft ends up: round Earth, round the Moon, or on the Moon. */
+export function placeOf(id: ContractId): Satellite['place'] {
+  const { orbit } = contractNeeds(contractById(id));
+  return onMoonGround(orbit) ? 'moonGround' : atMoon(orbit) ? 'moonOrbit' : 'earth';
 }
 
 export function satelliteStatus(report: MissionReport, today: number): SatelliteStatus {
@@ -75,6 +84,7 @@ export function satellitesInOrbit(state: SiteState): Satellite[] {
         report,
         orbitKm: contract.orbitKm,
         inclinationDeg: contract.inclinationDeg,
+        place: placeOf(report.contract),
         status: satelliteStatus(report, state.day),
       },
     ];

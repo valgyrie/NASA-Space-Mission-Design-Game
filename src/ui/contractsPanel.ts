@@ -3,19 +3,24 @@ import {
   type Contract,
   type ContractId,
   type Requirement,
+  CHOICE_MILESTONES,
+  type ChoiceMilestoneId,
   acceptContract,
   accepted,
   availableContracts,
+  choiceOf,
   contractById,
+  milestoneDone,
+  rewardFor,
   daysLeft,
   deadlineDay,
   questionOffers,
 } from '../game/contracts';
-import { LAST_ERA, eraOf, milestonesDone } from '../game/eras';
+import { eraAfter, eraOf, milestonesDone } from '../game/eras';
 import { type SiteState, canContinueFreePlay, continueFreePlay } from '../game/siteState';
 import { upgradeDaysLeft } from '../game/upgrades';
 import { t } from '../strings';
-import { contractText, formatDays, formatGameDate, formatMoney, formatNumber } from './format';
+import { contractText, eraName, formatDays, formatGameDate, formatMoney, formatNumber } from './format';
 import { missionLinks } from './learnMore';
 
 export interface ContractsPanel {
@@ -100,6 +105,11 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     else deadline.textContent = t('contracts.deadlineAfter', { days: formatNumber(contract.deadlineDays) });
     box.append(title);
     if (contract.question) box.append(field(t('contracts.question'), t(`question.${contract.question}.text`)));
+    // A Choice Milestone's Contract says in one line why NASA needs it.
+    const group = choiceOf(contract.id);
+    if (group) box.append(field(t('contracts.why'), t(`contract.${contract.id as (typeof CHOICE_MILESTONES)[ChoiceMilestoneId][number]}.why`)));
+    const reward = rewardFor(state, contract.id);
+    const rewardLine = reward !== contract.reward ? t('contracts.extraReward', { money: formatMoney(reward) }) : formatMoney(reward);
     box.append(
       // Generated Contracts say who needs the Data and why; Milestones name their real client.
       contract.kind === 'generated'
@@ -109,13 +119,20 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
       field(t('contracts.requirements'), requirements),
       field(
         t('contracts.reward'),
-        contract.plot ? t('contracts.rewardPlot', { money: formatMoney(contract.reward) }) : formatMoney(contract.reward),
+        contract.plot ? t('contracts.rewardPlot', { money: formatMoney(contract.reward) }) : rewardLine,
       ),
       field(t('contracts.deadline'), deadline),
     );
     if (contract.question) box.append(field(t('contracts.orbitWhy'), t(`question.${contract.question}.orbit`)));
     box.append(missionLinks(contract.id));
     if (contract.wholeLaunch) box.append(el('p', 'side-note', t('contracts.wholeLaunch')));
+    if (contract.ride) {
+      box.append(el('p', 'side-note', t('contracts.ride', {
+        vehicle: t(`launchVehicle.${contract.ride.vehicle}`),
+        site: t(`launchSite.${contract.ride.site}.short`),
+        kg: formatNumber(contract.ride.maxKg),
+      })));
+    }
     // A Milestone whose deadline passed is back: say so, so the player knows they can try again.
     if (!taken && state.reopened.includes(contract.id)) box.append(el('p', 'side-note', t('contracts.reopened')));
     if (!taken) {
@@ -174,7 +191,26 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     const open = availableContracts(state);
     if (open.length === 0 && state.contracts.length === 0) body.append(eraLine);
     else if (open.length === 0) body.append(el('p', 'side-note', t('contracts.none')));
-    for (const c of open) body.append(card(c));
+    // A Choice Milestone's Contracts sit side by side under one heading; the rest one under another.
+    const groups = new Map<ChoiceMilestoneId, Contract[]>();
+    for (const c of open) {
+      const group = choiceOf(c.id);
+      if (group) groups.set(group, [...(groups.get(group) ?? []), c]);
+      else body.append(card(c));
+    }
+    for (const [group, list] of groups) {
+      const name = t(`contract.group.${group}`);
+      const first = contractById(CHOICE_MILESTONES[group][0]);
+      const extra = formatMoney(first.extraReward ?? first.reward);
+      body.append(
+        el('h4', 'contract-choice-heading', t('contracts.choice.heading', { name })),
+        el('p', 'side-note', t(milestoneDone(state, group) ? 'contracts.choice.done' : 'contracts.choice.intro', { name, extra })),
+      );
+      const row = el('div', 'contract-choices');
+      for (const c of list) row.append(card(c));
+      body.append(row, el('p', 'side-note', t('contracts.plan')));
+    }
+    panel.classList.toggle('has-choices', groups.size > 0);
     if (state.playMode === 'freePlay') body.append(questionCard());
     if (canContinueFreePlay(state)) {
       body.append(el('p', 'side-note', t('freePlay.continueNote')));
@@ -207,9 +243,10 @@ export function showContractsPanel(root: HTMLElement, state: SiteState, onAccept
     const era = eraOf(state);
     const hq = state.hq;
     const left = hq ? upgradeDaysLeft(state, hq) : null;
-    if (left !== null && era < LAST_ERA) return t('contracts.hqUnderway', { era: era + 1, days: formatDays(left) });
-    if (era < LAST_ERA && milestonesDone(state, era)) return t('contracts.hqHint', { era, next: era + 1 });
-    return era >= LAST_ERA && milestonesDone(state, era) ? t('contracts.allDone') : t('contracts.none');
+    const after = state.playMode === 'freePlay' ? null : eraAfter(era);
+    if (left !== null && after) return t('contracts.hqUnderway', { next: eraName(after), days: formatDays(left) });
+    if (after && milestonesDone(state, era)) return t('contracts.hqHint', { era, next: eraName(after) });
+    return !after && milestonesDone(state, era) ? t('contracts.allDone') : t('contracts.none');
   };
 
   // Redraw when a Contract changes column on its own (a missed deadline puts it back on the board), or a new Era opens.

@@ -627,6 +627,22 @@ button.trade.blocked {
   width: min(380px, calc(100vw - 24px));
 }
 
+/* A Choice Milestone (Artemis III, IV) shows its choices side by side: the board widens for them. */
+.contracts.has-choices {
+  width: min(880px, calc(100vw - 24px));
+}
+
+.contract-choices {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.contract-choices .contract-card {
+  margin-top: 0;
+}
+
 .contract-card {
   margin-top: 4px;
   padding: 10px 12px;

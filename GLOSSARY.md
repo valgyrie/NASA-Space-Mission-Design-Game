@@ -112,6 +112,22 @@ _Avoid_: science mission, quest
 A Campaign Contract based on a real event in space history, such as Explorer 1.
 _Avoid_: story mission, chapter
 
+**Choice Milestone**:
+A Milestone the Company can complete in one of several ways, each its own Contract, such as Artemis III's camera, relay or space-weather watch. Any one completes it; each extra one pays a smaller extra reward.
+_Avoid_: branch, option mission
+
+**NASA ride**:
+A Launch on NASA's own rocket that NASA pays for, such as Apollo 11's Saturn V or Artemis II's SLS. The rocket and pad are NASA's, the Launch costs the Company nothing, and the Spacecraft must fit the room NASA gives it (the Lunar Module, a CubeSat slot).
+_Avoid_: free launch, NASA rideshare
+
+**Lunar night**:
+The two weeks of darkness on the Moon's surface after its two-week day. A Spacecraft on the surface needs a battery that lasts through it.
+_Avoid_: eclipse (on the Moon)
+
+**Relay**:
+A satellite that passes Data between other Spacecraft and Earth, such as a relay round the Moon for a site at the south pole, where Earth is often out of sight.
+_Avoid_: repeater
+
 **Spacecraft**:
 What the player designs and sends to space: a satellite, probe, lander or crew capsule.
 _Avoid_: rocket, ship, satellite (as the general term)

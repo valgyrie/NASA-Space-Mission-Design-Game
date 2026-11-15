@@ -11,7 +11,7 @@ import { build, checkBuild, newSiteState, placeAssemblyHall, placeHQ } from './s
 import { choose, partsNeeded, type OptionId } from './spacecraft';
 
 /** The Campaign Eras built so far. Add a prepared Company here when another Era is playable. */
-export const DEMO_ERAS = [1, 2] as const;
+export const DEMO_ERAS = [1, 2, 3, 5] as const;
 export type DemoEra = (typeof DEMO_ERAS)[number];
 export const DEMO_SEED = 'K7QXM2';
 export const DEMO_SAVE_KEY = 'leap.demo';
@@ -24,13 +24,31 @@ export function demoStorage(storage: SaveStorage): SaveStorage {
   };
 }
 
+/** Each demo's Milestone, the cards it has seen on accepting it, and its ready design. */
+const DEMO_CONTRACT = { 1: 'explorer1', 2: 'telstar1', 3: 'apollo11', 5: 'artemis2' } as const;
+const DEMO_CARDS = {
+  1: ['explorer1Before'],
+  2: ['telstar1Before'],
+  3: ['saturnVBefore', 'apollo11Before'],
+  5: ['artemis2Before'],
+} as const;
+const DEMO_DESIGN: Record<DemoEra, OptionId[]> = {
+  1: ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'noEngine', 'radiationDetector'],
+  2: ['mediumBus', 'solarCells', 'smallBattery', 'simpleAntenna', 'spin', 'noEngine', 'transponder'],
+  // Apollo 11: 41 kg in the Lunar Module's 45; the Dish Antenna reaches home from the Moon; the battery covers the night.
+  3: ['largeBus', 'foldOutPanels', 'largeBattery', 'dishAntenna', 'spin', 'noEngine', 'sciencePackage'],
+  // Artemis II: an 11.5 kg 12U CubeSat for a one-day Mission.
+  5: ['cubeSatBus', 'solarCells', 'smallBattery', 'simpleAntenna', 'spin', 'noEngine', 'radiationDetector'],
+};
+
 /** A fresh ready-made save, using the same Site, rules and Parts as an ordinary Campaign. */
 export function createDemo(era: DemoEra): SaveData {
   const state = newSiteState();
   const site = generateSite(DEMO_SEED, siteClimateFor(state.place));
   const hall = placeAssemblyHall(site, state);
   placeHQ(site, state).level = era;
-  hall.level = era === 1 ? 1 : 2;
+  // Era 3 and the Artemis Era fly the Large Bus, which needs a level 3 Assembly Hall.
+  hall.level = era === 1 ? 1 : era === 2 ? 2 : 3;
   state.day = eraStartDay(era);
   state.eraSeen = era;
   state.tutorial.skipped = true;
@@ -40,6 +58,16 @@ export function createDemo(era: DemoEra): SaveData {
     state.completed = ['explorer1', 'tiros1'];
     state.history = ['explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After'];
     state.vehicle = 'thorDelta';
+  }
+  if (era >= 3) {
+    state.completed = ['explorer1', 'tiros1', 'telstar1', 'syncom3', ...(era === 5 ? ['apollo11' as const] : [])];
+    state.history = [
+      'explorer1Before', 'explorer1After', 'vanguard1', 'tiros1Before', 'tiros1After',
+      'telstar1Before', 'telstar1After', 'alouette1', 'syncom3Before', 'syncom3After',
+      ...(era === 5 ? (['saturnVBefore', 'apollo11Before', 'apollo11After'] as const) : []),
+    ];
+    // Better Batteries from the research done so far: the lunar night leaves the Large Battery a thin margin.
+    state.research = { processedKb: 2_000, tech: ['betterBatteries'] };
   }
 
   // Group the industry near the hall; Mines use the nearest free Deposit of each Raw Material.
@@ -53,27 +81,26 @@ export function createDemo(era: DemoEra): SaveData {
   add('warehouse');
   for (const material of RAW_MATERIALS) add('mine', material);
   for (const kind of ['metalWorks', 'electronicsLab', 'batteryPlant'] as const) add(kind);
-  if (era === 2) {
+  if (era >= 2) {
     add('solarFab');
     add('researchLab');
     add('groundStation');
-    state.factories.find((f) => f.kind === 'metalWorks')!.making = 'mediumBus';
-    state.factories.find((f) => f.kind === 'electronicsLab')!.making = 'transponder';
+    state.factories.find((f) => f.kind === 'metalWorks')!.making = era === 5 ? 'cubeSatBus' : 'mediumBus';
+    state.factories.find((f) => f.kind === 'electronicsLab')!.making = era === 2 ? 'transponder' : era === 3 ? 'sciencePackage' : 'relayRadio';
   }
   for (const material of RAW_MATERIALS) state.stock[material] = 300;
 
-  const contract = era === 1 ? 'explorer1' : 'telstar1';
+  const contract = DEMO_CONTRACT[era];
   acceptContract(state, contract);
-  state.history.push(era === 1 ? 'explorer1Before' : 'telstar1Before');
-  const options: OptionId[] = era === 1
-    ? ['smallBus', 'batteriesOnly', 'largeBattery', 'simpleAntenna', 'spin', 'noEngine', 'radiationDetector']
-    : ['mediumBus', 'solarCells', 'smallBattery', 'simpleAntenna', 'spin', 'noEngine', 'transponder'];
-  for (const option of options) choose(state.design, option, state);
+  state.history.push(...DEMO_CARDS[era]);
+  for (const option of DEMO_DESIGN[era]) choose(state.design, option, state);
   // Enough for the prepared design and a second attempt, plus a battery choice to experiment with.
   for (const part of partsNeeded(state.design)) state.parts[part] = 2;
   state.parts.smallBattery = 2;
   state.parts.largeBattery = 2;
-  state.money = era === 1 ? 2_000_000 : 8_000_000;
+  // The Artemis demo goes on to Artemis III and IV: Parts for a camera satellite and a lunar relay are in stock too.
+  if (era === 5) for (const part of ['mediumBus', 'largeBus', 'tvCamera', 'relayRadio', 'foldOutPanels', 'dishAntenna', 'mainEngine'] as const) state.parts[part] = 1;
+  state.money = era === 1 ? 2_000_000 : era === 2 ? 8_000_000 : 20_000_000;
 
   return {
     version: SAVE_VERSION,

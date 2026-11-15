@@ -49,6 +49,16 @@ export function statusText(status: SatelliteStatus): string {
 /** The facts shown for one Spacecraft. */
 export function satelliteFacts(sat: Satellite): string[] {
   const minutes = orbitMinutes(sat.orbitKm);
+  const launched = t('space.launched', {
+    date: formatGameDate(sat.report.launchDay),
+    vehicle: t(`launchVehicle.${sat.report.vehicle}`),
+    site: t(`launchSite.${sat.report.site}.short`),
+  });
+  // Round the Moon or on it: Earth's lap times don't apply.
+  if (sat.place === 'moonGround') return [launched, t('space.onMoon')];
+  if (sat.place === 'moonOrbit') {
+    return [launched, t('space.moonOrbit', { high: formatNumber(sat.orbitKm.high), tilt: formatDecimal(sat.inclinationDeg) })];
+  }
   return [
     t('space.launched', {
       date: formatGameDate(sat.report.launchDay),

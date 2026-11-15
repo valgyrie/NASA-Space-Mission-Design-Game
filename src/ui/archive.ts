@@ -73,7 +73,7 @@ export function showArchive(
           b.append(img);
         }
         const words = el('span', 'archive-card-words');
-        words.append(el('strong', '', t(`history.${id}.title`)), el('span', '', t(`history.${card.when}`, { year: card.year })));
+        words.append(el('strong', '', t(`history.${id}.title`)), el('span', '', t(card.plan ? 'history.plan' : `history.${card.when}`, { year: card.year })));
         b.append(words);
         b.addEventListener('click', () => hooks.onCard(id));
         return b;

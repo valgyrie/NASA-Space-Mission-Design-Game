@@ -43,7 +43,7 @@ export const isGroundTestId = (v: unknown): v is GroundTestId => (GROUND_TEST_ID
  * strike any Spacecraft; Stuck solar panel and Survive the eclipse only one with Solar Cells.
  */
 export function groundTestsFor(design: Design): GroundTestId[] {
-  const solar = design.power === 'solarCells';
+  const solar = design.power === 'solarCells' || design.power === 'foldOutPanels';
   return GROUND_TEST_IDS.filter((id) => id === 'dayInTheLife' || solar);
 }
 

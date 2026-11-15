@@ -1,9 +1,26 @@
 import { type Rng, hashText, makeRng } from '../site/random';
 import { PART_SPREAD, TEST_RUNS } from './balance';
 import { contractById } from './contracts';
-import { LAUNCH_VEHICLES, type LaunchVehicleId, liftFrom } from './launchVehicles';
+import { LAUNCH_VEHICLES, type LaunchVehicleId } from './launchVehicles';
 import type { Finding, Mission } from './mission';
-import { type Design, SLOTS, contractNeeds, dataOf, hasMainEngine, hasRightPayload, needsMainEngine, powerOf, spacecraftMass } from './spacecraft';
+import {
+  type Design,
+  SLOTS,
+  batteryOnDay,
+  contractNeeds,
+  dataOf,
+  hasLander,
+  hasMainEngine,
+  hasRightPayload,
+  isCubeSat,
+  lastsDaysOn,
+  liftFor,
+  linkShare,
+  needsLander,
+  needsMainEngine,
+  powerOf,
+  spacecraftMass,
+} from './spacecraft';
 
 /**
  * The flight, worked out day by day. The real Launch flies it once; a Test Run flies it many times.
@@ -35,7 +52,7 @@ export function drawSpread(rng: Rng, share: Spread = PART_SPREAD): Spread {
  * were built with (all Mk 1 when `marks` is left out), and how much the Company's Ground Stations add to its
  * antenna (1, none, when `ground` is left out).
  */
-export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks' | 'site' | 'ground'>>;
+export type FlightPlan = Pick<Mission, 'contract' | 'design' | 'vehicle' | 'tech'> & Partial<Pick<Mission, 'marks' | 'site' | 'ground' | 'relay'>>;
 
 /** One flight. The day lists hold the value at the start of each Mission day, 0 to `missionDays`. */
 export interface Flight {
@@ -74,23 +91,28 @@ export function fly(
   spread: Spread = AS_LABELLED,
   failedStage: number | null = null,
 ): Flight {
-  const { orbit, payload, missionDays } = contractNeeds(contractById(plan.contract));
+  const contract = contractById(plan.contract);
+  const { orbit, payload, missionDays } = contractNeeds(contract);
   const design = plan.design;
   const marks = plan.marks ?? {};
   const massKg = spacecraftMass(design, marks);
-  const liftKg = liftFrom(plan.vehicle, orbit, plan.site ?? 'capeCanaveral');
+  const liftKg = liftFor(contract, plan.vehicle, orbit, plan.site ?? 'capeCanaveral');
   const power = powerOf(design, plan.tech, marks, orbit);
-  const data = dataOf(design, plan.tech, plan.ground ?? 1);
+  // From the Moon an antenna gets a fifth of its Data home; from the south pole, only while Earth or a relay is in view.
+  const data = dataOf(design, plan.tech, (plan.ground ?? 1) * linkShare(orbit, plan.relay ?? false));
   const rightPayload = hasRightPayload(design, payload);
-  const light = liftKg > 0 && massKg <= liftKg + 1e-9;
+  // NASA's CubeSat slots take CubeSats only: anything else never gets on board.
+  const fits = !contract.cubeSat || isCubeSat(design);
+  const light = liftKg > 0 && massKg <= liftKg + 1e-9 && fits;
   const rocketFailed = light ? failedStage : null;
-  // A geostationary orbit needs the Spacecraft's own main engine: without one it stays in the transfer orbit.
-  const stuck = light && rocketFailed === null && needsMainEngine(orbit) && !hasMainEngine(design);
+  // A geostationary orbit needs the Spacecraft's own main engine: without one it stays in the transfer orbit. Lunar
+  // orbit needs it to brake (without, it flies past the Moon); landing alone needs a Lander.
+  const stuck = light && rocketFailed === null &&
+    ((needsMainEngine(orbit) && !hasMainEngine(design)) || (needsLander(contract) && !hasLander(design)));
 
   const batteryWh = power.batteryWh * spread.batteryWh;
   const powerUseW = power.powerUseW * spread.powerUseW;
-  const drainW = powerUseW - power.sunW;
-  const lastsDays = drainW > 0 ? batteryWh / drainW / 24 : Infinity;
+  const lastsDays = lastsDaysOn(orbit, powerUseW, power.solarW, batteryWh);
   const sendPerDay = data.sendPerDay * spread.sendPerDay;
   const sentPerDay = rightPayload ? Math.min(data.dataPerDay, sendPerDay) : 0;
   const endDay = launchDay + missionDays;
@@ -124,7 +146,7 @@ export function fly(
     findings,
     success: findings.every((f) => f.ok),
     missionDays,
-    batteryWh: days.map((d) => Math.max(0, batteryWh - Math.max(0, drainW) * 24 * d)),
+    batteryWh: days.map((d) => batteryOnDay(orbit, powerUseW, power.solarW, batteryWh, d)),
     dataSentKb: days.map((d) => sentPerDay * Math.min(d, lastsDays)),
     dataGoalKb: data.dataPerDay * missionDays,
     powerOutDay: lastsDays < missionDays ? lastsDays : null,

@@ -1,4 +1,4 @@
-import { contractById, type ContractId } from './contracts';
+import { choiceOf, contractById, type ContractId } from './contracts';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
 
@@ -22,6 +22,15 @@ export const HISTORY_CARD_IDS = [
   'alouette1',
   'syncom3Before',
   'syncom3After',
+  'apollo11Before',
+  'saturnVBefore',
+  'apollo11After',
+  'artemis2Before',
+  'artemis2After',
+  'artemis3Before',
+  'artemis3After',
+  'artemis4Before',
+  'artemis4After',
 ] as const;
 export type HistoryCardId = (typeof HISTORY_CARD_IDS)[number];
 
@@ -39,6 +48,10 @@ export interface HistoryCard {
   image?: string;
   /** Learn more →: an official space agency page. */
   learnMore: string;
+  /** Shown before the Milestone's main "before" card (the Saturn V's story before Apollo 11's). */
+  first?: boolean;
+  /** About NASA's plans, not history yet (Artemis III and IV): labelled as a plan. */
+  plan?: boolean;
 }
 
 export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
@@ -142,12 +155,96 @@ export const HISTORY_CARDS: Record<HistoryCardId, HistoryCard> = {
     image: 'history/delta-intelsat3.jpg',
     learnMore: 'https://www.nasa.gov/history/communications-satellites/',
   },
+  // Era 3 (docs/research/eras-3-5.md). Text-only cards until NASA photos are added.
+  apollo11Before: {
+    id: 'apollo11Before',
+    contract: 'apollo11',
+    when: 'before',
+    year: 1969,
+    learnMore: 'https://www.nasa.gov/mission/apollo-11/',
+  },
+  // How NASA developed the Saturn V: Marshall under von Braun, the F-1, Apollo 4 flown "all-up", Apollo 8.
+  saturnVBefore: {
+    id: 'saturnVBefore',
+    contract: 'apollo11',
+    when: 'before',
+    year: 1967,
+    first: true,
+    learnMore: 'https://www.nasa.gov/history/55-years-ago-apollo-4-the-first-flight-of-the-saturn-v/',
+  },
+  apollo11After: {
+    id: 'apollo11After',
+    contract: 'apollo11',
+    when: 'after',
+    year: 1969,
+    learnMore: 'https://science.nasa.gov/resource/apollo-11-seismic-experiment/',
+  },
+  // The Artemis Era. Artemis III and IV are NASA's plans of 23 October 2026 (updated 26 October).
+  artemis2Before: {
+    id: 'artemis2Before',
+    contract: 'artemis2',
+    when: 'before',
+    year: 2026,
+    learnMore: 'https://www.nasa.gov/mission/artemis-ii/',
+  },
+  artemis2After: {
+    id: 'artemis2After',
+    contract: 'artemis2',
+    when: 'after',
+    year: 2026,
+    learnMore: 'https://www.nasa.gov/mission/artemis-ii/',
+  },
+  artemis3Before: {
+    id: 'artemis3Before',
+    contract: 'artemis3Camera',
+    when: 'before',
+    year: 2027,
+    plan: true,
+    learnMore: 'https://www.nasa.gov/missions/artemis/nasas-artemis-iii-mission-to-test-future-moon-lander-operations/',
+  },
+  artemis3After: {
+    id: 'artemis3After',
+    contract: 'artemis3Camera',
+    when: 'after',
+    year: 2027,
+    plan: true,
+    learnMore: 'https://www.nasa.gov/missions/artemis/nasas-artemis-iii-mission-to-test-future-moon-lander-operations/',
+  },
+  artemis4Before: {
+    id: 'artemis4Before',
+    contract: 'artemis4Relay',
+    when: 'before',
+    year: 2028,
+    plan: true,
+    learnMore: 'https://www.nasa.gov/missions/artemis/nasa-partners-accelerate-lander-development-for-2028-moon-missions/',
+  },
+  // The closing card of the Campaign, after the finale.
+  artemis4After: {
+    id: 'artemis4After',
+    contract: 'artemis4Relay',
+    when: 'after',
+    year: 2028,
+    plan: true,
+    learnMore: 'https://www.nasa.gov/humans-in-space/artemis/',
+  },
 };
+
+/** The card's Milestone: a Choice Milestone's cards belong to all of its Contracts. */
+function sameMilestone(card: ContractId, contract: ContractId): boolean {
+  return card === contract || (choiceOf(card) !== null && choiceOf(card) === choiceOf(contract));
+}
 
 /** The Real History card a Contract shows before or after, if it has one (Milestones do). */
 export function historyCardFor(contract: ContractId, when: 'before' | 'after'): HistoryCardId | null {
   if (contractById(contract).kind !== 'milestone') return null;
-  return HISTORY_CARD_IDS.find((id) => HISTORY_CARDS[id].contract === contract && HISTORY_CARDS[id].when === when) ?? null;
+  return HISTORY_CARD_IDS.find((id) => sameMilestone(HISTORY_CARDS[id].contract, contract) && HISTORY_CARDS[id].when === when && !HISTORY_CARDS[id].first) ?? null;
+}
+
+/** Every card shown when a Milestone is accepted, in order: the ones marked `first`, then its main "before" card. */
+export function cardsBefore(contract: ContractId): HistoryCardId[] {
+  if (contractById(contract).kind !== 'milestone') return [];
+  const before = HISTORY_CARD_IDS.filter((id) => sameMilestone(HISTORY_CARDS[id].contract, contract) && HISTORY_CARDS[id].when === 'before');
+  return [...before.filter((id) => HISTORY_CARDS[id].first), ...before.filter((id) => !HISTORY_CARDS[id].first)];
 }
 
 /** Keep a card in the History Archive. True if it is new. */
@@ -167,7 +264,7 @@ export interface Patch {
 /** The cards a Milestone's success unlocks, in the order they show: its "after" card, then its side stories. */
 export function cardsAfter(contract: ContractId): HistoryCardId[] {
   const after = historyCardFor(contract, 'after');
-  const side = HISTORY_CARD_IDS.filter((id) => HISTORY_CARDS[id].contract === contract && HISTORY_CARDS[id].when === 'side');
+  const side = HISTORY_CARD_IDS.filter((id) => sameMilestone(HISTORY_CARDS[id].contract, contract) && HISTORY_CARDS[id].when === 'side');
   return [...(after ? [after] : []), ...side];
 }
 

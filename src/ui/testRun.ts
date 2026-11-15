@@ -1,5 +1,6 @@
 import { missionLinks } from './learnMore';
 import { contractById, type ContractId } from '../game/contracts';
+import { type Satellite, placeOf } from '../game/space';
 import type { Flight, TestRun } from '../game/flight';
 import { t } from '../strings';
 import { contractText, formatNumber } from './format';
@@ -145,7 +146,17 @@ function eccentricAnomaly(lap: number, e: number): number {
   return ea;
 }
 
-export function drawOrbit(canvas: HTMLCanvasElement, orbitKm: { low: number; high: number }, lap: number, powered: boolean): void {
+export function drawOrbit(
+  canvas: HTMLCanvasElement,
+  orbitKm: { low: number; high: number },
+  lap: number,
+  powered: boolean,
+  place: Satellite['place'] = 'earth',
+): void {
+  if (place !== 'earth') {
+    drawMoonTrip(canvas, 1, powered, place === 'moonGround', lap);
+    return;
+  }
   const ratio = window.devicePixelRatio || 1;
   const w = Math.round(canvas.clientWidth * ratio);
   const h = Math.round(canvas.clientHeight * ratio);
@@ -213,6 +224,73 @@ export function drawOrbit(canvas: HTMLCanvasElement, orbitKm: { low: number; hig
   g.shadowBlur = 0;
 }
 
+/**
+ * The simple 2D picture of a trip to the Moon (for slow devices): Earth on the left, the Moon on the right, a dashed
+ * path between them, and the Spacecraft `share` (0–1) of the way along. Once there it circles the Moon, or sits on
+ * it when `ground`; `lap` turns it round the Moon.
+ */
+export function drawMoonTrip(canvas: HTMLCanvasElement, share: number, powered: boolean, ground = false, lap = 0): void {
+  const ratio = window.devicePixelRatio || 1;
+  const w = Math.round(canvas.clientWidth * ratio);
+  const h = Math.round(canvas.clientHeight * ratio);
+  if (w === 0 || h === 0) return;
+  if (canvas.width !== w || canvas.height !== h) {
+    canvas.width = w;
+    canvas.height = h;
+  }
+  const g = canvas.getContext('2d');
+  if (!g) return;
+  g.clearRect(0, 0, w, h);
+  const cy = h / 2;
+  const earth = { x: w * 0.18, r: Math.min(w, h) * 0.12 };
+  const moon = { x: w * 0.82, r: earth.r * 0.27 };
+  const shade = g.createRadialGradient(earth.x + earth.r * 0.3, cy - earth.r * 0.3, earth.r * 0.1, earth.x, cy, earth.r);
+  shade.addColorStop(0, COLOURS.ocean);
+  shade.addColorStop(1, COLOURS.oceanDeep);
+  g.fillStyle = shade;
+  g.beginPath();
+  g.arc(earth.x, cy, earth.r, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = '#b9b4aa';
+  g.beginPath();
+  g.arc(moon.x, cy, moon.r, 0, Math.PI * 2);
+  g.fill();
+  // The path: an arc from Earth over to the Moon.
+  const lift = h * 0.28;
+  const point = (s: number) => ({
+    x: earth.x + earth.r + (moon.x - moon.r * 2.2 - earth.x - earth.r) * s,
+    y: cy - Math.sin(Math.PI * s) * lift,
+  });
+  g.strokeStyle = COLOURS.path;
+  g.lineWidth = 1.5 * ratio;
+  g.setLineDash([5 * ratio, 5 * ratio]);
+  g.beginPath();
+  for (let i = 0; i <= 40; i++) {
+    const p = point(i / 40);
+    if (i === 0) g.moveTo(p.x, p.y);
+    else g.lineTo(p.x, p.y);
+  }
+  g.stroke();
+  g.setLineDash([]);
+  const s = Math.min(1, Math.max(0, share));
+  let craft = point(s);
+  if (s >= 1) {
+    const turn = lap * Math.PI * 2;
+    craft = ground
+      ? { x: moon.x, y: cy - moon.r - 3 * ratio }
+      : { x: moon.x + Math.cos(turn) * moon.r * 2, y: cy + Math.sin(turn) * moon.r * 2 };
+  }
+  g.fillStyle = powered ? COLOURS.craft : COLOURS.silent;
+  if (powered) {
+    g.shadowColor = COLOURS.craft;
+    g.shadowBlur = 10 * ratio;
+  }
+  g.beginPath();
+  g.arc(craft.x, craft.y, 4 * ratio, 0, Math.PI * 2);
+  g.fill();
+  g.shadowBlur = 0;
+}
+
 // ---- The screen ----
 
 export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean }): TestRunScreen {
@@ -271,6 +349,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
   let started = 0;
   let flight: Flight | null = null;
   let orbitKm = { low: 0, high: 0 };
+  let place: Satellite['place'] = 'earth';
   let cursors: Graph[] = [];
   const still = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
@@ -287,7 +366,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
     day.classList.toggle('warn', !powered);
     for (const c of cursors) c.setCursor(d);
     // A Spacecraft without Power still orbits: it just goes quiet.
-    drawOrbit(canvas, orbitKm, still() ? 0.15 : seconds / LAP_SECONDS, powered);
+    drawOrbit(canvas, orbitKm, still() ? 0.15 : seconds / LAP_SECONDS, powered, place);
     frame = requestAnimationFrame(tick);
   };
 
@@ -304,6 +383,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
       const f = run.asLabelled;
       flight = f;
       orbitKm = contractById(contract).orbitKm;
+      place = placeOf(contract);
       sources.replaceChildren(missionLinks(contract));
       orbitHint.textContent = t(contractById(contract).kind === 'generated' ? 'testRun.orbitGoal' : 'testRun.orbitHint', { contract: contractText(contract) });
 

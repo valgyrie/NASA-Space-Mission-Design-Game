@@ -93,6 +93,7 @@ export function optionStats(o: SpacecraftOption, tech: readonly TechId[] = [], m
   }
   if (!o.part) bits.push(t(`option.${o.id as NoPartOption}.about`));
   if (o.id === 'mainEngine') bits.push(t('option.mainEngine.about'));
+  if (o.id === 'lander') bits.push(t('option.lander.about'));
   return bits.join(t('stat.join'));
 }
 
@@ -121,12 +122,16 @@ export function gaugeText(resource: Resource, g: Gauge, check: DesignCheck, mone
           orbit: t(`orbit.${check.goal.orbit}`),
         });
       }
+      // NASA's ride: the room it gives (the Lunar Module, a CubeSat slot), not the rocket's lift.
+      if (check.goal.ride) return t('gauge.massRide', { kg: formatDecimal(g.value), max: formatNumber(g.target) });
       return t('gauge.mass', {
         kg: formatDecimal(g.value),
         vehicle: t(`launchVehicle.${check.goal.vehicle}`),
         max: formatNumber(g.target),
       });
     case 'power':
+      // On the Moon's surface: the battery against the lunar night.
+      if (check.goal.orbit === 'moonSurface') return t('gauge.powerNight', { have: formatNumber(g.value), need: formatNumber(g.target) });
       return t('gauge.power', { have: formatNumber(g.value), need: formatNumber(g.target) });
     case 'budget':
       return t('gauge.budget', { cost: formatMoney(g.value), money: formatMoney(money) });
@@ -145,6 +150,7 @@ export function gaugeText(resource: Resource, g: Gauge, check: DesignCheck, mone
 export function problemText(p: DesignProblem, check: DesignCheck): string {
   switch (p.kind) {
     case 'tooHeavy':
+      if (p.ride !== undefined) return t('problem.tooHeavyRide', { kg: formatDecimal(p.overKg), max: formatNumber(p.ride) });
       return p.bigger
         ? t('problem.tooHeavyBigger', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`), bigger: t(`launchVehicle.${p.bigger}`) })
         : t('problem.tooHeavy', { kg: formatDecimal(p.overKg), vehicle: t(`launchVehicle.${check.goal.vehicle}`) });
@@ -153,7 +159,11 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
         ? t('problem.cantReachBigger', { vehicle: t(`launchVehicle.${check.goal.vehicle}`), orbit: t(`orbit.${p.orbit}`), bigger: t(`launchVehicle.${p.bigger}`) })
         : t('problem.cantReach', { vehicle: t(`launchVehicle.${check.goal.vehicle}`), orbit: t(`orbit.${p.orbit}`) });
     case 'needsEngine':
-      return t('problem.needsEngine');
+      return t(p.moon ? 'problem.needsEngineMoon' : 'problem.needsEngine');
+    case 'needsLander':
+      return t('problem.needsLander');
+    case 'needsCubeSat':
+      return t('problem.needsCubeSat');
     case 'hallTooSmall':
       return t('problem.hallTooSmall', { bus: t(`part.${p.bus as BusId}`), need: p.need, level: p.level });
     case 'busFull':

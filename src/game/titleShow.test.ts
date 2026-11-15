@@ -10,9 +10,9 @@ describe('the Launch behind the main menu', () => {
     }
   });
 
-  it('can pick each of the five rockets', () => {
-    const seen = new Set([0, 0.25, 0.5, 0.75].map((r) => pickRocket(null, () => r)));
-    seen.add(pickRocket(null, () => 0.99));
+  it('can pick each of the rockets', () => {
+    const n = LAUNCH_VEHICLE_IDS.length;
+    const seen = new Set(LAUNCH_VEHICLE_IDS.map((_, i) => pickRocket(null, () => (i + 0.5) / n)));
     expect(seen.size).toBe(LAUNCH_VEHICLE_IDS.length);
   });
 

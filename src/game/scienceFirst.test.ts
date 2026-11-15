@@ -101,10 +101,12 @@ describe('Choose a question (ticket 42, Full)', () => {
 
   it('greys out exactly the options that cannot answer the question, each with a reason', () => {
     const greyed = (id: ContractId) => OPTION_IDS.filter((o) => cannotAnswer(contractById(id), o));
-    expect(greyed('ask-storms-0')).toEqual(['radiationDetector', 'transponder']);
-    expect(greyed('ask-seaIce-0')).toEqual(['radiationDetector', 'transponder']);
-    expect(greyed('ask-radiation-0')).toEqual(['tvCamera', 'transponder']);
-    expect(greyed('ask-farCall-0')).toEqual(['noEngine', 'radiationDetector', 'tvCamera']);
+    // The Moon Parts (Science Package, Relay Radio, Lander) answer none of these questions either.
+    const moon = ['sciencePackage', 'relayRadio'];
+    expect(greyed('ask-storms-0')).toEqual(['radiationDetector', 'transponder', ...moon]);
+    expect(greyed('ask-seaIce-0')).toEqual(['radiationDetector', 'transponder', ...moon]);
+    expect(greyed('ask-radiation-0')).toEqual(['tvCamera', 'transponder', ...moon]);
+    expect(greyed('ask-farCall-0')).toEqual(['noEngine', 'lander', 'radiationDetector', 'tvCamera', ...moon]);
     for (const q of QUESTION_IDS) for (const o of greyed(`ask-${q}-0`)) expect(STRINGS).toHaveProperty([`question.${q}.no.${o}`]);
     // Other Contracts grey out nothing.
     for (const id of ['free-0', 'free-2', 'syncom3'] as const) expect(greyed(id)).toEqual([]);

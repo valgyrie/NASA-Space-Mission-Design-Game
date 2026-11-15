@@ -1,14 +1,15 @@
 import { LAUNCH_PRICE, RIDESHARE_PER_KG, ROCKET_RELIABILITY, SPIN_LIFT_PER_MS } from './balance';
-import type { ContractId, Orbit } from './contracts';
+import { type ContractId, type Orbit, contractById } from './contracts';
 import { type Era, eraOf } from './eras';
 import type { SiteState } from './siteState';
 
 /**
  * Launch Vehicles the Company can book a Rideshare on, and the Launch Sites it ships to.
- * Era 1 has Juno I, then Thor-Able; Era 2 has Thor-Delta and Delta D, all from Cape Canaveral.
- * Capacities: docs/research/launch-vehicles.md.
+ * Era 1 has Juno I, then Thor-Able; Era 2 has Thor-Delta and Delta D, all from Cape Canaveral. Era 3 has NASA's
+ * Saturn V (Kennedy LC-39A) and the Artemis Era NASA's SLS (LC-39B): NASA's own rockets, which carry only what NASA
+ * puts on them (`nasaOnly`). Capacities: docs/research/launch-vehicles.md and docs/research/eras-3-5.md.
  */
-export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble', 'thorDelta', 'deltaD', 'falcon9'] as const;
+export const LAUNCH_VEHICLE_IDS = ['juno1', 'thorAble', 'thorDelta', 'deltaD', 'falcon9', 'saturnV', 'sls'] as const;
 export type LaunchVehicleId = (typeof LAUNCH_VEHICLE_IDS)[number];
 
 /** One stage of a Launch Vehicle, from the bottom up. */
@@ -51,7 +52,12 @@ export interface LaunchVehicle {
   reliability: number;
   /** Its real record: flights that worked out of all it made. */
   record?: { worked: number; flights: number };
+  /** NASA's own rocket: it flies only a Contract that rides it (`Contract.ride`), never a Rideshare. */
+  nasaOnly?: boolean;
 }
+
+/** No lift past low Earth orbit: the Era 1–2 rockets never flew far from Earth. */
+const NEAR_EARTH = { highEarthOrbit: 0, lunarOrbit: 0, moonSurface: 0, lunarSouthPole: 0 } as const;
 
 export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // Enough for Explorer 1 (13.97 kg); no direct capacity figure found yet (verify).
@@ -59,7 +65,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // fired one after another at the top of the climb. docs/research/launch-vehicles.md.
   juno1: {
     id: 'juno1',
-    liftKg: { lowEarthOrbit: 14, geostationary: 0 },
+    liftKg: { lowEarthOrbit: 14, geostationary: 0, ...NEAR_EARTH },
     perKg: RIDESHARE_PER_KG.juno1,
     heightM: 21.2,
     stages: [
@@ -82,7 +88,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // 24 April 1958, so it opens after Explorer 1. The short coast between the first two stages is a game estimate.
   thorAble: {
     id: 'thorAble',
-    liftKg: { lowEarthOrbit: 120, geostationary: 0 },
+    liftKg: { lowEarthOrbit: 120, geostationary: 0, ...NEAR_EARTH },
     perKg: RIDESHARE_PER_KG.thorAble,
     heightM: 27,
     stages: [
@@ -104,7 +110,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // geostationary transfer orbit. 12 flights 1960–1962, 11 worked; it launched Telstar 1 from LC-17B.
   thorDelta: {
     id: 'thorDelta',
-    liftKg: { lowEarthOrbit: 226, geostationary: 45 },
+    liftKg: { lowEarthOrbit: 226, geostationary: 45, ...NEAR_EARTH },
     perKg: RIDESHARE_PER_KG.thorDelta,
     launchPrice: LAUNCH_PRICE.thorDelta,
     heightM: 31,
@@ -125,7 +131,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // geostationary transfer orbit (Astronautix). 2 flights, both worked: Syncom 3 (1964) and Intelsat I (1965).
   deltaD: {
     id: 'deltaD',
-    liftKg: { lowEarthOrbit: 450, geostationary: 104 },
+    liftKg: { lowEarthOrbit: 450, geostationary: 104, ...NEAR_EARTH },
     perKg: RIDESHARE_PER_KG.deltaD,
     launchPrice: LAUNCH_PRICE.deltaD,
     strapOns: 3,
@@ -144,14 +150,63 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   },
   // Full Thrust, expendable capacity. No landing sequence in this ticket. Sources and game estimates:
   // docs/research/launch-vehicles.md. Its real flight record changes, so no fixed record is claimed.
+  // To the Moon: SpaceX publishes no figure. Intuitive Machines' IM-1 and IM-2 landers flew to the Moon on Falcon 9;
+  // IM-1's Nova-C weighed about 1,900 kg at launch (docs/research/eras-3-5.md), used here as a cited lower bound.
+  // High Earth orbit uses its geostationary transfer figure (game estimate: a similar climb).
   falcon9: {
     id: 'falcon9',
-    liftKg: { lowEarthOrbit: 22_800, geostationary: 8_300 },
+    liftKg: { lowEarthOrbit: 22_800, geostationary: 8_300, highEarthOrbit: 8_300, lunarOrbit: 1_900, moonSurface: 1_900, lunarSouthPole: 1_900 },
     perKg: 7_000,
     heightM: 70,
     stages: [{ motors: 9, burnS: 162 }, { motors: 1, burnS: 397 }],
     coastS: 3,
     reliability: 0.98,
+    era: 5,
+    lastFlight: 2026,
+  },
+  // Saturn V (Apollo 11, AS-506): 363 ft (110.6 m) with Apollo and its escape tower. S-IC, five F-1 engines, outboard
+  // cutoff 161.6 s; S-II, five J-2, about 384 s; S-IVB, one J-2, about 147 s to Earth orbit. Its second burn
+  // ("Off to the Moon", 346.8 s) plays in the Moon sequence. Lift: an Apollo-era NASA paper gives 270,000 lb
+  // (122,000 kg) to Earth orbit and 100,000 lb (45,000 kg) to the Moon. NASA's own: the Apollo Contract's Launch costs
+  // the Company nothing, and what fits in the Lunar Module is the Contract's limit (`ride.maxKg`).
+  // 13 flights, 1967–1973; the last launched Skylab on 14 May 1973 (verify). docs/research/eras-3-5.md.
+  saturnV: {
+    id: 'saturnV',
+    liftKg: { lowEarthOrbit: 122_000, geostationary: 0, highEarthOrbit: 45_000, lunarOrbit: 45_000, moonSurface: 45_000, lunarSouthPole: 45_000 },
+    perKg: 0,
+    heightM: 110.6,
+    stages: [
+      { motors: 5, burnS: 162 },
+      { motors: 5, burnS: 384 },
+      { motors: 1, burnS: 147 },
+    ],
+    coastS: 2,
+    reliability: ROCKET_RELIABILITY.saturnV,
+    nasaOnly: true,
+    era: 3,
+    lastEra: 3,
+    lastFlight: 1973,
+  },
+  // SLS Block 1 with Orion: 98.27 m (322.4 ft). Stage 1: the two five-segment solid boosters (about 126 s) with the
+  // core stage's four RS-25 engines; stage 2: the core stage alone, to about 486 s after liftoff (its 480 s burn);
+  // stage 3: the ICPS (one RL10), here its 30-second perigee raise into orbit. More than 27 t (59,525 lb) to the
+  // Moon (NASA's SLS Reference Guide for Artemis II). Low Earth orbit: more than 95 t for Block 1 (NASA SLS fact sheet).
+  // NASA's own, from Kennedy LC-39B on Mobile Launcher 1: CubeSats NASA picks ride free. 2 flights, both worked.
+  sls: {
+    id: 'sls',
+    liftKg: { lowEarthOrbit: 95_000, geostationary: 0, highEarthOrbit: 27_000, lunarOrbit: 27_000, moonSurface: 27_000, lunarSouthPole: 27_000 },
+    perKg: 0,
+    strapOns: 2,
+    heightM: 98.3,
+    stages: [
+      { motors: 4, burnS: 126 },
+      { motors: 4, burnS: 360 },
+      { motors: 1, burnS: 30 },
+    ],
+    coastS: 0,
+    reliability: ROCKET_RELIABILITY.sls,
+    record: { worked: 2, flights: 2 },
+    nasaOnly: true,
     era: 5,
     lastFlight: 2026,
   },
@@ -162,24 +217,40 @@ export type VehicleStatus =
   | { open: true }
   | { open: false; why: 'after'; contract: ContractId }
   | { open: false; why: 'era'; era: Era }
-  | { open: false; why: 'retired'; year: number };
+  | { open: false; why: 'retired'; year: number }
+  /** NASA's own rocket: it flies only a Contract that rides it. */
+  | { open: false; why: 'nasa' }
+  /** The Contract rides NASA's rocket, so no other one flies it. */
+  | { open: false; why: 'ride'; vehicle: LaunchVehicleId };
 
-export function vehicleStatus(state: Pick<SiteState, 'completed' | 'hq'>, id: LaunchVehicleId): VehicleStatus {
+type VehicleState = Pick<SiteState, 'completed' | 'hq'> & Partial<Pick<SiteState, 'contracts' | 'playMode'>>;
+
+/** The NASA ride the Company's first accepted Contract has (the one the Mission Designer works on), if any. */
+export function rideNow(state: Partial<Pick<SiteState, 'contracts'>>): { vehicle: LaunchVehicleId; site: LaunchSiteId } | null {
+  const first = state.contracts?.[0];
+  return first ? (contractById(first.id).ride ?? null) : null;
+}
+
+export function vehicleStatus(state: VehicleState, id: LaunchVehicleId): VehicleStatus {
   const v = LAUNCH_VEHICLES[id];
+  const ride = rideNow(state);
+  if (ride?.vehicle === id) return { open: true };
   const era = eraOf(state);
   if (era < v.era) return { open: false, why: 'era', era: v.era };
   if (v.lastEra !== undefined && era > v.lastEra) return { open: false, why: 'retired', year: v.lastFlight };
+  if (ride) return { open: false, why: 'ride', vehicle: ride.vehicle };
+  if (v.nasaOnly) return { open: false, why: 'nasa' };
   if (v.opensAfter && !state.completed.includes(v.opensAfter)) return { open: false, why: 'after', contract: v.opensAfter };
   return { open: true };
 }
 
 /** The Company can book this Launch Vehicle: it is out of the factory by now in history, and not retired yet. */
-export function isVehicleOpen(state: Pick<SiteState, 'completed' | 'hq'>, id: LaunchVehicleId): boolean {
+export function isVehicleOpen(state: VehicleState, id: LaunchVehicleId): boolean {
   return vehicleStatus(state, id).open;
 }
 
 /** The first Launch Vehicle the Company can book, for when its pick has retired. */
-export function firstOpenVehicle(state: Pick<SiteState, 'completed' | 'hq'>): LaunchVehicleId {
+export function firstOpenVehicle(state: VehicleState): LaunchVehicleId {
   return LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id)) ?? LAUNCH_VEHICLE_IDS[0];
 }
 
@@ -213,7 +284,7 @@ export function launchCost(vehicle: LaunchVehicleId, massKg: number, wholeLaunch
   return wholeLaunch && price !== undefined ? price : rideshareCost(vehicle, massKg);
 }
 
-export const LAUNCH_SITE_IDS = ['capeCanaveral', 'wallops'] as const;
+export const LAUNCH_SITE_IDS = ['capeCanaveral', 'wallops', 'kennedy39A', 'kennedy39B'] as const;
 export type LaunchSiteId = (typeof LAUNCH_SITE_IDS)[number];
 
 export interface LaunchSite {
@@ -223,14 +294,29 @@ export interface LaunchSite {
   lon: number;
   /** Not where these rockets really flew from: an alternate-history choice, labelled as such. */
   alternate?: boolean;
+  /** NASA's own pad: only this rocket flies from it. */
+  only?: LaunchVehicleId;
+  /** The nearby Launch Site whose daily weather it shares. */
+  weatherFrom?: 'capeCanaveral' | 'wallops';
 }
 
 /**
  * Cape Canaveral, Florida: Explorer 1 (LC-26) and TIROS-1 launched from here (docs/research/milestones.md).
  * Wallops Island, Virginia: a real NASA launch site further north; Juno I and Thor-Able never flew from it, so it
  * is alternate history (docs/research/places-and-weather.md).
+ * Kennedy Space Center, Launch Complex 39: Pad 39A launched Apollo 11's Saturn V on 16 July 1969, Pad 39B launched
+ * Artemis I and II on SLS. Coordinates rounded from Wikipedia (verify against a NASA source). About 20 km from the
+ * Cape's weather point, so they share its weather. docs/research/eras-3-5.md.
  */
 export const LAUNCH_SITES: Record<LaunchSiteId, LaunchSite> = {
   capeCanaveral: { id: 'capeCanaveral', lat: 28.44, lon: -80.57 },
   wallops: { id: 'wallops', lat: 37.84, lon: -75.48, alternate: true },
+  kennedy39A: { id: 'kennedy39A', lat: 28.608, lon: -80.604, only: 'saturnV', weatherFrom: 'capeCanaveral' },
+  kennedy39B: { id: 'kennedy39B', lat: 28.627, lon: -80.621, only: 'sls', weatherFrom: 'capeCanaveral' },
 };
+
+/** Can this rocket fly from this Launch Site? NASA's pads take only their own rocket, and NASA's rockets only their pad. */
+export function siteTakes(site: LaunchSiteId, vehicle: LaunchVehicleId): boolean {
+  const only = LAUNCH_SITES[site].only;
+  return only ? only === vehicle : !LAUNCH_VEHICLES[vehicle].nasaOnly;
+}

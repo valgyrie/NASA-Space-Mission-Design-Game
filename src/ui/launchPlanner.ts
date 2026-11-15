@@ -10,8 +10,10 @@ import {
   liftFactor,
   liftFrom,
   spinSpeed,
+  siteTakes,
   vehicleStatus,
 } from '../game/launchVehicles';
+import { ERA_YEARS } from '../game/eras';
 import type { BusId } from '../game/upgrades';
 import { isBuildingOpen } from '../game/eras';
 import type { MissionSegment } from '../game/segments';
@@ -68,6 +70,7 @@ export function problemStep(p: PlanProblem): PlannerStep {
     case 'emptySlots':
     case 'hallTooSmall':
     case 'busFull':
+    case 'needsCubeSat':
     case 'missingParts':
       return 'space';
     case 'vehicleClosed':
@@ -139,7 +142,9 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
     case 'underway':
       return t('planner.problem.underway');
     case 'vehicleClosed':
-      return t('planner.problem.vehicleClosed');
+      return t(siteTakes(plan.site, plan.vehicle) ? 'planner.problem.vehicleClosed' : 'planner.problem.siteClosed');
+    case 'needsCubeSat':
+      return t('planner.problem.needsCubeSat');
     case 'cantReach':
       return t('planner.problem.cantReach', { vehicle: t(`launchVehicle.${plan.vehicle}`), orbit: t(`orbit.${plan.goal.orbit}`) });
     case 'emptySlots':
@@ -172,7 +177,9 @@ export function planProblemText(p: PlanProblem, plan: LaunchPlan): string {
 function closedText(status: VehicleStatus): string {
   if (status.open) return '';
   if (status.why === 'after') return t('planner.opensAfter', { contract: contractText(status.contract) });
-  if (status.why === 'era') return status.era === 5 ? t('planner.freePlayOnly') : t('planner.opensInEra', { era: status.era });
+  if (status.why === 'era') return status.era === 5 ? t('planner.opensInYear', { year: ERA_YEARS[5].from }) : t('planner.opensInEra', { era: status.era });
+  if (status.why === 'nasa') return t('planner.nasaOnly');
+  if (status.why === 'ride') return t('planner.rideOnly', { vehicle: t(`launchVehicle.${status.vehicle}`) });
   return t('planner.retired', { year: status.year });
 }
 
@@ -588,9 +595,11 @@ export function makeLaunchPlanner(
     firstLaunch.hidden = state.reports.length > 0;
 
     // Launch Site tiles and the chosen site's name and numbers
+    // NASA's pads take only NASA's rockets, and NASA's rockets only their own pad: show the sites this rocket uses.
     for (const [id, b] of siteButtons) {
       b.setAttribute('aria-pressed', String(id === site));
       b.disabled = !lead;
+      b.hidden = !siteTakes(id, vehicle);
     }
     const siteText = siteTexts.get(site)!;
     siteName.textContent = t(`launchSite.${site}.short`);

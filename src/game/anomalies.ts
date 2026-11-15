@@ -1,5 +1,6 @@
 import { hashText, makeRng, randInt } from '../site/random';
-import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, GROUND_TEST_CHANCE_LEFT, PANEL_CHANCE } from './balance';
+import { ANOMALY_MAX_DATA_LOSS, ANOMALY_UNANSWERED_SCORE, ANTENNA_CHANCE, ECLIPSE_CHANCE, FOLD_OUT_PANEL_CHANCE, GROUND_TEST_CHANCE_LEFT, PANEL_CHANCE } from './balance';
+import { contractById } from './contracts';
 import type { Flight, FlightPlan } from './flight';
 import type { MissionReport } from './mission';
 import type { SiteState } from './siteState';
@@ -125,18 +126,22 @@ export function rollAnomaly(
   const forced = isMandatory(state, 'antenna');
   const rolls: Roll[] = [{ kind: 'antenna', chance: antenna, struck: rng() < antenna || forced, day: randInt(rng, 1, untilDay - 1), extra: {} }];
 
-  if (plan.design.power === 'solarCells') {
+  // Fold-out panels have hinges to stick too (one of Explorer 6's four paddles never fully opened, 1959). On the
+  // Moon's surface there is no eclipse to survive: the lunar night is part of the Power check instead.
+  const foldOut = plan.design.power === 'foldOutPanels';
+  if (plan.design.power === 'solarCells' || foldOut) {
     const roll = (kind: AnomalyKind, chance: number, extra: Roll['extra']) => {
       const own = makeRng(hashText(`${seed}|anomaly|${kind}|${plan.contract}|${launchDay}`));
       const c = lowered(kind, chance);
       rolls.push({ kind, chance: c, struck: own() < c, day: randInt(own, 1, untilDay - 1), extra });
     };
     const solarMark = plan.marks?.power ?? 1;
-    roll('panel', panelChance(solarMark), { solarMark });
+    roll('panel', Math.min(1, panelChance(solarMark) * (foldOut ? FOLD_OUT_PANEL_CHANCE : 1)), { solarMark });
     const power = flight.findings.find((f) => f.kind === 'power');
     const battery = plan.design.battery as NonNullable<Anomaly['battery']>;
     const lastsDays = power?.kind === 'power' ? power.lastsDays : null;
-    roll('eclipse', eclipseChance(lastsDays, flight.missionDays, battery), { battery, lastsDays });
+    const onGround = (['moonSurface', 'lunarSouthPole'] as const).some((o) => contractById(plan.contract).requirements.some((r) => r.kind === 'orbit' && r.orbit === o));
+    if (!onGround) roll('eclipse', eclipseChance(lastsDays, flight.missionDays, battery), { battery, lastsDays });
   }
 
   const struck = rolls.filter((r) => r.struck);

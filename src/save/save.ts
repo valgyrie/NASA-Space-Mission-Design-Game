@@ -17,7 +17,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. Demo Mode uses a separate storage adapter; Online reuses this format and validator. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 19;
+export const SAVE_VERSION = 20;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -398,6 +398,16 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
   }
   if (v?.version === 18) {
     v = { ...v, version: 19, state: { ...(v as { state?: object }).state, plots: [], freePlots: 0 } } as typeof v;
+  }
+  // Version 19 had no Era 3 or Artemis Parts: none in stock, none better than Mk 1.
+  if (v?.version === 19) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const added = ['sciencePackage', 'dishAntenna', 'foldOutPanels', 'cubeSatBus', 'relayRadio', 'lander'];
+    const parts = old.parts && typeof old.parts === 'object'
+      ? { ...Object.fromEntries(added.map((p) => [p, 0])), ...old.parts } : old.parts;
+    const betterParts = old.betterParts && typeof old.betterParts === 'object'
+      ? { ...Object.fromEntries(added.map((p) => [p, []])), ...old.betterParts } : old.betterParts;
+    v = { ...v, version: 20, state: { ...old, parts, betterParts } } as typeof v;
   }
   return v;
 }

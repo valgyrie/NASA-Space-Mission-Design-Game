@@ -85,7 +85,9 @@ describe('HQ and Eras', () => {
     // Juno I and Thor-Able have retired: the planner moves to Thor-Delta.
     expect(state.vehicle).toBe('thorDelta');
     expect(state.money).toBe(before);
-    expect(nextUpgrade('hq', state.hq!, 2)).toBeNull();
+    // The next HQ level is Era 3's, open once Era 2's Milestones are done.
+    expect(nextUpgrade('hq', state.hq!, 2)?.level).toBe(3);
+    expect(checkUpgrade(state, 'hq', state.hq!)).toEqual({ ok: false, problem: 'milestones' });
   });
 
   it('never moves the date backwards', () => {

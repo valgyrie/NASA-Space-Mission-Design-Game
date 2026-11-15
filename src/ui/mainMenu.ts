@@ -2,13 +2,12 @@ import { makeAudioControls } from './audioControls';
 import { makeCredits } from './credits';
 import { makeDataCredits } from './dataCredits';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
-import { ERA_YEARS } from '../game/eras';
 import type { LaunchVehicleId } from '../game/launchVehicles';
 import { audio } from '../audio/sound';
 import { TITLE_TRACKS } from '../audio/tracks';
 import type { CompanyEntry } from '../save/companies';
 import { t, type StringKey } from '../strings';
-import { formatGameDate } from './format';
+import { eraHeading, formatGameDate } from './format';
 import { icon } from './icons';
 
 /** Short lines that tilt beside the wordmark, one picked each time the menu opens. Facts: docs/research/milestones.md. */
@@ -146,12 +145,12 @@ export function showMainMenu(
   const eras = DEMO_ERAS.map((era) => {
     const item = document.createElement('div');
     item.className = 'main-menu-era';
-    const b = button(t('era.heading', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
+    const b = button(eraHeading(era));
     b.dataset.demoEra = String(era);
     b.addEventListener('click', () => { leave(); options.onDemo(era); });
     const goal = document.createElement('p');
     goal.className = 'note';
-    goal.textContent = t(era === 1 ? 'demo.1.goal' : 'demo.2.goal');
+    goal.textContent = t(`demo.${era}.goal`);
     item.append(b, goal);
     return item;
   });

@@ -1,7 +1,7 @@
 import type { Part } from '../economy/part';
 import { type ContractId, type Orbit, type PayloadKind, contractById, accepted, completeContract, deadlineDay } from './contracts';
 import { INSURANCE } from './balance';
-import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, launchCost, liftFrom } from './launchVehicles';
+import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen, launchCost, siteTakes } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
 import { type GroundTestId, chosenGroundTests, groundTestCost, groundTestDays, testedKinds } from './groundTests';
@@ -24,6 +24,8 @@ import {
   emptySlots,
   hallFits,
   hallNeeded,
+  isCubeSat,
+  liftFor,
   marksFor,
   missionGoal,
   partsNeeded,
@@ -53,6 +55,8 @@ export interface Mission {
   marks: Marks;
   /** How much the Company's Ground Stations multiplied its antenna when it shipped (1 with none). */
   ground: number;
+  /** The Company had its own relay round the Moon when it shipped (the south-pole rule). Missing in older saves: none. */
+  relay?: boolean;
   /** Game day it was booked and assembly began. */
   startDay: number;
   /** Game day assembly ends and Shipping begins. */
@@ -81,7 +85,7 @@ export type PlanProblem =
   | { kind: 'emptySlots'; slots: Slot[] }
   | { kind: 'tooHeavy'; overKg: number }
   | { kind: 'cantReach' }
-  | Extract<DesignProblem, { kind: 'busFull' | 'hallTooSmall' }>
+  | Extract<DesignProblem, { kind: 'busFull' | 'hallTooSmall' | 'needsCubeSat' }>
   | { kind: 'missingParts'; parts: Part[] }
   | { kind: 'money'; short: number }
   /** Team Mode: these roles have not signed their lines of the Design Review. */
@@ -130,12 +134,18 @@ export function planLaunch(
   insurance = 0,
 ): LaunchPlan {
   const goal = missionGoal(state);
+  // NASA's ride decides the rocket and the pad, and costs the Company nothing.
+  const ride = goal.contract.ride;
+  if (ride) {
+    vehicle = ride.vehicle;
+    site = ride.site;
+  }
   const taken = goal.status === 'accepted' ? accepted(state, goal.contract.id) : undefined;
   const marks = marksFor(state, design);
   const massKg = spacecraftMass(design, marks);
-  const liftKg = liftFrom(vehicle, goal.orbit, site);
+  const liftKg = liftFor(goal.contract, vehicle, goal.orbit, site);
   const wholeLaunch = !!goal.contract.wholeLaunch && LAUNCH_VEHICLES[vehicle].launchPrice !== undefined;
-  const rideshare = launchCost(vehicle, massKg, wholeLaunch);
+  const rideshare = ride ? 0 : launchCost(vehicle, massKg, wholeLaunch);
   const route = shippingTo(state.place, site);
   const shipping = route.cost;
   const groundTests = chosenGroundTests(state, design);
@@ -150,11 +160,12 @@ export function planLaunch(
   const problems: PlanProblem[] = [];
   if (!taken) problems.push({ kind: 'noContract' });
   if (state.mission) problems.push({ kind: 'underway' });
-  if (!isVehicleOpen(state, vehicle)) problems.push({ kind: 'vehicleClosed' });
+  if (!isVehicleOpen(state, vehicle) || !siteTakes(site, vehicle)) problems.push({ kind: 'vehicleClosed' });
   const slots = emptySlots(design);
   if (slots.length > 0) problems.push({ kind: 'emptySlots', slots });
   if (liftKg <= 0) problems.push({ kind: 'cantReach' });
   else if (massKg > liftKg + 1e-9) problems.push({ kind: 'tooHeavy', overKg: massKg - liftKg });
+  if (goal.contract.cubeSat && design.bus && !isCubeSat(design)) problems.push({ kind: 'needsCubeSat' });
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
   const partsKg = carriedMass(design, marks);
@@ -221,13 +232,14 @@ export function testRunFor(
   const flightPlan = {
     contract: plan.goal.contract.id,
     design,
-    vehicle,
-    site,
+    vehicle: plan.vehicle,
+    site: plan.site,
     tech: [...state.research.tech],
     marks: plan.marks,
     ground: plan.goal.ground,
+    relay: plan.goal.relay,
   };
-  return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay, { reliability: rocketReliability(state, vehicle) });
+  return testRun(seed, flightPlan, plan.readyDay, plan.deadlineDay, { reliability: rocketReliability(state, plan.vehicle) });
 }
 
 /**
@@ -290,11 +302,12 @@ export function shipMission(
   state.mission = {
     contract: plan.goal.contract.id,
     design: { ...design },
-    vehicle,
-    site,
+    vehicle: plan.vehicle,
+    site: plan.site,
     tech: [...state.research.tech],
     marks: { ...plan.marks },
     ground: plan.goal.ground,
+    ...(plan.goal.relay ? { relay: true } : {}),
     startDay,
     shipDay: startDay + plan.assemblyDays + plan.testDays,
     readyDay: plan.readyDay,
@@ -455,6 +468,9 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   };
   state.reports.push(report);
   state.mission = null;
+  // NASA's own rocket goes back to NASA once its Contract is done.
+  if (!isVehicleOpen(state, state.vehicle)) state.vehicle = firstOpenVehicle(state);
+  if (!siteTakes(state.launchSite, state.vehicle)) state.launchSite = 'capeCanaveral';
   awardMission(state, report);
   return { report, flight, design: m.design };
 }

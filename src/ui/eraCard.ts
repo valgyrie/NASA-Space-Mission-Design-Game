@@ -1,16 +1,18 @@
 import { audio } from '../audio/sound';
-import { ERA_YEARS, type Era } from '../game/eras';
+import type { Era } from '../game/eras';
 import { t } from '../strings';
+import { eraHeading } from './format';
 
 export interface EraCard {
-  show(era: Era): void;
+  /** `freePlay`: the Company has just moved into Free Play (Era 5 in the Campaign is the Artemis Era). */
+  show(era: Era, freePlay?: boolean): void;
   close(): void;
   readonly isOpen: boolean;
 }
 
 /** Text for each Era's card. Era 1's card opens a new Campaign; the others follow an HQ Upgrade. */
-const ERA_TEXT = { 1: 'era.1.text', 2: 'era.2.text', 5: 'freePlay.welcome' } as const;
-const ERA_ALT = { 1: 'era.1.alt', 2: 'era.2.alt', 5: 'era.5.alt' } as const;
+const ERA_TEXT = { 1: 'era.1.text', 2: 'era.2.text', 3: 'era.3.text', 5: 'era.5.text' } as const;
+const ERA_ALT = { 1: 'era.1.alt', 2: 'era.2.alt', 3: 'era.3.alt', 5: 'era.5.alt' } as const;
 
 /** One AI illustration per Era (docs/art/). Loaded only when its card opens; hidden until the team adds the file. */
 export function eraImage(era: Era): string {
@@ -47,9 +49,9 @@ export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(
   backdrop.append(panel);
   root.append(backdrop);
   const api: EraCard = {
-    show(era) {
-      title.textContent = era === 5 ? t('freePlay.heading') : t('era.heading', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to });
-      text.textContent = t(ERA_TEXT[era]);
+    show(era, freePlay = false) {
+      title.textContent = freePlay ? t('freePlay.heading') : eraHeading(era);
+      text.textContent = t(freePlay ? 'freePlay.welcome' : ERA_TEXT[era]);
       image.alt = t(ERA_ALT[era]);
       const src = new URL(eraImage(era), location.href).href;
       if (image.src !== src) image.src = src;

@@ -1,9 +1,9 @@
 import { chosenGroundTests, groundTestDays } from './groundTests';
 import type { Part } from '../economy/part';
-import { GROUND_STATION_STEP, MARK_STEP, OPTION_STATS, type OptionStats, RECIPES, SUNLIT_SHARE } from './balance';
+import { GROUND_STATION_STEP, LUNAR_NIGHT, MARK_STEP, MOON_SEND_SHARE, OPTION_STATS, type OptionStats, RECIPES, SOUTH_POLE_LINK, SUNLIT_SHARE } from './balance';
 import { type Era, eraOf, isBuildingOpen, isPartOpen, partEra } from './eras';
 import { type Difficulty, partInMode } from './modes';
-import { type Contract, type Orbit, type PayloadKind, contractById, CONTRACT_IDS, availableContracts, daysLeft } from './contracts';
+import { type Contract, type Orbit, type PayloadKind, atMoon, contractById, CONTRACT_IDS, availableContracts, daysLeft, onMoonGround } from './contracts';
 import type { HistoryCardId } from './history';
 import { type Boosted, type TechId, boost } from './research';
 import { LAUNCH_VEHICLE_IDS, type LaunchSiteId, type LaunchVehicleId, isVehicleOpen, liftFrom } from './launchVehicles';
@@ -28,22 +28,28 @@ export const SLOT_ERA: Partial<Record<Slot, Era>> = { propulsion: 2 };
 
 /** Every option in every slot. Options that need a Part share its id; the rest need no Part. */
 export const OPTION_IDS = [
+  'cubeSatBus',
   'smallBus',
   'mediumBus',
   'largeBus',
   'batteriesOnly',
   'solarCells',
+  'foldOutPanels',
   'smallBattery',
   'mediumBattery',
   'largeBattery',
   'simpleAntenna',
   'lowPowerAntenna',
+  'dishAntenna',
   'spin',
   'noEngine',
   'mainEngine',
+  'lander',
   'radiationDetector',
   'tvCamera',
   'transponder',
+  'sciencePackage',
+  'relayRadio',
 ] as const;
 export type OptionId = (typeof OPTION_IDS)[number];
 
@@ -84,6 +90,14 @@ export const OPTIONS: Record<OptionId, SpacecraftOption> = {
   radiationDetector: option('radiationDetector', 'payload', 'radiationDetector', 'radiationDetector'),
   tvCamera: option('tvCamera', 'payload', 'tvCamera', 'tvCamera'),
   transponder: option('transponder', 'payload', 'transponder', 'transponder'),
+  // Era 3 and the Artemis Era (tickets 50, 52).
+  cubeSatBus: option('cubeSatBus', 'bus', 'cubeSatBus'),
+  foldOutPanels: option('foldOutPanels', 'power', 'foldOutPanels'),
+  dishAntenna: option('dishAntenna', 'comms', 'dishAntenna'),
+  // Legs and a landing engine: it gets a Spacecraft down onto the Moon without NASA's Lunar Module.
+  lander: option('lander', 'propulsion', 'lander'),
+  sciencePackage: option('sciencePackage', 'payload', 'sciencePackage', 'sciencePackage'),
+  relayRadio: option('relayRadio', 'payload', 'relayRadio', 'relayRadio'),
 };
 
 /**
@@ -244,6 +258,10 @@ export interface MissionGoal {
   shippingDays: number;
   /** How much the Company's Ground Stations multiply what an antenna sends home (1 with none). */
   ground: number;
+  /** The Company has its own relay satellite round the Moon (Artemis IV's relay choice done). */
+  relay: boolean;
+  /** NASA's free ride, when the Contract has one: the rocket and pad are NASA's, and `liftKg` is the room it gives. */
+  ride: boolean;
 }
 
 /** What a Contract asks for: orbit, Payload and days of Data. */
@@ -266,8 +284,10 @@ export function missionGoal(state: SiteState): MissionGoal {
   const contract = taken ? contractById(taken.id) : (offered ?? contractById(state.completed.at(-1) ?? CONTRACT_IDS[0]));
   const status = taken ? 'accepted' : offered ? 'offered' : 'done';
   const { orbit, payload, missionDays } = contractNeeds(contract);
-  const vehicle: LaunchVehicleId = state.vehicle;
-  const site: LaunchSiteId = state.launchSite;
+  // NASA's ride decides the rocket and the pad, and the room it gives caps the mass.
+  const ride = contract.ride;
+  const vehicle: LaunchVehicleId = ride?.vehicle ?? state.vehicle;
+  const site: LaunchSiteId = ride?.site ?? state.launchSite;
   return {
     contract,
     status,
@@ -276,11 +296,35 @@ export function missionGoal(state: SiteState): MissionGoal {
     daysLeft: taken ? daysLeft(state, taken) : contract.deadlineDays,
     orbit,
     vehicle,
-    liftKg: liftFrom(vehicle, orbit, site),
+    liftKg: liftFor(contract, vehicle, orbit, site),
     site,
     shippingDays: shippingTo(state.place, site).days,
     ground: groundBoost(state),
+    relay: hasMoonRelay(state),
+    ride: !!ride,
   };
+}
+
+/** What the rocket can lift to the Contract's orbit, capped by the room NASA gives on its ride (the Lunar Module). */
+export function liftFor(contract: Contract, vehicle: LaunchVehicleId, orbit: Orbit, site: LaunchSiteId): number {
+  const lift = liftFrom(vehicle, orbit, site);
+  return contract.ride ? Math.min(lift, contract.ride.maxKg) : lift;
+}
+
+/** The Company's relay satellite is in lunar orbit: Artemis IV's relay choice is done. */
+export function hasMoonRelay(state: Pick<SiteState, 'completed'>): boolean {
+  return state.completed.includes('artemis4Relay');
+}
+
+/**
+ * The share of what an antenna can send that gets home from this orbit: all of it near Earth; a fifth from the Moon,
+ * which is about ten times farther than geostationary orbit; and from the south pole, only while Earth (or the
+ * Company's relay) is in view.
+ */
+export function linkShare(orbit: Orbit, relay = false): number {
+  if (!atMoon(orbit)) return 1;
+  if (orbit === 'lunarSouthPole') return MOON_SEND_SHARE * (relay ? SOUTH_POLE_LINK.relay : SOUTH_POLE_LINK.alone);
+  return MOON_SEND_SHARE;
 }
 
 // ---- Ground Stations ----
@@ -310,9 +354,24 @@ export function hasMainEngine(design: Design): boolean {
   return design.propulsion === 'mainEngine';
 }
 
-/** The orbit needs the Spacecraft's own main engine to reach it (a geostationary orbit does). */
+/** The orbit needs the Spacecraft's own main engine to reach it: to climb to geostationary orbit, or brake into lunar orbit. */
 export function needsMainEngine(orbit: Orbit): boolean {
-  return orbit === 'geostationary';
+  return orbit === 'geostationary' || orbit === 'lunarOrbit';
+}
+
+/** The Mission lands on the Moon by itself: no NASA Lunar Module to ride in, so it needs a Lander. */
+export function needsLander(contract: Contract): boolean {
+  return onMoonGround(contractNeeds(contract).orbit) && !contract.ride;
+}
+
+/** The Spacecraft carries a Lander: legs and a landing engine. */
+export function hasLander(design: Design): boolean {
+  return design.propulsion === 'lander';
+}
+
+/** The design flies as a CubeSat: its Bus is the CubeSat Bus. */
+export function isCubeSat(design: Design): boolean {
+  return design.bus === 'cubeSatBus';
 }
 
 // ---- How the Spacecraft works in flight ----
@@ -326,13 +385,43 @@ export function powerOf(
   tech: readonly TechId[] = [],
   marks: Marks = {},
   orbit: Orbit = 'lowEarthOrbit',
-): { powerUseW: number; sunW: number; batteryWh: number; lastsDays: number } {
+): { powerUseW: number; sunW: number; solarW: number; batteryWh: number; lastsDays: number } {
   const options = picked(design);
   const powerUseW = sum(options, 'powerUseW', tech, marks);
-  const sunW = sum(options, 'solarW', tech, marks) * SUNLIT_SHARE[orbit];
+  const solarW = sum(options, 'solarW', tech, marks);
+  const sunW = solarW * SUNLIT_SHARE[orbit];
   const batteryWh = sum(options, 'batteryWh', tech, marks);
-  const drainW = powerUseW - sunW;
-  return { powerUseW, sunW, batteryWh, lastsDays: drainW > 0 ? batteryWh / drainW / 24 : Infinity };
+  return { powerUseW, sunW, solarW, batteryWh, lastsDays: lastsDaysOn(orbit, powerUseW, solarW, batteryWh) };
+}
+
+/**
+ * Days the battery keeps the Spacecraft going. In orbit, sunlight is averaged over each lap. On the Moon's surface at
+ * Tranquility Base, the Sun is up for the first LUNAR_NIGHT.sunDays and then sets: the battery must carry the
+ * Spacecraft through the night alone. Infinity when it never runs out.
+ */
+export function lastsDaysOn(orbit: Orbit, powerUseW: number, solarW: number, batteryWh: number): number {
+  if (orbit !== 'moonSurface') {
+    const drainW = powerUseW - solarW * SUNLIT_SHARE[orbit];
+    return drainW > 0 ? batteryWh / drainW / 24 : Infinity;
+  }
+  const dayDrainW = Math.max(0, powerUseW - solarW);
+  const sunDays = LUNAR_NIGHT.sunDays;
+  if (dayDrainW > 0 && batteryWh / dayDrainW / 24 < sunDays) return batteryWh / dayDrainW / 24;
+  if (powerUseW <= 0) return Infinity;
+  return sunDays + (batteryWh - dayDrainW * 24 * sunDays) / powerUseW / 24;
+}
+
+/** Watt-hours left in the battery at the start of a Mission day (the same rule as `lastsDaysOn`). */
+export function batteryOnDay(orbit: Orbit, powerUseW: number, solarW: number, batteryWh: number, day: number): number {
+  if (orbit !== 'moonSurface') {
+    const drainW = Math.max(0, powerUseW - solarW * SUNLIT_SHARE[orbit]);
+    return Math.max(0, batteryWh - drainW * 24 * day);
+  }
+  const dayDrainW = Math.max(0, powerUseW - solarW);
+  const sunDays = LUNAR_NIGHT.sunDays;
+  const lit = Math.min(day, sunDays);
+  const dark = Math.max(0, day - sunDays);
+  return Math.max(0, batteryWh - dayDrainW * 24 * lit - powerUseW * 24 * dark);
 }
 
 /** Kilobytes of Data the Payload makes each day, and what the Comms can send home through the Ground Stations. */
@@ -362,6 +451,16 @@ export function assemblyDays(design: Design): number {
   return design.bus ? (OPTIONS[design.bus].stats.assemblyDays ?? 0) : 0;
 }
 
+/**
+ * Watt-hours the battery must hold on the Moon's surface: what the Spacecraft uses through the night inside the
+ * Mission, plus any shortfall while the Sun is up.
+ */
+export function nightNeedWh(powerUseW: number, solarW: number, missionDays: number): number {
+  const sunDays = Math.min(missionDays, LUNAR_NIGHT.sunDays);
+  const darkDays = Math.max(0, missionDays - LUNAR_NIGHT.sunDays);
+  return Math.max(0, powerUseW - solarW) * 24 * sunDays + powerUseW * 24 * darkDays;
+}
+
 // ---- The six resources ----
 
 export const RESOURCES = ['mass', 'power', 'budget', 'data', 'communications', 'time'] as const;
@@ -382,9 +481,13 @@ export interface Gauge {
 
 /** A clear reason a resource is short, for the warning list. */
 export type DesignProblem =
-  | { kind: 'tooHeavy'; overKg: number; bigger: LaunchVehicleId | null }
+  | { kind: 'tooHeavy'; overKg: number; bigger: LaunchVehicleId | null; ride?: number }
   | { kind: 'cantReach'; orbit: Orbit; bigger: LaunchVehicleId | null }
-  | { kind: 'needsEngine' }
+  | { kind: 'needsEngine'; moon?: boolean }
+  /** It must land on the Moon by itself, and has no Lander. */
+  | { kind: 'needsLander' }
+  /** NASA's CubeSat slots take only CubeSats. */
+  | { kind: 'needsCubeSat' }
   | { kind: 'busFull'; bus: OptionId; carriesKg: number; partsKg: number }
   | { kind: 'hallTooSmall'; bus: OptionId; need: number; level: number }
   | { kind: 'powerShort'; lastsDays: number; needDays: number }
@@ -430,10 +533,16 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
     // A Launch Vehicle the Company can book that would lift it, if there is one.
     const bigger = LAUNCH_VEHICLE_IDS.find((id) => isVehicleOpen(state, id) && liftFrom(id, goal.orbit, goal.site) >= mass) ?? null;
     if (goal.liftKg <= 0) problems.push({ kind: 'cantReach', orbit: goal.orbit, bigger });
+    else if (goal.ride) problems.push({ kind: 'tooHeavy', overKg: mass - goal.liftKg, bigger: null, ride: goal.liftKg });
     else problems.push({ kind: 'tooHeavy', overKg: mass - goal.liftKg, bigger });
   }
-  // A geostationary orbit needs the Spacecraft's own main engine for the last climb.
-  if (needsMainEngine(goal.orbit) && !hasMainEngine(design)) problems.push({ kind: 'needsEngine' });
+  // A geostationary orbit needs the Spacecraft's own main engine for the last climb, lunar orbit to brake into it.
+  if (needsMainEngine(goal.orbit) && !hasMainEngine(design)) problems.push({ kind: 'needsEngine', ...(goal.orbit === 'lunarOrbit' ? { moon: true } : {}) });
+  // Landing on the Moon without NASA's Lunar Module needs a Lander.
+  if (needsLander(goal.contract) && !hasLander(design)) problems.push({ kind: 'needsLander' });
+  // Artemis II's slots took CubeSats only.
+  const cubeSatOk = !goal.contract.cubeSat || !design.bus || isCubeSat(design);
+  if (!cubeSatOk) problems.push({ kind: 'needsCubeSat' });
   const bus = design.bus;
   const carriesKg = bus ? (OPTIONS[bus].stats.carriesKg ?? 0) : Infinity;
   const partsKg = carriedMass(design, marks);
@@ -448,8 +557,12 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   // Power: energy stored plus sunlight, against what the Spacecraft uses over the Mission.
   const hours = goal.missionDays * 24;
   const tech = state.research.tech;
-  const { powerUseW, sunW, batteryWh, lastsDays } = powerOf(design, tech, marks, goal.orbit);
-  const powerGauge = gauge(batteryWh + sunW * hours, powerUseW * hours, 'min', empty('power', 'battery'));
+  const { powerUseW, sunW, solarW, batteryWh, lastsDays } = powerOf(design, tech, marks, goal.orbit);
+  // On the Moon's surface the night decides: the battery against what the Spacecraft uses while the Sun is down.
+  const night = goal.orbit === 'moonSurface' ? nightNeedWh(powerUseW, solarW, goal.missionDays) : null;
+  const powerGauge = night
+    ? gauge(batteryWh, night, 'min', empty('power', 'battery'))
+    : gauge(batteryWh + sunW * hours, powerUseW * hours, 'min', empty('power', 'battery'));
   if (powerGauge.status === 'short') problems.push({ kind: 'powerShort', lastsDays, needDays: goal.missionDays });
 
   // Budget: what the missing Parts cost on the Market, against the money in the bank.
@@ -464,7 +577,7 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
   if (design.payload && !rightPayload && goal.payload) problems.push({ kind: 'wrongPayload', payload: goal.payload });
 
   // Communications: Data the antenna can send each day, against what the Payload makes.
-  const { dataPerDay, sendPerDay } = dataOf(design, tech, goal.ground);
+  const { dataPerDay, sendPerDay } = dataOf(design, tech, goal.ground * linkShare(goal.orbit, goal.relay));
   const commsGauge = gauge(sendPerDay, dataPerDay, 'min', empty('comms', 'payload'));
   if (commsGauge.status === 'short') {
     problems.push({ kind: 'commsShort', sendPerDay, dataPerDay, stations: isBuildingOpen(state, 'groundStation') });
@@ -485,7 +598,7 @@ export function checkDesign(state: SiteState, design: Design): DesignCheck {
     communications: commsGauge,
     time: timeGauge,
   };
-  const engineOk = !needsMainEngine(goal.orbit) || hasMainEngine(design);
-  const ready = isComplete(design) && hallOk && engineOk && RESOURCES.every((r) => gauges[r].status === 'ok');
+  const engineOk = (!needsMainEngine(goal.orbit) || hasMainEngine(design)) && (!needsLander(goal.contract) || hasLander(design));
+  const ready = isComplete(design) && hallOk && engineOk && cubeSatOk && RESOURCES.every((r) => gauges[r].status === 'ok');
   return { goal, gauges, problems, marks, powerUseW, lastsDays, dataPerDay, sendPerDay, buildDays, ready };
 }

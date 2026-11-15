@@ -36,7 +36,7 @@ import { showSpaceScreen } from './ui/spaceScreen';
 import { showArchive } from './ui/archive';
 import { showHistoryCard } from './ui/historyCard';
 import { showTutorialGuide } from './ui/tutorialGuide';
-import { historyCardFor, patchFor, unlockCard } from './game/history';
+import { cardsBefore, historyCardFor, patchFor, unlockCard } from './game/history';
 import { accepted, deadlineDay } from './game/contracts';
 import { isMandatory, settleAnomaly, settleUnanswered } from './game/anomalies';
 import { launch, launchWeather, missionStage } from './game/mission';
@@ -156,8 +156,13 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
   });
   // Accepting a Milestone shows its Real History card: the real story before you build it.
   const contracts = showContractsPanel(ui, state, (id) => {
-    const card = historyCardFor(id, 'before');
-    if (card && unlockCard(state, card)) history.show(card);
+    // The Saturn V's story comes before Apollo 11's: show each new card in turn.
+    const fresh = cardsBefore(id).filter((card) => unlockCard(state, card));
+    const next = () => {
+      const card = fresh.shift();
+      if (card) history.show(card, next);
+    };
+    next();
     save();
   }, () => save());
   const panel = showBuildingPanel(ui, site, state, () => save());
@@ -501,7 +506,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
     if (!covered && !designer.isOpen && eraOf(state) > state.eraSeen) {
       state.eraSeen = eraOf(state);
       save();
-      eraCard.show(eraOf(state));
+      eraCard.show(eraOf(state), state.playMode === 'freePlay');
     }
     // The startup grant waits until nothing else is on screen (a failed Mission's report and cards first).
     if (!covered && !designer.isOpen && !eraCard.isOpen) {

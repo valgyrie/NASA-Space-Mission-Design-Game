@@ -1,7 +1,8 @@
 import { type SiteBuildingKind, isFactory } from '../economy/part';
 import type { RawMaterial } from '../economy/rawMaterial';
 import { LAB_KB_PER_DAY, MINE_OUTPUT_PER_DAY, RECIPES, TECH_TREE, WAREHOUSE_STORAGE_KG } from '../game/balance';
-import { ERA_YEARS, type Era, LAST_ERA, eraMilestones, eraOf, isPartOpen, milestonesDone } from '../game/eras';
+import { ERA_YEARS, type Era, LAST_ERA, eraAfter, eraGoals, eraOf, isPartOpen, milestonesDone } from '../game/eras';
+import { milestoneDone } from '../game/contracts';
 import { groundBoost } from '../game/spacecraft';
 import { missionStage } from '../game/mission';
 import { type BusId, busesAt, checkUpgrade, maxLevel, nextUpgrade, startUpgrade, upgradeDaysLeft } from '../game/upgrades';
@@ -23,7 +24,7 @@ import {
 } from '../game/siteState';
 import type { Site } from '../site/site';
 import { t } from '../strings';
-import { contractText, formatDays, formatDecimal, formatMoney, formatNumber } from './format';
+import { contractText, eraName, formatDays, formatDecimal, formatMoney, formatNumber, goalText } from './format';
 import { itemColour, storageText } from './marketPanel';
 import { stockText } from './missionDesigner';
 import { sourcedTip } from './sourcedTip';
@@ -211,15 +212,17 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
     body.append(about, next);
     refresh = () => {
       const era = eraOf(state);
-      setText(about, era === 5 ? t('freePlay.hq') : t('panel.hq', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
-      const waiting = eraMilestones(era).filter((id) => !state.completed.includes(id));
+      const freePlay = state.playMode === 'freePlay';
+      setText(about, freePlay ? t('freePlay.hq') : t('panel.hq', { era, from: ERA_YEARS[era].from, to: ERA_YEARS[era].to }));
+      const waiting = eraGoals(era).filter((id) => !milestoneDone(state, id));
+      const after = eraAfter(era);
       setText(
         next,
-        era === 5 ? t('freePlay.boardHint') : era >= LAST_ERA
+        freePlay ? t('freePlay.boardHint') : era >= LAST_ERA || !after
           ? t('panel.hqNewest', { era })
           : milestonesDone(state, era)
-            ? t('panel.hqReady', { era, next: era + 1, year: ERA_YEARS[(era + 1) as Era].from })
-            : t('panel.hqWaiting', { milestones: waiting.map((id) => contractText(id)).join(t('stat.list')) }),
+            ? t('panel.hqReady', { era, next: eraName(after), year: ERA_YEARS[after].from })
+            : t('panel.hqWaiting', { milestones: waiting.map(goalText).join(t('stat.list')) }),
       );
     };
   };
@@ -256,14 +259,14 @@ export function showBuildingPanel(root: HTMLElement, site: Site, state: SiteStat
       if (kind === 'warehouse') return t('level.next.warehouse', { level, kg: formatNumber(WAREHOUSE_STORAGE_KG * levelBoost(level)) });
       if (kind === 'researchLab') return t('level.next.researchLab', { level, kb: formatNumber(LAB_KB_PER_DAY * levelBoost(level)) });
       if (kind === 'assemblyHall') return t('level.next.assemblyHall', { level, bus: t(`part.${busesAt(level).at(-1) as BusId}`) });
-      if (kind === 'hq') return t('level.next.hq', { level, from: ERA_YEARS[level as Era].from, to: ERA_YEARS[level as Era].to });
+      if (kind === 'hq') return t('level.next.hq', { level, name: eraName(level as Era), from: ERA_YEARS[level as Era].from, to: ERA_YEARS[level as Era].to });
       if (kind === 'groundStation') return t('level.next.groundStation', { level });
       return isFactory(kind) ? t('level.next.factory', { level }) : '';
     };
     // At the top level for now: the hall's next level comes with the Large Bus in a later Era.
     const topText = () => {
       const era = eraOf(state);
-      return kind === 'assemblyHall' && maxLevel(kind, era) < maxLevel(kind, LAST_ERA) ? t('level.topEra', { era: era + 1 }) : t('level.top');
+      return kind === 'assemblyHall' && maxLevel(kind, era) < maxLevel(kind, LAST_ERA) ? t('level.topEra', { era: eraAfter(era) ?? era }) : t('level.top');
     };
     return {
       box,

@@ -12,6 +12,14 @@ const PATCH_COLOURS: Record<MilestoneId, { ring: string; sky: string; earth: str
   tiros1: { ring: '#1f5f63', sky: '#0d2629', earth: '#5bb3c9', trim: '#e9eef2' },
   telstar1: { ring: '#6b2a2a', sky: '#1d0f14', earth: '#4a9be0', trim: '#f4d58d' },
   syncom3: { ring: '#3d2a6b', sky: '#120d24', earth: '#3f8fd0', trim: '#f2a65a' },
+  apollo11: { ring: '#5a4a2a', sky: '#0b0b14', earth: '#3f8fd0', trim: '#e8e2cf' },
+  artemis2: { ring: '#24365c', sky: '#0a1020', earth: '#4a9be0', trim: '#c9d3e0' },
+  artemis3Camera: { ring: '#2c4a5e', sky: '#0b1622', earth: '#4a9be0', trim: '#e9b44c' },
+  artemis3Relay: { ring: '#2c4a5e', sky: '#0b1622', earth: '#4a9be0', trim: '#7fd1b9' },
+  artemis3SpaceWeather: { ring: '#2c4a5e', sky: '#0b1622', earth: '#4a9be0', trim: '#f28f5a' },
+  artemis4Relay: { ring: '#3a3a48', sky: '#08080f', earth: '#4a9be0', trim: '#7fd1b9' },
+  artemis4CargoLander: { ring: '#3a3a48', sky: '#08080f', earth: '#4a9be0', trim: '#e9b44c' },
+  artemis4Mapper: { ring: '#3a3a48', sky: '#08080f', earth: '#4a9be0', trim: '#c9d3e0' },
 };
 
 let uid = 0;

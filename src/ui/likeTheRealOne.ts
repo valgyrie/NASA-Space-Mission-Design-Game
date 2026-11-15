@@ -36,7 +36,7 @@ export function yoursFrom(report: MissionReport): Yours {
   const orbit = report.findings.find((f) => f.kind === 'orbit');
   const massKg = orbit?.massKg ?? (report.design ? spacecraftMass(report.design) : null);
   const option = report.design?.power ?? null;
-  const power = option === 'batteriesOnly' ? 'batteries' : option === 'solarCells' ? 'solarAndBatteries' : null;
+  const power = option === 'batteriesOnly' ? 'batteries' : option === 'solarCells' || option === 'foldOutPanels' ? 'solarAndBatteries' : null;
   let worked: Yours['worked'] = null;
   // Reached orbit: the rest of the flight happened (missionReport.ts reachedOrbit; not imported, to avoid a cycle).
   if (report.findings.some((f) => f.kind === 'orbit' && f.ok)) {
@@ -87,8 +87,9 @@ export function comparisonLine(y: Yours, craft: RealCraft, name: string): string
 }
 
 /** The real Spacecraft beside the player's, with only the figures that have a source. */
-export function likeTheRealOne(report: MissionReport): RealComparison {
+export function likeTheRealOne(report: MissionReport): RealComparison | null {
   const craft = realCraftFor(report.contract);
+  if (!craft) return null;
   const name = t(`real.${craft.id}.name`);
   const y = yoursFrom(report);
   const unknown = t('report.real.unknown');

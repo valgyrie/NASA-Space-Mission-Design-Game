@@ -30,10 +30,14 @@ const power = (lastsDays: number | null, needDays: number): Finding => ({
 
 describe('Like the real one: the data', () => {
   it('has a real Spacecraft for every Milestone and every Free Play kind', () => {
-    for (const id of CONTRACT_IDS) expect(realCraftFor(id).id).toBe(id);
-    expect(realCraftFor('free-0').id).toBe('sampex'); // radiation survey
-    expect(realCraftFor('free-1').id).toBe('noaa18'); // weather watch
-    expect(realCraftFor('free-2').id).toBe('tdrs1'); // orbital relay
+    for (const id of ['explorer1', 'tiros1', 'telstar1', 'syncom3'] as const) expect(realCraftFor(id)?.id).toBe(id);
+    expect(realCraftFor('apollo11')?.id).toBe('easep');
+    expect(realCraftFor('artemis4Mapper')?.id).toBe('lro');
+    // Plans, not flown Spacecraft: no comparison.
+    for (const id of CONTRACT_IDS.filter((c) => c.startsWith('artemis3') || c === 'artemis4Relay' || c === 'artemis4CargoLander')) expect(realCraftFor(id)).toBeNull();
+    expect(realCraftFor('free-0')?.id).toBe('sampex'); // radiation survey
+    expect(realCraftFor('free-1')?.id).toBe('noaa18'); // weather watch
+    expect(realCraftFor('free-2')?.id).toBe('tdrs1'); // orbital relay
   });
 
   it('gives every figure a source and every Spacecraft a Learn more link', () => {
@@ -78,7 +82,7 @@ describe('Like the real one: the comparison line', () => {
 
 describe('Like the real one: the table', () => {
   it('shows Yours beside the Milestone, for a whole Mission', () => {
-    const c = likeTheRealOne(report('explorer1', [orbit(true, 11.47), power(40, 30)]));
+    const c = likeTheRealOne(report('explorer1', [orbit(true, 11.47), power(40, 30)]))!;
     expect(c.name).toBe('Explorer 1');
     expect(c.sameMission).toBe(true);
     expect(c.rows).toEqual([
@@ -89,15 +93,15 @@ describe('Like the real one: the table', () => {
   });
 
   it('says when the Power ran out, and when it never reached orbit', () => {
-    const short = likeTheRealOne(report('tiros1', [orbit(true, 120), power(41.7, 78)], 'solarCells'));
+    const short = likeTheRealOne(report('tiros1', [orbit(true, 120), power(41.7, 78)], 'solarCells'))!;
     expect(short.rows[2]).toEqual({ label: 'How long it worked', yours: '41 days, then the Power ran out', real: '78 days' });
     expect(short.rows[1]!.yours).toBe('Solar cells and batteries');
-    const lost = likeTheRealOne(report('explorer1', [orbit(false, 20), power(40, 30)]));
+    const lost = likeTheRealOne(report('explorer1', [orbit(false, 20), power(40, 30)]))!;
     expect(lost.rows[2]!.yours).toBe('Never reached orbit');
   });
 
   it('uses a real mission of the same kind in Free Play', () => {
-    const c = likeTheRealOne(report('free-1', [orbit(true, 60), power(null, 45)], 'solarCells'));
+    const c = likeTheRealOne(report('free-1', [orbit(true, 60), power(null, 45)], 'solarCells'))!;
     expect(c.name).toBe('NOAA-18');
     expect(c.sameMission).toBe(false);
     expect(c.rows.map((r) => r.real)).toEqual(['1,420 kg', 'Solar cells', 'Until 6 June 2025']);

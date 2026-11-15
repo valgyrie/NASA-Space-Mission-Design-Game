@@ -74,7 +74,7 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
         captionText.textContent = t(`history.${id}.caption`);
         credit.textContent = t(`history.${id}.credit`);
       } else img.removeAttribute('src');
-      label.textContent = t('history.label', { when: t(`history.${card.when}`, { year: card.year }) });
+      label.textContent = t('history.label', { when: t(card.plan ? 'history.plan' : `history.${card.when}`, { year: card.year }) });
       title.textContent = t(`history.${id}.title`);
       text.textContent = t(`history.${id}.text`);
       learn.href = card.learnMore;

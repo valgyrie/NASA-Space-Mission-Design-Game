@@ -199,7 +199,7 @@ export function dayOfYear(day: number): number {
 /** The weather on a Game day: the real 2025 weather on the same date at that Launch Site (NASA POWER). */
 export function weatherOn(site: LaunchSiteId, day: number): Weather {
   const d = dayOfYear(day);
-  const data = LAUNCH_WEATHER_2025[site];
+  const data = LAUNCH_WEATHER_2025[LAUNCH_SITES[site].weatherFrom ?? (site as keyof typeof LAUNCH_WEATHER_2025)];
   const windMs = data.wind[d]!;
   const rainMm = data.rain[d]!;
   const hotC = data.hot[d]!;

@@ -65,7 +65,10 @@ export function findingText(f: Finding, flown = true): string {
           flights: formatNumber(record.flights),
         });
       }
-      if (!f.ok && f.noEngine) return t('finding.orbit.noEngine', { orbit: t(`orbit.${f.orbit}`), vehicle: t(`launchVehicle.${f.vehicle}`) });
+      if (!f.ok && f.noEngine) {
+        const key = f.orbit === 'lunarOrbit' ? 'finding.orbit.noEngineMoon' : f.orbit === 'moonSurface' || f.orbit === 'lunarSouthPole' ? 'finding.orbit.noLander' : 'finding.orbit.noEngine';
+        return t(key, { orbit: t(`orbit.${f.orbit}`), vehicle: t(`launchVehicle.${f.vehicle}`) });
+      }
       return t(`finding.orbit.${state}`, {
         orbit: t(`orbit.${f.orbit}`),
         kg: formatDecimal(f.massKg),
@@ -209,6 +212,7 @@ export function teamLines(report: MissionReport): TeamLine[] {
 /** The "Like the real one" section: a line on who the real one is, a two-column table, one comparing line. */
 function realSection(report: MissionReport): HTMLElement[] {
   const c = likeTheRealOne(report);
+  if (!c) return [];
   const intro = el('p', 'report-real-intro', t(c.sameMission ? 'report.real.introMilestone' : 'report.real.introFree', { name: c.name }));
   intro.append(' ', learnMore(c.craft.learnMore, c.name));
   const table = el('table', 'report-real-table');

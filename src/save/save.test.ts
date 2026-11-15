@@ -393,12 +393,12 @@ describe('local save', () => {
     expect(loadGame(storage)?.state.design).toEqual({ ...emptyDesign(), bus: 'smallBus', payload: 'radiationDetector' });
   });
 
-  it('keeps the designs tried in a Test Run (maturity strip), still as version 19, and loads saves without them', () => {
+  it('keeps the designs tried in a Test Run (maturity strip), as version 20 (the Era 3 and Artemis Parts), and loads saves without them', () => {
     const storage = memoryStorage();
     const tested = structuredClone(game);
     tested.state.testedDesigns = { contract: 'explorer1', designs: ['a', 'b'] };
     saveGame(storage, tested);
-    expect(SAVE_VERSION).toBe(19);
+    expect(SAVE_VERSION).toBe(20);
     expect(loadGame(storage)?.state.testedDesigns).toEqual({ contract: 'explorer1', designs: ['a', 'b'] });
     saveGame(storage, game);
     expect(loadGame(storage)?.state.testedDesigns).toBeUndefined();
@@ -406,7 +406,7 @@ describe('local save', () => {
     expect(loadGame(storage)).toBeNull();
   });
 
-  it('keeps Ground Tests on the Site, the Mission and its Anomaly, still as version 19', () => {
+  it('keeps Ground Tests on the Site, the Mission and its Anomaly, as version 20', () => {
     const storage = memoryStorage();
     const busy = structuredClone(game);
     for (const id of EXPLORER) choose(busy.state.design, id);
@@ -415,7 +415,7 @@ describe('local save', () => {
     busy.state.groundTests = ['dayInTheLife'];
     expect(shipMission(busy.state, busy.state.design).ok).toBe(true);
     saveGame(storage, busy);
-    expect(SAVE_VERSION).toBe(19);
+    expect(SAVE_VERSION).toBe(20);
     expect(loadGame(storage)?.state).toEqual(busy.state);
     busy.state.day = busy.state.mission!.readyDay;
     launch(busy.state, busy.site.seed);

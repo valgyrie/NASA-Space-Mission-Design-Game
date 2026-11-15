@@ -68,3 +68,20 @@
 - [ ] SLS and Falcon Heavy in the catalogue and the 3D Launch; new Parts with 3D models
 - [ ] Real History cards, facts cited, future dates marked; Era 5 in Demo Mode
 - [ ] Old saves load; Seeds unchanged; tests; browser check at 1280×800 and 1024×768
+
+
+## As built (demo, 15 Nov 2026)
+
+Cut down by `docs/eras-demo/PLAN.md`: the Campaign's Artemis Era starts **1 January 2026** (same day as Free Play), right after Era 3. No Falcon 9 booster landing, Artemis I, Falcon Heavy, CubeSat 6U or Free Play Moon Contracts.
+
+- **Artemis II** (`artemis2`): high Earth orbit 185 × 74,080 km, Radiation Detector, 1 day, $6M. NASA ride on SLS from `kennedy39B`, ≤ 26 kg, and the Bus must be the **CubeSat Bus (12U)** (`cubeSat`, problem "needsCubeSat").
+- **Artemis III** (Choice Milestone `artemis3`): `artemis3Camera` (TV Camera), `artemis3Relay` (Relay Radio), `artemis3SpaceWeather` (Radiation Detector); Low Earth Orbit 440 km, 14 days; $12M, extra choices $6M; Falcon 9 from the Cape.
+- **Artemis IV** (Choice Milestone `artemis4`, the finale): `artemis4Relay` (lunar orbit 4,760 km, polar, Relay Radio, 30 days), `artemis4CargoLander` (south pole, Science Package + Lander, 14 days), `artemis4Mapper` (lunar orbit 50 km, polar, TV Camera, 27 days); $30M, extra $15M. Any one completes the Campaign: closing card "From Explorer 1 to the Moon", then Continue in Free Play.
+- **Board**: each Choice Milestone's Contracts side by side, each with a "Why NASA needs it" line, and a note that it is NASA's plan of 23 October 2026.
+- **Rules**: lunar orbit needs a Main Engine; landing alone needs a **Lander** (Propulsion, 18 kg, lighter than proposed so it fits the Large Bus); south pole sunlight 0.8; Data gets home ×0.2 from the Moon, and at the south pole ×0.3 alone or ×0.85 once `artemis4Relay` is done.
+- **SLS** (`sls`, `nasaOnly`): 98.3 m; boosters + 4 RS-25 · 126 s, core · 360 s (to ~486 s), ICPS · 30 s; 27,000 kg to the Moon, 95,000 kg low orbit. Falcon 9 to the Moon 1,900 kg (IM-1's Nova-C, about 1,908 kg, _(verify on a NASA page)_).
+- **Parts**: CubeSat Bus (12U) (4 kg, carries 22 kg, 25 days, Hall 1), Relay Radio (Payload, 3 kg, 4 W, 30 kB/day), Lander.
+- **Cards**: Artemis II before/after (facts flown); Artemis III and IV marked "NASA's plan".
+- **Launch show**: `'moon'` segments `{ kind: 'artemis2' }`, `{ kind: 'artemis3', choice }`, `{ kind: 'artemis4', choice }`.
+- **Demo Mode**: Artemis Era start with the Artemis II CubeSat ready and spare Parts for Artemis III and IV.
+- Tests: `src/game/era5.test.ts`.

@@ -1,6 +1,25 @@
 import { START_DATE_UTC } from '../game/balance';
 import { type StringKey, t } from '../strings';
-import { contractById, type ContractId, type MilestoneId } from '../game/contracts';
+import { type ChoiceMilestoneId, contractById, type ContractId, type MilestoneId } from '../game/contracts';
+import { ERA_YEARS, type Era } from '../game/eras';
+
+/**
+ * An Era's heading: "Era 3: 1969–1972". The Artemis Era (Era 5 in the Campaign) goes by its name, since Era 4 is
+ * not built yet: "The Artemis Era: 2026–2028".
+ */
+export function eraName(era: Era): string {
+  return era === 5 ? t('era.name.5') : t('era.name', { era });
+}
+
+/** A Milestone's name, or a Choice Milestone's ("Artemis III"). */
+export function goalText(id: MilestoneId | ChoiceMilestoneId): string {
+  return id === 'artemis3' || id === 'artemis4' ? t(`contract.group.${id}`) : contractText(id);
+}
+
+export function eraHeading(era: Era): string {
+  const years = { from: ERA_YEARS[era].from, to: ERA_YEARS[era].to };
+  return era === 5 ? t('era.artemis.heading', years) : t('era.heading', { era, ...years });
+}
 
 /** One translated name throughout the board, designer, tracker, report, patches and Space view. */
 export function contractText(id: ContractId, field: 'name' | 'client' | 'objective' | 'need' = 'name'): string {

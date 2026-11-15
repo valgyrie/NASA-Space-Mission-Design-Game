@@ -1,6 +1,8 @@
-import { CONTRACT_DEADLINE_DAYS, CONTRACT_REWARD, LAND_CONTRACT_EVERY } from './balance';
-import { eraOf } from './eras';
+import { CONTRACT_DEADLINE_DAYS, CONTRACT_EXTRA_REWARD, CONTRACT_REWARD, LAND_CONTRACT_EVERY } from './balance';
+import { type Era, eraOf } from './eras';
+import type { LaunchSiteId, LaunchVehicleId } from './launchVehicles';
 import type { SiteState } from './siteState';
+import type { MoonShowSpec } from '../world/moonShow';
 import { hashText, makeRng, randInt } from '../site/random';
 
 /**
@@ -8,10 +10,47 @@ import { hashText, makeRng, randInt } from '../site/random';
  * Text (client, objective) lives in strings.ts under `contract.<id>.*`.
  */
 
-export const CONTRACT_IDS = ['explorer1', 'tiros1', 'telstar1', 'syncom3'] as const;
+export const CONTRACT_IDS = [
+  'explorer1',
+  'tiros1',
+  'telstar1',
+  'syncom3',
+  'apollo11',
+  'artemis2',
+  'artemis3Camera',
+  'artemis3Relay',
+  'artemis3SpaceWeather',
+  'artemis4Relay',
+  'artemis4CargoLander',
+  'artemis4Mapper',
+] as const;
 export type MilestoneId = (typeof CONTRACT_IDS)[number];
 /** A question Contract's ID names its question and a number, so the same question can be asked again. */
 export type ContractId = MilestoneId | `free-${number}` | `ask-${QuestionId}-${number}`;
+
+/**
+ * Choice Milestones (Artemis III and IV): the board offers several Contracts side by side, each a different way to
+ * help, and any one of them completes the Milestone. Each extra one done pays its smaller extra reward.
+ */
+export const CHOICE_MILESTONES = {
+  artemis3: ['artemis3Camera', 'artemis3Relay', 'artemis3SpaceWeather'],
+  artemis4: ['artemis4Relay', 'artemis4CargoLander', 'artemis4Mapper'],
+} as const satisfies Record<string, readonly MilestoneId[]>;
+export type ChoiceMilestoneId = keyof typeof CHOICE_MILESTONES;
+
+/** The Choice Milestone a Contract is one of the choices of, if any. */
+export function choiceOf(id: ContractId): ChoiceMilestoneId | null {
+  for (const [group, ids] of Object.entries(CHOICE_MILESTONES)) {
+    if ((ids as readonly string[]).includes(id)) return group as ChoiceMilestoneId;
+  }
+  return null;
+}
+
+/** A Milestone is done: its Contract completed, or for a Choice Milestone, any one of its Contracts. */
+export function milestoneDone(state: Pick<SiteState, 'completed'>, id: ContractId | ChoiceMilestoneId): boolean {
+  const choices = (CHOICE_MILESTONES as Record<string, readonly ContractId[]>)[id];
+  return choices ? choices.some((c) => state.completed.includes(c)) : state.completed.includes(id as ContractId);
+}
 
 /** A Milestone follows real history; Free Play generates work for fictional clients. */
 export type ContractKind = 'milestone' | 'generated';
@@ -19,13 +58,25 @@ export type ContractKind = 'milestone' | 'generated';
 /**
  * Where the Spacecraft must go. A geostationary orbit circles the equator once a day, 35,786 km up: the rocket
  * leaves the Spacecraft in a transfer orbit, and its own main engine takes it the rest of the way.
- * More destinations arrive with later Eras.
+ * High Earth orbit: Artemis II's 185 × 74,080 km. Lunar orbit: round the Moon (the Spacecraft's main engine brakes it
+ * into orbit). The Moon's surface: Apollo 11's Tranquility Base, with its two-week lunar night. The lunar south pole:
+ * a sunlit ridge near the pole, where Earth is often out of sight (docs/research/eras-3-5.md).
  */
-export const ORBITS = ['lowEarthOrbit', 'geostationary'] as const;
+export const ORBITS = ['lowEarthOrbit', 'geostationary', 'highEarthOrbit', 'lunarOrbit', 'moonSurface', 'lunarSouthPole'] as const;
 export type Orbit = (typeof ORBITS)[number];
 
+/** Orbits at the Moon: radios send less from there, and the Launch show plays a Moon sequence. */
+export function atMoon(orbit: Orbit): boolean {
+  return orbit === 'lunarOrbit' || orbit === 'moonSurface' || orbit === 'lunarSouthPole';
+}
+
+/** On the Moon's ground: no orbit to hold, and a Lander (or NASA's Lunar Module) to get down. */
+export function onMoonGround(orbit: Orbit): boolean {
+  return orbit === 'moonSurface' || orbit === 'lunarSouthPole';
+}
+
 /** Payloads named by Contracts. The Mission Designer (ticket 07) adds them as Parts. */
-export type PayloadKind = 'radiationDetector' | 'tvCamera' | 'transponder';
+export type PayloadKind = 'radiationDetector' | 'tvCamera' | 'transponder' | 'sciencePackage' | 'relayRadio';
 
 /** What the Mission must do to fulfil the Contract. Checked by the Mission Report later. */
 export type Requirement =
@@ -46,9 +97,25 @@ export interface Contract {
   /** The orbit's tilt to the equator, in degrees. Drawn in the Space view. */
   inclinationDeg: number;
   /** A Milestone that must be done before this one is offered: the Campaign follows history in order. */
-  after?: ContractId;
+  after?: ContractId | ChoiceMilestoneId;
   /** The Era it belongs to: it is offered only once the Company has reached it (its HQ's level). */
-  era: 1 | 2 | 5;
+  era: Era;
+  /**
+   * NASA flies it on its own rocket from its own pad, free: the Launch costs the Company nothing, no other rocket can
+   * take it, and the Spacecraft must weigh no more than `maxKg` (the room NASA gives it: Apollo 11's Lunar Module,
+   * Artemis II's CubeSat slot).
+   */
+  ride?: { vehicle: LaunchVehicleId; site: LaunchSiteId; maxKg: number };
+  /** The rocket and Launch Site picked for it when it is accepted (the player can still change them). */
+  rocket?: { vehicle: LaunchVehicleId; site: LaunchSiteId };
+  /** The Spacecraft must be a CubeSat (Artemis II's slots took 12U CubeSats only). */
+  cubeSat?: boolean;
+  /** For a Choice Milestone's Contract: what it pays when another choice of the same Milestone is already done. */
+  extraReward?: number;
+  /** Its Launch show plays this Moon sequence after the climb. */
+  moonShow?: MoonShowSpec;
+  /** Finishing it finishes the Campaign: a closing card, then Continue in Free Play. */
+  finale?: boolean;
   /** Generated Contracts reuse a translated objective, with a unique number in their name. */
   template?: 'survey' | 'weather' | 'relay';
   /** The client pays for the whole Launch Vehicle instead of a Rideshare, as AT&T did for Telstar 1. */
@@ -138,7 +205,122 @@ export const CONTRACTS: Record<MilestoneId, Contract> = {
     after: 'telstar1',
     era: 2,
   },
+  // Apollo 11's science package (EASEP): a seismometer with its own solar panels and a laser reflector, set up by
+  // Buzz Aldrin at Tranquility Base (0.674° N, 23.473° E) on 20 July 1969. NASA: "just three weeks" of data. It rode
+  // in the Lunar Module on a Saturn V from Pad 39A that NASA paid for. The Lunar Module limit (45 kg) is a game
+  // estimate: the real package's two parts weighed 77 kg. docs/research/eras-3-5.md.
+  apollo11: {
+    id: 'apollo11',
+    kind: 'milestone',
+    requirements: [
+      { kind: 'orbit', orbit: 'moonSurface' },
+      { kind: 'payload', payload: 'sciencePackage' },
+      { kind: 'dataDays', days: 21 },
+    ],
+    reward: CONTRACT_REWARD.apollo11,
+    deadlineDays: CONTRACT_DEADLINE_DAYS.apollo11,
+    orbitKm: { low: 0, high: 0 },
+    inclinationDeg: 0,
+    after: 'syncom3',
+    era: 3,
+    ride: { vehicle: 'saturnV', site: 'kennedy39A', maxKg: 45 },
+    moonShow: { kind: 'apollo11' },
+  },
+  // Artemis II (1–10 April 2026): four 12U CubeSats (each up to 26 kg) rode SLS with Orion and were released in high
+  // Earth orbit, 185 × 74,080 km; K-Rad Cube measured radiation across the Van Allen belts. About a day from release
+  // to re-entry. NASA picked them, so the ride was free. The tilt is a game estimate (the Cape's latitude).
+  artemis2: {
+    id: 'artemis2',
+    kind: 'milestone',
+    requirements: [
+      { kind: 'orbit', orbit: 'highEarthOrbit' },
+      { kind: 'payload', payload: 'radiationDetector' },
+      { kind: 'dataDays', days: 1 },
+    ],
+    reward: CONTRACT_REWARD.artemis2,
+    deadlineDays: CONTRACT_DEADLINE_DAYS.artemis2,
+    orbitKm: { low: 185, high: 74_080 },
+    inclinationDeg: 28.5,
+    after: 'apollo11',
+    era: 5,
+    ride: { vehicle: 'sls', site: 'kennedy39B', maxKg: 26 },
+    cubeSat: true,
+    moonShow: { kind: 'artemis2' },
+  },
+  // Artemis III (NASA's plan of 23 Oct 2026, for 2027): Orion docks with lander test articles in low Earth orbit,
+  // the Blue Moon one waiting about 440 km up; a planned 14-day mission. The three ways to help are game ideas built
+  // on real needs (NASA's plan studies times the crew cannot talk to mission control). On the Company's own Falcon 9.
+  artemis3Camera: artemisThree('artemis3Camera', 'tvCamera', 'camera'),
+  artemis3Relay: artemisThree('artemis3Relay', 'relayRadio', 'relay'),
+  artemis3SpaceWeather: artemisThree('artemis3SpaceWeather', 'radiationDetector', 'spaceWeather'),
+  // Artemis IV (NASA's plan of 23 Oct 2026, for 2028): the first crewed landing since 1972, near the south pole.
+  // A relay in a high polar lunar orbit (NASA's LCRNS design: 6,500 km from the Moon's centre, about 4,760 km up);
+  // a cargo lander on a sunlit south-pole ridge for one lunar day; a Moon Mapper in a 50 km polar orbit like LRO's,
+  // for one turn of the Moon under it (27 days). Any one finishes the Campaign.
+  artemis4Relay: artemisFour('artemis4Relay', 'lunarOrbit', 'relayRadio', 30, { low: 4_760, high: 4_760 }, 90, 'relay'),
+  artemis4CargoLander: artemisFour('artemis4CargoLander', 'lunarSouthPole', 'sciencePackage', 14, { low: 0, high: 0 }, 0, 'cargoLander'),
+  artemis4Mapper: artemisFour('artemis4Mapper', 'lunarOrbit', 'tvCamera', 27, { low: 50, high: 50 }, 90, 'mapper'),
 };
+
+function artemisThree(id: MilestoneId, payload: PayloadKind, choice: MoonShowSpec['choice']): Contract {
+  return {
+    id,
+    kind: 'milestone',
+    requirements: [
+      { kind: 'orbit', orbit: 'lowEarthOrbit' },
+      { kind: 'payload', payload },
+      { kind: 'dataDays', days: 14 },
+    ],
+    reward: CONTRACT_REWARD.artemis3,
+    extraReward: CONTRACT_EXTRA_REWARD.artemis3,
+    deadlineDays: CONTRACT_DEADLINE_DAYS.artemis3,
+    orbitKm: { low: 440, high: 440 },
+    // Game estimate: the plan gives the height, not the tilt.
+    inclinationDeg: 28.5,
+    after: 'artemis2',
+    era: 5,
+    rocket: { vehicle: 'falcon9', site: 'capeCanaveral' },
+    moonShow: { kind: 'artemis3', choice },
+  };
+}
+
+function artemisFour(
+  id: MilestoneId,
+  orbit: Orbit,
+  payload: PayloadKind,
+  days: number,
+  orbitKm: { low: number; high: number },
+  inclinationDeg: number,
+  choice: MoonShowSpec['choice'],
+): Contract {
+  return {
+    id,
+    kind: 'milestone',
+    requirements: [
+      { kind: 'orbit', orbit },
+      { kind: 'payload', payload },
+      { kind: 'dataDays', days },
+    ],
+    reward: CONTRACT_REWARD.artemis4,
+    extraReward: CONTRACT_EXTRA_REWARD.artemis4,
+    deadlineDays: CONTRACT_DEADLINE_DAYS.artemis4,
+    orbitKm,
+    inclinationDeg,
+    after: 'artemis3',
+    era: 5,
+    rocket: { vehicle: 'falcon9', site: 'capeCanaveral' },
+    moonShow: { kind: 'artemis4', choice },
+    finale: true,
+  };
+}
+
+/** What finishing a Contract pays now: a Choice Milestone's extra choice pays its extra reward. */
+export function rewardFor(state: Pick<SiteState, 'completed'>, id: ContractId): number {
+  const contract = contractById(id);
+  const group = choiceOf(id);
+  const other = group !== null && CHOICE_MILESTONES[group].some((c) => c !== id && state.completed.includes(c));
+  return other && contract.extraReward !== undefined ? contract.extraReward : contract.reward;
+}
 
 /** How many "who needs it" lines each generated Contract kind has in strings.ts. */
 export const NEED_LINES = 4;
@@ -264,7 +446,7 @@ export function questionOffers(state: SiteState): ContractId[] {
 export function isOffered(state: SiteState, id: ContractId): boolean {
   if (state.playMode === 'freePlay') return availableContracts(state).some((c) => c.id === id) || questionOffers(state).includes(id);
   const contract = contractById(id);
-  return contract.kind === 'milestone' && eraOf(state) >= contract.era && (!contract.after || state.completed.includes(contract.after));
+  return contract.kind === 'milestone' && eraOf(state) >= contract.era && (!contract.after || milestoneDone(state, contract.after));
 }
 
 export type AcceptResult = { ok: true } | { ok: false; problem: 'taken' | 'done' | 'notYet' };
@@ -275,6 +457,12 @@ export function acceptContract(state: SiteState, id: ContractId): AcceptResult {
   if (state.completed.includes(id)) return { ok: false, problem: 'done' };
   if (!isOffered(state, id)) return { ok: false, problem: 'notYet' };
   state.contracts.push({ id, acceptedDay: state.day });
+  // NASA's ride sets the rocket and pad; the Artemis choices start on the Company's own Falcon 9 from the Cape.
+  const launch = contractById(id).ride ?? contractById(id).rocket;
+  if (launch && state.contracts.length === 1) {
+    state.vehicle = launch.vehicle;
+    state.launchSite = launch.site;
+  }
   state.reopened = state.reopened.filter((c) => c !== id);
   return { ok: true };
 }
@@ -308,10 +496,12 @@ export function daysLeft(state: SiteState, contract: AcceptedContract): number {
  * (an Anomaly still to settle holds the payment back).
  */
 export function completeContract(state: SiteState, id: ContractId, pay = true): number {
+  // A Choice Milestone's second or third choice pays its extra reward (worked out before this one counts as done).
+  const reward = state.completed.includes(id) ? contractById(id).reward : rewardFor(state, id);
   state.contracts = state.contracts.filter((c) => c.id !== id);
   if (!state.completed.includes(id)) state.completed.push(id);
-  if (pay) state.money += contractById(id).reward;
+  if (pay) state.money += reward;
   // Land is not cut by an Anomaly, so it comes at once.
   if (contractById(id).plot) state.freePlots += 1;
-  return contractById(id).reward;
+  return reward;
 }
