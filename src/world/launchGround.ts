@@ -102,6 +102,17 @@ const COMMON = /* glsl */ `
     vec4 b = texture2D(t, mat2(0.8, 0.6, -0.6, 0.8) * p / s2 + 0.37);
     return mix(mix(a, b, 0.45), avg, far);
   }
+  // A ripple slope from the water normal map that never repeats as a grid: two copies at random offsets, cross-faded
+  // along noise lines (Inigo Quilez's texture-repetition technique), keeping the contrast where they blend. The
+  // derivatives come from outside the sea's branch.
+  vec2 gRipple(vec2 uv, vec2 dx, vec2 dy) {
+    float l = gNoise(uv * 0.7) * 8.0;
+    float ia = floor(l);
+    float f = smoothstep(0.25, 0.75, fract(l));
+    vec2 a = textureGrad(gWaterN, uv + sin(vec2(3.0, 7.0) * ia), dx, dy).rg * 2.0 - 1.0;
+    vec2 b = textureGrad(gWaterN, uv + sin(vec2(3.0, 7.0) * (ia + 1.0)), dx, dy).rg * 2.0 - 1.0;
+    return mix(a, b, f) * inversesqrt(f * f + (1.0 - f) * (1.0 - f));
+  }
   // East edge of the land: the coastline wiggles along z.
   float gCoast(float z) {
     return ${COAST_X.toFixed(1)} + (gFbm(vec2(z * 0.0007, 3.1)) - 0.5) * 420.0 + (gNoise(vec2(z * 0.012, 7.0)) - 0.5) * 22.0;
@@ -280,15 +291,24 @@ function groundMaterial(sky: SkyUniforms): THREE.MeshStandardMaterial {
       .replace(
         '#include <opaque_fragment>',
         /* glsl */ `
+        vec2 p = vec2(gp.x, -gp.y);
+        vec2 pdx = dFdx(p);
+        vec2 pdy = dFdy(p);
         if (gSea > 0.0) {
-          // The sea: ripples at three scales, the sky reflected by Fresnel, sun glint, deep blue body.
-          vec2 p = vec2(gp.x, -gp.y);
+          // The sea: ripples at four scales, each turned and drifting its own way and none repeating as a grid (the
+          // climb looks straight down on it), in broad gusty and calm patches; the sky reflected by Fresnel, sun
+          // glint, deep blue body.
           float t = gTime;
-          vec2 s1 = texture2D(gWaterN, mat2(0.8, 0.6, -0.6, 0.8) * p / 9.0 + vec2(-t * 0.02, t * 0.015)).rg * 2.0 - 1.0;
-          vec2 s2 = texture2D(gWaterN, p / 31.0 + vec2(t * 0.01, t * 0.006)).rg * 2.0 - 1.0;
-          vec2 s3 = texture2D(gWaterN, mat2(0.28, -0.96, 0.96, 0.28) * p / 97.0 - vec2(t * 0.005, -t * 0.007)).rg * 2.0 - 1.0;
+          mat2 r1 = mat2(0.8, 0.6, -0.6, 0.8);
+          mat2 r3 = mat2(0.28, -0.96, 0.96, 0.28);
+          mat2 r4 = mat2(-0.6, 0.8, -0.8, -0.6);
+          vec2 s1 = gRipple(r1 * p / 9.0 + vec2(-t * 0.02, t * 0.015), r1 * pdx / 9.0, r1 * pdy / 9.0);
+          vec2 s2 = gRipple(p / 31.0 + vec2(t * 0.01, t * 0.006), pdx / 31.0, pdy / 31.0);
+          vec2 s3 = gRipple(r3 * p / 97.0 - vec2(t * 0.005, -t * 0.007), r3 * pdx / 97.0, r3 * pdy / 97.0);
+          vec2 s4 = gRipple(r4 * p / 340.0 + vec2(t * 0.002, t * 0.001), r4 * pdx / 340.0, r4 * pdy / 340.0);
+          float gust = 0.55 + 0.9 * gFbm(p * 0.0012 + vec2(t * 0.004, -t * 0.003));
           float near = 1.0 - smoothstep(80.0, 2500.0, gDist);
-          vec2 sl = (s1 * 0.5 * near + s2 * 0.6 + s3 * 0.5) * 0.18 * mix(0.15, 1.0, 1.0 - smoothstep(500.0, 20000.0, gDist));
+          vec2 sl = (s1 * 0.5 * near + s2 * 0.6 + s3 * 0.5 + s4 * 0.35) * 0.16 * gust * mix(0.15, 1.0, 1.0 - smoothstep(500.0, 20000.0, gDist));
           vec3 N = normalize(vec3(sl.x, 1.0, -sl.y));
           vec3 V = normalize(cameraPosition - vGround);
           float cosV = max(dot(N, V), 0.0);
@@ -311,7 +331,7 @@ function groundMaterial(sky: SkyUniforms): THREE.MeshStandardMaterial {
         `,
       );
   };
-  material.customProgramCacheKey = () => 'launch-ground-2';
+  material.customProgramCacheKey = () => 'launch-ground-3';
   return material;
 }
 

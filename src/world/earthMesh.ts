@@ -321,6 +321,13 @@ function cloudMaterial(s: Shared, view: View): THREE.ShaderMaterial {
         // Seen edge-on near the rim, clouds look thicker.
         float ndv = max(dot(n, v), 0.0);
         float alpha = clamp(cover * (1.0 + (1.0 - ndv) * 0.6), 0.0, 1.0) * mix(0.35, 1.0, smoothstep(-0.2, 0.05, ndl));
+        // The cloud shell stands higher above the ground than real clouds do. Where the line of sight passes over
+        // the planet's edge into space (seen from low orbit), it would show as bright streaks floating above the
+        // horizon: fade the clouds out there, so they end at the planet's edge.
+        vec3 ray = normalize(vPoint - eye);
+        float skim = length(eye + ray * max(dot(-eye, ray), 0.0));
+        float ground = length(vPoint) / ${(1 + CLOUD_HEIGHT).toFixed(4)};
+        alpha *= 1.0 - smoothstep(ground * ${(1 - CLOUD_HEIGHT * 0.1).toFixed(5)}, ground * ${(1 + CLOUD_HEIGHT * 0.12).toFixed(5)}, skim);
         gl_FragColor = vec4(colour, alpha);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
