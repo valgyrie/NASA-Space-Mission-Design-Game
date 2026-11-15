@@ -1,4 +1,5 @@
 import { makeAudioControls } from './audioControls';
+import { comingSoon } from './comingSoon';
 import { makeCredits } from './credits';
 import { makeDataCredits } from './dataCredits';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
@@ -113,8 +114,9 @@ export function showMainMenu(
   actions.className = 'main-menu-actions';
   const play = button(t('mainMenu.play'), 'menu-button primary');
   const demo = button(t('demo.heading'));
+  // Online is switched off for now: greyed, says "Coming soon" on hover, and does nothing when clicked.
   const online = button(t('online.heading'));
-  online.addEventListener('click', options.onOnline);
+  comingSoon(online);
   const dataButton = button(t('data.heading'));
   const creditsButton = button(t('credits.heading'));
   const soundButton = iconButton(t('sound.heading'), 'sound');
@@ -133,10 +135,14 @@ export function showMainMenu(
     view.append(h, ...content);
     return view;
   };
+  // Back sits in a footer pinned to the bottom of the sheet, so long sheets (Credits, Real data) never need a scroll to leave.
   const backButton = () => {
     const back = button(t('mainMenu.back'));
     back.addEventListener('click', () => goBack());
-    return back;
+    const foot = document.createElement('div');
+    foot.className = 'sticky-foot';
+    foot.append(back);
+    return foot;
   };
 
   const note = document.createElement('p');
@@ -247,8 +253,10 @@ export function showMainMenu(
     select(rows[Math.min(at, rows.length - 1)]!.entry);
   });
   const buttons = document.createElement('div');
-  buttons.className = 'company-buttons';
-  buttons.append(playCompany, create, deleteButton, backButton());
+  buttons.className = 'company-buttons sticky-foot';
+  const companiesBack = button(t('mainMenu.back'));
+  companiesBack.addEventListener('click', () => goBack());
+  buttons.append(playCompany, create, deleteButton, companiesBack);
   const companies = sheet(t('companies.heading'), list, buttons, confirm);
   companies.classList.add('companies-view');
   select(selected, false);

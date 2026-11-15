@@ -5,6 +5,7 @@ import type { Flight, TestRun } from '../game/flight';
 import { t } from '../strings';
 import { contractText, formatNumber } from './format';
 import { findingText } from './missionReport';
+import { chanceWord } from '../game/explorer';
 
 /**
  * The Test Run screen, shown inside the Mission Designer in place of the Launch planner: a top-down
@@ -58,14 +59,19 @@ export function at(values: readonly number[], day: number): number {
   return values[i]! + (values[j]! - values[i]!) * (day - i);
 }
 
-/** Every predicted problem in plain words: what the design does as labelled, then thin margins found by the runs. */
-export function predictedProblems(run: TestRun): string[] {
+/**
+ * Every predicted problem in plain words: what the design does as labelled, then thin margins found by the runs.
+ * `explorer`: the same lines without numbers.
+ */
+export function predictedProblems(run: TestRun, explorer = false): string[] {
   const findings = run.asLabelled.findings;
-  const lines = findings.filter((f) => !f.ok).map((f) => findingText(f));
+  const lines = findings.filter((f) => !f.ok).map((f) => findingText(f, true, explorer));
   for (const kind of ['power', 'comms'] as const) {
     const failsAnyway = findings.some((f) => f.kind === kind && !f.ok);
     const count = run.missed[kind];
-    if (count > 0 && !failsAnyway) lines.push(t(`testRun.thin.${kind}`, { count: formatNumber(count), runs: formatNumber(run.runs) }));
+    if (count > 0 && !failsAnyway) {
+      lines.push(explorer ? t(`explorer.thin.${kind}`) : t(`testRun.thin.${kind}`, { count: formatNumber(count), runs: formatNumber(run.runs) }));
+    }
   }
   return lines;
 }
@@ -91,6 +97,8 @@ function lineGraph(opts: {
   /** Values marked on the left with a grid line. */
   marks: readonly number[];
   value(v: number): string;
+  /** The words under the start, middle and end of the days (default "Day 0", "Day 15", "Day 30"). */
+  dayWords?: readonly [string, string, string];
 }): Graph {
   const { days, max, line } = opts;
   const x = (d: number) => PAD.left + (d / Math.max(days, 1)) * (W - PAD.left - PAD.right);
@@ -103,9 +111,9 @@ function lineGraph(opts: {
     label.textContent = opts.value(v);
     root.append(label);
   }
-  for (const d of [0, Math.round(days / 2), days]) {
+  for (const [i, d] of [0, Math.round(days / 2), days].entries()) {
     const label = svg('text', { x: x(d), y: H - 6, 'text-anchor': d === 0 ? 'start' : d === days ? 'end' : 'middle' }, 'graph-label');
-    label.textContent = t('testRun.dayTick', { day: formatNumber(d) });
+    label.textContent = opts.dayWords ? opts.dayWords[i]! : t('testRun.dayTick', { day: formatNumber(d) });
     root.append(label);
   }
   if (opts.low && opts.high) {
@@ -152,6 +160,8 @@ export function drawOrbit(
   lap: number,
   powered: boolean,
   place: Satellite['place'] = 'earth',
+  /** Mark the lowest and highest points in km (Mission Director). */
+  heights = true,
 ): void {
   if (place !== 'earth') {
     drawMoonTrip(canvas, 1, powered, place === 'moonGround', lap);
@@ -202,13 +212,15 @@ export function drawOrbit(
   g.stroke();
   g.setLineDash([]);
 
-  g.fillStyle = COLOURS.label;
-  g.font = `${11 * ratio}px system-ui, sans-serif`;
-  g.textBaseline = 'middle';
-  g.textAlign = 'right';
-  g.fillText(t('testRun.km', { km: formatNumber(orbitKm.low) }), w - 4 * ratio, cy);
-  g.textAlign = 'left';
-  g.fillText(t('testRun.km', { km: formatNumber(orbitKm.high) }), 4 * ratio, cy);
+  if (heights) {
+    g.fillStyle = COLOURS.label;
+    g.font = `${11 * ratio}px system-ui, sans-serif`;
+    g.textBaseline = 'middle';
+    g.textAlign = 'right';
+    g.fillText(t('testRun.km', { km: formatNumber(orbitKm.low) }), w - 4 * ratio, cy);
+    g.textAlign = 'left';
+    g.fillText(t('testRun.km', { km: formatNumber(orbitKm.high) }), 4 * ratio, cy);
+  }
 
   const ea = eccentricAnomaly(lap, e);
   const sx = cx + a * Math.cos(ea) * scale;
@@ -293,7 +305,9 @@ export function drawMoonTrip(canvas: HTMLCanvasElement, share: number, powered: 
 
 // ---- The screen ----
 
-export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean }): TestRunScreen {
+export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean; /** Explorer: words instead of numbers. */ explorer?: boolean }): TestRunScreen {
+  const explorer = !!hooks.explorer;
+  const dayWords = explorer ? ([t('explorer.testRun.start'), t('explorer.testRun.middle'), t('explorer.testRun.end')] as const) : undefined;
   const root = el('div', 'testrun');
   root.hidden = true;
   const back = el('button', 'small planner-back', t(hooks.designBack ? 'planner.back' : 'testRun.back'));
@@ -366,7 +380,7 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
     day.classList.toggle('warn', !powered);
     for (const c of cursors) c.setCursor(d);
     // A Spacecraft without Power still orbits: it just goes quiet.
-    drawOrbit(canvas, orbitKm, still() ? 0.15 : seconds / LAP_SECONDS, powered, place);
+    drawOrbit(canvas, orbitKm, still() ? 0.15 : seconds / LAP_SECONDS, powered, place, !explorer);
     frame = requestAnimationFrame(tick);
   };
 
@@ -395,7 +409,8 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
         line: f.batteryWh,
         low: run.batteryLowWh,
         high: run.batteryHighWh,
-        value: (v) => t('testRun.wh', { wh: formatNumber(Math.round(v)) }),
+        value: (v) => (explorer ? t(v > 0 ? 'explorer.testRun.full' : 'explorer.testRun.empty') : t('testRun.wh', { wh: formatNumber(Math.round(v)) })),
+        dayWords,
       });
       battery.root.setAttribute('aria-label', t('testRun.batteryHint'));
       batteryBox.replaceChildren(battery.root);
@@ -407,10 +422,11 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
           max: f.dataGoalKb * 1.15,
           line: f.dataSentKb,
           goal: f.dataGoalKb,
-          marks: [f.dataGoalKb, 0],
-          value: (v) => t('testRun.kb', { kb: formatNumber(Math.round(v)) }),
+          marks: explorer ? [0] : [f.dataGoalKb, 0],
+          value: (v) => (explorer ? t('explorer.testRun.none') : t('testRun.kb', { kb: formatNumber(Math.round(v)) })),
+          dayWords,
         });
-        dataHint.textContent = t('testRun.dataHint', { kb: formatNumber(f.dataGoalKb) });
+        dataHint.textContent = explorer ? t('explorer.testRun.dataHint') : t('testRun.dataHint', { kb: formatNumber(f.dataGoalKb) });
         data.root.setAttribute('aria-label', dataHint.textContent);
         dataBox.replaceChildren(data.root);
         cursors.push(data);
@@ -419,13 +435,16 @@ export function makeTestRunScreen(hooks: { onBack(): void; designBack?: boolean 
         dataBox.replaceChildren();
       }
 
-      percent.textContent = t('testRun.percent', { percent: formatNumber(run.successPercent) });
+      percent.textContent = explorer ? t(`explorer.chance.${chanceWord(run.successPercent)}`) : t('testRun.percent', { percent: formatNumber(run.successPercent) });
       percent.dataset.level = run.successPercent >= 90 ? 'good' : run.successPercent >= 50 ? 'fair' : 'poor';
       runs.textContent = t('testRun.runs', { runs: formatNumber(run.runs) });
       // The rocket can fail too: the estimate is the design's runs times the rocket's record in the game.
       const odds = { design: formatNumber(run.designPercent), rocket: formatNumber(Math.round(run.reliability * 100)), vehicle: t(`launchVehicle.${run.vehicle}`) };
-      rocket.textContent = t(run.reliability < 1 ? 'testRun.rocket' : 'testRun.rocketFirst', odds);
-      const lines = predictedProblems(run);
+      rocket.textContent = explorer
+        ? t(run.reliability < 1 ? 'explorer.testRun.rocket' : 'planner.firstLaunch.short')
+        : t(run.reliability < 1 ? 'testRun.rocket' : 'testRun.rocketFirst', odds);
+      runs.hidden = explorer;
+      const lines = predictedProblems(run, explorer);
       problems.replaceChildren(...lines.map((line) => el('li', '', line)));
       none.hidden = lines.length > 0;
       play();

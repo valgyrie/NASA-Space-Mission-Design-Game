@@ -1,6 +1,7 @@
 import { audio } from '../audio/sound';
 import { HISTORY_CARDS, type HistoryCardId } from '../game/history';
 import { t } from '../strings';
+import { tm } from './displayMode';
 
 export interface HistoryCardDialog {
   /** Show a card. `onDone` runs when it is closed. */
@@ -76,7 +77,7 @@ export function showHistoryCard(root: HTMLElement, hooks: { onOpen(): void; onCl
       } else img.removeAttribute('src');
       label.textContent = t('history.label', { when: t(card.plan ? 'history.plan' : `history.${card.when}`, { year: card.year }) });
       title.textContent = t(`history.${id}.title`);
-      text.textContent = t(`history.${id}.text`);
+      text.textContent = tm(`history.${id}.text`);
       learn.href = card.learnMore;
       after = onDone;
       if (backdrop.hidden) {

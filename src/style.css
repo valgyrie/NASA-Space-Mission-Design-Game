@@ -4873,3 +4873,229 @@ button.designer-challenge-test[hidden] { display: none; }
 /* The Demo Mode note sits centred under the top bar, clear of the panels on both sides. */
 .demo-playing { top: max(96px, calc(var(--top-bar-bottom, 0px) + 10px)); right: auto; left: 50%; transform: translateX(-50%); text-align: center; }
 .build-item:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* Features not open yet (Online): greyed out, "Coming soon" on hover, clicks ignored (src/ui/comingSoon.ts). */
+button.coming-soon,
+button.coming-soon:hover,
+button.coming-soon:focus-visible {
+  position: relative;
+  color: rgba(255, 255, 255, 0.38);
+  background: rgba(46, 50, 58, 0.55);
+  border-color: rgba(255, 255, 255, 0.12);
+  filter: grayscale(1);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+/* The note covers the button's own label on hover, so it never overlaps the buttons around it. */
+button.coming-soon::after {
+  content: attr(data-tip);
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: inherit;
+  background: rgba(30, 34, 42, 0.96);
+  color: #fff;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+button.coming-soon:hover::after,
+button.coming-soon:focus-visible::after {
+  opacity: 1;
+}
+
+/* ---- Ghost preview on the resource bars (both modes): what picking the hovered Part would do ---- */
+.gauge-head {
+  justify-self: end;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+}
+.gauge-arrow { font-size: 11px; font-weight: 800; }
+.gauge-arrow[hidden] { display: none; }
+.gauge[data-ghost='better'] .gauge-arrow { color: var(--accent); }
+.gauge[data-ghost='worse'] .gauge-arrow { color: var(--warn); }
+.gauge-track { position: relative; }
+.gauge-ghost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  transition: left 0.15s ease, width 0.15s ease;
+}
+.gauge-ghost[hidden] { display: none; }
+/* Growing: a light, striped segment past the fill. Shrinking: a dark, hatched segment over the part that goes. */
+.gauge-ghost[data-change='up'] {
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.55) 0 3px, rgba(255, 255, 255, 0.25) 3px 6px);
+}
+.gauge-ghost[data-change='down'] {
+  background: repeating-linear-gradient(135deg, rgba(4, 8, 16, 0.85) 0 3px, rgba(4, 8, 16, 0.55) 3px 6px);
+}
+.gauge[data-ghost='better'] .gauge-ghost { box-shadow: 0 0 0 1px var(--accent); }
+.gauge[data-ghost='worse'] .gauge-ghost { box-shadow: 0 0 0 1px var(--warn); }
+@media (prefers-reduced-motion: reduce) {
+  .gauge-ghost { transition: none; }
+}
+
+/* ---- Explorer (difficulty 'easy'): bigger, friendlier, words instead of numbers ---- */
+/* Colour pairs colour-blind players can tell apart: blue for good, orange for short, each with a mark. */
+body.mode-explorer .gauge-fill { background: var(--accent); }
+body.mode-explorer .gauge[data-status='short'] .gauge-fill {
+  background: repeating-linear-gradient(135deg, var(--warn) 0 4px, #e08a3a 4px 8px);
+}
+body.mode-explorer .gauge[data-status='ok'] .gauge-short::before { content: '✓ '; color: var(--accent); }
+body.mode-explorer .gauge[data-status='short'] .gauge-short::before { content: '! '; }
+body.mode-explorer .gauge-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+body.mode-explorer .gauge-name .icon-svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+body.mode-explorer .designer-body > .designer-resources { width: clamp(250px, 23vw, 310px); }
+body.mode-explorer .designer-resources .gauge-name,
+body.mode-explorer .designer-resources .gauge-short { font-size: 15px; }
+body.mode-explorer .designer-resources .gauge-track { height: 8px; border-radius: 4px; }
+body.mode-explorer .designer-resources .gauge-text { font-size: 13px; }
+body.mode-explorer .designer-resources-toggle { font-size: 13px; }
+body.mode-explorer .gauge-arrow { font-size: 14px; }
+
+/* Option levels in place of numbers: a word and three pips each. */
+.explorer-levels {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 4px 14px;
+}
+.explorer-level { display: inline-flex; align-items: center; gap: 6px; }
+.explorer-level-name { font-size: 15px; color: var(--text); }
+.explorer-pips { display: inline-flex; gap: 3px; }
+.explorer-pips > span {
+  width: 14px;
+  height: 8px;
+  border-radius: 2px;
+  border: 1px solid rgba(160, 190, 230, 0.6);
+}
+.explorer-pips > span.on { background: var(--accent); border-color: var(--accent); }
+.explorer-about { font-size: 15px; color: var(--muted); }
+body.mode-explorer .designer-picked-stats { font-size: 15px; }
+
+/* Explorer's Launch checklist: a tick, cross or "careful" mark beside each plain line. */
+.explorer-checklist {
+  list-style: none;
+  margin: 4px 0 10px;
+  padding: 0;
+  display: grid;
+  gap: 6px;
+}
+.explorer-checklist[hidden] { display: none; }
+.explorer-checklist li { display: flex; align-items: baseline; gap: 10px; font-size: 17px; }
+.explorer-mark {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-weight: 800;
+  font-size: 15px;
+  color: #06101d;
+}
+.explorer-checklist li[data-mark='ok'] .explorer-mark { background: var(--accent); }
+.explorer-checklist li[data-mark='no'] .explorer-mark { background: var(--warn); }
+.explorer-checklist li[data-mark='no'] { color: var(--warn); }
+.explorer-checklist li[data-mark='warn'] .explorer-mark { background: #f2d264; }
+
+/* Planner: who needs the Mission, the best site's reason, the Weather page's price. */
+.planner-who { margin: 0 0 6px; font-size: 16px; color: var(--text); max-width: 46ch; }
+.planner-who[hidden], .planner-site-why[hidden], .planner-arrives[hidden], .planner-price[hidden], .planner-money[hidden] { display: none; }
+.planner-site-why { margin: 2px 0 0; }
+.planner-arrives { margin: 0 0 8px; font-weight: 600; }
+.planner-price { margin: 12px 0 2px; font-size: 20px; font-weight: 800; }
+.planner-money.warn { color: var(--warn); }
+body.mode-explorer .planner-tile-tag.planner-tile-best { background: var(--accent); }
+body.mode-explorer .planner-tile-tag { font-size: 12px; }
+body.mode-explorer button.planner-vehicle[data-fits='true']::after {
+  content: '✓';
+  position: absolute;
+  bottom: 4px;
+  left: 6px;
+  font-weight: 800;
+  color: var(--accent);
+}
+body.mode-explorer .planner-tile-tip { font-size: 14px; }
+body.mode-explorer .planner-head-segment { display: none; }
+
+/* Bigger text where Explorer players read. */
+body.mode-explorer .slot-why .fold-summary,
+body.mode-explorer .slot-why .fold-body,
+body.mode-explorer .planner-head-hint,
+body.mode-explorer .planner-hint,
+body.mode-explorer .planner-card,
+body.mode-explorer .designer-warnings li,
+body.mode-explorer .designer-status,
+body.mode-explorer .report-findings li,
+body.mode-explorer .report-outcome,
+body.mode-explorer .report-reward,
+body.mode-explorer .testrun-problems li,
+body.mode-explorer .history-text,
+body.mode-explorer .sourced-tip { font-size: 18px; }
+body.mode-explorer .testrun-percent { font-size: 32px; }
+body.mode-explorer .testrun-percent[data-level='good'] { color: var(--accent); }
+body.mode-explorer .report-findings .ok .report-mark { color: var(--accent); }
+
+/* Large, touch-friendly buttons, each with a word: the ✕ and icon buttons show their name beside the symbol. */
+body.mode-explorer button.small,
+body.mode-explorer .designer-page,
+body.mode-explorer .planner-pager-arrow,
+body.mode-explorer .planner-back,
+body.mode-explorer .report-buttons button,
+body.mode-explorer .history-buttons button,
+body.mode-explorer .history-buttons a { min-height: 44px; font-size: 15px; }
+body.mode-explorer .designer-page,
+body.mode-explorer .planner-pager-arrow { min-width: 44px; width: auto; padding: 0 12px; }
+body.mode-explorer button.icon-button::after {
+  content: attr(aria-label);
+  margin-left: 6px;
+  font-size: 14px;
+}
+body.mode-explorer .designer-page,
+body.mode-explorer .planner-pager-arrow { height: 44px; border-radius: 22px; font-size: 16px; font-weight: 700; white-space: nowrap; }
+/* Explorer keeps the plain sentence under a short bar, even on small screens: it names the fix. */
+body.mode-explorer .designer-resources .gauge[data-status='short'] .gauge-text:not([hidden]) { display: block; }
+body.mode-explorer .planner-best { color: #06101d; background: var(--accent); }
+.planner-rows[hidden], .planner-card[hidden] { display: none; }
+
+/* Back / Resume footers pinned to the bottom of a scrolling menu, so they are always in reach (mainMenu.ts, menu.ts). */
+.sticky-foot {
+  position: sticky;
+  bottom: -24px;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 4px -24px -24px;
+  padding: 14px 24px 24px;
+  background: linear-gradient(to bottom, rgba(10, 17, 30, 0), rgba(10, 17, 30, 0.97) 14px);
+}
+.main-menu-sheet > .sticky-foot {
+  bottom: -20px;
+  margin: 4px -22px -20px;
+  padding: 14px 22px 20px;
+}
+.company-buttons.sticky-foot { display: grid; }
+.company-buttons.sticky-foot[hidden] { display: none; }
+.sticky-foot > button { width: 100%; }
+/* Explorer: fewer panels at once. JPL's Concept Maturity strip stays in Mission Director. */
+body.mode-explorer .designer .maturity { display: none; }

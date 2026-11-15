@@ -28,7 +28,9 @@ import {
   statsOf,
 } from '../game/spacecraft';
 import type { TechId } from '../game/research';
-import type { Difficulty } from '../game/modes';
+import { type Difficulty, isExplorer } from '../game/modes';
+import { dayPhase, ghostLayout, optionLevels, whatIf } from '../game/explorer';
+import { icon } from './icons';
 import { makeLaunchPlanner } from './launchPlanner';
 import type { CompanyLogo } from '../company/logo';
 import { makeMaturityStrip } from './designReview';
@@ -38,7 +40,7 @@ import { recordTestRun } from '../game/maturity';
 import { makeTestRunScreen } from './testRun';
 import { planLaunch, testRunFor } from '../game/mission';
 import type { Part } from '../economy/part';
-import { type StringKey, t } from '../strings';
+import { type StringKey, t, textFor } from '../strings';
 import { SpacecraftView } from '../world/spacecraftView';
 import { spacecraftPicture } from '../world/spacecraftThumbnails';
 import { missionLinks } from './learnMore';
@@ -185,6 +187,45 @@ export function problemText(p: DesignProblem, check: DesignCheck): string {
   }
 }
 
+/** Explorer's word on a bar's first line ("Too heavy"); the Budget keeps its money. */
+export function explorerGaugeShort(resource: Resource, g: Gauge): string {
+  if (g.status === 'waiting' || resource === 'budget') return gaugeShort(resource, g);
+  if (resource === 'mass' && g.target <= 0) return t('explorer.gauge.mass.cant');
+  return t(`explorer.gauge.${resource}.${g.status === 'ok' ? 'ok' : 'no'}`);
+}
+
+/** Explorer's sentence under a bar: what it means, no numbers (the Budget keeps its money). */
+export function explorerGaugeText(resource: Resource, g: Gauge, check: DesignCheck, money: number): string {
+  if (g.status === 'waiting' || resource === 'budget') return gaugeText(resource, g, check, money);
+  if (resource === 'mass' && g.target <= 0) return t('explorer.gaugeText.mass.cant');
+  if (resource === 'communications' && g.status === 'short' && check.problems.some((p) => p.kind === 'commsShort' && p.stations)) {
+    return t('explorer.gaugeText.communications.stations');
+  }
+  return t(`explorer.gaugeText.${resource}.${g.status === 'ok' ? 'ok' : 'no'}`);
+}
+
+/** Explorer's plain sentence for a shortfall: the cause and a fix, without the numbers. */
+export function explorerProblemText(p: DesignProblem, check: DesignCheck): string {
+  const vehicle = t(`launchVehicle.${check.goal.vehicle}`);
+  switch (p.kind) {
+    case 'tooHeavy':
+      if (p.ride !== undefined) return t('explorer.problem.tooHeavyRide');
+      return p.bigger ? t('explorer.problem.tooHeavyBigger', { vehicle, bigger: t(`launchVehicle.${p.bigger}`) }) : t('explorer.problem.tooHeavy', { vehicle });
+    case 'busFull':
+      return t('explorer.problem.busFull', { bus: t(`part.${p.bus as BusId}`) });
+    case 'powerShort':
+      return t('explorer.problem.powerShort', { phase: t(`explorer.phase.${dayPhase(p.lastsDays, p.needDays)}`) });
+    case 'money':
+      return t('explorer.problem.money', { short: formatMoney(p.short) });
+    case 'commsShort':
+      return t(p.stations ? 'explorer.problem.commsShortStations' : 'explorer.problem.commsShort');
+    case 'late':
+      return t('explorer.problem.late');
+    default:
+      return problemText(p, check);
+  }
+}
+
 /** The short number on a bar's first line ("3.2 / 8 kg"); the full sentence from `gaugeText` sits under the bar. */
 export function gaugeShort(resource: Resource, g: Gauge): string {
   if (g.status === 'waiting') return t('gauge.waiting', { slot: t(`slot.${g.waitingFor!}`) });
@@ -246,6 +287,8 @@ export function showMissionDesigner(
     };
   },
 ): MissionDesigner {
+  /** Explorer shows the same design with words, levels and bars instead of numbers. */
+  const explorer = isExplorer(state);
   const backdrop = el('div', 'backdrop designer-backdrop');
   backdrop.hidden = true;
   const panel = el('div', 'panel designer');
@@ -312,13 +355,14 @@ export function showMissionDesigner(
   const preview = (tile: Tile | null) => {
     previewing = tile;
     showPicked();
+    showGhost();
   };
 
   for (const slot of SLOTS) {
     const hint = el('div', 'designer-slot-hint');
     const chip = makeRoleChip(SLOT_ROLE[slot]);
     // The idea in one line; the arrow opens why it matters.
-    const slotWhy = fold(t(`slot.${slot}.hint`), t(`slot.${slot}.why`));
+    const slotWhy = fold(t(`slot.${slot}.hint`), textFor(`slot.${slot}.why`, explorer));
     slotWhy.classList.add('slot-why');
     hint.append(slotWhy, chip.root);
     hintBox.append(hint);
@@ -371,8 +415,9 @@ export function showMissionDesigner(
 
   // The pager: ‹ 3 / 7 · Power ›, with one dot per page (ticked when its slot is filled).
   const pager = el('div', 'designer-pager');
-  const back = button('designer-page designer-page-back', t('designer.pagePrev'));
-  const forward = button('designer-page designer-page-next', t('designer.pageNext'));
+  // Explorer: a word beside each arrow.
+  const back = button('designer-page designer-page-back', t(explorer ? 'explorer.pagePrev' : 'designer.pagePrev'));
+  const forward = button('designer-page designer-page-next', t(explorer ? 'explorer.pageNext' : 'designer.pageNext'));
   const pageLabel = el('span', 'designer-page-label');
   const dots = el('ol', 'designer-dots');
   dots.setAttribute('aria-label', t('designer.steps'));
@@ -412,20 +457,67 @@ export function showMissionDesigner(
     resToggle.setAttribute('aria-expanded', String(!open));
   });
   resBox.append(resToggle);
-  const gauges = new Map<Resource, { row: HTMLElement; fill: HTMLElement; target: HTMLElement; short: HTMLElement; text: HTMLElement }>();
+  type GaugeUi = { row: HTMLElement; fill: HTMLElement; ghost: HTMLElement; target: HTMLElement; short: HTMLElement; arrow: HTMLElement; text: HTMLElement };
+  const gauges = new Map<Resource, GaugeUi>();
   for (const r of RESOURCES) {
     const row = el('div', 'gauge');
+    row.dataset.resource = r;
     const name = el('span', 'gauge-name', t(`resource.${r}`));
+    // Explorer: an icon beside each bar's word.
+    if (explorer) name.prepend(icon(r));
     const short = el('span', 'gauge-short');
+    // The ghost preview: how the bar would change with the hovered or focused Part, and an arrow saying which way.
+    const arrow = el('span', 'gauge-arrow');
+    arrow.hidden = true;
     const track = el('div', 'gauge-track');
     const fill = el('div', 'gauge-fill');
+    const ghost = el('div', 'gauge-ghost');
+    ghost.hidden = true;
     const target = el('div', 'gauge-target');
-    track.append(fill, target);
+    track.append(fill, ghost, target);
     const text = el('span', 'gauge-text');
-    row.append(name, short, track, text);
+    const head = el('span', 'gauge-head');
+    head.append(arrow, short);
+    row.append(name, head, track, text);
     resBox.append(row);
-    gauges.set(r, { row, fill, target, short, text });
+    gauges.set(r, { row, fill, ghost, target, short, arrow, text });
   }
+  /** The bars as last drawn, for putting them back when the ghost preview ends. */
+  let drawn: DesignCheck['gauges'] | null = null;
+  const placeBar = (ui: GaugeUi, g: Gauge) => {
+    const layout = gaugeLayout(g);
+    ui.fill.style.width = `${(g.status === 'waiting' ? 0 : layout.fill) * 100}%`;
+    ui.target.style.left = `${layout.target * 100}%`;
+    ui.target.hidden = g.status === 'waiting';
+  };
+  /** Show on each bar what picking the previewed Part would do, from the same check the bars use. */
+  const showGhost = () => {
+    const tile = previewing && step !== 'check' && previewing.o.slot === step && state.design[step] !== previewing.o.id ? previewing : null;
+    const changes = tile && drawn ? whatIf(state, state.design, tile.o.id, adjust) : null;
+    for (const r of RESOURCES) {
+      const ui = gauges.get(r)!;
+      const c = changes?.[r];
+      if (!c || c.change === 'same') {
+        ui.ghost.hidden = ui.arrow.hidden = true;
+        delete ui.row.dataset.ghost;
+        if (drawn) placeBar(ui, drawn[r]);
+        continue;
+      }
+      const l = ghostLayout(c.before, c.after);
+      const fill = c.before.status === 'waiting' ? 0 : l.fill;
+      ui.fill.style.width = `${fill * 100}%`;
+      ui.target.style.left = `${l.target * 100}%`;
+      ui.target.hidden = false;
+      ui.ghost.hidden = ui.arrow.hidden = false;
+      ui.ghost.style.left = `${Math.min(fill, l.ghost) * 100}%`;
+      ui.ghost.style.width = `${Math.abs(l.ghost - fill) * 100}%`;
+      ui.ghost.dataset.change = c.change;
+      ui.row.dataset.ghost = c.better === false ? 'worse' : 'better';
+      ui.arrow.textContent = t(c.change === 'up' ? 'explorer.ghostUp' : 'explorer.ghostDown');
+      ui.arrow.title = t(c.better === false ? 'explorer.ghostWorse' : 'explorer.ghostBetter');
+      ui.arrow.setAttribute('aria-label', ui.arrow.title);
+    }
+  };
 
   // The 3D view fills the whole area behind everything else.
   const viewBox = el('section', 'designer-view');
@@ -460,7 +552,7 @@ export function showMissionDesigner(
       strip.render(state);
     },
   });
-  const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge });
+  const testRun = makeTestRunScreen({ onBack: () => showView(hooks.challenge ? 'design' : 'planner'), designBack: !!hooks.challenge, explorer });
   panel.append(head, ...(team ? [team.root] : []), strip.root, body, planner.root, testRun.root);
 
   /**
@@ -553,8 +645,39 @@ export function showMissionDesigner(
     const tile = previewing ?? slotRows.get(step)!.tiles.find((x) => x.o.id === pickedId) ?? null;
     pickedName.classList.toggle('empty', !tile);
     pickedName.textContent = tile ? optionName(tile.o) : t('designer.pick');
-    pickedStats.textContent = tile ? tile.stats : '';
+    if (explorer) pickedStats.replaceChildren(...(tile ? [levelsOf(tile.o)] : []));
+    else pickedStats.textContent = tile ? tile.stats : '';
     tileNote.textContent = previewing ? previewing.reasons.join(t('stat.join')) : '';
+  };
+
+  /** Explorer's stand-in for an option's numbers: a word and three pips for each, ranked against its slot's other options. */
+  const levelsOf = (o: SpacecraftOption): HTMLElement => {
+    const box = el('span', 'explorer-levels');
+    const others = slotRows.get(o.slot)!.tiles.map((x) => x.o);
+    const markOf = (x: SpacecraftOption) => (x.part ? bestMark(state, x.part) : 1);
+    for (const l of optionLevels(o, others, state.research.tech, markOf)) {
+      const item = el('span', 'explorer-level');
+      const name = t(`explorer.level.${l.stat}`);
+      item.title = t('explorer.levelName', { stat: name, level: l.level });
+      item.setAttribute('aria-label', item.title);
+      const pips = el('span', 'explorer-pips');
+      pips.setAttribute('aria-hidden', 'true');
+      for (let i = 1; i <= 3; i++) pips.append(el('span', i <= l.level ? 'on' : ''));
+      item.append(el('span', 'explorer-level-name', name), pips);
+      box.append(item);
+    }
+    const about = !o.part ? t(`option.${o.id as NoPartOption}.about`) : o.id === 'mainEngine' || o.id === 'lander' ? t(`option.${o.id}.about`) : '';
+    if (about) box.append(el('span', 'explorer-about', about));
+    return box;
+  };
+
+  /** The Weekly Challenge counts the Launch in the Budget and the wait for its Launch day in the Time. */
+  const adjust = (check: DesignCheck, design: Design) => {
+    if (!hooks.challenge) return;
+    check.gauges.budget.value += planLaunch(state, design).total;
+    check.gauges.budget.status = check.gauges.budget.value <= state.money ? 'ok' : 'short';
+    check.gauges.time.value = hooks.challenge.launchDay - state.day + check.goal.missionDays;
+    check.gauges.time.status = check.gauges.time.value <= check.goal.daysLeft ? 'ok' : 'short';
   };
 
   const report = (result: TradeResult) => {
@@ -602,7 +725,7 @@ export function showMissionDesigner(
       tile.stats = optionStats(o, state.research.tech, o.part ? bestMark(state, o.part) : 1, state.difficulty);
       const picked = state.design[o.slot] === o.id;
       b.setAttribute('aria-pressed', String(picked));
-      b.title = [optionName(o), tile.stats, ...reasons].join('\n');
+      b.title = [optionName(o), ...(explorer ? [] : [tile.stats]), ...reasons].join('\n');
       // Pictures are drawn only for the page on show, once per design (cached).
       if (o.slot === step) {
         const d = tileDesign(state.design, o);
@@ -685,22 +808,17 @@ export function showMissionDesigner(
     view.show(state.design);
     viewEmpty.hidden = state.design.bus !== null;
 
-    if (hooks.challenge) {
-      check.gauges.budget.value += planLaunch(state, state.design).total;
-      check.gauges.budget.status = check.gauges.budget.value <= state.money ? 'ok' : 'short';
-      check.gauges.time.value = hooks.challenge.launchDay - state.day + check.goal.missionDays;
-      check.gauges.time.status = check.gauges.time.value <= check.goal.daysLeft ? 'ok' : 'short';
-    }
+    adjust(check, state.design);
+    drawn = check.gauges;
     for (const r of RESOURCES) {
       const g = check.gauges[r];
       const ui = gauges.get(r)!;
-      const layout = gaugeLayout(g);
       ui.row.dataset.status = g.status;
-      ui.fill.style.width = `${(g.status === 'waiting' ? 0 : layout.fill) * 100}%`;
-      ui.target.style.left = `${layout.target * 100}%`;
-      ui.target.hidden = g.status === 'waiting';
-      const sentence = hooks.challenge && r === 'budget' ? t('weekly.budgetGauge', { cost: formatMoney(g.value), money: formatMoney(state.money) }) : gaugeText(r, g, check, state.money);
-      ui.short.textContent = gaugeShort(r, g);
+      placeBar(ui, g);
+      const sentence = hooks.challenge && r === 'budget'
+        ? t('weekly.budgetGauge', { cost: formatMoney(g.value), money: formatMoney(state.money) })
+        : explorer ? explorerGaugeText(r, g, check, state.money) : gaugeText(r, g, check, state.money);
+      ui.short.textContent = explorer ? explorerGaugeShort(r, g) : gaugeShort(r, g);
       // The sentence says it in full; while waiting it would only repeat the short line.
       ui.text.textContent = sentence;
       ui.text.hidden = g.status === 'waiting';
@@ -708,7 +826,8 @@ export function showMissionDesigner(
     }
     resBox.dataset.short = String(RESOURCES.some((r) => check.gauges[r].status === 'short'));
 
-    warnings.replaceChildren(...check.problems.map((p) => el('li', '', problemText(p, check))));
+    warnings.replaceChildren(...check.problems.map((p) => el('li', '', explorer ? explorerProblemText(p, check) : problemText(p, check))));
+    showGhost();
     status.textContent = check.ready
       ? t('designer.ready', { contract })
       : check.problems.length === 0

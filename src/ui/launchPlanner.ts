@@ -46,9 +46,12 @@ export interface LaunchPlanner {
   dispose?(): void;
 }
 
-/** The planner's steps, one page each, in order: begin with the end in mind, the Launch last. */
-export const PLANNER_STEPS = ['user', 'space', 'ground', 'vehicle', 'site', 'costs', 'review'] as const;
-export type PlannerStep = (typeof PLANNER_STEPS)[number];
+export { PLANNER_STEPS, type PlannerStep, plannerSteps, problemStep } from './plannerSteps';
+import { type PlannerStep, plannerSteps, problemStep } from './plannerSteps';
+import { isExplorer } from '../game/modes';
+import { CHECKLIST_COVERS, explorerChecklist } from '../game/explorer';
+import { checkDesign } from '../game/spacecraft';
+import { textFor } from '../strings';
 
 /** What the 3D view looks at on each step. */
 const STEP_SHOT: Record<PlannerStep, PlannerShot> = {
@@ -60,29 +63,6 @@ const STEP_SHOT: Record<PlannerStep, PlannerShot> = {
   costs: 'sky',
   review: 'overview',
 };
-
-/** Which step each problem belongs to, so the pager can flag it. */
-export function problemStep(p: PlanProblem): PlannerStep {
-  switch (p.kind) {
-    case 'noContract':
-    case 'underway':
-      return 'user';
-    case 'emptySlots':
-    case 'hallTooSmall':
-    case 'busFull':
-    case 'needsCubeSat':
-    case 'missingParts':
-      return 'space';
-    case 'vehicleClosed':
-    case 'cantReach':
-    case 'tooHeavy':
-      return 'vehicle';
-    case 'money':
-      return 'costs';
-    case 'unsigned':
-      return 'review';
-  }
-}
 
 function el<K extends keyof HTMLElementTagNameMap>(tag: K, className: string, text = ''): HTMLElementTagNameMap[K] {
   const e = document.createElement(tag);
@@ -199,6 +179,10 @@ export function makeLaunchPlanner(
 ): LaunchPlanner {
   const root = el('div', 'planner planner-show');
   root.hidden = true;
+  /** Explorer: four steps (Rocket, Launch Site, Weather, Launch), plain words, no Launch Insurance. */
+  const explorer = isExplorer(state);
+  const steps = plannerSteps(state.difficulty);
+  const tx = (key: Parameters<typeof textFor>[0], values: Record<string, string | number> = {}) => textFor(key, explorer, values);
   const back = button('small planner-back', t('planner.back'));
   back.addEventListener('click', () => hooks.onBack());
 
@@ -214,7 +198,10 @@ export function makeLaunchPlanner(
   const vehicleName = el('h3', 'planner-show-name');
   const vehicleStats = el('p', 'planner-show-stats');
   const vehicleFit = el('p', 'planner-show-fit');
-  const firstLaunch = el('p', 'planner-hint planner-show-note', t('planner.firstLaunch'));
+  const firstLaunch = el('p', 'planner-hint planner-show-note', tx('planner.firstLaunch'));
+  // Explorer has no User step: who needs the Mission sits at the top of the first step instead.
+  const who = el('p', 'planner-who');
+  who.hidden = !explorer;
   const vehicleTiles = el('div', 'planner-tiles');
   const vehicleTexts = new Map<LaunchVehicleId, { lifts: string; price: string; record: string; fits: boolean; reach: boolean; open: boolean; closed: string }>();
   const vehicleButtons = new Map<
@@ -249,11 +236,11 @@ export function makeLaunchPlanner(
     vehicleButtons.set(id, { button: b, img, tag, tip });
   }
   // How a geostationary orbit is reached, shown when the Contract asks for one.
-  const geoNote = el('p', 'planner-hint', t('planner.geoNote'));
+  const geoNote = el('p', 'planner-hint', tx('planner.geoNote'));
   const geoPath = transferPicture();
   const geoFold = fold(t('fold.howItWorks'), geoPath, learnMore(SOURCES.orbits, t('sources.orbits')));
   const vehicleExtras = el('div', 'planner-head-extras');
-  vehicleExtras.append(geoNote, geoFold, fold(t('fold.sources'), ...vehicleLinks));
+  vehicleExtras.append(who, geoNote, geoFold, fold(t('fold.sources'), ...vehicleLinks));
   const vehicleShow = el('div', 'planner-showcase');
   vehicleShow.append(vehicleName, vehicleStats, vehicleFit, firstLaunch, el('hr', 'planner-show-rule'), vehicleTiles);
 
@@ -276,11 +263,15 @@ export function makeLaunchPlanner(
   const best = LAUNCH_SITE_IDS.reduce((a, b) => (liftFactor(b) > liftFactor(a) ? b : a));
   const siteName = el('h3', 'planner-show-name');
   const siteStats = el('p', 'planner-show-stats');
-  const siteBadge = el('span', 'planner-best', t('planner.siteBest'));
+  const siteBadge = el('span', 'planner-best', t(explorer ? 'explorer.siteBest' : 'planner.siteBest'));
+  // Explorer: the best site's one-line reason, in place of the equator tip and its fold.
+  const siteWhy = el('p', 'planner-hint planner-site-why', t('explorer.siteBestWhy'));
+  if (explorer) tip.hidden = true;
   const siteNote = el('p', 'planner-hint planner-show-note', t('planner.siteAlternate'));
   const siteTiles = el('div', 'planner-tiles');
   const siteTexts = new Map<LaunchSiteId, { lift: string; shipping: string }>();
   const siteButtons = new Map<LaunchSiteId, HTMLButtonElement>();
+  const siteTags = new Map<LaunchSiteId, HTMLElement>();
   const siteLinks: HTMLElement[] = [];
   for (const id of LAUNCH_SITE_IDS) {
     const route = shippingTo(state.place, id);
@@ -293,11 +284,12 @@ export function makeLaunchPlanner(
       shipping: t('planner.shipping', { price: formatMoney(route.cost), days: formatNumber(route.days), km: formatNumber(route.km) }),
     });
     b.append(sitePicture(id), el('span', 'planner-tile-name', t(`launchSite.${id}.short`)), el('span', 'planner-tile-mark', t('planner.stepDone')));
-    if (id === best) {
-      const tag = el('span', 'planner-tile-tag planner-tile-best', t('planner.siteBestShort'));
-      tag.title = t('planner.siteBest');
-      b.append(tag);
-    }
+    // Mission Director marks the site nearest the equator; Explorer marks the best of the sites this rocket can use.
+    const tag = el('span', 'planner-tile-tag planner-tile-best', t('planner.siteBestShort'));
+    tag.title = t(explorer ? 'explorer.siteBestWhy' : 'planner.siteBest');
+    tag.hidden = id !== best;
+    siteTags.set(id, tag);
+    b.append(tag);
     b.addEventListener('click', () => {
       if (!mayChange(state, 'lead')) return;
       state.launchSite = id;
@@ -313,7 +305,7 @@ export function makeLaunchPlanner(
   const siteShow = el('div', 'planner-showcase');
   const siteNameRow = el('div', 'planner-show-namerow');
   siteNameRow.append(siteName, siteBadge);
-  siteShow.append(siteNameRow, siteStats, siteNote, el('hr', 'planner-show-rule'), siteTiles);
+  siteShow.append(siteNameRow, siteStats, siteWhy, siteNote, el('hr', 'planner-show-rule'), siteTiles);
 
   // ---- Costs: the rows sit in the running totals bottom-left; this page has the insurance, timeline and weather ----
   const costRows = el('dl', 'planner-rows');
@@ -337,14 +329,26 @@ export function makeLaunchPlanner(
   const weatherLine = el('p', 'planner-weather');
   const adviceLine = el('p', 'planner-advice');
   const timeCard = el('section', 'planner-card');
+  const timeHeading = el('h4', '', t('planner.timeline'));
+  // Explorer's Weather page: the day it arrives, the weather, and the total price in place of the timeline.
+  const arriveLine = el('p', 'planner-arrives');
+  const priceLine = el('p', 'planner-price');
+  const moneyLine = el('p', 'planner-hint planner-money');
   timeCard.append(
-    el('h4', '', t('planner.timeline')),
+    timeHeading,
     timeRows,
+    arriveLine,
     el('h4', '', t('planner.weather')),
     weatherLine,
     adviceLine,
     fold(t('fold.howItWorks'), t('planner.weatherHint'), learnMore(SOURCES.climate, t('sources.climate')), t('sources.estimates')),
+    priceLine,
+    moneyLine,
   );
+  timeHeading.hidden = timeRows.hidden = explorer;
+  arriveLine.hidden = priceLine.hidden = moneyLine.hidden = !explorer;
+  // No Launch Insurance in Explorer.
+  insureCard.hidden = explorer;
 
   // ---- User segment: who gets the Data, where it goes, and when the Mission ends ----
   const user = el('section', 'planner-card');
@@ -401,8 +405,12 @@ export function makeLaunchPlanner(
   });
   const problems = el('ul', 'planner-problems');
   problems.setAttribute('aria-live', 'polite');
+  // Explorer: the Design Review as a checklist of ticks and crosses, in plain words.
+  const checklistHead = el('h4', '', t('explorer.checklist'));
+  const checklist = el('ul', 'explorer-checklist');
+  checklistHead.hidden = checklist.hidden = !explorer;
   const reviewCard = el('section', 'planner-card planner-review-card');
-  reviewCard.append(review.root, problems);
+  reviewCard.append(checklistHead, checklist, review.root, problems);
 
   // ---- The pages ----
   const cards = (...list: HTMLElement[]) => {
@@ -433,10 +441,10 @@ export function makeLaunchPlanner(
     user: t('segment.user.hint'),
     space: t('segment.space.hint'),
     ground: t('segment.ground.hint'),
-    vehicle: t('planner.vehicleHint'),
-    site: t('planner.siteHint'),
-    costs: t('planner.costsHint'),
-    review: t('planner.reviewHint'),
+    vehicle: tx('planner.vehicleHint'),
+    site: tx('planner.siteHint'),
+    costs: tx('planner.costsHint'),
+    review: tx('planner.reviewHint'),
   };
 
   // The title at the top: the step's name big, its Segment and one line small under it, then its folds.
@@ -452,7 +460,7 @@ export function makeLaunchPlanner(
   headMain.append(headTitle, headSub, headChip);
   head.append(headMain, ...Object.values(extras));
 
-  let current: PlannerStep = 'user';
+  let current: PlannerStep = steps[0]!;
   const visited = new Set<PlannerStep>([current]);
   const centre = el('div', 'planner-centre');
   for (const [step, page] of Object.entries(centres)) {
@@ -463,19 +471,20 @@ export function makeLaunchPlanner(
   // The pager: ‹ 4 / 7 · Launch Vehicle ›, with a dot per step (ticked when seen and fine, marked on a problem).
   const pager = el('nav', 'planner-pager');
   pager.setAttribute('aria-label', t('planner.stepsLabel'));
-  const prev = button('planner-pager-arrow', t('planner.pagerPrev'));
-  const next = button('planner-pager-arrow', t('planner.pagerNext'));
+  // Explorer: a word beside each arrow.
+  const prev = button('planner-pager-arrow', t(explorer ? 'explorer.pagePrev' : 'planner.pagerPrev'));
+  const next = button('planner-pager-arrow', t(explorer ? 'explorer.pageNext' : 'planner.pagerNext'));
   const pagerText = el('span', 'planner-pager-text');
   const pagerCount = el('span', 'planner-pager-count');
   const pagerName = el('span', 'planner-pager-name');
   pagerText.append(pagerCount, pagerName);
   const dots = el('div', 'planner-dots');
   const dotButtons = new Map<PlannerStep, HTMLButtonElement>();
-  for (const step of PLANNER_STEPS) {
+  for (const step of steps) {
     const d = button('planner-dot', '');
     d.dataset.step = step;
-    d.setAttribute('aria-label', t(`planner.step.${step}`));
-    d.title = t(`planner.step.${step}`);
+    d.setAttribute('aria-label', tx(`planner.step.${step}`));
+    d.title = tx(`planner.step.${step}`);
     d.addEventListener('click', () => go(step));
     dots.append(d);
     dotButtons.set(step, d);
@@ -484,12 +493,12 @@ export function makeLaunchPlanner(
   pagerRow.append(prev, pagerText, next);
   pager.append(pagerRow, dots);
   prev.addEventListener('click', () => {
-    const i = PLANNER_STEPS.indexOf(current);
-    if (i > 0) go(PLANNER_STEPS[i - 1]!);
+    const i = steps.indexOf(current);
+    if (i > 0) go(steps[i - 1]!);
   });
   next.addEventListener('click', () => {
-    const i = PLANNER_STEPS.indexOf(current);
-    if (i < PLANNER_STEPS.length - 1) go(PLANNER_STEPS[i + 1]!);
+    const i = steps.indexOf(current);
+    if (i < steps.length - 1) go(steps[i + 1]!);
   });
   centre.append(pager);
   const go = (step: PlannerStep) => {
@@ -578,7 +587,7 @@ export function makeLaunchPlanner(
   const stats = (box: HTMLElement, ...parts: string[]) => box.replaceChildren(...parts.filter(Boolean).map((p) => el('span', '', p)));
 
   ship.addEventListener('click', () => {
-    if (shipMission(state, state.design, state.vehicle, state.launchSite, { insure, seed }).ok) {
+    if (shipMission(state, state.design, state.vehicle, state.launchSite, { insure: insure && !explorer, seed }).ok) {
       insure = insureBox.checked = false;
       hooks.onShip();
     } else render();
@@ -588,7 +597,7 @@ export function makeLaunchPlanner(
     const vehicle = state.vehicle;
     const site = state.launchSite;
     const quote = insuranceQuote(state, seed, state.design, vehicle, site);
-    const insured = insure && quote.ok;
+    const insured = !explorer && insure && quote.ok;
     const plan = shipPlan(state, state.design, vehicle, site, insured ? quote.price : 0);
     const lead = mayChange(state, 'lead');
     for (const c of chips) c.render(state);
@@ -603,9 +612,17 @@ export function makeLaunchPlanner(
     }
     const siteText = siteTexts.get(site)!;
     siteName.textContent = t(`launchSite.${site}.short`);
-    siteBadge.hidden = site !== best;
+    // Explorer: "Best choice" on the best of the sites on show, with one line why; the player still chooses.
+    const shown = LAUNCH_SITE_IDS.filter((id) => siteTakes(id, vehicle));
+    const bestShown = explorer && shown.length > 1 ? shown.reduce((a, b) => (liftFactor(b) > liftFactor(a) ? b : a)) : explorer ? null : best;
+    for (const [id, tag] of siteTags) tag.hidden = id !== bestShown;
+    siteBadge.hidden = site !== bestShown;
+    siteWhy.hidden = !explorer || bestShown === null || liftFactor(bestShown) <= Math.min(...shown.map(liftFactor)) + 1e-9;
     siteNote.hidden = !LAUNCH_SITES[site].alternate;
-    stats(siteStats, siteText.lift, siteText.shipping);
+    if (explorer) {
+      const route = shippingTo(state.place, site);
+      stats(siteStats, t('explorer.siteTrip', { days: formatNumber(route.days), price: formatMoney(route.cost) }));
+    } else stats(siteStats, siteText.lift, siteText.shipping);
 
     // Launch Vehicle tiles and the chosen vehicle's name and numbers
     const orbit = plan.goal.orbit;
@@ -645,21 +662,32 @@ export function makeLaunchPlanner(
       ui.button.setAttribute('aria-disabled', String(!open || !lead));
       ui.button.dataset.locked = String(!open);
       ui.button.setAttribute('aria-pressed', String(id === vehicle));
-      ui.tip.textContent = open ? t('planner.tileTip', { lifts: texts.lifts, price: texts.price }) : texts.closed;
+      if (explorer) {
+        // Explorer: no numbers on the tiles, just whether this rocket can carry the Spacecraft there.
+        ui.tip.textContent = open ? t(!texts.reach ? 'explorer.cantReach' : texts.fits ? 'explorer.canCarry' : 'explorer.tooHeavy') : texts.closed;
+        ui.button.dataset.fits = String(open && texts.reach && texts.fits);
+      } else ui.tip.textContent = open ? t('planner.tileTip', { lifts: texts.lifts, price: texts.price }) : texts.closed;
       ui.tag.hidden = !open || (texts.reach && texts.fits);
-      ui.tag.textContent = texts.reach ? t('planner.tooHeavyTag') : t('planner.cantReachTag');
+      ui.tag.textContent = texts.reach ? t(explorer ? 'explorer.tooHeavy' : 'planner.tooHeavyTag') : t(explorer ? 'explorer.cantReach' : 'planner.cantReachTag');
     }
     const chosen = vehicleTexts.get(vehicle)!;
     vehicleName.textContent = t(`launchVehicle.${vehicle}`);
-    stats(vehicleStats, chosen.lifts, chosen.price, chosen.record);
+    if (explorer) stats(vehicleStats);
+    else stats(vehicleStats, chosen.lifts, chosen.price, chosen.record);
     vehicleFit.hidden = !chosen.reach && chosen.open;
-    vehicleFit.textContent = chosen.open
-      ? t(chosen.fits ? 'planner.fits' : 'planner.tooHeavyShort', { kg: formatDecimal(plan.massKg) })
-      : chosen.closed;
+    vehicleFit.textContent = !chosen.open
+      ? chosen.closed
+      : explorer
+        ? t(chosen.fits ? 'explorer.fits' : 'explorer.tooHeavyLine')
+        : t(chosen.fits ? 'planner.fits' : 'planner.tooHeavyShort', { kg: formatDecimal(plan.massKg) });
+    if (explorer) {
+      const id = plan.goal.contract.id;
+      who.textContent = contractText(id, 'need') || t('explorer.who', { client: contractText(id, 'client'), objective: contractText(id, 'objective') });
+    }
     vehicleFit.classList.toggle('warn', !chosen.fits || !chosen.open);
 
     costRows.replaceChildren();
-    row(
+    if (!explorer) row(
       costRows,
       plan.wholeLaunch
         ? t('planner.wholeLaunch', { vehicle: t(`launchVehicle.${vehicle}`) })
@@ -668,8 +696,8 @@ export function makeLaunchPlanner(
     );
     lighter.hidden = plan.wholeLaunch;
     wholeNote.hidden = !plan.wholeLaunch;
-    row(costRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), formatMoney(plan.shipping));
-    if (plan.testCost > 0) row(costRows, t('planner.groundTests'), formatMoney(plan.testCost));
+    if (!explorer) row(costRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), formatMoney(plan.shipping));
+    if (plan.testCost > 0 && !explorer) row(costRows, t('planner.groundTests'), formatMoney(plan.testCost));
     if (insured) row(costRows, t('planner.insurance'), formatMoney(plan.insurance));
     const total = plan.total + plan.insurance;
     row(costRows, t('planner.total'), formatMoney(total), 'total');
@@ -685,6 +713,10 @@ export function makeLaunchPlanner(
     timeRows.replaceChildren();
     row(timeRows, t('planner.shippingCost', { site: t(`launchSite.${site}.short`) }), t('planner.days', { days: formatNumber(plan.shippingDays) }));
     row(timeRows, t('planner.arrives', { site: t(`launchSite.${site}.short`) }), formatGameDate(plan.readyDay));
+    arriveLine.textContent = t('explorer.arrives', { date: formatGameDate(plan.readyDay) });
+    priceLine.textContent = t('explorer.total', { price: formatMoney(total) });
+    moneyLine.textContent = state.money < total ? t('explorer.moneyShort') : t('explorer.money', { money: formatMoney(state.money) });
+    moneyLine.classList.toggle('warn', state.money < total);
 
     userRows.replaceChildren();
     const labs = state.labs.length;
@@ -737,11 +769,29 @@ export function makeLaunchPlanner(
           ? t('planner.stationsBuild')
           : t('planner.stationsBorrowed');
 
-    weatherLine.textContent = weatherText(site, plan.readyDay);
-    adviceLine.textContent = adviceText(adviseLaunch(site, plan.readyDay));
+    weatherLine.textContent = weatherText(site, plan.readyDay, explorer);
+    adviceLine.textContent = adviceText(adviseLaunch(site, plan.readyDay), explorer);
 
-    review.render(state);
-    problems.replaceChildren(...plan.problems.map((p) => el('li', '', planProblemText(p, plan))));
+    const reviewed = review.render(state);
+    if (explorer) {
+      // The checklist: one plain line per requirement; the JPL review stays for Team Mode, where everyone signs it.
+      review.root.hidden = !state.team;
+      const mark = (m: 'ok' | 'no' | 'warn') => {
+        const span = el('span', 'explorer-mark', t(`explorer.${m}`));
+        span.setAttribute('aria-label', t(`explorer.${m}Name`));
+        return span;
+      };
+      checklist.replaceChildren(
+        ...explorerChecklist(reviewed, checkDesign(state, state.design), state.design).map((line) => {
+          const li = el('li', '');
+          li.dataset.mark = line.mark;
+          li.append(mark(line.mark), el('span', '', t(`explorer.check.${line.key}`)));
+          return li;
+        }),
+      );
+    }
+    const listed = explorer ? plan.problems.filter((p) => !CHECKLIST_COVERS.includes(p.kind)) : plan.problems;
+    problems.replaceChildren(...listed.map((p) => el('li', '', planProblemText(p, plan))));
     ship.textContent = t('planner.ship', { price: formatMoney(total) });
     ship.disabled = !plan.ok;
     const count = plan.problems.length;
@@ -750,23 +800,23 @@ export function makeLaunchPlanner(
 
     // The page: title, folds, middle and pager.
     root.dataset.step = current;
-    headTitle.textContent = t(`planner.step.${current}`);
+    headTitle.textContent = tx(`planner.step.${current}`);
     headSegment.textContent = t(`segment.${segmentOf[current]}`);
     headHint.textContent = hintOf[current];
     headChip.hidden = current !== 'vehicle' && current !== 'site';
     for (const [step, box] of Object.entries(extras)) box.hidden = step !== current;
     for (const [step, page] of Object.entries(centres)) page.hidden = step !== current;
-    const index = PLANNER_STEPS.indexOf(current);
-    pagerCount.textContent = t('planner.pager', { n: formatNumber(index + 1), total: formatNumber(PLANNER_STEPS.length) });
-    pagerName.textContent = t(`planner.step.${current}`);
+    const index = steps.indexOf(current);
+    pagerCount.textContent = t('planner.pager', { n: formatNumber(index + 1), total: formatNumber(steps.length) });
+    pagerName.textContent = tx(`planner.step.${current}`);
     prev.disabled = index === 0;
-    next.disabled = index === PLANNER_STEPS.length - 1;
-    prev.setAttribute('aria-label', index > 0 ? t(`planner.step.${PLANNER_STEPS[index - 1]!}`) : t('planner.stepBack'));
+    next.disabled = index === steps.length - 1;
+    prev.setAttribute('aria-label', index > 0 ? tx(`planner.step.${steps[index - 1]!}`) : t('planner.stepBack'));
     next.setAttribute(
       'aria-label',
-      index < PLANNER_STEPS.length - 1 ? t('planner.stepNext', { step: t(`planner.step.${PLANNER_STEPS[index + 1]!}`) }) : t('planner.stepBack'),
+      index < steps.length - 1 ? t('planner.stepNext', { step: tx(`planner.step.${steps[index + 1]!}`) }) : t('planner.stepBack'),
     );
-    const flagged = new Set(plan.problems.map(problemStep));
+    const flagged = new Set(plan.problems.map((p) => problemStep(p, state.difficulty)));
     for (const [step, d] of dotButtons) {
       if (step === current) d.setAttribute('aria-current', 'step');
       else d.removeAttribute('aria-current');

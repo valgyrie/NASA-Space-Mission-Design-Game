@@ -15,6 +15,7 @@ import { showOnline } from './ui/online';
 import { TitleLaunch } from './world/titleLaunch';
 import { addOwnedPlots } from './game/plots';
 import { showLoading } from './ui/loading';
+import { setDisplayMode } from './ui/displayMode';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world');
 const ui = document.querySelector<HTMLElement>('#ui');
@@ -83,6 +84,8 @@ async function startGame(game: SaveData, options: { storage: SaveStorage; demoEr
   titlePreview = false;
   menu = null;
   hideTitleLaunch();
+  // Explorer or Mission Director styles, from the loading tip on.
+  setDisplayMode(game.state.difficulty);
   const done = showLoading(root, world);
   const playing = import('./playSite');
   // Let the rendered shot paint before generating the Site; never hold a completed load for a tip.
@@ -99,6 +102,7 @@ async function startGame(game: SaveData, options: { storage: SaveStorage; demoEr
   }
 }
 function startNew(): void {
+  setDisplayMode(null);
   titlePreview = false;
   menu = null;
   hideTitleLaunch();
@@ -115,6 +119,7 @@ function startNew(): void {
   });
 }
 function mainMenu(): void {
+  setDisplayMode(null);
   world.keyboardEnabled = false;
   world.controls.enabled = false;
   menu = showMainMenu(root, {

@@ -1,4 +1,5 @@
 import { makeAudioControls } from './audioControls';
+import { comingSoon } from './comingSoon';
 import { makeDataCredits } from './dataCredits';
 import { shareSeed } from '../site/shareSeed';
 import { t } from '../strings';
@@ -85,17 +86,23 @@ export function makeMenu(root: HTMLElement, seed: string, state: Pick<SiteState,
     controls.append(li);
   }
 
-  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, makeAudioControls(), makeDataCredits(), controlsLabel, controls, resume);
+  panel.append(heading, seedLabel, seedRow, seedNote, settings, playMode, mode, modeNote, fixedMode, makeAudioControls(), makeDataCredits(), controlsLabel, controls);
+  // Resume, Main menu and Online stay pinned to the bottom of the panel, so they never need a scroll to reach.
+  const footer = document.createElement('div');
+  footer.className = 'sticky-foot menu-footer';
+  footer.append(resume);
   const mainMenu = document.createElement('button');
   mainMenu.type = 'button';
   mainMenu.textContent = t('mainMenu.heading');
   mainMenu.addEventListener('click', onMainMenu);
-  panel.append(mainMenu);
+  footer.append(mainMenu);
   const online = document.createElement('button');
   online.type = 'button';
   online.textContent = t('online.heading');
-  online.addEventListener('click', () => { menu.close(); onOnline?.(); });
-  panel.append(online);
+  // Online is switched off for now: greyed, says "Coming soon" on hover, and does nothing when clicked.
+  comingSoon(online);
+  footer.append(online);
+  panel.append(footer);
   backdrop.append(panel);
   root.append(backdrop);
 

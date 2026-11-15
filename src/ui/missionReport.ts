@@ -7,7 +7,9 @@ import { LAUNCH_VEHICLES } from '../game/launchVehicles';
 import type { Patch } from '../game/history';
 import { contractById } from '../game/contracts';
 import { OPTIONS } from '../game/spacecraft';
-import { t } from '../strings';
+import { t, textFor } from '../strings';
+import { dayPhase } from '../game/explorer';
+import { explorerShown } from './displayMode';
 import { lostText, percentText } from './anomalyPanel';
 import { groundTestFor, testedChance, untestedChance } from '../game/groundTests';
 import { contractText, formatDecimal, formatGameDate, formatMoney, formatNumber } from './format';
@@ -47,11 +49,16 @@ export function reachedOrbit(findings: Finding[]): boolean {
 
 /**
  * One "because" line: what happened and the design numbers behind it. With `flown` false the Spacecraft
- * never reached orbit, so the line says what the design would have done instead.
+ * never reached orbit, so the line says what the design would have done instead. `explorer`: the same line in
+ * plain words, without the numbers (days and dates stay).
  */
-export function findingText(f: Finding, flown = true): string {
+export function findingText(f: Finding, flown = true, explorer = false): string {
   const state = f.ok ? 'ok' : 'short';
   const d = flown ? '' : '.design';
+  if (explorer) {
+    const plain = explorerFindingText(f, d);
+    if (plain) return plain;
+  }
   switch (f.kind) {
     case 'orbit':
       if (!f.ok && f.failedStage != null) {
@@ -99,6 +106,29 @@ export function findingText(f: Finding, flown = true): string {
   }
 }
 
+/** Explorer's wording of a finding with numbers in it, or '' when the full line has none to hide. */
+function explorerFindingText(f: Finding, d: '' | '.design'): string {
+  const mark = f.ok ? 'ok' : 'no';
+  switch (f.kind) {
+    case 'orbit': {
+      const values = { orbit: t(`orbit.${f.orbit}`), vehicle: t(`launchVehicle.${f.vehicle}`) };
+      if (!f.ok && f.failedStage != null) return t('explorer.finding.orbit.rocket', values);
+      if (!f.ok && f.noEngine) return '';
+      return t(`explorer.finding.orbit.${mark}`, values);
+    }
+    case 'power':
+      // Sunlight lines say only how many days: keep them.
+      if (f.ok && f.lastsDays === null) return '';
+      return f.ok
+        ? t(`explorer.finding.power.ok${d}`)
+        : t(`explorer.finding.power.no${d}`, { phase: t(`explorer.phase.${dayPhase(f.lastsDays ?? 0, f.needDays)}`) });
+    case 'comms':
+      return t(`explorer.finding.comms.${mark}${d}`);
+    default:
+      return '';
+  }
+}
+
 /** A line of the Mission Report: a requirement met (ok), not met (short), or a plain fact (info). */
 export interface ReportLine {
   segment: MissionSegment;
@@ -111,13 +141,13 @@ export interface ReportLine {
  * inside each, what went wrong comes first: that is what the player needs to fix. A Segment with nothing to say
  * is left out. `labs` is how many Research Labs the Company has, for where the Data goes.
  */
-export function reportSegments(report: MissionReport, labs: number): { segment: MissionSegment; lines: ReportLine[] }[] {
+export function reportSegments(report: MissionReport, labs: number, explorer = false): { segment: MissionSegment; lines: ReportLine[] }[] {
   const flown = reachedOrbit(report.findings);
   const finding = (f: Finding): ReportLine => ({
     segment: findingSegment(f),
     mark: f.ok ? 'ok' : 'short',
     // Without orbit, only the orbit line is about what happened; the rest say what the design would have done.
-    text: findingText(f, flown || f.kind === 'orbit'),
+    text: findingText(f, flown || f.kind === 'orbit', explorer),
   });
   const rank = { short: 0, ok: 1, info: 2 } as const;
   const lines = [...report.findings].sort((a, b) => Number(b.kind === 'orbit') - Number(a.kind === 'orbit')).map(finding);
@@ -128,7 +158,9 @@ export function reportSegments(report: MissionReport, labs: number): { segment: 
       lines.push({
         segment: 'ground',
         mark: 'info',
-        text: report.ground > 1 ? t('report.ground.own', { boost: formatDecimal(report.ground) }) : t('report.ground.borrowed'),
+        text: report.ground > 1
+          ? explorer ? t('explorer.report.groundOwn') : t('report.ground.own', { boost: formatDecimal(report.ground) })
+          : t('report.ground.borrowed'),
       });
     }
   }
@@ -199,14 +231,14 @@ export interface TeamLine {
 }
 
 /** Each role's part ("Power · Ada: Power lasted all 78 days…"). Empty for a Mission built by one player. */
-export function teamLines(report: MissionReport): TeamLine[] {
+export function teamLines(report: MissionReport, explorer = false): TeamLine[] {
   const players = report.team;
   if (!players) return [];
   const flown = reachedOrbit(report.findings);
   return ROLE_IDS.flatMap((role) => {
     const f = rolePart(report, role);
     if (!f) return [];
-    const text = t('report.team.line', { who: ownerText(players, role), text: findingText(f, flown || f.kind === 'orbit') });
+    const text = t('report.team.line', { who: ownerText(players, role), text: findingText(f, flown || f.kind === 'orbit', explorer) });
     return [{ role, player: roleHolder(players.length, role), ok: f.ok, text }];
   });
 }
@@ -258,9 +290,9 @@ export function showMissionReport(
   const outcome = el('p', 'report-outcome');
   const why = el('h3', '', t('report.why'));
   // The lines sit under NASA's four Segments, with one line on what they are.
-  const segmentsIntro = el('p', 'report-segments-intro', t('segment.intro'));
-  segmentsIntro.append(' ', learnMore(SOURCES.segments, t('sources.segments')));
-  const notFlown = el('p', 'report-not-flown', t('report.notFlown'));
+  const segmentsIntro = el('p', 'report-segments-intro');
+  const segmentsLink = learnMore(SOURCES.segments, t('sources.segments'));
+  const notFlown = el('p', 'report-not-flown');
   const findings = el('div', 'report-segments');
   const anomalyHeading = el('h3', '', t('report.anomaly'));
   const anomaly = el('div', 'report-anomaly');
@@ -291,6 +323,10 @@ export function showMissionReport(
 
   const api: MissionReportDialog = {
     show(report, deadlineDay, today, earned = null, labs = 0) {
+      // Explorer: the same report in plain words (the mode is fixed per Company, so it is read when shown).
+      const explorer = explorerShown();
+      segmentsIntro.replaceChildren(textFor('segment.intro', explorer), ' ', segmentsLink);
+      notFlown.textContent = textFor('report.notFlown', explorer);
       const contract = contractText(report.contract);
       sources.replaceChildren(missionLinks(report.contract, report.vehicle));
       subtitle.textContent = t('report.subtitle', {
@@ -313,7 +349,7 @@ export function showMissionReport(
       };
       notFlown.hidden = reachedOrbit(report.findings);
       findings.replaceChildren(
-        ...reportSegments(report, labs).map(({ segment, lines }) => {
+        ...reportSegments(report, labs, explorer).map(({ segment, lines }) => {
           const group = el('section', 'report-segment');
           group.dataset.segment = segment;
           const list = el('ul', 'report-findings');
@@ -337,7 +373,7 @@ export function showMissionReport(
       }
       else reward.textContent = t('report.tooLate');
       if (report.insurancePaid > 0) reward.textContent += ` ${t('report.insurance', { money: formatMoney(report.insurancePaid) })}`;
-      const team = teamLines(report);
+      const team = teamLines(report, explorer);
       teamHeading.hidden = teamBox.hidden = team.length === 0;
       const teamList = el('ul', 'report-team-lines');
       teamList.append(

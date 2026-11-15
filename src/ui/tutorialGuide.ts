@@ -2,6 +2,7 @@ import type { SiteState } from '../game/siteState';
 import { SOURCES } from '../game/sources';
 import { NASA_STEPS, NASA_STEP_OF, TUTORIAL_STEPS, type TutorialStep, tutorialEnded, tutorialStep } from '../game/tutorial';
 import { t } from '../strings';
+import { tm } from './displayMode';
 import { learnMore } from './learnMore';
 
 export interface TutorialGuide {
@@ -113,7 +114,7 @@ export function showTutorialGuide(root: HTMLElement, onSkip: () => void): Tutori
         if (now === 'end') {
           showRow(NASA_STEPS.length);
           label.textContent = t('tutorial.done');
-          line.textContent = t('tutorial.end');
+          line.textContent = tm('tutorial.end');
         }
       }
       if (!step) return;

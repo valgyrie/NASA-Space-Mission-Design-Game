@@ -1,6 +1,7 @@
 import { audio } from '../audio/sound';
 import type { Era } from '../game/eras';
 import { t } from '../strings';
+import { tm } from './displayMode';
 import { eraHeading } from './format';
 
 export interface EraCard {
@@ -51,7 +52,7 @@ export function showEraCard(root: HTMLElement, hooks: { onOpen(): void; onClose(
   const api: EraCard = {
     show(era, freePlay = false) {
       title.textContent = freePlay ? t('freePlay.heading') : eraHeading(era);
-      text.textContent = t(freePlay ? 'freePlay.welcome' : ERA_TEXT[era]);
+      text.textContent = tm(freePlay ? 'freePlay.welcome' : ERA_TEXT[era]);
       image.alt = t(ERA_ALT[era]);
       const src = new URL(eraImage(era), location.href).href;
       if (image.src !== src) image.src = src;
