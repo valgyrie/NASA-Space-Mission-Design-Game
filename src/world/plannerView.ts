@@ -22,8 +22,11 @@ import { type RocketModel, buildRocket, disposeRocket } from './rocketMesh';
 /** What a planner step looks at. */
 export type PlannerShot = 'overview' | 'spacecraft' | 'ground' | 'vehicle' | 'site' | 'sky';
 
-/** Toward the sun: a morning sun behind the watching camera, as in the Launch show. */
-const SUN = new THREE.Vector3(-0.32, 0.62, 0.72).normalize();
+/**
+ * Toward the sun: the Launch show's morning sun over the sea, east-south-east (launchView.ts `PAD_SUN`), off to the
+ * right of the usual camera, so the rocket's round body shows a lit side and a shadow side instead of flat front light.
+ */
+const SUN = new THREE.Vector3(0.69, 0.57, 0.44).normalize();
 const EXPOSURE = 0.34;
 const SUN_INTENSITY = 12;
 const SKY_LIGHT = 0.62;

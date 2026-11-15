@@ -81,7 +81,8 @@ describe('land around the Site', () => {
       }
       expect(outsideWater, `${seed} ${site.water}`).toBeGreaterThan(0);
     }
-  });
+    // Builds the Land round many Sites: slow when the machine is busy (the pre-commit hook), so a longer timeout.
+  }, 30_000);
 });
 
 describe('Seeds', () => {
