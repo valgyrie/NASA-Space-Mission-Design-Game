@@ -16,6 +16,7 @@ import { TitleLaunch } from './world/titleLaunch';
 import { addOwnedPlots } from './game/plots';
 import { showLoading } from './ui/loading';
 import { setDisplayMode } from './ui/displayMode';
+import { showMinigames } from './ui/minigames';
 
 const canvas = document.querySelector<HTMLCanvasElement>('#world');
 const ui = document.querySelector<HTMLElement>('#ui');
@@ -135,6 +136,12 @@ function mainMenu(): void {
     },
     onDemo(era) {
       void startGame(createDemo(era), { storage: demoStorage(localStorage), demoEra: era });
+    },
+    onMinigames(level) {
+      // Over the title background, which keeps playing; Explorer or Mission Director styles and reading links.
+      menu = null;
+      setDisplayMode(level === 'explorer' ? 'easy' : 'advanced');
+      showMinigames(root, level, { onExit: () => mainMenu() });
     },
   });
   showTitleLaunch();

@@ -4,6 +4,7 @@ import { makeCredits } from './credits';
 import { makeDataCredits } from './dataCredits';
 import { DEMO_ERAS, type DemoEra } from '../game/demo';
 import type { LaunchVehicleId } from '../game/launchVehicles';
+import type { MinigameLevel } from '../minigames/types';
 import { audio } from '../audio/sound';
 import { TITLE_TRACKS } from '../audio/tracks';
 import type { CompanyEntry } from '../save/companies';
@@ -28,6 +29,8 @@ export interface MainMenuOptions {
   onCreate(): void;
   onDelete(id: string): void;
   onDemo(era: DemoEra): void;
+  /** Main menu → Minigames → Explorer or Mission Director. */
+  onMinigames(level: MinigameLevel): void;
   onOnline(): void;
 }
 
@@ -114,6 +117,7 @@ export function showMainMenu(
   actions.className = 'main-menu-actions';
   const play = button(t('mainMenu.play'), 'menu-button primary');
   const demo = button(t('demo.heading'));
+  const minigames = button(t('minigames.heading'));
   // Online is switched off for now: greyed, says "Coming soon" on hover, and does nothing when clicked.
   const online = button(t('online.heading'));
   comingSoon(online);
@@ -123,7 +127,7 @@ export function showMainMenu(
   const row = document.createElement('div');
   row.className = 'main-menu-row';
   row.append(soundButton, dataButton, creditsButton);
-  actions.append(play, demo, online, row);
+  actions.append(play, demo, minigames, online, row);
 
   // Demo picker, Companies, Credits, Music & Sounds and Real data open in one sheet in place of the buttons.
   const sheet = (heading: string, ...content: HTMLElement[]) => {
@@ -161,6 +165,22 @@ export function showMainMenu(
     return item;
   });
   const picker = sheet(t('demo.heading'), note, ...eras, backButton());
+  // Minigames: two big choices, Explorer (young players) and Mission Director (real numbers).
+  const levels = (['explorer', 'director'] as const).map((level) => {
+    const b = button('', 'menu-button mg-choice');
+    b.dataset.minigames = level;
+    const name = document.createElement('strong');
+    name.textContent = t(`minigames.${level}`);
+    const line = document.createElement('span');
+    line.textContent = t(`minigames.${level}.note`);
+    b.append(name, line);
+    b.addEventListener('click', () => { leave(); options.onMinigames(level); });
+    return b;
+  });
+  const minigamesNote = document.createElement('p');
+  minigamesNote.className = 'note';
+  minigamesNote.textContent = t('minigames.note');
+  const minigamesSheet = sheet(t('minigames.heading'), minigamesNote, ...levels, backButton());
   const credits = sheet(t('credits.heading'), makeCredits(), backButton());
   credits.classList.add('credits-view');
   const sound = sheet(t('sound.heading'), makeAudioControls(), titleMusic(), backButton());
@@ -267,7 +287,7 @@ export function showMainMenu(
     rows.find((r) => r.entry === selected)?.item.focus();
   });
 
-  const sheets = [picker, companies, credits, sound, data];
+  const sheets = [picker, minigamesSheet, companies, credits, sound, data];
 
   // A sheet replaces the buttons; Back or Esc returns to the button that opened it.
   let opener: HTMLButtonElement | null = null;
@@ -286,6 +306,7 @@ export function showMainMenu(
     opener?.focus();
   }
   demo.addEventListener('click', () => open(picker, demo));
+  minigames.addEventListener('click', () => open(minigamesSheet, minigames));
   creditsButton.addEventListener('click', () => open(credits, creditsButton));
   soundButton.addEventListener('click', () => open(sound, soundButton));
   dataButton.addEventListener('click', () => open(data, dataButton));
