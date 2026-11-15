@@ -15,8 +15,24 @@ Run a small space company. Mine metals, build Parts, design the spacecraft, pick
 
 Every choice moves six bars: Mass, Power, Budget, Data, Communications and Time. When a mission works or fails, the report says why, and a card tells what happened on the real one.
 
-Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/). For players from about age 10 up.
+Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/). For players from about age 12 up.
+## Contents
 
+- [The game](#the-game)
+  - [Build your Site](#build-your-site)
+  - [Design the Spacecraft](#design-the-spacecraft)
+  - [Plan the Launch](#plan-the-launch)
+  - [Launch and fly](#launch-and-fly)
+  - [Read the Mission Report](#read-the-mission-report)
+- [Ways to play](#ways-to-play)
+- [Run it](#run-it)
+- [Controls](#controls)
+- [Future work](#future-work)
+- [For developers](#for-developers)
+- [Docs](#docs)
+- [Credits](#credits)
+- [How AI was used](#how-ai-was-used)
+- [Licence](#licence)
 ## The game
 
 ### Build your Site
