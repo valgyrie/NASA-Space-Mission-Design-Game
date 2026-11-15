@@ -59,6 +59,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 51 | [Era 4: telescopes and Moon maps](51-era-4.md) _(added 2026-11-15, planned)_ | 50 | Hubble on the Shuttle and LRO in lunar orbit; Atlas V; lithium batteries; Assembly Hall level 5. |
 | 52 | [Era 5: reusable rockets and Artemis](52-era-5-artemis.md) _(added 2026-11-15, planned)_ | 51 | Falcon 9 booster landing, Artemis I and II CubeSats, then you choose how to help Artemis III and the Artemis IV finale; Moon Contracts in Free Play. |
 | 53 🧪 | [Explorer and Mission Director](53-game-modes.md) _(added 2026-11-15)_ | 20 | Two game modes on one rule set: pictures and words for young players, real numbers, expiring Offers, paid testing and Deposits that run out for the realistic one. |
+| 54 | [Minigames](54-minigames.md) _(added 2026-11-15, in progress)_ | 53 | A main-menu mode of short 2D games, each teaching one real space fact: three for Explorer, three for Mission Director. |
 
 **Recommended build order (2026-11-13):** 27 → 32 → 33 → 34 → 35 → 36 → 37 → 38 → 39 → the rule items in 28 and 29 → 40 → 41 → the rest (42–48). Stop adding features on Saturday night (14 Nov). Sunday is for hosting, the demo, the project page and the final launcher checks (ticket 28).
 

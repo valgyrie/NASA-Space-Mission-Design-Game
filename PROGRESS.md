@@ -4,6 +4,11 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
+**Minigames (15 Nov, night), on branch `minigames`, stopped by the user and checkpointed. START HERE for this work.** Ticket `docs/tickets/54-minigames.md`, facts `docs/research/minigames.md`.
+- A new main-menu mode: choose Explorer or Mission Director, play three short 2D games in a random order, each followed by the real fact it teaches (child-friendly in Explorer), then an end screen with stars.
+- Done: the shell and the three Explorer games (Build Pluto, Rover Rescue, Planet Parade), played to the end at 1280×800 and 1024×768; Mission Director's Too Hot, Too Cold and Square Peg, Round Hole.
+- Left: Lost Signal is built with its model and tests, but nobody has played it to a win in the browser yet. Play all three Mission Director games through the real menu (so far only in a test harness). Then GDD, GLOSSARY ("Minigame" vs the Anomaly "mini-game") and CHECKLIST. 648 tests and type checks pass. Not merged into `main`.
+
 **Game modes (15 Nov, evening): merged into `main` at the user's request (branch `game-modes` kept). START HERE for this work.** Brief: the team's `game-modes-prompt.txt` (plans.txt plus the agreed changes). Everything built and how: `docs/tickets/53-game-modes.md` ("As built"); GDD §7 "Game modes".
 - Easy and Advanced are shown as **Explorer** and **Mission Director** (ids unchanged). Explorer: bars and words instead of numbers, a ghost preview of each Part, short texts, a four-step Launch planner with a checklist, word-only Test Run and report, bigger colour-blind-safe UI, NASA kids' pages instead of papers, a refund once per Contract, faster Mines and Shipping. Mission Director: Offers expire after 60 days, repeat Test Runs cost 2% of the reward, Ground Tests ×3 money and ×2 days, Deposits run out. Safety valve: the grant can come again (every 180 days, five per game). One-way switch from Explorer in the pause menu. Save v21.
 - Also asked for this session: the Online button is greyed out with "Coming soon" (so the Weekly Challenge can't be reached for now), and Back/Resume are pinned to the bottom of scrolling menus.
@@ -93,6 +98,8 @@
 **Suggested skill:** `/handoff` at the end.
 
 ## Log
+
+- 2026-11-15: Minigames (ticket 54) on branch `minigames`: shell, three Explorer games and three Mission Director games; checkpointed when the user stopped the work (Lost Signal not yet played to a win). 648 tests pass.
 
 - 2026-11-15: Game modes on branch `game-modes` (ticket 53): Explorer and Mission Director on one rule set, kids' NASA links, save v21; Online greyed out; Back/Resume always in reach. 588 tests, type checks and browser checks of both modes pass. Merged into `main` the same evening at the user's request.
 
