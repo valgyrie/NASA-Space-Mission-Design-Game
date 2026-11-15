@@ -5,3 +5,5 @@ The game is built as a web app (TypeScript, Vite, Three.js for the low-poly 2.5D
 **Considered options:** Godot 4. It has better lighting out of the box and native exports, but Claude would be working blind, Godot 3/4 API mix-ups are common, and the web build is a much larger download.
 
 **Consequences:** Desktop builds, if wanted later, are packaged with Electron (same Chromium on every OS) rather than Tauri. PWA install is the cheap option for the hackathon.
+
+**Note (15 Nov 2026):** the world is no longer low-poly. ADR-0005 replaced that look with a realistic one; the stack is unchanged.

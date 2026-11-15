@@ -1,7 +1,10 @@
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CONTRACT_IDS } from './contracts';
 import { t } from '../strings';
-import { CHALLENGE, DATASET_IDS, DATASETS, missionSource, SOFTWARE, SOFTWARE_IDS } from './sources';
+import {
+  ART_ASSETS, ART_GROUP_IDS, ART_GROUPS, CHALLENGE, DATASET_IDS, DATASETS, missionSource, SOFTWARE, SOFTWARE_IDS,
+} from './sources';
 
 describe('Mission reading links', () => {
   it('gives every historical Milestone an official NASA reading source', () => {
@@ -37,5 +40,27 @@ describe('Credits', () => {
       expect(t(`credits.software.${id}`)).not.toContain('credits.');
       expect(new URL(SOFTWARE[id]).protocol).toBe('https:');
     }
+  });
+
+  it('credits every third-party texture and technique once, by name, with a link to its page', () => {
+    const ids = ART_GROUP_IDS.flatMap((group) => [...ART_GROUPS[group]]);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.sort()).toEqual(Object.keys(ART_ASSETS).sort());
+    for (const group of ART_GROUP_IDS) expect(t(`credits.models.${group}`)).not.toContain('credits.');
+    for (const id of ids) {
+      expect(t(`credits.asset.${id}`)).not.toContain('credits.');
+      expect(new URL(ART_ASSETS[id]).protocol).toBe('https:');
+    }
+  });
+
+  it('lists every Poly Haven and ambientCG texture named in docs/art', () => {
+    const docs = readdirSync('docs/art')
+      .filter((file) => /^assets-.*\.md$/.test(file))
+      .map((file) => readFileSync(`docs/art/${file}`, 'utf8'))
+      .join('\n');
+    const pages = new Set(docs.match(/https:\/\/(polyhaven\.com|ambientcg\.com)\/a\/\w+/g) ?? []);
+    expect(pages.size).toBeGreaterThan(0);
+    const credited = new Set(Object.values(ART_ASSETS));
+    for (const page of pages) expect(credited, page).toContain(page);
   });
 });

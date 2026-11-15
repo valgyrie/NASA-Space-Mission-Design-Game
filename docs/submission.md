@@ -37,12 +37,13 @@ The hosted game: GitHub Pages at `https://valgyrie.github.io/NASA-Space-Mission-
 
 **What we hope to achieve.** A game a class can play in one lesson and still talk about the next day: why the rocket was too small, why the Data didn't fit through the antenna.
 
-**Tools.** TypeScript, Vite, three.js, HTML and CSS; Supabase for the online part; Python scripts to prepare the data. Runs in any modern browser.
+**Tools.** TypeScript, Vite, three.js, HTML and CSS; Supabase for the online part; Python scripts to prepare the data; Blender scripts for the 3D models. Runs in any modern browser.
 
 ## NASA data and resources
 
 - **NASA POWER** (Langley Research Center): the climate of every start (2025 monthly averages) and the daily launch weather at Cape Canaveral and Wallops Island (2025 daily data, version 2). <https://power.larc.nasa.gov/>
 - **NASA Blue Marble: Next Generation**, served by **NASA GIBS**: the colours of the land on the globe in the Mission Designer, the Launch and the Space view. <https://science.nasa.gov/earth/earth-observatory/blue-marble-next-generation/> · <https://nasa-gibs.github.io/gibs-api-docs/>
+- **NASA Black Marble** and **VIIRS true-colour pictures**, also via NASA GIBS: city lights on the night side of the globe, and the clouds of one real day (10 September 2024). <https://blackmarble.gsfc.nasa.gov/> · <https://www.earthdata.nasa.gov/data/instruments/viirs>
 - **NASA Image and Video Library**: the photos on Real History cards, each credited. <https://images.nasa.gov/>
 - **Design and Develop Science Missions** (NASA Small Spacecraft institute, 2025; an official challenge Resource): the four mission Segments in the Launch planner and Mission Report. <https://www.nasa.gov/wp-content/uploads/2025/04/250323-design-and-develop-science-mission.pdf>
 - **NASA history and science pages** for the facts behind each Milestone (Explorer 1, TIROS-1, Telstar 1, Syncom 3) and the orbits: cited in `docs/research/`.
@@ -55,18 +56,19 @@ None used yet. The Canadian Space Agency's Alouette 1 card is planned (ticket 37
 
 Every source, as the form asks ("any code, text, and images (even if they are open source or freely available)"):
 
-- **Data:** NASA POWER; NASA Blue Marble: Next Generation (NASA Earth Observatory, Reto Stöckli); NASA GIBS; Natural Earth (public domain map data); NASA Image and Video Library.
+- **Data:** NASA POWER; NASA Blue Marble: Next Generation (NASA Earth Observatory, Reto Stöckli); NASA Black Marble (NASA Earth Observatory); VIIRS true-colour pictures (NASA and NOAA); NASA GIBS; Natural Earth (public domain map data); NASA Image and Video Library.
 - **NASA resources:** Design and Develop Science Missions (Julie Levri, 26 March 2025); the challenge's other Resources were read for planned features (`docs/research/official-resources.md`).
 - **Facts:** every mission fact and number is cited in `docs/research/` (NASA, JPL and Wikipedia pages per Milestone and rocket).
 - **Photos:** NASA, NASA/MSFC and NASA Goddard, credited on each Real History card.
-- **Code libraries:** three.js (MIT), Vite (MIT), obscenity (MIT), Supabase client calls (online backend).
+- **Code libraries:** three.js and its add-ons (MIT), Vite (MIT), obscenity (MIT), the Draco decoder by Google (Apache License 2.0), Supabase client calls (online backend).
+- **3D models and textures:** models made for LEAP in Blender by AI coding agents (scripts in `scripts/blender/`). Photo textures from Poly Haven (CC0; land, buildings, launch pads) and ambientCG by Lennart Demes (CC0; leaves and bark). Ground photos repeat without a visible grid using Inigo Quilez's texture-repetition technique. Every file with author and licence: `docs/art/assets-*.md`.
 - **Music:** generated with Google Lyria 3.5 (`docs/audio/README.md`). **Sound effects:** made in code.
 - **Illustrations:** AI-generated (Canva's image generator; ChatGPT for the last two) from game screenshots and our prompts (`docs/art/README.md`), watermarked.
 - **Licence:** Apache License 2.0 (`LICENSE`).
 
 ## Did you use any Super Intelligence (SI) tools? How?
 
-Yes. AI coding agents (Claude Code and Codex) wrote the code from the team's design documents and tickets; the team reviewed and tested every change. The music was generated with Google Lyria 3.5 and is tagged as AI-generated in each file's metadata. The Era illustrations were generated with image tools (Canva, ChatGPT) from screenshots of our own game and carry a visible "AI-generated" watermark. The game idea and design are the team's own; facts and numbers come from cited NASA and other sources, not from AI. No NASA logos, flags or mission identifiers were generated.
+Yes. AI coding agents (Claude Code and Codex) wrote the code from the team's design documents and tickets; the team reviewed and tested every change. The same agents built the 3D models as Blender scripts; the textures on them are real CC0 photos. The music was generated with Google Lyria 3.5 and is tagged as AI-generated in each file's metadata. The Era illustrations were generated with image tools (Canva, ChatGPT) from screenshots of our own game and carry a visible "AI-generated" watermark. The game idea and design are the team's own; facts and numbers come from cited NASA and other sources, not from AI. No NASA logos, flags or mission identifiers were generated.
 
 ## Early start
 

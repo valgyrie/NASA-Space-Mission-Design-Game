@@ -31,7 +31,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 23 🧪 | [Weekly Challenge and Seeds](23-weekly-challenge-and-seeds.md) | 22 | Same budget and Parts list for all, scoring weights, badges; share Seeds. |
 | 24 ✅ | [Demo Mode](24-demo-mode.md) | 18 | One ready save per finished Era on a fixed demo Site. |
 | 25 🧪 | [Sound and music](25-sound-and-music.md) | 01 | Code-made sound effects; music files from the team with looping crossfades; credits recorded. |
-| 26 🧪 | [Look and feel pass](26-look-and-feel.md) | 18 | Cozy low-poly models and a clean NASA-style UI across all screens; Learn more → links. |
+| 26 🧪 | [Look and feel pass](26-look-and-feel.md) | 18 | Cozy low-poly models (replaced by ticket 49's realistic look) and a clean NASA-style UI across all screens; Learn more → links. |
 | 27 | [NASA data in view + official Resources](27-nasa-data-and-resources.md) | 16 | Official Resources captured and mapped (docs, Nov 13); each Resource used gets a Real data and Credits entry when its ticket ships. |
 | 28 | [Submission](28-submission.md) | 24, 26, 27 | Credits screen, README, hosted link, video, project page, repo public. Mostly team tasks. |
 | 29 🧪 | [Era illustrations](29-era-illustrations.md) | 27 | Style guide and image prompts for one illustration per Era; team generates them; shown on Era transitions. Done after the NASA Resources arrive. |
@@ -54,6 +54,7 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 46 | [End of mission](46-end-of-mission.md) _(Later)_ | 31 | Low orbits decay; Free Play Contracts ask for a plan to leave orbit. Research first. |
 | 47 | [A timeline you can drag](47-timeline-you-can-drag.md) _(Later)_ | 31 | Drag through a Mission's events in the Space view. |
 | 48 | [CubeSat sizes](48-cubesat-sizes.md) _(Later)_ | 20, 21 | Free Play Buses become 1U, 3U and 6U; needs a rebalance. |
+| 49 🧪 | [Realistic graphics](49-realistic-graphics.md) _(added 2026-11-14)_ | 26 | Smooth photo-textured land, real sky and water, Blender-built buildings and launch pads, trees by climate, a photo Earth; every asset credited. The team accepts it before the final merge. |
 
 **Recommended build order (2026-11-13):** 27 → 32 → 33 → 34 → 35 → 36 → 37 → 38 → 39 → the rule items in 28 and 29 → 40 → 41 → the rest (42–48). Stop adding features on Saturday night (14 Nov). Sunday is for hosting, the demo, the project page and the final launcher checks (ticket 28).
 

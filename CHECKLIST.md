@@ -18,7 +18,7 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 ### Foundations
 - [x] Project setup (TypeScript, Vite, Three.js), type checks and tests on commit
 - [x] Local launchers: dependency setup, progress, browser opening and reopening (`LEAP.bat`, `LEAP.command`, `LEAP.sh`)
-- [x] Low-poly world with camera controls (pan, turn, tilt to the horizon, zoom; mouse and keyboard; H for the whole-Site view)
+- [x] 3D world with camera controls (pan, turn, tilt to the horizon, zoom; mouse and keyboard; H for the whole-Site view)
 - [x] Land continues past the Site to the horizon; sky, haze and sun shadows
 - [x] Pause menu (Esc) with the Seed and Copy
 - [x] Save and load (local)
@@ -82,7 +82,16 @@ Tick an item only after it works in the game. Details for each item are in [`doc
 - [x] Cloud saves for Free Play (ticket 22)
 
 ### Look and sound
-- [x] Cozy low-poly art, clean NASA-style UI
+- [x] Clean NASA-style UI (the first cozy low-poly art is replaced by the realistic look below)
+- [ ] Realistic look (ticket 49, asked for by the team on 14 Nov; ADR-0005)
+  - [x] Smooth photo-textured land, real sky, haze, water and sun shadows
+  - [x] Buildings, crane and foundations built in Blender
+  - [x] Trees, bushes, cacti and boulders by climate; Shipping truck, dock and road
+  - [x] Photo Earth (NASA), Spacecraft like flight hardware, stars with the Milky Way
+  - [ ] Rockets, launch pads, flame and smoke (first pass built; the climb not yet checked on screen)
+  - [x] Every asset credited (Credits, README, `docs/art/`)
+  - [ ] Play-test of the whole game in the new look, and frame rate on a school-class laptop
+  - [ ] Team test and go-ahead before the final merge into `main`
 - [x] Buildings big enough to see from the whole-Site view (3 × 3 tiles each; the Site stays 64 × 64)
 - [x] Smooth Earth from space: rounded coasts and soft clouds, far and close up
 - [x] Sound effects (ticket 25: generated in code)

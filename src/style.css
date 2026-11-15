@@ -3418,6 +3418,7 @@ button.upgrade {
 .credits li { margin: 2px 0; }
 .credits a { color: #8fc6ff; text-underline-offset: 3px; overflow-wrap: anywhere; }
 .credits a:hover { color: var(--text); }
+.credits h4 { margin: 10px 0 2px; font-size: 13px; font-weight: 600; color: var(--text); }
 
 /* Era illustrations (ticket 29): wide art on top of the Era card, labelled as an illustration. */
 .era-card { width: min(560px, calc(100vw - 32px)); }

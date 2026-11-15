@@ -1,10 +1,15 @@
 import { HISTORY_CARD_IDS, HISTORY_CARDS } from '../game/history';
 import { LAUNCH_SITE_IDS, LAUNCH_VEHICLE_IDS } from '../game/launchVehicles';
-import { CHALLENGE, SITE_SOURCES, SOFTWARE, SOFTWARE_IDS, SOURCES, VEHICLE_SOURCES } from '../game/sources';
+import {
+  ART_ASSETS, ART_GROUP_IDS, ART_GROUPS, CHALLENGE, SITE_SOURCES, SOFTWARE, SOFTWARE_IDS, SOURCES, VEHICLE_SOURCES,
+} from '../game/sources';
 import { t, type StringKey } from '../strings';
 import { makeDatasetList } from './dataCredits';
 
-/** The Credits screen in the main menu: team, real data, photos, illustrations, reading sources, audio and software. */
+/**
+ * The Credits screen in the main menu: team, real data, photos, illustrations, 3D models and textures, reading
+ * sources, audio and software.
+ */
 export function makeCredits(): HTMLElement {
   const credits = document.createElement('div');
   credits.className = 'credits';
@@ -44,7 +49,15 @@ export function makeCredits(): HTMLElement {
   );
 
   const art = section('credits.art.heading');
-  art.append(paragraph(t('credits.art')), paragraph(t('credits.models')));
+  art.append(paragraph(t('credits.art')));
+
+  const models = section('credits.models.heading');
+  models.append(paragraph(t('credits.models')), paragraph(t('credits.models.note'), 'note'));
+  for (const group of ART_GROUP_IDS) {
+    const heading = document.createElement('h4');
+    heading.textContent = t(`credits.models.${group}`);
+    models.append(heading, list(ART_GROUPS[group].map((id) => listItem(link(ART_ASSETS[id], t(`credits.asset.${id}`))))));
+  }
 
   const audio = section('credits.audio.heading');
   audio.append(paragraph(t('audio.musicCredit')), paragraph(t('audio.effectsCredit')));
@@ -52,7 +65,7 @@ export function makeCredits(): HTMLElement {
   const software = section('credits.software.heading');
   software.append(list(SOFTWARE_IDS.map((id) => listItem(link(SOFTWARE[id], t(`credits.software.${id}`))))));
 
-  credits.append(team, data, photos, art, reading, audio, software);
+  credits.append(team, data, photos, art, models, reading, audio, software);
   return credits;
 }
 
