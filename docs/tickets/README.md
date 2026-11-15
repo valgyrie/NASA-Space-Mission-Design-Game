@@ -55,9 +55,12 @@ Each ticket is a thin, playable slice of the game that fits in one session. Do a
 | 47 | [A timeline you can drag](47-timeline-you-can-drag.md) _(Later)_ | 31 | Drag through a Mission's events in the Space view. |
 | 48 | [CubeSat sizes](48-cubesat-sizes.md) _(Later)_ | 20, 21 | Free Play Buses become 1U, 3U and 6U; needs a rebalance. |
 | 49 🧪 | [Realistic graphics](49-realistic-graphics.md) _(added 2026-11-14)_ | 26 | Smooth photo-textured land, real sky and water, Blender-built buildings and launch pads, trees by climate, a photo Earth; every asset credited. The team accepts it before the final merge. |
+| 50 | [Era 3: the Moon and the land from above](50-era-3.md) _(added 2026-11-15, planned)_ | 18 | The Apollo 11 science package on the Moon and Landsat 1; Saturn V, Delta 900, Vandenberg; new Parts; Assembly Hall level 4. |
+| 51 | [Era 4: telescopes and Moon maps](51-era-4.md) _(added 2026-11-15, planned)_ | 50 | Hubble on the Shuttle and LRO in lunar orbit; Atlas V; lithium batteries; Assembly Hall level 5. |
+| 52 | [Era 5: reusable rockets and Artemis](52-era-5-artemis.md) _(added 2026-11-15, planned)_ | 51 | Falcon 9 booster landing, Artemis I and II CubeSats, then you choose how to help Artemis III and the Artemis IV finale; Moon Contracts in Free Play. |
 
 **Recommended build order (2026-11-13):** 27 → 32 → 33 → 34 → 35 → 36 → 37 → 38 → 39 → the rule items in 28 and 29 → 40 → 41 → the rest (42–48). Stop adding features on Saturday night (14 Nov). Sunday is for hosting, the demo, the project page and the final launcher checks (ticket 28).
 
 **Changed since (2026-11-10, asked for by the team):** every building takes 3 × 3 tiles so it shows from the whole-Site view (GDD §4; tickets 04, 05 and 15 were built with one tile each), and the Earth seen from space is a smooth globe (ticket 26's Earth box, done early).
 
-**Not in this list (Optional in `CHECKLIST.md`):** Eras 3–5, Crew Module, Dodge the debris, Stop the tumble, GIBS photos, Horizons, DONKI, manual placement, live weather, visiting Sites, co-op, Sandbox, Mars, touch, translations, desktop app.
+**Not in this list (Optional in `CHECKLIST.md`):** Crew Module, Dodge the debris, Stop the tumble, GIBS photos, Horizons, DONKI, manual placement, live weather, visiting Sites, co-op, Sandbox, Mars, touch, translations, desktop app.

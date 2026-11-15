@@ -5,6 +5,7 @@ Cited facts and numbers used in the game. Every claim links to its source; anyth
 | File | Covers |
 |---|---|
 | [milestones.md](milestones.md) | Campaign Milestones: dates, rockets, builders, Real History card facts |
+| [eras-3-5.md](eras-3-5.md) | Eras 3–5 (1969–2028): Apollo 11's science package, Landsat 1, Hubble, LRO, Falcon 9 landing, Artemis I–IV, lunar relays; new rockets, Parts and proposed game numbers (tickets 50–52) |
 | [launch-vehicles.md](launch-vehicles.md) | Launch Vehicle capacities, Rideshare price |
 | [spacecraft-parts.md](spacecraft-parts.md) | Real ranges for solar, batteries, pointing, radios, propulsion, computers |
 | [earth-map.md](earth-map.md) | Real Earth map and apparent size for the Mission Designer globe |

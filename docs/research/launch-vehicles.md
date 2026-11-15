@@ -11,7 +11,7 @@ Payload to **low Earth orbit (LEO)** unless noted. Sources often disagree becaus
 | Delta A | 2 | **250 kg** | | [Astronautix: Thor Delta A](http://astronautix.com/t/thordeltaa.html) |
 | Delta D | 2 | **450 kg** | GTO: **104 kg**. Launched Syncom 3 to GEO | [Astronautix: Thor Delta D](http://www.astronautix.com/t/thordeltad.html) · [Wikipedia: Delta D](https://en.wikipedia.org/wiki/Delta_D) |
 | Saturn V | 3 | **~140,000 kg** (incl. Moon-departure fuel); other sources 118,000–120,000 kg | | [Wikipedia: heavy-lift launch vehicle](https://en.wikipedia.org/wiki/Heavy-lift_launch_vehicle) |
-| Delta 900 | 3 | _(verify)_ | Launched Landsat 1 | [Wikipedia: Landsat 1](https://en.wikipedia.org/wiki/Landsat_1) |
+| Delta 900 | 3 | **816 kg** to Sun-synchronous orbit (Gunter's); ~1,680 kg LEO _(verify)_ | Launched Landsat 1; 2 flights, both from Vandenberg, 1972 | [Gunter's: Delta](https://space.skyrocket.de/doc_lau/delta.htm) · details in [eras-3-5.md](eras-3-5.md) |
 | Space Shuttle | 4 | **27,500 kg** | Crewed; deployed Hubble | [Wikipedia: heavy-lift launch vehicle](https://en.wikipedia.org/wiki/Heavy-lift_launch_vehicle) |
 | Pegasus XL | 4 | **443 kg** (185 km, 28.5°) | Air-launched; first own-rocket model | [Wikipedia: Pegasus](https://en.wikipedia.org/wiki/Northrop_Grumman_Pegasus) |
 | Atlas V 401 | 4 | **9,800 kg** | GTO: 4,750 kg | [ULA mission booklet](https://www.ulalaunch.com/docs/default-source/news-items/av_oa7_mob.pdf) · [Gunter's](https://space.skyrocket.de/doc_lau/atlas-5.htm) |

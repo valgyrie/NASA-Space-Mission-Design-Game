@@ -139,14 +139,16 @@ Verified dates, rockets and sources: [`docs/research/milestones.md`](research/mi
 | 4 · 1990–2009 | Hubble | Space telescope, 1990 | Build it |
 | | Lunar Reconnaissance Orbiter | Maps the Moon, 2009 | Build it |
 | 5 · 2015–2028 | Falcon 9 booster landing | First orbital-class booster landing, 2015 | Reusable rockets unlock |
-| | Artemis I | Uncrewed Moon test flight, 2022 | Support |
-| | Artemis II | Crew flies around the Moon, April 2026 | Support |
-| | **Artemis IV** (finale) | Planned first crewed landing since 1972, by 2028 | Support: relay satellite and cargo lander to the landing site |
+| | Artemis I | Uncrewed Moon test flight, 2022 | Support: a CubeSat riding along, as ten real ones did |
+| | Artemis II | Crew flies around the Moon, April 2026 | Support: a CubeSat like the four international ones it carried |
+| | Artemis III | Crew tests docking with Moon landers in Earth orbit, planned 2027 | **Your choice:** a camera satellite, a relay, or a space-weather watch |
+| | **Artemis IV** (finale) | Planned first crewed landing since 1972, near the south pole, 2028 | **Your choice:** a lunar relay satellite, a cargo lander, or a Moon Mapper scouting the site |
 
 - Every Milestone shows a **Real History card** before (the real story) and after (what happened next), with **Learn more →**. Free Play shows optional "Did you know?" cards linked to Contract types. All unlocked cards are kept in the **History Archive**.
 - **Failure is part of history:** failed Milestones are always retryable, and come with a short real failure story (e.g. Vanguard TV3 exploding on the pad in December 1957).
 - **As built (ticket 17):** a failed Mission keeps its Contract open until the deadline, then it goes back on the board. The Company's first failed Mission (for any reason) shows the **Vanguard TV3** card, "Up 1.2 metres, then down" (a failure story, kept in the History Archive), ending "find out why, fix it, and fly again". Its photo is a Vanguard rocket on its pad in 1958; no NASA photo of the explosion was found. Facts: `docs/research/milestones.md`.
-- Artemis IV is in the future. If NASA changes the plan, update the Era data file.
+- Artemis III and IV are in the future. If NASA changes the plan, update the Era data file.
+- **Eras 3–5 (planned 15 Nov 2026, tickets 50–52, not built yet):** for Artemis III and IV the player picks how the Company helps; any one choice completes the Milestone, the others stay as optional Contracts, and the same Moon Contracts join Free Play. Facts and proposed numbers: [`docs/research/eras-3-5.md`](research/eras-3-5.md).
 
 ## 7. Spacecraft design (core of the 60%)
 

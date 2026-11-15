@@ -20,6 +20,8 @@ Facts used in Real History cards and Milestone Contracts. Researched 2026-11-07.
 | 11 | **Artemis II** | 1 Apr 2026 | SLS · Kennedy | NASA | Crewed flight around the Moon.[^artemis] |
 | 12 | **Artemis IV** (finale) | Planned by 2028 | SLS + a commercial lander (Starship or Blue Moon, not chosen yet) | NASA | Planned first crewed Moon landing since 1972. Artemis III was changed in Feb 2026 to a lander test in Earth orbit (2027).[^artemis] |
 
+Milestones 5–12 (Eras 3–5) are researched in depth, with proposed game numbers, in [eras-3-5.md](eras-3-5.md) (15 Nov 2026). It updates rows 11–12: Artemis II flew 1–10 Apr 2026; on 23 Oct 2026 NASA's plan for Artemis III (2027) was a 14-day Earth-orbit test docking with both landers, and the Artemis IV lander was still unassigned.
+
 **Game notes**
 - Explorer 1 had **batteries only**, so the tutorial Spacecraft uses batteries, not solar. Solar cells unlock after Vanguard 1's real first (1958).
 - Explorer 1 Contract: client **US Army**. The Army Ballistic Missile Agency (ABMA) modified the Jupiter-C, and "ABMA and JPL completed the job of modifying the Jupiter-C and building Explorer 1 in 84 days"; Project Orbiter was "a joint U.S. Army and U.S. Navy proposal". Its main instrument was a Geiger tube "to detect cosmic rays". The high-power transmitter ran 31 days, so the game asks for **30 days of Data**.[^e1]
