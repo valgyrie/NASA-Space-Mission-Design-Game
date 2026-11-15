@@ -4,7 +4,7 @@
 
 **Blocked by:** 20
 
-**Status:** built, waiting for a team test. Branch `game-modes`; not merged into `main`.
+**Status:** built and merged into `main` (15 Nov 2026, at the user's request); waiting for a team test.
 
 - [x] Mode names and setup lines; one choice at Company setup (ids stay `easy` / `advanced`)
 - [x] Explorer: bars with icons and words, no units; ghost preview of each Part's effect

@@ -4,12 +4,13 @@
 
 **Goal:** a 2.5D space-company tycoon for NASA Space Apps 2026 (hackathon Nov 14–15). See `docs/GDD.md`.
 
-**Game modes (15 Nov, evening), on branch `game-modes`, waiting for the team before merging into `main`. START HERE for this work.** Brief: the team's `game-modes-prompt.txt` (plans.txt plus the agreed changes). Everything built and how: `docs/tickets/53-game-modes.md` ("As built"); GDD §7 "Game modes".
+**Game modes (15 Nov, evening): merged into `main` at the user's request (branch `game-modes` kept). START HERE for this work.** Brief: the team's `game-modes-prompt.txt` (plans.txt plus the agreed changes). Everything built and how: `docs/tickets/53-game-modes.md` ("As built"); GDD §7 "Game modes".
 - Easy and Advanced are shown as **Explorer** and **Mission Director** (ids unchanged). Explorer: bars and words instead of numbers, a ghost preview of each Part, short texts, a four-step Launch planner with a checklist, word-only Test Run and report, bigger colour-blind-safe UI, NASA kids' pages instead of papers, a refund once per Contract, faster Mines and Shipping. Mission Director: Offers expire after 60 days, repeat Test Runs cost 2% of the reward, Ground Tests ×3 money and ×2 days, Deposits run out. Safety valve: the grant can come again (every 180 days, five per game). One-way switch from Explorer in the pause menu. Save v21.
 - Also asked for this session: the Online button is greyed out with "Coming soon" (so the Weekly Challenge can't be reached for now), and Back/Resume are pinned to the bottom of scrolling menus.
 - Defaults used for the open questions (the team may change them): names "Explorer" and "Mission Director"; refund the launch costs once per Contract; repeat Test Run fee 2% of the reward (at least $10K); Offers expire after 60 days, Milestones never.
 - 588 tests and both type checks pass. Browser: Explorer (Demo Era 1) and a Mission Director Free Play Company at 1280×800 and 1024×768, no console errors. Not seen on screen: a Deposit running out, the repeat grant, a real Explorer refund, the switch (it reloads to the main menu), touch.
 - Before Online returns: rebuild and redeploy `leap-online` (`npm run build:online`), because its bundled save validator must accept v21.
+- Explorer's Mission Report was simplified after feedback: big result and reward, the patch, ticks and crosses, one tip, one line on trouble in space.
 - Team: play both modes; decide whether the JPL maturity strip should come back in Explorer, and whether Explorer is too close to "Explorer 1" as a name.
 
 **Eras demo (15 Nov, evening): played, fixed, merged into `main`. START HERE.** The team asked for two Eras for the demo: the Moon landing (Era 3, Apollo 11) and the Artemis Era (Artemis II, III, IV). Both are built, played end to end in Demo Mode, and merged.
@@ -93,7 +94,7 @@
 
 ## Log
 
-- 2026-11-15: Game modes on branch `game-modes` (ticket 53): Explorer and Mission Director on one rule set, kids' NASA links, save v21; Online greyed out; Back/Resume always in reach. 588 tests, type checks and browser checks of both modes pass. Waiting for the team before merging.
+- 2026-11-15: Game modes on branch `game-modes` (ticket 53): Explorer and Mission Director on one rule set, kids' NASA links, save v21; Online greyed out; Back/Resume always in reach. 588 tests, type checks and browser checks of both modes pass. Merged into `main` the same evening at the user's request.
 
 - 2026-11-14: The rest of the game (Space view, Launch show overlay, Mission Report, History, tutorial, Anomaly) in the new look; HUD icons and clearer hints; captioned screenshots of every screen. Mission Designer and Launch planner untouched.
 - 2026-11-14: Several Companies (Your Companies list, own save each, index only in memory), Music & Sounds with a title-music choice, and the Site panels and dialogs in the title look. Launch show, Mission Designer and Launch planner untouched. Waiting for the team's approval to merge.
