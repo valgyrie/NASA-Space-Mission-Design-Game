@@ -1481,7 +1481,7 @@ export const STRINGS = {
   'era.illustration': 'Illustration (AI-generated)',
 
   'grant.heading': 'Startup grant',
-  'grant.text': 'Money is running low, so the government backs young space companies like yours with a grant of {money}. It comes only once: spend it well.',
+  'grant.text': 'Money is running low, so the government backs young space companies like yours with a grant of {money}. Spend it well.',
   'grant.ok': 'Thanks',
 
   'archive.open': 'History Archive',
@@ -1723,6 +1723,24 @@ export const STRINGS = {
   'moonShow.artemis4.landed.detail': 'The last crew to walk on the Moon was Apollo 17’s, in December 1972.',
   'moonShow.artemis4.surface': 'Moonwalk at the pole',
   'moonShow.artemis4.surface.detail': 'From the south pole, Earth bobs up and down near the horizon.',
+
+  // Game modes: rules
+  'modes.offerLeft': 'Offer ends in {days}.',
+  'modes.offerLastDay': 'Offer ends today.',
+  'modes.testRunFee': 'Test Run · {money}',
+  'modes.testRunFeeName': 'You have tested this design already: another Test Run costs {money}.',
+  'modes.testRunShort': 'Not enough money for another Test Run of this design ({money}).',
+  'modes.testRunNote': 'The first Test Run of each design is free. Running the same one again costs {money}.',
+  'modes.depositLeft': 'Deposit: {kg} of {size} kg left.',
+  'modes.depositEmpty': 'This Deposit is empty. Buy a neighbouring Plot to find new ones.',
+  'build.problem.emptyDeposit': 'This Deposit is empty. Buy a neighbouring Plot to find new ones.',
+  'modes.refund': 'Explorer refund: {money} back for the launch. This happens once per Contract.',
+  'modes.switch': 'Switch to Mission Director',
+  'modes.switchNote': 'Contracts on offer expire, repeat Test Runs cost money, Ground Tests cost more and Deposits run out.',
+  'modes.switchConfirm': 'Switch this Company for good? You can’t switch back.',
+  'modes.switchYes': 'Switch for good',
+  'modes.switchNo': 'Cancel',
+  'grant.textAgain': 'Money is running low again, so the government backs your Company with another {money}.',
 } as const;
 
 export type StringKey = keyof typeof STRINGS;

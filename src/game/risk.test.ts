@@ -8,7 +8,7 @@ import { grantDue, payGrant } from './grant';
 import { FAILURE_STORY } from './history';
 import { LAUNCH_VEHICLES } from './launchVehicles';
 import { type MissionReport, insuranceQuote, launch, planLaunch, rocketReliability, shipMission, testRunFor } from './mission';
-import { weatherOn } from './places';
+import { JPL, weatherOn } from './places';
 import { type SiteState, newSiteState } from './siteState';
 import { type Design, type OptionId, choose, emptyDesign, partsNeeded } from './spacecraft';
 
@@ -24,7 +24,7 @@ function design(ids: OptionId[]): Design {
 
 /** A Company with Explorer 1 accepted, the Parts in the Warehouse, and `launches` Missions flown before. */
 function ready(ids: OptionId[] = EXPLORER, launches = 0): SiteState {
-  const state = newSiteState();
+  const state = newSiteState(JPL, 'advanced');
   acceptContract(state, 'explorer1');
   state.design = design(ids);
   for (const p of partsNeeded(state.design)) state.parts[p] += 1;

@@ -1,6 +1,7 @@
 import type { Part } from '../economy/part';
 import { type ContractId, type Orbit, type PayloadKind, contractById, accepted, completeContract, deadlineDay } from './contracts';
 import { INSURANCE } from './balance';
+import { isExplorer } from './modes';
 import { LAUNCH_VEHICLES, type LaunchSiteId, type LaunchVehicleId, firstOpenVehicle, isVehicleOpen, launchCost, siteTakes } from './launchVehicles';
 import { type Weather, shippingTo, weatherOn } from './places';
 import { type Anomaly, rollAnomaly } from './anomalies';
@@ -69,6 +70,8 @@ export interface Mission {
   groundTests?: GroundTestId[];
   /** The players who signed it off in Team Mode (ticket 41). Missing: built by one player. */
   team?: TeamPlayer[];
+  /** What its Launch and Shipping cost when it shipped (Explorer's refund). Missing in older saves: unknown, so none. */
+  launchCost?: number;
 }
 
 /** Launch Insurance: paid when shipping; pays back `payout` if the Mission fails. */
@@ -146,11 +149,11 @@ export function planLaunch(
   const liftKg = liftFor(goal.contract, vehicle, goal.orbit, site);
   const wholeLaunch = !!goal.contract.wholeLaunch && LAUNCH_VEHICLES[vehicle].launchPrice !== undefined;
   const rideshare = ride ? 0 : launchCost(vehicle, massKg, wholeLaunch);
-  const route = shippingTo(state.place, site);
+  const route = shippingTo(state.place, site, state.difficulty);
   const shipping = route.cost;
   const groundTests = chosenGroundTests(state, design);
-  const testDays = groundTestDays(groundTests);
-  const testCost = groundTestCost(groundTests);
+  const testDays = groundTestDays(groundTests, state.difficulty);
+  const testCost = groundTestCost(groundTests, state.difficulty);
   const total = rideshare + shipping + testCost;
   const building = assemblyDays(design);
   const shippingDays = route.days;
@@ -313,6 +316,7 @@ export function shipMission(
     readyDay: plan.readyDay,
     insurance,
     groundTests: [...plan.groundTests],
+    launchCost: plan.rideshare + plan.shipping,
     ...(state.team ? { team: state.team.players.map((p) => ({ ...p })) } : {}),
   };
   // The next design starts unsigned.
@@ -415,6 +419,8 @@ export interface MissionReport {
   ground?: number;
   /** The players who signed it off in Team Mode (ticket 41). Missing: built by one player. */
   team?: TeamPlayer[];
+  /** Explorer: launch costs paid back after a failure, once per Contract. Missing: none. */
+  refund?: number;
 }
 
 /** What a Launch gives back: the Mission Report (also filed in the state) and the flight behind it, for the show. */
@@ -438,6 +444,19 @@ export function launchWeather(state: SiteState): Weather | null {
   return weatherOn(m.site, state.day);
 }
 
+/**
+ * Explorer: a failed Mission pays back its Launch and Shipping costs, once per Contract (less what Launch Insurance
+ * already paid back). Pays it and returns the amount, or 0.
+ */
+export function explorerRefund(state: SiteState, m: Mission, insurancePaid = 0): number {
+  if (!isExplorer(state) || state.refunds.includes(m.contract)) return 0;
+  const refund = Math.max(0, (m.launchCost ?? 0) - insurancePaid);
+  if (refund <= 0) return 0;
+  state.refunds.push(m.contract);
+  state.money += refund;
+  return refund;
+}
+
 export function launch(state: SiteState, seed: string): LaunchResult | null {
   const m = state.mission;
   if (!m || missionStage(state)?.stage !== 'ready') return null;
@@ -452,6 +471,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
   // Launch Insurance pays back most of the cost of a failed Mission.
   const insurancePaid = !success && m.insurance ? m.insurance.payout : 0;
   state.money += insurancePaid;
+  const refund = success ? 0 : explorerRefund(state, m, insurancePaid);
   const report: MissionReport = {
     contract: m.contract,
     vehicle: m.vehicle,
@@ -465,6 +485,7 @@ export function launch(state: SiteState, seed: string): LaunchResult | null {
     insurancePaid,
     ground: m.ground,
     ...(m.team ? { team: m.team } : {}),
+    ...(refund > 0 ? { refund } : {}),
   };
   state.reports.push(report);
   state.mission = null;

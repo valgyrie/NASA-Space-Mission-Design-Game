@@ -162,6 +162,8 @@ describe('signing the Design Review', () => {
 
   it('clears a signature when the role ticks one of its Ground Tests', () => {
     const state = tiros(4);
+    // Ground Tests are Mission Director's (Explorer has none).
+    state.difficulty = 'advanced';
     signAll(state);
     toggleGroundTest(state, 'vibration', true);
     expect(isSigned(state, 'power')).toBe(false);

@@ -11,6 +11,7 @@ import {
   checkBuild,
   daysFor,
   fitBuildings,
+  mineEmpty,
   mineMaterial,
   placeAssemblyHall,
   placeHQ,
@@ -44,6 +45,7 @@ import { adviseLaunch, siteClimateFor } from './game/places';
 import { showScrubCard } from './ui/scrubCard';
 import { showGrantCard } from './ui/grantCard';
 import { payGrant } from './game/grant';
+import { switchToDirector } from './game/modes';
 import { dataWaiting } from './game/research';
 import { makeMenu } from './ui/menu';
 import { showTopBar } from './ui/topBar';
@@ -121,6 +123,14 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       window.location.reload();
     },
     demoEra === undefined ? () => online.open() : undefined,
+    // Explorer → Mission Director, for good: save, then reload so every panel shows the new rules.
+    demoEra === undefined
+      ? () => {
+          if (!switchToDirector(state)) return;
+          save();
+          window.location.reload();
+        }
+      : undefined,
   );
   if (demoEra !== undefined) {
     const note = document.createElement('p');
@@ -472,9 +482,10 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
 
   world.onFrame((seconds) => {
     advanceDays(site, state, daysFor(seconds, speed));
-    // Mines turn while there is room to store what they dig; Factories while they make a Part.
+    // Mines turn while there is room to store what they dig (and, in Mission Director, their Deposit lasts);
+    // Factories while they make a Part.
     const room = storageFree(state) > 0;
-    for (const m of state.mines) world.setWorking(m.x, m.z, room);
+    for (const m of state.mines) world.setWorking(m.x, m.z, room && !mineEmpty(site, state, m));
     for (const f of state.factories) world.setWorking(f.x, f.z, f.progress !== null);
     const researching = dataWaiting(state) > 0;
     for (const l of state.labs) world.setWorking(l.x, l.z, researching);
@@ -514,7 +525,7 @@ export function playSite(world: World, ui: HTMLElement, game: SaveData, { storag
       if (paid > 0) {
         save();
         audio.effect('reward');
-        grant.show(paid);
+        grant.show(paid, state.grants > 1);
       }
     }
   });

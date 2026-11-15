@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { GROUND_TESTS, GROUND_TEST_CHANCE_LEFT, PANEL_CHANCE } from './balance';
+import { DIRECTOR_GROUND_TESTS, GROUND_TESTS, GROUND_TEST_CHANCE_LEFT, PANEL_CHANCE } from './balance';
+import { JPL } from './places';
 import { antennaChance, rollAnomaly } from './anomalies';
 import { acceptContract, type ContractId } from './contracts';
 import { fly } from './flight';
@@ -12,6 +13,7 @@ import {
   groundTestCost,
   groundTestDays,
   groundTestFor,
+  groundTestPrice,
   groundTestsFor,
   testedKinds,
   toggleGroundTest,
@@ -26,7 +28,7 @@ const TIROS: OptionId[] = ['mediumBus', 'solarCells', 'largeBattery', 'simpleAnt
 
 /** A Company with money, the Contract accepted and the Parts in the Warehouse. */
 function company(contract: ContractId, ids: OptionId[]): SiteState {
-  const state = newSiteState();
+  const state = newSiteState(JPL, 'advanced');
   state.money = 5_000_000;
   state.assemblyHall = { x: 0, z: 0, level: 3, upgradeDay: null };
   if (contract === 'tiros1') {
@@ -45,6 +47,33 @@ const design = (ids: OptionId[]) => {
   for (const id of ids) choose(d, id);
   return d;
 };
+
+/** A test's days and money in Mission Director. */
+const director = (id: keyof typeof GROUND_TESTS) => groundTestPrice(id, 'advanced');
+
+describe('Ground Tests: game modes', () => {
+  it('cost more money and days in Mission Director', () => {
+    for (const id of GROUND_TEST_IDS) {
+      expect(director(id)).toEqual({ days: GROUND_TESTS[id].days * DIRECTOR_GROUND_TESTS.days, cost: GROUND_TESTS[id].cost * DIRECTOR_GROUND_TESTS.cost });
+    }
+    expect(groundTestCost(['vibration'], 'advanced')).toBe(3 * groundTestCost(['vibration']));
+    expect(groundTestDays(['vibration'], 'advanced')).toBe(2 * groundTestDays(['vibration']));
+  });
+
+  it('are never needed in Explorer: ticked ones cost nothing and nothing waits for them', () => {
+    const state = company('tiros1', TIROS);
+    state.difficulty = 'easy';
+    const before = planLaunch(state, state.design);
+    toggleGroundTest(state, 'vibration', true);
+    expect(chosenGroundTests(state, state.design)).toEqual([]);
+    const after = planLaunch(state, state.design);
+    expect(after.groundTests).toEqual([]);
+    expect(after.total).toBe(before.total);
+    expect(after.readyDay).toBe(before.readyDay);
+    expect(shipMission(state, state.design).ok).toBe(true);
+    expect(state.mission!.groundTests).toEqual([]);
+  });
+});
 
 describe('Ground Tests: which ones show', () => {
   it('offers only the tests whose Anomaly can strike the design', () => {
@@ -74,10 +103,10 @@ describe('Ground Tests: days and money', () => {
     toggleGroundTest(state, 'vibration', true);
     toggleGroundTest(state, 'thermalVacuum', true);
     const after = planLaunch(state, state.design);
-    const days = GROUND_TESTS.vibration.days + GROUND_TESTS.thermalVacuum.days;
-    const cost = GROUND_TESTS.vibration.cost + GROUND_TESTS.thermalVacuum.cost;
-    expect(groundTestDays(after.groundTests)).toBe(days);
-    expect(groundTestCost(after.groundTests)).toBe(cost);
+    const days = director('vibration').days + director('thermalVacuum').days;
+    const cost = director('vibration').cost + director('thermalVacuum').cost;
+    expect(groundTestDays(after.groundTests, 'advanced')).toBe(days);
+    expect(groundTestCost(after.groundTests, 'advanced')).toBe(cost);
     expect(after.testDays).toBe(days);
     expect(after.testCost).toBe(cost);
     expect(after.readyDay).toBe(before.readyDay + days);
@@ -95,7 +124,7 @@ describe('Ground Tests: days and money', () => {
     expect(state.money).toBe(money - plan.total);
     const m = state.mission!;
     expect(m.groundTests).toEqual(['dayInTheLife']);
-    expect(m.shipDay - m.startDay).toBe(plan.assemblyDays + GROUND_TESTS.dayInTheLife.days);
+    expect(m.shipDay - m.startDay).toBe(plan.assemblyDays + director('dayInTheLife').days);
     expect(missionTimeline(state)!.readyDay).toBe(plan.readyDay);
   });
 
@@ -103,7 +132,7 @@ describe('Ground Tests: days and money', () => {
     const state = company('tiros1', TIROS);
     const plan = planLaunch(state, state.design);
     toggleGroundTest(state, 'thermalVacuum', true);
-    expect(planLaunch(state, state.design).total - plan.total).toBe(GROUND_TESTS.thermalVacuum.cost);
+    expect(planLaunch(state, state.design).total - plan.total).toBe(director('thermalVacuum').cost);
   });
 });
 

@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { JPL } from './places';
 import { t } from '../strings';
 import { ERAS, MODERN_ERA } from './eras';
 import { FACTORY_KINDS, PARTS } from '../economy/part';
@@ -79,7 +80,7 @@ describe('Mines', () => {
   });
 
   it('dig up whatever their Deposit holds', () => {
-    const state = newSiteState();
+    const state = newSiteState(JPL, 'advanced');
     build(site, state, 'mine', ...copper);
     advanceDays(site, state, 2);
     expect(state.stock.copper).toBeCloseTo(2 * MINE_OUTPUT_PER_DAY);
@@ -235,7 +236,7 @@ describe('Factories and the Warehouse', () => {
   });
 
   it('stop Mines when storage is full; a Warehouse adds room', () => {
-    const state = newSiteState();
+    const state = newSiteState(JPL, 'advanced');
     build(site, state, 'mine', ...copper);
     expect(storageCapacity(state)).toBe(BASE_STORAGE_KG);
     advanceDays(site, state, 10_000);

@@ -1,5 +1,6 @@
 import { type AnomalyKind, antennaChance, eclipseChance, panelChance } from './anomalies';
-import { GROUND_TESTS, GROUND_TEST_CHANCE_LEFT } from './balance';
+import { DIRECTOR_GROUND_TESTS, GROUND_TESTS, GROUND_TEST_CHANCE_LEFT } from './balance';
+import type { Difficulty } from './modes';
 import type { SiteState } from './siteState';
 import { type Design, type Marks, dataOf, missionGoal, marksFor, powerOf } from './spacecraft';
 
@@ -47,10 +48,20 @@ export function groundTestsFor(design: Design): GroundTestId[] {
   return GROUND_TEST_IDS.filter((id) => id === 'dayInTheLife' || solar);
 }
 
-/** The ticked tests that count for this design, in a fixed order. Missing in older saves: none. */
-export function chosenGroundTests(state: Pick<SiteState, 'groundTests'>, design: Design): GroundTestId[] {
+/**
+ * The ticked tests that count for this design, in a fixed order. Missing in older saves: none. Explorer has no
+ * Ground Tests, so none count there, even ones ticked before.
+ */
+export function chosenGroundTests(state: Pick<SiteState, 'groundTests'> & Partial<Pick<SiteState, 'difficulty'>>, design: Design): GroundTestId[] {
+  if (state.difficulty === 'easy') return [];
   const ticked = state.groundTests ?? [];
   return groundTestsFor(design).filter((id) => ticked.includes(id));
+}
+
+/** One test's days and cost in a mode: Mission Director's cost more of both (DIRECTOR_GROUND_TESTS). */
+export function groundTestPrice(id: GroundTestId, difficulty?: Difficulty): { days: number; cost: number } {
+  const g = GROUND_TESTS[id];
+  return difficulty === 'advanced' ? { days: g.days * DIRECTOR_GROUND_TESTS.days, cost: g.cost * DIRECTOR_GROUND_TESTS.cost } : { ...g };
 }
 
 /** Tick or untick a test in the Launch planner. */
@@ -59,12 +70,12 @@ export function toggleGroundTest(state: Pick<SiteState, 'groundTests'>, id: Grou
   state.groundTests = on ? [...rest, id] : rest;
 }
 
-export function groundTestDays(tests: readonly GroundTestId[]): number {
-  return tests.reduce((sum, id) => sum + GROUND_TESTS[id].days, 0);
+export function groundTestDays(tests: readonly GroundTestId[], difficulty?: Difficulty): number {
+  return tests.reduce((sum, id) => sum + groundTestPrice(id, difficulty).days, 0);
 }
 
-export function groundTestCost(tests: readonly GroundTestId[]): number {
-  return tests.reduce((sum, id) => sum + GROUND_TESTS[id].cost, 0);
+export function groundTestCost(tests: readonly GroundTestId[], difficulty?: Difficulty): number {
+  return tests.reduce((sum, id) => sum + groundTestPrice(id, difficulty).cost, 0);
 }
 
 /** The Anomalies these tests make less likely. */

@@ -2,7 +2,8 @@ import { t } from '../strings';
 import { formatMoney } from './format';
 
 export interface GrantCard {
-  show(amount: number): void;
+  /** `again`: not the Company's first grant. */
+  show(amount: number, again?: boolean): void;
   close(): void;
   readonly isOpen: boolean;
 }
@@ -28,8 +29,8 @@ export function showGrantCard(root: HTMLElement, hooks: { onOpen(): void; onClos
   backdrop.append(panel);
   root.append(backdrop);
   const api: GrantCard = {
-    show(amount) {
-      text.textContent = t('grant.text', { money: formatMoney(amount) });
+    show(amount, again = false) {
+      text.textContent = t(again ? 'grant.textAgain' : 'grant.text', { money: formatMoney(amount) });
       backdrop.hidden = false;
       hooks.onOpen();
       ok.focus();

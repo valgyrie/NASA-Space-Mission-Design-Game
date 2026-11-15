@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { JPL } from './places';
 import { generateSite } from '../site/site';
 import { CONTRACTS, acceptContract, availableContracts } from './contracts';
 import { LAUNCH_VEHICLES, rideshareCost } from './launchVehicles';
@@ -18,7 +19,7 @@ function design(ids: OptionId[]): Design {
 
 /** A Company with the Contract accepted and the Parts for `ids` in the Warehouse. */
 function ready(ids: OptionId[] = EXPLORER): SiteState {
-  const state = newSiteState();
+  const state = newSiteState(JPL, 'advanced');
   acceptContract(state, 'explorer1');
   state.design = design(ids);
   for (const p of partsNeeded(state.design)) state.parts[p] += 1;

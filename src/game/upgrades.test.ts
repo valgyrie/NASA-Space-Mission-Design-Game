@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { JPL } from './places';
 import { generateSite, tileAt } from '../site/site';
 import {
   ASSEMBLY_HALL_COST,
@@ -88,7 +89,7 @@ describe('Building Upgrades', () => {
   });
 
   it('raise Mine output, Warehouse storage and Research Lab pace', () => {
-    const state = newSiteState();
+    const state = newSiteState(JPL, 'advanced');
     build(site, state, 'mine', ...copper);
     build(site, state, 'warehouse', ...bare[0]!);
     build(site, state, 'researchLab', ...bare[1]!);

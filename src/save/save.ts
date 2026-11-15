@@ -17,7 +17,7 @@ import { randomSeed } from '../site/seed';
 /** Local save in the browser. Demo Mode uses a separate storage adapter; Online reuses this format and validator. */
 
 export const SAVE_KEY = 'leap.save';
-export const SAVE_VERSION = 20;
+export const SAVE_VERSION = 21;
 export const AUTOSAVE_MS = 30_000;
 
 export interface Company {
@@ -109,6 +109,7 @@ function isMission(value: unknown): boolean {
     isNumber(m.readyDay) &&
     (m.insurance === null || (isNumber(m.insurance?.price) && isNumber(m.insurance?.payout))) &&
     isGroundTests(m.groundTests) &&
+    (m.launchCost === undefined || isNumber(m.launchCost)) &&
     (m.team === undefined || isTeamPlayers(m.team))
   );
 }
@@ -150,7 +151,8 @@ function isReport(value: unknown): boolean {
     isAnomaly(r.anomaly) &&
     isNumber(r.insurancePaid) &&
     (r.ground === undefined || isNumber(r.ground)) &&
-    (r.team === undefined || isTeamPlayers(r.team))
+    (r.team === undefined || isTeamPlayers(r.team)) &&
+    (r.refund === undefined || isNumber(r.refund))
   );
 }
 
@@ -173,6 +175,25 @@ const isTestedDesigns = (v: unknown): boolean => {
   const t = v as Partial<NonNullable<SiteState['testedDesigns']>> | null;
   return !!t && isContractId(t.contract) && Array.isArray(t.designs) && t.designs.every((d) => typeof d === 'string' && d.length < 200);
 };
+
+/** Game-mode rules (save v21). */
+function isModeRules(v: Partial<SiteState>): boolean {
+  const isRecord = (r: unknown, key: (k: string) => boolean): boolean =>
+    typeof r === 'object' && r !== null && !Array.isArray(r) && Object.entries(r).every(([k, n]) => key(k) && isNumber(n) && n >= 0);
+  return (
+    isNumber(v.grants) &&
+    v.grants >= 0 &&
+    isRecord(v.offerDays, isContractId) &&
+    Array.isArray(v.expiredOffers) &&
+    v.expiredOffers.every(isContractId) &&
+    Array.isArray(v.testRuns) &&
+    v.testRuns.length <= 100 &&
+    v.testRuns.every((k) => typeof k === 'string' && k.length < 300) &&
+    isRecord(v.depositsUsed, (k) => /^-?\d+,-?\d+$/.test(k)) &&
+    Array.isArray(v.refunds) &&
+    v.refunds.every(isContractId)
+  );
+}
 
 function isSiteState(value: unknown): value is SiteState {
   const v = value as Partial<SiteState> | null;
@@ -225,7 +246,8 @@ function isSiteState(value: unknown): value is SiteState {
     v.freePlots >= 0 &&
     (v.testedDesigns === undefined || isTestedDesigns(v.testedDesigns)) &&
     isGroundTests(v.groundTests) &&
-    (v.team === undefined || isTeam(v.team))
+    (v.team === undefined || isTeam(v.team)) &&
+    isModeRules(v)
   );
 }
 
@@ -408,6 +430,17 @@ function upgrade(data: unknown, newSeed: () => string): unknown {
     const betterParts = old.betterParts && typeof old.betterParts === 'object'
       ? { ...Object.fromEntries(added.map((p) => [p, []])), ...old.betterParts } : old.betterParts;
     v = { ...v, version: 20, state: { ...old, parts, betterParts } } as typeof v;
+  }
+  // Version 20 had no game-mode rules: Deposits full, Contracts on the board dated from the first day played,
+  // no Test Runs paid, no refunds, and the grant counted once if it was paid.
+  if (v?.version === 20) {
+    const old = (v as { state?: Record<string, unknown> }).state ?? {};
+    const grants = old.grantDay === null || old.grantDay === undefined ? 0 : 1;
+    v = {
+      ...v,
+      version: 21,
+      state: { ...old, grants, offerDays: {}, expiredOffers: [], testRuns: [], depositsUsed: {}, refunds: [] },
+    } as typeof v;
   }
   return v;
 }
