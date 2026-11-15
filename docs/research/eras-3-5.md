@@ -56,7 +56,7 @@ Facts for the Campaign from Apollo 11 (1969) to Artemis IV (2028), with sources,
 - A Sun-synchronous orbit runs pole to pole and crosses the equator at the same local solar time on every pass, so sunlight falls at the same angle and images from different years compare. NASA's low satellites trim their tilt every year or two to stay that way.[^orbcat]
 - Why about 98–99°: Earth's bulge makes a tilted orbit's plane turn slowly; tilted just past the pole (retrograde), it turns eastward about 1° a day, keeping pace with the Sun. NASA's example: 96° at a low altitude.[^orbcat] The tilt needed rises with height. Worked out from Earth's oblateness (J2 = 1.08263 × 10⁻³, a textbook constant): **98.2° at 705 km, 98.6° at 800 km, 99.0° at 900 km, 99.1° at 917 km**, against Landsat 1's real 99.2°. _(Calculation by the research agent; check with GMAT before showing numbers on screen.)_
 - Vandenberg: NASA's preferred site for polar orbits; the coast juts into the Pacific, "allowing rockets to launch to the south without flying over populated areas".[^vafb] Polar launches from Florida would fly over Florida's towns.
-- Launch Sites (coordinates from Wikipedia, rounded): Kennedy **LC-39A** 28.608° N, 80.604° W; **LC-39B** 28.627° N, 80.621° W; Vandenberg **SLC-2W** 34.756° N, 120.622° W; Cape Canaveral **SLC-41** 28.583° N, 80.583° W _(verify against a NASA or Space Force source)_.
+- Launch Sites: Kennedy **LC-39A** 28.608° N, 80.604° W and **LC-39B** 28.627° N, 80.621° W (NASA's Apollo table gives 28.608422° N, 80.604133° W and 28.627306° N, 80.620869° W, geodetic);[^sp4029bg] Vandenberg **SLC-2W** 34.756° N, 120.622° W and Cape Canaveral **SLC-41** 28.583° N, 80.583° W (Wikipedia, rounded) _(verify these two against a NASA or Space Force source)_.
 
 ### Launch Vehicles of Era 3
 
@@ -66,7 +66,7 @@ Facts for the Campaign from Apollo 11 (1969) to Artemis IV (2028), with sources,
 | Stages | S-IC (5 F-1), 138 ft; S-II (5 J-2), 81.5 ft; S-IVB (1 J-2), 58.4 ft; plus an Instrument Unit | Extended Long Tank Thor with **9 Castor II** solid boosters; Delta second stage (AJ10-118F); no third stage | [^satpk] [^gunterdelta] |
 | Burn times | Apollo 11: S-IC outboard cutoff at **161.6 s**; S-II cutoff 9 min 08 s (~384 s burn); S-IVB first burn to 11 min 39 s (~147 s); translunar injection **346.8 s** at 2 h 44 min | not found _(verify)_ | [^a11sum] |
 | Lift | NASA press kit: **125 tons** to low Earth orbit or **48 tons** to the Moon; another Apollo-era NASA paper: 270,000 lb (122 t) to Earth orbit, 100,000 lb (45 t) to translunar injection | Sun-synchronous **816 kg** (Gunter's). An Air Force Space and Missile Museum fact sheet (quoted by a search; the site did not load): 3,700 lb (1,680 kg) to low orbit (Delta 900), 1,400 lb (635 kg) to transfer orbit (Delta 904) _(verify)_ | [^satpk] [^gunterdelta] search results |
-| Flights | 13, 1967–1973; last launched Skylab on 14 May 1973 _(verify)_ | **2**, both from Vandenberg SLC-2W: ERTS-1 (23 Jul 1972) and Nimbus 5 (11 Dec 1972); no failure listed | [^gunterdelta] |
+| Flights | 13, 1967–1973, "every launch was successful" (NASA); the last launched Skylab from Pad 39A on 14 May 1973[^satv13][^skylab] | **2**, both from Vandenberg SLC-2W: ERTS-1 (23 Jul 1972) and Nimbus 5 (11 Dec 1972); no failure listed | [^gunterdelta] |
 
 - Era 2's rockets had stopped long before 1969: Thor-Delta last flew 18 Sep 1962 and Delta D 6 Apr 1965 ([launch-vehicles.md](launch-vehicles.md); Gunter's agrees on Delta D).[^gunterdelta] Other Deltas (C, E, L, M, N) flew 1963–1971 but are not in the game.
 - Saturn V record: Apollo 6 (1968) reached orbit but two second-stage engines shut down early _(verify; from memory, no source fetched)_.
@@ -112,7 +112,7 @@ Checks of these numbers against the game's rules:
 
 | Vehicle | Height | Stages for the show | Lift | Rideshare | Whole launch | Reliability (game) | Real record |
 |---|---|---|---|---|---|---|---|
-| Saturn V | 111 m | 5 F-1 · 162 s; 5 J-2 · 384 s; 1 J-2 · 147 s, then "Off to the Moon" 347 s | LEO 125,000 kg; to the Moon 45,000 kg | not sold | paid by NASA (Apollo) | 0.98 | 13 flights 1967–1973 _(verify record)_ |
+| Saturn V | 111 m | 5 F-1 · 162 s; 5 J-2 · 384 s; 1 J-2 · 147 s, then "Off to the Moon" 347 s | LEO 125,000 kg; to the Moon 45,000 kg | not sold | paid by NASA (Apollo) | 0.98 | 13 flights 1967–1973, all successful (NASA)[^satv13] |
 | Delta 900 | 32 m _(verify)_ | Thor ELT + 9 Castor II; Delta second stage | SSO 816 kg; LEO 1,680 kg _(museum fact sheet)_ | $20,000/kg | $6M _(no real price found)_ | 0.97 (as Delta D) | 2 of 2 worked (1972) |
 
 - Saturn V's "lift to the Moon's surface" for the Apollo Contract is the space in the Lunar Module, not the rocket: proposal **45 kg** (game estimate; EASEP's two packages weighed 77 kg).
@@ -122,7 +122,7 @@ Checks of these numbers against the game's rules:
 [^a11nasa]: [NASA: Apollo 11 Mission Overview](https://www.nasa.gov/history/apollo-11-mission-overview/) · [NASA: Apollo 11](https://www.nasa.gov/mission/apollo-11/)
 [^a11alsj]: [NASA ALSJ: Apollo 11 (CSM Columbia and LM Eagle)](https://nasa.gov/wp-content/uploads/static/history/alsj/a11/a11ov.html)
 [^sp4029]: [NASA SP-4029: Lunar Surface Experiments](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-33_Lunar_Surface_Experiments.htm) (also says EASEP "continued to return data for 71 days", which conflicts with the three weeks on NASA's seismic page; not used)
-[^sp4205]: [Chariots for Apollo (NASA SP-4205), appendix D](https://apolloexplorer.co.uk/books/SP-4205/app-d.html)
+[^sp4205]: [Chariots for Apollo (NASA SP-4205), appendix D](https://apolloexplorer.co.uk/books/SP-4205/app-d.html) · [NASA NTRS 19790020032: SP-4205 in full, p. 394: EASEP's two packages "weighed a total of 77 kilograms and occupied 0.34 cubic meters"](https://ntrs.nasa.gov/citations/19790020032) (read 15 Nov 2026)
 [^nasaseis]: [NASA Science: Apollo 11 Seismic Experiment](https://science.nasa.gov/resource/apollo-11-seismic-experiment/)
 [^llr]: [NASA Goddard: Measuring the Moon's distance (1994)](https://eclipse.gsfc.nasa.gov/SEhelp/ApolloLaser.html)
 [^ilrs]: [ILRS (NASA): Lunar science](https://ilrs.gsfc.nasa.gov/science/scienceContributions/lunar.html)
@@ -133,6 +133,9 @@ Checks of these numbers against the game's rules:
 [^vafb]: [NASA Earth Observatory: Earth Science Lifts off from the California Coast (11 Apr 2013)](https://science.nasa.gov/?p=1112568)
 [^satpk]: [NASA Apollo 4 press kit (1967), NTRS 19670031260](https://ntrs.nasa.gov/api/citations/19670031260/downloads/19670031260.pdf) (via search summary) · [NASA: Saturn V launch vehicles (ALSJ)](https://www.nasa.gov/wp-content/uploads/static/history/alsj/CSM02_Saturn_Launch_Vehicles_pp8-14.pdf)
 [^a11sum]: [NASA SP-4029: Apollo 11 summary](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_11a_Summary.htm) · [Apollo 11 Mission Report](https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11mr_NoMissingPages_19700008096.pdf) (via search summary)
+[^sp4029bg]: [NASA SP-4029 (Apollo by the Numbers): General background, launch complex table](https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_18-01_General_Background.htm) (read 15 Nov 2026)
+[^satv13]: [NASA: Saturn V in the Vehicle Assembly Building](https://www.nasa.gov/image-article/saturn-v-vehicle-assembly-building-kennedy-space-center/) ("A total of 13 Saturn V rockets were launched between 1967 and 1973. Every launch was successful.") · [NASA: 50 years ago, final Saturn rocket rolls out](https://www.nasa.gov/history/50-years-ago-final-saturn-rocket-rolls-out-to-launch-pad-39/) (12 for Apollo, one for Skylab)
+[^skylab]: [NASA: 50 years ago, the launch of Skylab](https://www.nasa.gov/history/50-years-ago-the-launch-of-skylab-americas-first-space-station/) ("On May 14, 1973, the final Saturn V rocket thundered off Launch Pad 39A")
 [^exp6]: [NASA SP-8074, Spacecraft design criteria](https://ntrs.nasa.gov/api/citations/19710028154/downloads/19710028154.pdf) · [NASA: Aeronautics and Astronautics Chronology, 1959](https://history.nasa.gov/Timeline/1959.html) (via search summary)
 [^mariner4]: [JPL: Mariner IV charts vast expanse between Earth and Mars](https://www.jpl.nasa.gov/news/mariner-iv-charts-vast-expanse-between-earth-and-mars/) · [JPL DESCANSO monograph 8, ch. 3](https://descanso.jpl.nasa.gov/monograph/series8/Descanso8_03.pdf) (via search summary)
 
@@ -184,7 +187,7 @@ Checks of these numbers against the game's rules:
 | Lift | About **27,500 kg** to low orbit ([launch-vehicles.md](launch-vehicles.md), secondary source); NASA's reference page gives no per-flight figure | **9,800 kg** low orbit (reference), **4,750 kg** geostationary transfer | [^atlasoa7] |
 | Flights | **135**, from STS-1 (12 Apr 1981, Columbia, Pad 39A) to STS-135 (launched 8 Jul 2011, landed 21 Jul 2011). Challenger (1986) and Columbia (2003) were lost _(verify wording on the card)_ | First flight **21 Aug 2002** (Hot Bird 6, SLC-41); the 401 flew about half of all Atlas V missions by 2017; still flying in 2026 _(verify)_ | [^shuttleref] [^atlasoa7] |
 
-- **Saturn V** last flew on 14 May 1973 (Skylab) _(verify)_ and **Delta 900** on 11 Dec 1972 (Gunter's), so both are retired by 1990.[^gunterdelta]
+- **Saturn V** last flew on 14 May 1973 (Skylab)[^skylab] and **Delta 900** on 11 Dec 1972 (Gunter's), so both are retired by 1990.[^gunterdelta]
 - **Pegasus** (side story): first flight **5 Apr 1990**, released from NASA's B-52 (NASA 008) at 43,198 ft about 60 miles southwest of Monterey; three solid stages; it put the 423-lb PEGSAT into orbit. Built by Orbital Sciences with private money; its maker calls it the first privately developed space launch vehicle (a company claim). B-52 launches 1990–1994, then Orbital's own L-1011 airliner.[^pegasus]
 
 ### Batteries through the Eras
@@ -397,6 +400,7 @@ Checks:
 [^lcrns]: [Esper et al. (NASA), NASA's Lunar Communications Relay and Navigation Systems, SpaceOps 2025 paper 257](https://www.nasa.gov/wp-content/uploads/2026/02/lcrns-esper-257-1.pdf) (read in full)
 [^moonbase]: [NASA: Moon Base phases (updated 12 Nov 2026)](https://www.nasa.gov/moonbase-phases/)
 [^clps]: [NASA: Touchdown! Firefly's Blue Ghost lands on Moon](https://www.nasa.gov/news-release/touchdown-carrying-nasa-science-fireflys-blue-ghost-lands-on-moon/) · [NASA: CLPS providers](https://www.nasa.gov/commercial-lunar-payload-services/clps-providers/) (via search summary)
+[^im1]: [NSSDCA: Intuitive Machines 1 (Odysseus)](https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=IM-1-NOVA): launch mass 1,908 kg, Falcon 9, 15 Feb 2024 (the page returned errors from this environment on 15 Nov 2026; figures via search summary of it) · [NASA: IM-1 press kit](https://www.nasa.gov/wp-content/uploads/2024/01/np-2023-12-016-jsc-clps-im-press-kit-web-508.pdf) (no mass given)
 [^lola]: [NASA (NTRS 20170007365): Illumination conditions at the lunar poles](https://ntrs.nasa.gov/api/citations/20170007365/downloads/20170007365.pdf) · [NASA Lunar Surface Data Book (NTRS 20250002845)](https://ntrs.nasa.gov/api/citations/20250002845/downloads/M2M-30044%20Lunar%20Surface%20Data%20Book%20Baseline_Final.pdf) · [NASA SVS: Moon's south pole](https://svs.gsfc.nasa.gov/gallery/moonpole/) (via search summary)
 [^rad]: [NASA: Step 3, Artemis: Moon missions as an astronaut testbed for Mars](https://www.nasa.gov/humans-in-space/step-3-artemis-moon-missions-as-an-astronaut-testbed-for-mars/) · [NASA THREE (JSC) risk pages](https://three.jsc.nasa.gov/?sub=nonRisks) (via search summary)
 [^moonfact]: [NASA NSSDCA: Moon fact sheet](https://nssdc.gsfc.nasa.gov/planetary/factsheet/moonfact.html) (the page reset the connection from here; 384,400 km is its well-known mean distance _(verify)_)
@@ -417,7 +421,7 @@ Each fact the demo shows on screen, re-checked on a NASA page today (agent A). I
 | Seismometer: two solar panels, worked only in the lunar day; radioisotope heater; about 340-hour night; about three weeks of data; stopped answering at 04:00 UT on 25 Aug 1969; 100–200 meteorite hits | [NASA Science: Apollo 11 seismic experiment](https://science.nasa.gov/resource/apollo-11-seismic-experiment/) |
 | Laser reflector: 100 corner cubes, distance to about 3 cm; the Moon recedes about 3.8 cm a year | [NASA Goddard: Apollo laser ranging](https://eclipse.gsfc.nasa.gov/help/ApolloLaser.html) |
 | SLS Block 1: more than 95 t to low Earth orbit, more than 27 t to the Moon | [NASA SLS fact sheet (Dec 2025)](https://www.nasa.gov/wp-content/uploads/2026/03/sls-5640-sls-fact-sheet-dec2025-508.pdf) · [SLS Reference Guide for Artemis II](https://www.nasa.gov/wp-content/uploads/2025/12/sls-5558-artemis-ii-sls-reference-guide.pdf) |
-| Falcon 9 to the Moon: IM-1's Nova-C weighed about 1,908 kg at launch (15 Feb 2024, LC-39A); used as a lower bound for lift, rounded to 1,900 kg _(verify on a NASA page; secondary sources only)_ | NASASpaceflight, Wikipedia (Nova-C) |
+| Falcon 9 to the Moon: IM-1's Nova-C weighed 1,908 kg at launch (15 Feb 2024, Falcon 9 from LC-39A); used as a lower bound for lift, rounded down to 1,900 kg. NASA's IM-1 press kit gives no mass | [NSSDCA: Intuitive Machines 1 (Odysseus)](https://nssdc.gsfc.nasa.gov/nmc/spacecraft/display.action?id=IM-1-NOVA)[^im1] |
 | Artemis II, Artemis III and IV plans | as above in this note ([^a2], [^a3], [^a4]); III and IV are labelled "NASA's plan" in the game |
 
-Game rules built on these (game estimates, in `src/game/balance.ts`): `LUNAR_NIGHT.sunDays` 14, `MOON_SEND_SHARE` 0.2, `SOUTH_POLE_LINK` 0.3 / 0.85, `SUNLIT_SHARE` (high Earth orbit 0.99, lunar orbit 0.75, Moon's surface 0.67, south pole 0.8), Lunar Module limit 45 kg, Lander 18 kg, Relay Radio as a Payload (30 kB/day). Not verified: Kennedy LC-39A/39B coordinates (Wikipedia, rounded) _(verify)_; Saturn V record "13 of 13 reached orbit" _(verify; Apollo 6 had engine problems)_ is not shown in the game.
+Game rules built on these (game estimates, in `src/game/balance.ts`): `LUNAR_NIGHT.sunDays` 14, `MOON_SEND_SHARE` 0.2, `SOUTH_POLE_LINK` 0.3 / 0.85, `SUNLIT_SHARE` (high Earth orbit 0.99, lunar orbit 0.75, Moon's surface 0.67, south pole 0.8), Lunar Module limit 45 kg, Lander 18 kg, Relay Radio as a Payload (30 kB/day). Checked since (15 Nov 2026, Credits session): Kennedy LC-39A/39B coordinates match NASA's Apollo table to the rounding;[^sp4029bg] Saturn V's record: NASA says all 13 launches were successful (not shown in the game);[^satv13] EASEP's 77 kg is on page 394 of NASA SP-4205.[^sp4205]

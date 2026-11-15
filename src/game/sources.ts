@@ -53,6 +53,39 @@ export const SOURCES = {
   /** NASA's Lunar Communications Relay and Navigation Systems paper (2025): south-pole coverage with and without a relay. */
   lcrns: 'https://www.nasa.gov/wp-content/uploads/2026/02/lcrns-esper-257-1.pdf',
   artemis: 'https://www.nasa.gov/humans-in-space/artemis/',
+  // The Moon sequences' captions (moonShow.* in strings.ts): every fact and its page are in docs/art/assets-moon.md.
+  /** Apollo 11: the orbit round the Moon, undocking, the descent burn, the time on the surface. */
+  apollo11Overview: 'https://www.nasa.gov/history/apollo-11-mission-overview/',
+  /** Apollo 11's times: the burn to the Moon, undocking, the descent burn, the landing, the stay. NASA SP-4029. */
+  apollo11Numbers: 'https://www.nasa.gov/wp-content/uploads/static/history/SP-4029/Apollo_11a_Summary.htm',
+  /** Apollo Lunar Surface Journal: the landing, "Contact light" and Armstrong's debrief on the dust. */
+  apollo11Landing: 'https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.landing.html',
+  /** Apollo Lunar Surface Journal: Aldrin set up the seismometer, Armstrong the laser reflector. */
+  apollo11Easep: 'https://www.nasa.gov/wp-content/uploads/static/history/alsj/a11/a11.clsout.html',
+  /** Apollo 9 (March 1969) tested the Lunar Module and docking in Earth orbit. */
+  apollo9: 'https://www.nasa.gov/mission/apollo-9/',
+  /** Apollo 17 (December 1972), the last crew on the Moon. */
+  apollo17: 'https://www.nasa.gov/mission/apollo-17/',
+  /** Artemis II: separation, the crew's piloting test, CubeSats one minute apart, the free-return path. */
+  artemis2PressKit: 'https://www.nasa.gov/artemis-ii-press-kit/',
+  /** Artemis II: 252,756 miles from Earth, splashdown off San Diego on 10 April 2026. */
+  artemis2Return: 'https://www.nasa.gov/news-release/nasa-welcomes-record-setting-artemis-ii-moonfarers-back-to-earth/',
+  /** NASA's plan of November 2026: Artemis III in Earth orbit in 2027, the Artemis IV landing in 2028. */
+  artemisPlans: 'https://www.nasa.gov/missions/artemis/nasa-shares-plans-to-accelerate-artemis-return-to-moon/',
+  /** STS-6 (April 1983) launched the first Tracking and Data Relay Satellite. */
+  tdrs: 'https://www.nasa.gov/mission/sts-6/',
+  /** Solar storms, warnings and Orion's shelter. */
+  moonRadiation: 'https://science.nasa.gov/science-research/heliophysics/how-nasa-will-protect-astronauts-from-space-radiation-at-the-moon/',
+  /** IM-2, a NASA CLPS delivery, landed near the south pole on 6 March 2025. */
+  im2: 'https://www.nasa.gov/news-release/nasa-receives-some-data-before-intuitive-machines-ends-lunar-mission/',
+  /** LRO's laser altimeter maps the south pole, shadowed craters included (Barker et al., NASA Goddard). */
+  lolaSouthPole: 'https://ntrs.nasa.gov/api/citations/20230014419/downloads/BarkernewviewSTIupdated.pdf',
+  /** The Sun stays low: at most 7° in the Artemis landing regions. */
+  southPoleSun: 'https://www.nasa.gov/centers-and-facilities/nesc/characterizing-the-visual-experience-of-astronauts-at-the-lunar-south-pole/',
+  /** Shackleton crater: rim points sunlit more than 90% of the year, the floor always dark. */
+  shackleton: 'https://science.nasa.gov/resource/shackleton-craters-illuminated-rim-shadowed-interior/',
+  /** Earth seen from the south pole bobs up and down near the horizon. */
+  earthFromPole: 'https://science.nasa.gov/resource/earth-and-sun-from-the-moons-south-pole-2/',
 };
 
 /**

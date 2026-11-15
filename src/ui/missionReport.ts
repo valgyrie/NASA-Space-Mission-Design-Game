@@ -87,8 +87,10 @@ export function findingText(f: Finding, flown = true): string {
         w: formatDecimal(f.powerUseW),
         days: formatNumber(Math.floor(f.lastsDays ?? 0)),
       };
-      if (f.ok && f.lastsDays === null) return t(`finding.power.sun${d}`, values);
-      return t(`finding.power.${state}${d}`, values);
+      // A one-day Mission (Artemis II) reads "the whole day", not "all 1 days".
+      const one = f.ok && f.needDays === 1 ? '.one' : '';
+      if (f.ok && f.lastsDays === null) return t(`finding.power.sun${one}${d}`, values);
+      return one ? t(`finding.power.ok.one${d}`, values) : t(`finding.power.${state}${d}`, values);
     }
     case 'comms':
       return t(`finding.comms.${state}${d}`, { send: formatNumber(f.sendPerDay), make: formatNumber(f.dataPerDay) });

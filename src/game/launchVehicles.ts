@@ -151,7 +151,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // Full Thrust, expendable capacity. No landing sequence in this ticket. Sources and game estimates:
   // docs/research/launch-vehicles.md. Its real flight record changes, so no fixed record is claimed.
   // To the Moon: SpaceX publishes no figure. Intuitive Machines' IM-1 and IM-2 landers flew to the Moon on Falcon 9;
-  // IM-1's Nova-C weighed about 1,900 kg at launch (docs/research/eras-3-5.md), used here as a cited lower bound.
+  // IM-1's Nova-C weighed 1,908 kg at launch (NSSDCA, docs/research/eras-3-5.md), rounded down as a cited lower bound.
   // High Earth orbit uses its geostationary transfer figure (game estimate: a similar climb).
   falcon9: {
     id: 'falcon9',
@@ -169,7 +169,7 @@ export const LAUNCH_VEHICLES: Record<LaunchVehicleId, LaunchVehicle> = {
   // ("Off to the Moon", 346.8 s) plays in the Moon sequence. Lift: an Apollo-era NASA paper gives 270,000 lb
   // (122,000 kg) to Earth orbit and 100,000 lb (45,000 kg) to the Moon. NASA's own: the Apollo Contract's Launch costs
   // the Company nothing, and what fits in the Lunar Module is the Contract's limit (`ride.maxKg`).
-  // 13 flights, 1967–1973; the last launched Skylab on 14 May 1973 (verify). docs/research/eras-3-5.md.
+  // 13 flights, 1967–1973, all successful; the last launched Skylab on 14 May 1973 (NASA). docs/research/eras-3-5.md.
   saturnV: {
     id: 'saturnV',
     liftKg: { lowEarthOrbit: 122_000, geostationary: 0, highEarthOrbit: 45_000, lunarOrbit: 45_000, moonSurface: 45_000, lunarSouthPole: 45_000 },
@@ -305,7 +305,7 @@ export interface LaunchSite {
  * Wallops Island, Virginia: a real NASA launch site further north; Juno I and Thor-Able never flew from it, so it
  * is alternate history (docs/research/places-and-weather.md).
  * Kennedy Space Center, Launch Complex 39: Pad 39A launched Apollo 11's Saturn V on 16 July 1969, Pad 39B launched
- * Artemis I and II on SLS. Coordinates rounded from Wikipedia (verify against a NASA source). About 20 km from the
+ * Artemis I and II on SLS. Coordinates rounded from NASA SP-4029's launch complex table. About 20 km from the
  * Cape's weather point, so they share its weather. docs/research/eras-3-5.md.
  */
 export const LAUNCH_SITES: Record<LaunchSiteId, LaunchSite> = {

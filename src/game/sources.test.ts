@@ -2,8 +2,10 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { CONTRACT_IDS } from './contracts';
 import { t } from '../strings';
+import { HISTORY_CARD_IDS, HISTORY_CARDS } from './history';
 import {
-  ART_ASSETS, ART_GROUP_IDS, ART_GROUPS, CHALLENGE, DATASET_IDS, DATASETS, missionSource, SOFTWARE, SOFTWARE_IDS,
+  ART_ASSETS, ART_GROUP_IDS, ART_GROUPS, CHALLENGE, DATASET_IDS, DATASETS, missionSource, SITE_SOURCES, SOFTWARE,
+  SOFTWARE_IDS, SOURCES, VEHICLE_SOURCES,
 } from './sources';
 
 describe('Mission reading links', () => {
@@ -53,14 +55,31 @@ describe('Credits', () => {
     }
   });
 
-  it('lists every Poly Haven and ambientCG texture named in docs/art', () => {
+  it('lists every Poly Haven, ambientCG and NASA SVS asset named in docs/art', () => {
     const docs = readdirSync('docs/art')
       .filter((file) => /^assets-.*\.md$/.test(file))
       .map((file) => readFileSync(`docs/art/${file}`, 'utf8'))
       .join('\n');
-    const pages = new Set(docs.match(/https:\/\/(polyhaven\.com|ambientcg\.com)\/a\/\w+/g) ?? []);
+    const pages = new Set(docs.match(/https:\/\/((polyhaven\.com|ambientcg\.com)\/a\/\w+|svs\.gsfc\.nasa\.gov\/\d+)/g) ?? []);
     expect(pages.size).toBeGreaterThan(0);
     const credited = new Set(Object.values(ART_ASSETS));
     for (const page of pages) expect(credited, page).toContain(page);
+  });
+
+  it('lists every NASA page behind the Moon sequence captions under Reading sources', () => {
+    const doc = readFileSync('docs/art/assets-moon.md', 'utf8');
+    const section = doc.split('## Sources behind the Moon sequence captions')[1]?.split('\n## ')[0] ?? '';
+    const urls = new Set(section.match(/https:\/\/[^\s|]+/g) ?? []);
+    expect(urls.size).toBeGreaterThan(10);
+    const reading = new Set<string>([
+      ...HISTORY_CARD_IDS.map((id) => HISTORY_CARDS[id].learnMore),
+      ...Object.values(VEHICLE_SOURCES),
+      ...Object.values(SITE_SOURCES),
+      ...Object.values(SOURCES),
+    ]);
+    for (const url of urls) {
+      expect(new URL(url).hostname, url).toMatch(/(^|\.)nasa\.gov$/);
+      expect(reading, url).toContain(url);
+    }
   });
 });

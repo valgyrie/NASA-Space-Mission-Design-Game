@@ -449,7 +449,7 @@ export const ROCKET_RELIABILITY = {
   // since two flights can't show a rocket never fails.
   thorDelta: 0.97,
   deltaD: 0.97,
-  // Saturn V: every one of its 13 launches reached orbit (verify); SLS: 2 of 2. Game estimates kept below perfect.
+  // Saturn V: NASA: all 13 launches were successful (SP-4029, assets-moon.md); SLS: 2 of 2. Game estimates kept below perfect.
   saturnV: 0.98,
   sls: 0.97,
 } as const;

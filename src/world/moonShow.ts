@@ -563,10 +563,18 @@ export class MoonShow {
       }
       if (t < 47) {
         // Looking west past Eagle, up at Earth high in the black sky; the long morning shadow stretches away.
-        const k = (t - 41) / 6;
+        // Crouched close to Eagle on its east side, the view tilts from Eagle up past its top to Earth (66.5° up
+        // in the west), so the ascent stage stands against the black sky with Earth above it.
+        const k = sm(0.25, 0.95, (t - 41) / 6);
+        const eye = v3(8.2, ground(8.2, 1.6) + 1.0, 1.6);
+        const flat = Math.hypot(eye.x, eye.z);
+        const pitch = THREE.MathUtils.lerp(Math.atan2(landY + 2.5 - eye.y, flat), deg(52), k);
+        const yaw0 = Math.atan2(-eye.z, -eye.x);
+        const turn = THREE.MathUtils.euclideanModulo(Math.atan2(earthGround.z, earthGround.x) - yaw0 + Math.PI, 2 * Math.PI) - Math.PI;
+        const yaw = yaw0 + turn * k;
         return {
-          shot: 'landed', sun: sunGround, fov: 50 + 14 * sm(0.25, 0.95, k),
-          camera: v3(20, landY + 1.2, 5), target: v3(20, landY + 1.2, 5).add(v3(-Math.cos(deg(8 + 30 * sm(0.25, 0.95, k))), Math.sin(deg(8 + 30 * sm(0.25, 0.95, k))), -0.15).multiplyScalar(30)),
+          shot: 'landed', sun: sunGround, fov: 55 + 10 * k,
+          camera: eye, target: eye.clone().add(v3(Math.cos(yaw) * Math.cos(pitch), Math.sin(pitch), Math.sin(yaw) * Math.cos(pitch)).multiplyScalar(30)),
           earth: earthGround, moon: null, fill: 0.03, fillColour: 0x8fa0c0, stars: 0, exposure: 1.0, shadow: { at: v3(-14, landY, 0), size: 32 },
         };
       }
@@ -606,7 +614,9 @@ export class MoonShow {
         const s = Math.max(0, t - t0);
         const a = (i / 4) * Math.PI * 2 + 0.9;
         c.visible = t >= t0 && t < 25;
-        c.position.set(-0.4 - s * 0.1, Math.cos(a) * (2.2 + s * 0.45), Math.sin(a) * (2.2 + s * 0.45));
+        // Out of its dispenser inside the adapter ring (r 2.1 m, 0.4 m below the rim), then away from the stage.
+        const r = 2.1 + s * 0.3;
+        c.position.set(-0.4 + s * 0.4, Math.cos(a) * r, Math.sin(a) * r);
         c.rotation.set(s * 0.25, s * 0.18 + i, 0);
       });
       icps.visible = t < 25;
@@ -618,14 +628,15 @@ export class MoonShow {
         return { ...base, shot: 'heo', sun: sunHeo, fov: 42, camera: v3(-4 + 6 * k, 9, 34 - 4 * k), target: v3(away * 0.5 - 2, -2, 0), shadow: { at: v3(away * 0.5, 0, 0), size: 20 } };
       }
       if (t < 12) {
-        // The CubeSats spring out of the adapter ring one after another.
-        return { ...base, shot: 'cubesats', sun: sunHeo, fov: 40, camera: v3(6, 3.5, 8), target: v3(-1.2, 0.5, 0), shadow: { at: v3(-1, 0, 0), size: 8 } };
+        // Close over the adapter ring as the Company's CubeSat springs out of its dispenser, the others after it.
+        const k = (t - 8) / 4;
+        return { ...base, shot: 'cubesats', sun: sunHeo, fov: 38, camera: v3(1.7 + 0.3 * k, 2.6, 3.2 + 0.3 * k), target: v3(0.1, 1.55, 1.85), shadow: { at: v3(0, 1.5, 1.5), size: 5 } };
       }
       if (t < 17) {
-        // Close on the Company's CubeSat drifting away, Earth beyond.
+        // Close on the Company's CubeSat drifting away, the stage's adapter behind it, Earth beyond.
         const p = cubes[0]!.position;
         const k = (t - 12) / 5;
-        return { ...base, shot: 'player', sun: sunHeo, fov: 34, camera: p.clone().add(v3(1.6 + 0.4 * k, 0.9, 2.2 + 0.3 * k)), target: p.clone().add(v3(-0.2, -0.3, -0.5)), shadow: { at: p, size: 2 } };
+        return { ...base, shot: 'player', sun: sunHeo, fov: 36, camera: p.clone().add(v3(0.3 + 0.1 * k, 0.3, 0.95 + 0.15 * k)), target: p.clone().add(v3(-0.15, -0.1, 0)), shadow: { at: p, size: 2 } };
       }
       if (t < 25) {
         // Off to the Moon on Orion's own main engine; Earth falls away below.
@@ -711,7 +722,8 @@ export class MoonShow {
       if (t < 16) {
         // The player's satellite nearby, the lander behind it, Earth's blue below.
         const k = (t - 8) / 8;
-        return { ...base, shot: 'player', fov: 36, camera: sat.position.clone().add(v3(1.5 - 2 * k, -1.2, 6.5)), target: sat.position.clone().lerp(v3(8, 0, 0), 0.2), shadow: { at: sat.position, size: 6 } };
+        // From the side and a little above, looking down past the satellite at Earth's limb (21° below level here).
+        return { ...base, shot: 'player', fov: 36, camera: sat.position.clone().add(v3(5.2 - 1.2 * k, 1.6, 1.6 + 0.6 * k)), target: sat.position.clone().add(v3(0.2, -0.5, -0.4)), shadow: { at: sat.position, size: 6 } };
       }
       if (t < 26) {
         return { ...base, shot: 'approach', fov: 38, camera: v3(4, 12, 40), target: v3((x + 10) / 2, 0, 0), shadow: { at: v3((x + 8) / 2, 0, 0), size: 30 + (x - dockX) * 0.5 } };
