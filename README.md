@@ -1,5 +1,12 @@
 # LEAP: A Space Mission Design Game
 
+[![NASA Space Apps 2026](https://img.shields.io/badge/NASA%20Space%20Apps-2026-0B3D91)](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/)
+[![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue)](LICENSE)
+[![Platforms](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey)](#run-it)
+[![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![three.js](https://img.shields.io/badge/three.js-000000?logo=threedotjs&logoColor=white)](https://threejs.org/)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)](https://vite.dev/)
+
 **Watch it on YouTube**
 
 | Video | Link |
@@ -16,6 +23,10 @@ Run a space company. Mine metals, build Parts, design the spacecraft, pick the r
 Every choice moves six bars: Mass, Power, Budget, Data, Communications and Time. When a mission works or fails, the report says why, and a card tells what happened on the real one.
 
 Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design Game](https://www.spaceappschallenge.org/2026/challenges/space-mission-design-game/). For players from about age 12 up.
+
+> [!TIP]
+> **Want to play?** Download the ZIP, unzip it and double-click the launcher for your system. No install or admin rights needed. Steps in [Run it](#run-it).
+
 ## Contents
 
 - [The game](#the-game)
@@ -25,7 +36,7 @@ Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design
   - [Launch and fly](#launch-and-fly)
   - [Read the Mission Report](#read-the-mission-report)
 - [Ways to play](#ways-to-play)
-- [Run it](#run-it)
+- **[Run it](#run-it)**
 - [Controls](#controls)
 - [Future work](#future-work)
 - [For developers](#for-developers)
@@ -33,6 +44,7 @@ Made for the **NASA Space Apps Challenge 2026**, challenge [Space Mission Design
 - [Credits](#credits)
 - [How AI was used](#how-ai-was-used)
 - [Licence](#licence)
+
 ## The game
 
 ### Build your Site
@@ -105,11 +117,18 @@ Download the repository (Code → Download ZIP), unzip it, and keep the folder t
 - **macOS:** double-click `LEAP.command`.
 - **Linux:** run `./LEAP.sh` in a terminal in this folder, or open `LEAP.sh` with **Run as a program**.
 
-The first start needs internet and takes a few minutes. The launcher downloads its own copy of [Node.js](https://nodejs.org/) into this folder, checks it, and installs the game's packages. You don't need to install anything or have administrator rights. Later starts are quick.
+> [!NOTE]
+> The first start needs internet and takes a few minutes. The launcher downloads its own copy of [Node.js](https://nodejs.org/) into this folder, checks it, and installs the game's packages. You don't need to install anything or have administrator rights. Later starts are quick.
 
-LEAP opens in your browser at [http://localhost:5173](http://localhost:5173). **Keep the launcher window open while you play.** To quit, press **Exit** on the main menu, close the tab, then close the launcher window (or press **Ctrl+C** in it). Closing only the browser tab does not stop LEAP; run the launcher again to get the tab back.
+LEAP opens in your browser at [http://localhost:5173](http://localhost:5173).
 
-Your Companies are saved in that browser. Use the same browser and address to find them again.
+> [!IMPORTANT]
+> **Keep the launcher window open while you play.** Closing only the browser tab does not stop LEAP; run the launcher again to get the tab back.
+
+To quit, press **Exit** on the main menu, close the tab, then close the launcher window (or press **Ctrl+C** in it).
+
+> [!TIP]
+> Your Companies are saved in that browser. Use the same browser and address to find them again.
 
 <details>
 <summary>If something goes wrong</summary>
